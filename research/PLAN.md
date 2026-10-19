@@ -45,6 +45,21 @@ cubic value aggregation is O(n^3 d), not O(n^2 d).
 5. Keep: one softmax across sectors, sector potentials, RMS readout, absorbing carry.
    Rename before submission: "poly-attention" collides with Chakrabarti, Pitassi & Alman.
 
+## Results so far (19 Oct 2026, three seeds each, balanced accuracy)
+
+- Phase A (Match-k ladder): no operator without a native k-way term leaves chance for k >= 4.
+  DS-PA with every Newton primitive stays at 50.0 on Match-4 at width 64, 128 and 192:
+  composition is representable but not learned (the leap barrier, T1 + T7).
+- Newton attention (polybench `--model newton`): complex phase features, leave-one-out power
+  sums, Newton's identities, every arity up to K read out at once, O(nKr).
+  Rank 256, four heads: SET 100, Match-3 100, smallest-arity 95.1 (best fixed-order 54),
+  four-card SET 75.5, Match-4 70.6, Match-5 56.8 (only model above chance).
+  Order capped below the task's arity gives exactly 50.0 (ranks 32 and 128).
+  Width-matched cubic (0.52M) and standard 3L (2.4M) stay at chance on Match-4/5.
+  Width is the lever (rank 8 -> 128: 54.7 -> 63.6 on Match-4); steps are not (6k vs 20k).
+- Open: a read-out that shares weights across arities (0.79M of 0.96M params are read-out);
+  why learned phases fall short of exact characters; routing for chain tasks.
+
 ## Experiments
 
 Phase A, mechanism (Match-k ladder in Z_3^m, k = 2..6, m = 2..4; mixtures of k):

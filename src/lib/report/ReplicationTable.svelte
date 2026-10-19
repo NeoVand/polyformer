@@ -93,16 +93,19 @@
 		font-size: var(--text-xs);
 		color: var(--color-ink-3);
 	}
-	th {
+	thead th {
+		border-bottom: 1px solid #262626;
 		padding: 0 8px 8px 0;
 		font-weight: 400;
 		text-align: left;
 		color: var(--color-ink-3);
 		white-space: nowrap;
 	}
+	tbody tr:last-child td {
+		border-bottom: 1px solid #262626;
+	}
 	td {
 		padding: 6px 8px 6px 0;
-		border-top: 1px solid #1a1a1a;
 	}
 	.r {
 		text-align: right;

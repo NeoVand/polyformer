@@ -10,6 +10,7 @@
 	 * click it to choose it.
 	 */
 	import type { Snippet } from 'svelte';
+	import { fade } from 'svelte/transition';
 	import type { DiagramHead, DiagramSector } from '#lib/engine/protocol.ts';
 	import MathTex from '#lib/ui/Math.svelte';
 	import { backwardCone, dominant, flowEdges, stateAt } from './diagramFlow.ts';
@@ -178,7 +179,7 @@
 				<g class="currents">
 					{#each edges as e, i (i)}
 						{#if e.lit && e.flow >= 0.18 && visible(e) && e.kind !== 'carry' && e.kind !== 'leaf'}
-							<path d={pathOf(e)} class="current" />
+							<path d={pathOf(e)} class="current" transition:fade={{ duration: 600 }} />
 						{/if}
 					{/each}
 				</g>
@@ -186,14 +187,11 @@
 
 			<!-- the readout leg -->
 			{#if !Number.isNaN(geo.y[focus])}
-				<line
-					x1={geo.x[rounds] + 6}
-					x2={geo.out - 4}
-					y1={geo.y[focus]}
-					y2={geo.y[focus]}
-					class="leg"
-				/>
-				<circle cx={geo.x[rounds]} cy={geo.y[focus]} r="5.5" class="root-ring" />
+				<!-- glides to the focused row instead of jumping -->
+				<g class="readout" style:transform="translateY({geo.y[focus]}px)">
+					<line x1={geo.x[rounds] + 6} x2={geo.out - 4} y1="0" y2="0" class="leg" />
+					<circle cx={geo.x[rounds]} cy="0" r="5.5" class="root-ring" />
+				</g>
 			{/if}
 
 			<!-- states -->
@@ -272,6 +270,9 @@
 	.world {
 		stroke: rgb(255 255 255 / 0.06);
 	}
+	.world {
+		transition: stroke 850ms cubic-bezier(0.65, 0, 0.35, 1);
+	}
 	.world.on {
 		stroke: rgb(255 255 255 / 0.16);
 	}
@@ -281,7 +282,11 @@
 		stroke-width: 0.8;
 		stroke-linecap: round;
 		opacity: calc(0.12 + 0.4 * var(--w));
-		transition: opacity 160ms ease;
+		/* a new focus fades in rather than switching: weight, tone and width all ease */
+		transition:
+			opacity 850ms cubic-bezier(0.65, 0, 0.35, 1),
+			stroke 850ms cubic-bezier(0.65, 0, 0.35, 1),
+			stroke-width 850ms cubic-bezier(0.65, 0, 0.35, 1);
 	}
 	.edge.lit {
 		stroke: #f2f2f2;
@@ -307,6 +312,9 @@
 			stroke-dashoffset: 0;
 		}
 	}
+	.readout {
+		transition: transform 850ms cubic-bezier(0.65, 0, 0.35, 1);
+	}
 	.leg {
 		stroke: #f2f2f2;
 		stroke-width: 1.6;
@@ -318,6 +326,9 @@
 		opacity: 0.7;
 	}
 	.v {
+		transition:
+			fill 850ms cubic-bezier(0.65, 0, 0.35, 1),
+			opacity 850ms cubic-bezier(0.65, 0, 0.35, 1);
 		fill: #5c5c5c;
 		opacity: calc(0.45 + 0.55 * var(--m));
 	}
@@ -355,6 +366,7 @@
 		border: 0;
 		border-radius: 3px;
 		background: transparent;
+		transition: background 300ms ease;
 		transform: translateY(-50%);
 		cursor: pointer;
 	}
@@ -389,6 +401,7 @@
 		align-items: baseline;
 		gap: 6px;
 		transform: translateY(-50%);
+		transition: top 850ms cubic-bezier(0.65, 0, 0.35, 1);
 		font-size: 13px;
 		white-space: nowrap;
 		pointer-events: none;

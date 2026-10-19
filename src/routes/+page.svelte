@@ -5,16 +5,12 @@
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import type { DiagramResult } from '#lib/engine/protocol.ts';
 	import { SUITES, type SuiteId } from '#lib/engine/runs.ts';
-	import { querySlice, topHyperedges } from '#lib/explore/analysis.ts';
-	import { exactProbe, scoreSlice } from '#lib/explore/exact.ts';
-	import { dealLayout, findSets, LAYOUT_SIZE, type Card } from '#lib/set/cards.ts';
-	import { mulberry32 } from '#lib/set/rng.ts';
-	import Icon from '#lib/ui/Icon.svelte';
+	import { dealTable, strongestEdges, tourStops } from '#lib/explore/deal.ts';
+	import { LAYOUT_SIZE } from '#lib/set/cards.ts';
 	import LineChart, { type Series } from '#lib/ui/LineChart.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import { Pause, Play } from '#lib/ui/icons.ts';
 	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
 	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
 	import FlowLegend from '#lib/viz/FlowLegend.svelte';
@@ -22,65 +18,21 @@
 	import TensorCube from '#lib/viz/TensorCube.svelte';
 
 	const C = LAYOUT_SIZE;
-	/** Tiles are drawn on the well colour; the 3D canvases match it. */
-	const TILE = 0x0e0e0e;
+	/** The tiles fall to the page's black where the figures sit; the 3D canvases match it. */
+	const TILE = 0x080808;
 
 	// ── one deal of twelve cards, scored by the hand-built cubic head ────────
-	function deal(seed: number): Card[] {
-		const rng = mulberry32(seed * 7717 + 3);
-		for (;;) {
-			const l = dealLayout(rng);
-			if (findSets(l).length >= 3) return l;
-		}
-	}
-	const layout = deal(3);
-	const sets = findSets(layout);
-	const exact = exactProbe(layout, 3);
-
-	/** The score tensor, normalised and sharpened so SET cells stand out (as in the lab). */
-	const volume = (() => {
-		const flat = new Float32Array(C * C * C);
-		for (let i = 0; i < C; i++) flat.set(scoreSlice(exact, i), i * C * C);
-		let lo = Infinity;
-		let hi = -Infinity;
-		for (const v of flat)
-			if (!Number.isNaN(v)) {
-				lo = Math.min(lo, v);
-				hi = Math.max(hi, v);
-			}
-		const span = hi - lo || 1;
-		return flat.map((v) => (Number.isNaN(v) ? 0 : ((v - lo) / span) ** 3.25));
-	})();
-	const strongest = (q: number) => {
-		const top = topHyperedges(querySlice(exact, 0, q), 5, q);
-		const w = top[0]?.weight || 1;
-		return top.map((e) => ({ j: e.j, k: e.k, weight: e.weight / w }));
-	};
+	const table = dealTable(3);
+	const { layout, sets, volume } = table;
 
 	// ── the cube, the hypergraph and the trained model share one query card ──
 	let query = $state(sets[0][0]);
 	let pick = $state<{ j: number; k: number } | null>(null);
-	const edges = $derived(strongest(query));
+	const edges = $derived(strongestEdges(table, query));
 	const selected = $derived(pick ?? (edges[0] ? { j: edges[0].j, k: edges[0].k } : null));
 
 	// ── the tour: every card in a SET, once per SET it belongs to ────────────
-	interface Stop {
-		i: number;
-		pair: { j: number; k: number } | null;
-	}
-	const STOPS: Stop[] = (() => {
-		const out: Stop[] = [];
-		const members = [...new Set(sets.flat())].sort((a, b) => a - b);
-		for (const i of members)
-			for (const s of sets.filter((x) => x.includes(i))) {
-				const [j, k] = s.filter((c) => c !== i);
-				out.push({ i, pair: { j, k } });
-			}
-		// one card in no SET, to show what nothing looks like
-		const loner = layout.findIndex((_, c) => !sets.some((s) => s.includes(c)));
-		if (loner >= 0) out.splice(Math.ceil(out.length / 2), 0, { i: loner, pair: null });
-		return out;
-	})();
+	const STOPS = tourStops(table);
 	const STEP_MS = 3600;
 	let touring = $state(false);
 	let stop = $state(0);
@@ -90,18 +42,24 @@
 		query = STOPS[stop].i;
 		pick = STOPS[stop].pair;
 	}
-	/** Anything the visitor clicks takes over from the tour. */
+	/** Anything the visitor clicks takes over from the tour, which resumes once they stop. */
+	let resume = 0;
 	function takeOver() {
 		touring = false;
+		clearTimeout(resume);
+		if (!reduced) resume = window.setTimeout(() => (touring = true), 9000);
 	}
 	function choose(card: number) {
 		takeOver();
 		query = card;
 		pick = null;
 	}
+	let reduced = false;
 	onMount(() => {
 		goTo(0);
-		touring = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		touring = !reduced;
+		return () => clearTimeout(resume);
 	});
 	$effect(() => {
 		if (!touring) return;
@@ -218,66 +176,43 @@
 	<!-- ── the idea ─────────────────────────────────────────────────────── -->
 	<section class="intro">
 		<h1>Higher-order attention</h1>
-		<div class="eq">
-			<MathTex
-				display
-				tex={'\\begin{aligned} A_{ij} &= \\langle Q_i,\\, K_j \\rangle && \\text{pairs} \\\\ A_{ijk} &= \\langle Q_i,\\, K^{1}_{j} \\odot K^{2}_{k} \\rangle && \\text{triples} \\end{aligned}'}
-			/>
-		</div>
+		<p class="lede">
+			You can tell whether a photo shows an animal in about 150 milliseconds, time for only a dozen
+			or so neural stages in a row. The brain manages with few layers because each one does a lot: a
+			single neuron combines its inputs more like a small network than a weighted sum.
+		</p>
 		<p>
-			A transformer head scores a query against one key at a time, so it sees pairs. Higher-order
-			heads score whole tuples: cubic attention reads the query with every pair of keys, and DS-PA
-			learns how many tokens each step should combine. On tasks built from triples and chains, both
-			win with fewer layers and fewer parameters.
+			Transformers go the other way. A head compares tokens two at a time, so anything that depends
+			on three tokens at once has to be assembled over many layers. Polyformer looks for layers that
+			do more per step: attention that relates whole groups of tokens at once, and learns how large
+			those groups should be.
+		</p>
+		<p>
+			Hints of this run from the 2-simplicial transformer to proofs that attention over triples
+			beats pairs and kernels that train it at scale. Our two ideas, cubic attention and DS-PA,
+			solve SET in one layer and pointer chasing with 40% of the parameters of the deepest baseline.
 		</p>
 		<p class="small">
 			Every model on this page was trained in a browser with jax-js. There is no server.
 		</p>
 		<div class="ctas">
 			<a class="cta primary" href={resolve('/learn')}>Read how it works</a>
-			<a class="cta" href={resolve('/explore')}>Explore the models</a>
-		</div>
-		<div class="tour" aria-label="Tour of the SETs on the table">
-			<button
-				class="tour-btn"
-				aria-pressed={touring}
-				onclick={() => (touring = !touring)}
-				title={touring ? 'Pause the tour' : 'Play the tour'}
-			>
-				<Icon icon={touring ? Pause : Play} size={13} />
-				{touring ? 'Touring the SETs' : 'Tour paused'}
-			</button>
-			<span class="dots">
-				{#each STOPS as s, n (n)}
-					<button
-						class="dot"
-						class:on={n === stop}
-						class:loner={!s.pair}
-						aria-label="Card {s.i + 1}{s.pair
-							? ` with cards ${s.pair.j + 1} and ${s.pair.k + 1}`
-							: ', in no SET'}"
-						onclick={() => {
-							takeOver();
-							goTo(n);
-						}}
-					></button>
-				{/each}
-			</span>
+			<a class="cta" href={resolve('/report')}>Read the paper</a>
 		</div>
 	</section>
 
 	<!-- ── the tensor ───────────────────────────────────────────────────── -->
 	<section class="tile cube">
 		<header>
-			<h2>The attention tensor</h2>
+			<h2>Scores for whole triples</h2>
 			<p>
-				Every triple of the twelve cards gets one score, a block sized by its value; the solid plane
-				is the query's slice. This hand-built head counts the attributes <MathTex tex="m" /> where the
-				three cards fail, so it scores 4 exactly on a SET:
+				A standard head fills a matrix: one score for each query and key. A higher-order head fills
+				a tensor, scoring every query against every pair of keys, so one step can judge how two
+				tokens bear on a third. The bright blocks are the triples this head was built to find.
 			</p>
 			<div class="t-math">
 				<MathTex
-					tex={'A_{ijk} = \\sum_{t=1}^{4} \\cos \\tfrac{2\\pi}{3}\\big(a_t + b_t + c_t\\big) = 4 - \\tfrac{3}{2}\\, m_{ijk}'}
+					tex={'A_{ij} = \\langle Q_i,\\, K_j \\rangle \\quad\\longrightarrow\\quad A_{ijk} = \\langle Q_i,\\, K^{1}_{j} \\odot K^{2}_{k} \\rangle'}
 				/>
 			</div>
 		</header>
@@ -304,9 +239,9 @@
 		<header>
 			<h2>Attention on hyperedges</h2>
 			<p>
-				The same cards. The weight lands on triangles, not edges: the query spreads one softmax over
-				every pair and reads the product of their values. Each SET on the table is a membrane; the
-				lit one is where the weight went.
+				The same scores as a graph. The weight lands on triangles, not edges: the query reads what a
+				group of tokens holds together, the product of their values, rather than what any pair says
+				alone. A relation that exists only in the group becomes a single step.
 			</p>
 			<div class="t-math">
 				<MathTex
@@ -335,30 +270,31 @@
 	<!-- ── what a trained DS-PA model does ──────────────────────────────── -->
 	<section class="tile flow">
 		<header class="row">
-			<div>
-				<h2>What a trained DS-PA model does</h2>
-				<p>
-					Each round, one softmax picks what a token reads: its value, one token, two at once or a
-					virtual mode.
-					{#if flowTask === 'set'}
-						On SET, every card in a SET learned to read its two partners at one cubic vertex.
-					{:else}
-						On pointer chasing, every node learned to read the node it points to.
-					{/if}
-				</p>
+			<div class="head-line">
+				<h2>Letting the data choose the arity</h2>
+				<div class="seg" role="group" aria-label="Task">
+					<button
+						class:on={flowTask === 'set'}
+						aria-pressed={flowTask === 'set'}
+						onclick={() => (flowTask = 'set')}>SET</button
+					>
+					<button
+						class:on={flowTask === 'chase'}
+						aria-pressed={flowTask === 'chase'}
+						onclick={() => (flowTask = 'chase')}>Chase</button
+					>
+				</div>
 			</div>
-			<div class="seg" role="group" aria-label="Task">
-				<button
-					class:on={flowTask === 'set'}
-					aria-pressed={flowTask === 'set'}
-					onclick={() => (flowTask = 'set')}>SET</button
-				>
-				<button
-					class:on={flowTask === 'chase'}
-					aria-pressed={flowTask === 'chase'}
-					onclick={() => (flowTask = 'chase')}>Chase</button
-				>
-			</div>
+			<p>
+				How many tokens should one step relate? DS-PA leaves it to learning: each round, every token
+				reads its own value, one token, two at once or a learned summary. Unrolled, that is a sum
+				over diagrams, and this is the one a trained model drew.
+				{#if flowTask === 'set'}
+					Asked to find matching triples, it chose triples.
+				{:else}
+					Asked to follow pointers, it chose chains of single hops.
+				{/if}
+			</p>
 		</header>
 		<div class="t-math pad">
 			<MathTex
@@ -420,42 +356,32 @@
 	<!-- ── the bench ────────────────────────────────────────────────────── -->
 	<section class="tile chart">
 		<header class="row">
-			<div>
-				<h2>Held-out accuracy</h2>
-				<p>
-					{#if suite === 'set'}
-						Each card is labelled by whether it belongs to a SET on the table. One cubic layer
-						reaches 100%; two standard layers, with more parameters, reach 64%.
-					{:else}
-						The query must return the payload at the end of its start node's list. DS-PA reaches
-						100% with 61k parameters; three standard layers reach 94% with 154k.
-					{/if}
-				</p>
+			<div class="head-line">
+				<h2>More per layer</h2>
+				<div class="seg" role="group" aria-label="Task">
+					<button
+						class:on={suite === 'set'}
+						aria-pressed={suite === 'set'}
+						onclick={() => (suite = 'set')}>SET</button
+					>
+					<button
+						class:on={suite === 'chase'}
+						aria-pressed={suite === 'chase'}
+						onclick={() => (suite = 'chase')}>Chase</button
+					>
+				</div>
 			</div>
-			<div class="seg" role="group" aria-label="Task">
-				<button
-					class:on={suite === 'set'}
-					aria-pressed={suite === 'set'}
-					onclick={() => (suite = 'set')}>SET</button
-				>
-				<button
-					class:on={suite === 'chase'}
-					aria-pressed={suite === 'chase'}
-					onclick={() => (suite = 'chase')}>Chase</button
-				>
-			</div>
+			<p>
+				{#if suite === 'set'}
+					On a task built from three-way relations, one higher-order layer is exact, and stacking
+					pairwise layers does not catch up.
+				{:else}
+					On following chains, a layer that chooses its arity matches a deeper pairwise model with
+					40% of its parameters.
+				{/if}
+				Held-out accuracy, trained in the browser.
+			</p>
 		</header>
-		<div class="t-math pad">
-			{#if suite === 'set'}
-				<MathTex
-					tex={'y_i = \\mathbf{1}\\big[\\, \\exists\\, j,k :\\ \\{i,j,k\\} \\text{ is a SET} \\,\\big]'}
-				/>
-			{:else}
-				<MathTex
-					tex={'\\hat y = \\text{payload}\\big(\\text{next}^{\\,h}(\\text{start})\\big),\\quad h \\le 3'}
-				/>
-			{/if}
-		</div>
 		<div class="plot" bind:clientHeight={chartH}>
 			{#if series.length && chartH > 60}
 				<LineChart
@@ -524,20 +450,16 @@
 		letter-spacing: -0.028em;
 		text-wrap: balance;
 	}
-	.eq {
-		margin: 2.4vh 0 1.6vh;
-		font-size: clamp(15px, 2.1vh, 19px);
-		color: var(--color-ink);
-	}
-	.eq :global(.katex-display) {
-		margin: 0;
-	}
 	.intro p {
-		margin: 0;
+		margin: 1.4vh 0 0;
 		max-width: 44ch;
 		font-size: clamp(13px, 1.7vh, 15px);
 		line-height: 1.6;
 		color: var(--color-ink-2);
+	}
+	.intro p.lede {
+		margin-top: 2.6vh;
+		color: var(--color-ink);
 	}
 	.intro p.small {
 		margin-top: 1.6vh;
@@ -572,57 +494,6 @@
 	.cta.primary:hover {
 		background: #fff;
 	}
-	.tour {
-		display: flex;
-		align-items: center;
-		flex-wrap: wrap;
-		gap: 10px 14px;
-		margin-top: 3.4vh;
-	}
-	.tour-btn {
-		display: inline-flex;
-		align-items: center;
-		gap: 7px;
-		padding: 0;
-		border: 0;
-		background: none;
-		color: var(--color-ink-3);
-		font: inherit;
-		font-size: var(--text-xs);
-		cursor: pointer;
-	}
-	.tour-btn:hover,
-	.tour-btn[aria-pressed='true'] {
-		color: var(--color-ink-2);
-	}
-	.dots {
-		display: inline-flex;
-		gap: 5px;
-	}
-	.dot {
-		width: 7px;
-		height: 7px;
-		padding: 0;
-		border: 0;
-		border-radius: 50%;
-		background: #2a2a2a;
-		cursor: pointer;
-		transition:
-			background 200ms ease,
-			transform 200ms ease;
-	}
-	.dot.loner {
-		background: transparent;
-		box-shadow: inset 0 0 0 1px #3a3a3a;
-	}
-	.dot:hover {
-		background: #555;
-	}
-	.dot.on {
-		background: var(--color-ink);
-		transform: scale(1.25);
-	}
-
 	/* ── tiles ─────────────────────────────────────────────────────────── */
 	.tile {
 		position: relative;
@@ -631,7 +502,15 @@
 		min-width: 0;
 		min-height: 0;
 		border-radius: 12px;
-		background: var(--color-well);
+		/* soft grey behind the words, falling slowly to the page's black where the figure sits */
+		background: linear-gradient(
+			180deg,
+			#171717 0%,
+			#131313 16%,
+			#0e0e0e 34%,
+			#0a0a0a 46%,
+			var(--color-void) 56%
+		);
 		overflow: hidden;
 	}
 	.tile header {
@@ -641,11 +520,17 @@
 		pointer-events: none;
 	}
 	.tile header.row {
+		pointer-events: auto;
+	}
+	/* the task switch shares the title's line, so the text below gets the full width */
+	.head-line {
 		display: flex;
-		align-items: flex-start;
+		align-items: center;
 		justify-content: space-between;
 		gap: 12px;
-		pointer-events: auto;
+	}
+	.head-line .seg {
+		margin: -5px -4px -5px 0;
 	}
 	h2 {
 		margin: 0;
@@ -675,6 +560,8 @@
 		position: relative;
 		flex: 1;
 		min-height: 0;
+		/* the canvases fade in over the gradient instead of showing their own edge */
+		--feather-top: 72px;
 	}
 	.tile footer {
 		display: flex;
@@ -686,9 +573,6 @@
 	}
 	.cube {
 		grid-area: cube;
-	}
-	.cube .stage {
-		margin-bottom: 22px;
 	}
 	.graph {
 		grid-area: graph;

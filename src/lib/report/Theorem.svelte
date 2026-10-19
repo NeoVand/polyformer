@@ -38,15 +38,15 @@
 </script>
 
 <div class="thm" class:def={kind === 'Definition' || kind === 'Remark'} {id}>
-	<div class="head">
+	<p class="head">
 		<span class="kind">{kind}{n !== undefined ? ` ${n}` : ''}</span>
-		{#if name}<span class="name">({name})</span>{/if}
+		{#if name}<span class="name">{name}</span>{/if}
 		{#if evidence}<span class="ev {evidence}">{EVIDENCE_LABEL[evidence]}</span>{/if}
-	</div>
+	</p>
 	<div class="body">{@render children()}</div>
 	{#if proof}
 		<button class="toggle" aria-expanded={open} onclick={() => (open = !open)}>
-			{open ? 'Hide the proof' : 'Show the proof'}
+			{open ? 'Hide the proof' : 'Proof'}
 		</button>
 		{#if open}
 			<div class="proof">
@@ -58,82 +58,81 @@
 </div>
 
 <style>
+	/* no boxes or rules: the statement is set in full ink, the prose around it is not */
 	.thm {
-		margin: 22px 0;
-		padding: 2px 0 2px 16px;
-		border-left: 2px solid #3a3a3a;
-	}
-	.thm.def {
-		border-left-color: #222;
+		position: relative;
+		margin: 18px 0 20px;
 	}
 	.head {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: baseline;
-		gap: 4px 8px;
-		margin-bottom: 6px;
+		gap: 2px 10px;
+		margin: 0 0 4px;
 	}
 	.kind {
 		font-weight: 600;
 		color: var(--color-ink);
 	}
 	.name {
-		color: var(--color-ink-2);
+		color: var(--color-ink-3);
 	}
 	.ev {
-		margin-left: auto;
 		display: inline-flex;
 		align-items: center;
 		gap: 6px;
 		font-size: var(--text-2xs);
 		color: var(--color-ink-3);
 	}
+	/* in the margin when there is one */
+	@media (min-width: 1180px) {
+		.ev {
+			position: absolute;
+			top: 4px;
+			left: calc(100% + 40px);
+			width: 200px;
+		}
+	}
 	.ev::before {
 		content: '';
+		flex: none;
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: var(--color-ink-3);
-	}
-	.ev.proved::before,
-	.ev.checked::before {
 		background: var(--color-ink);
 	}
 	.ev.measured::before {
-		background: transparent;
-		box-shadow: inset 0 0 0 1.5px var(--color-ink-2);
+		background: var(--color-ink-3);
 	}
 	.ev.open::before {
-		background: transparent;
-		box-shadow: inset 0 0 0 1px #555;
+		background: #444;
+	}
+	.body {
+		color: var(--color-ink);
+	}
+	.def .body {
+		color: var(--color-ink-2);
 	}
 	.body :global(p) {
 		margin: 0 0 8px;
 	}
-	.body {
-		font-style: normal;
-		color: var(--color-ink);
-	}
 	.toggle {
-		margin-top: 2px;
 		padding: 0;
 		border: 0;
 		background: none;
 		color: var(--color-ink-3);
 		font: inherit;
 		font-size: var(--text-xs);
-		text-decoration: underline;
-		text-underline-offset: 3px;
+		font-style: italic;
 		cursor: pointer;
 	}
 	.toggle:hover {
 		color: var(--color-ink);
 	}
 	.proof {
-		margin-top: 8px;
-		padding: 10px 14px 12px;
-		border-radius: 6px;
-		background: #0e0e0e;
+		margin-top: 6px;
+		padding-left: 18px;
+		font-size: 14px;
 		color: var(--color-ink-2);
 	}
 	.proof :global(p) {

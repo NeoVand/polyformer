@@ -105,15 +105,18 @@
 		border-collapse: collapse;
 		font-size: var(--text-sm);
 	}
-	th {
+	thead th {
+		border-bottom: 1px solid #262626;
 		padding: 0 6px 8px;
 		font-weight: 400;
 		text-align: left;
 		color: var(--color-ink-3);
 	}
+	tbody tr:last-child td {
+		border-bottom: 1px solid #262626;
+	}
 	td {
 		padding: 4px 6px;
-		border-top: 1px solid #1a1a1a;
 		color: var(--color-ink-2);
 	}
 	td.num,

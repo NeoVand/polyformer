@@ -173,5 +173,22 @@ export const BIB: Reference[] = [
 		venue: 'ICML',
 		year: 2022,
 		url: 'https://arxiv.org/abs/2205.15659'
+	},
+	{
+		id: 'hla',
+		authors: 'Y. Zhang, Z. Qin, M. Wang, Q. Gu',
+		title: 'Higher-order linear attention',
+		venue: 'arXiv:2510.27258',
+		year: 2025,
+		url: 'https://arxiv.org/abs/2510.27258'
+	},
+	{
+		id: 'janossy',
+		authors: 'R. L. Murphy, B. Srinivasan, V. Rao, B. Ribeiro',
+		title:
+			'Janossy pooling: learning deep permutation-invariant functions for variable-size inputs',
+		venue: 'ICLR',
+		year: 2019,
+		url: 'https://arxiv.org/abs/1811.01900'
 	}
 ];

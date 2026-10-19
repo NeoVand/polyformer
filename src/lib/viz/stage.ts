@@ -50,6 +50,11 @@ export interface StageOptions {
 	background?: number;
 	/** World half-extents [x, y] that must stay in view; the camera distance follows the aspect. */
 	fit?: [number, number];
+	/**
+	 * Points, as [distance from the vertical axis, height], that must stay in view from every
+	 * angle of a turntable orbit, with a pixel margin for overlays. Replaces `fit` when given.
+	 */
+	fitOrbit?: { points: [number, number][]; margin?: number };
 	fov?: number;
 	position?: [number, number, number];
 	target?: [number, number, number];
@@ -165,9 +170,36 @@ export function createStage(
 		composer.setSize(w, h);
 		camera.aspect = w / Math.max(1, h);
 		camera.updateProjectionMatrix();
-		if (opts.fit) {
+		if (opts.fitOrbit || opts.fit) {
 			const half = Math.tan(((camera.fov / 2) * Math.PI) / 180);
-			const need = Math.max(opts.fit[1] / half, opts.fit[0] / (half * camera.aspect));
+			let need: number;
+			if (opts.fitOrbit) {
+				// shrink the usable field by the pixel margin, then turn the scene through a full
+				// circle under the (possibly raised) camera and keep the closest fit that holds at
+				// every angle: for each point, distance >= its depth + offset / tan(half field)
+				const { points, margin = 0 } = opts.fitOrbit;
+				const tv = half * Math.max(0.2, 1 - (2 * margin) / h);
+				const th = half * camera.aspect * Math.max(0.2, 1 - (2 * margin) / w);
+				const off = base.clone().sub(controls.target);
+				const sin = off.y / Math.max(1e-6, off.length());
+				const cos = Math.sqrt(1 - sin * sin);
+				need = 0;
+				for (let a = 0; a < 72; a++) {
+					const c = Math.cos((a / 72) * 2 * Math.PI);
+					const s = Math.sin((a / 72) * 2 * Math.PI);
+					for (const [r, y] of points)
+						for (const yy of [y, -y]) {
+							const depth = r * c * cos + yy * sin;
+							const up = yy * cos - r * c * sin;
+							need = Math.max(need, depth + Math.max(Math.abs(r * s) / th, Math.abs(up) / tv));
+						}
+				}
+				controls.maxDistance = Math.max(controls.maxDistance, need * 1.4);
+				controls.minDistance = Math.min(controls.minDistance, need * 0.7);
+			} else {
+				const [fx, fy] = opts.fit!;
+				need = Math.max(fy / half, fx / (half * camera.aspect));
+			}
 			const scale = need / base.distanceTo(controls.target);
 			base.sub(controls.target).multiplyScalar(scale).add(controls.target);
 			camera.position.sub(controls.target).multiplyScalar(scale).add(controls.target);

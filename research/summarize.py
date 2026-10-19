@@ -18,8 +18,18 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 
 def label(r: dict) -> str:
     m = r["model"].split("_")[0]
+    argv = r.get("argv", [])
+    opt = lambda k: argv[argv.index(k) + 1] if k in argv else None
     if m == "sa":
-        return f"standard-{r['layers']}L"
+        return f"standard-{r['layers']}L" + (f"-d{opt('--d')}" if opt("--d") else "")
+    if m == "dspa5" and "_lin" in r["model"]:
+        m = "dspa5-lin"
+    if m == "newton":
+        m = f"newton-K{opt('--order') or 6}-r{opt('--rank') or 32}-h{opt('--heads') or 4}"
+    if opt("--d"):
+        m += f"-d{opt('--d')}"
+    if opt("--steps") and m.startswith("newton") and opt("--steps") != "4000" and opt("--steps") != "6000":
+        m += f"-s{opt('--steps')}"
     return m
 
 
@@ -46,6 +56,8 @@ def main(grid: str) -> None:
                 "params": rs[0]["params"],
                 "pos_rate": rs[0]["pos_rate"],
                 "secs": round(statistics.mean(r["secs"] for r in rs), 1),
+                # held-out balanced accuracy through training, one list of [step, value] per seed
+                "curves": [[[c[0], c[4]] for c in r.get("curve", [])] for r in rs],
             }
         )
     dest = ROOT / "src" / "lib" / "report" / "results"

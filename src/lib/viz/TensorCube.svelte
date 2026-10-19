@@ -41,6 +41,7 @@
 	interface CubeApi {
 		update(v: Float32Array | null, q: number, sel: { j: number; k: number } | null): void;
 		setPlanes(p: { i?: boolean; j?: boolean; k?: boolean }): void;
+		dispose(): void;
 	}
 	let api = $state.raw<CubeApi | null>(null);
 	let labels = $state<{ id: string; tex: string; sub: string; x: number; y: number }[]>([]);
@@ -65,7 +66,16 @@
 				background,
 				fov: 24,
 				position: [3.05, 1.75, 3.45],
-				fit: [0.98, 0.98],
+				// the box and its axis arrows stay in frame as the cube turns; the margin is for labels
+				fitOrbit: {
+					points: [
+						[Math.SQRT2 * 0.5, 0.5],
+						[Math.hypot(0.68, 0.56), 0.56],
+						[Math.hypot(0.56, 0.74), 0.56],
+						[Math.SQRT2 * 0.56, 0.68]
+					],
+					margin: 14
+				},
 				distance: [2.6, 7],
 				// only the selected block's lit top face crosses the threshold
 				bloom: { strength: 0.22, radius: 0.2, threshold: 0.93 },
@@ -75,6 +85,7 @@
 		});
 		return () => {
 			disposed = true;
+			api?.dispose();
 			api = null;
 			stage?.dispose();
 		};
@@ -125,15 +136,18 @@
 		const vertexShader = /* glsl */ `
 			attribute float aV;
 			attribute float aF;
+			attribute float aS;
 			varying vec3 vP;
 			varying vec3 vN;
 			varying float vV;
 			varying float vF;
+			varying float vS;
 			void main() {
 				vP = position;
 				vN = normal;
 				vV = aV;
 				vF = aF;
+				vS = aS;
 				gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
 			}`;
 		const solidMat = new THREE.ShaderMaterial({
@@ -143,6 +157,7 @@
 				varying vec3 vN;
 				varying float vV;
 				varying float vF;
+				varying float vS;
 				${faces}
 				void main() {
 					vec3 a = 0.5 - abs(vP);
@@ -153,8 +168,10 @@
 					// a soft bevel, antialiased in screen space, separates neighbouring blocks
 					float bevel = 1.0 - smoothstep(0.07 - w, 0.07 + w, mid);
 					float shade = shadeOf(vN);
-					float sel = step(2.5, vF);
-					float beam = step(1.5, vF) - sel;
+					// both ease in and out: aF is how much the cell is in the selection's beam,
+					// aS how much it is the selected cell
+					float sel = vS;
+					float beam = vF;
 					float tone = 0.05 + 0.85 * vV * vV + 0.08 * beam;
 					vec3 col = vec3(tone * shade * (1.0 - 0.35 * bevel));
 					col = mix(col, vec3(1.08 * shade * (1.0 - 0.2 * bevel)), sel);
@@ -170,7 +187,8 @@
 				varying float vF;
 				${faces}
 				void main() {
-					gl_FragColor = vec4(vec3(0.006 + 0.055 * vV) * shadeOf(vN), 1.0);
+					// aF fades a ghost out while its cell grows into the query plane
+					gl_FragColor = vec4(vec3(0.006 + 0.055 * vV) * shadeOf(vN) * vF, 1.0);
 				}`,
 			transparent: true,
 			depthWrite: false,
@@ -180,15 +198,17 @@
 			const g = new THREE.BoxGeometry(1, 1, 1);
 			const v = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
 			const f = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
+			const sa = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
 			g.setAttribute('aV', v);
 			g.setAttribute('aF', f);
+			g.setAttribute('aS', sa);
 			const mesh = new THREE.InstancedMesh(g, mat, capacity);
 			mesh.frustumCulled = false;
 			mesh.count = 0;
 			scene.add(mesh);
 			/** The tensor cell drawn in each instance slot, for picking. */
 			const cellOf = new Int32Array(capacity);
-			return { mesh, v, f, cellOf };
+			return { mesh, v, f, s: sa, cellOf };
 		};
 		const solid = voxelLayer(solidMat, n * n);
 		const ghost = voxelLayer(ghostMat, n * n * n);
@@ -278,31 +298,100 @@
 		let sel: { j: number; k: number } | null = null;
 		let shown = { i: true, j: false, k: false } as { i?: boolean; j?: boolean; k?: boolean };
 
+		// ── eased state: each cell carries how much it is on the query plane, in the
+		// selection's beam, and selected. A new query or pick tweens all of it at once,
+		// from wherever it is, with one ease-in-out: the old plane sinks back into ghosts
+		// while the new one rises out of them, and the slice and outline glide along.
+		const N3 = n * n * n;
+		const onPlane = new Float32Array(N3);
+		const inBeam = new Float32Array(N3);
+		const picked = new Float32Array(N3);
+		/** The scores themselves, so a new set of values (scores, weights, a trained head) morphs too. */
+		const value = new Float32Array(N3);
+		const from = [
+			new Float32Array(N3),
+			new Float32Array(N3),
+			new Float32Array(N3),
+			new Float32Array(N3)
+		];
+		const goal = [
+			new Float32Array(N3),
+			new Float32Array(N3),
+			new Float32Array(N3),
+			new Float32Array(N3)
+		];
+		const slabAt = new THREE.Vector3();
+		const ringAt = new THREE.Vector3();
+		const slabFrom = new THREE.Vector3();
+		const ringFrom = new THREE.Vector3();
+		const slabGoal = new THREE.Vector3();
+		const ringGoal = new THREE.Vector3();
+		const DURATION = 850;
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		let primed = false;
+		let raf = 0;
+		let t0 = 0;
 		const m4 = new THREE.Matrix4();
-		function refresh() {
+		const inOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+
+		/** Fix the targets for the current query and pick, starting from where things are now. */
+		function aim() {
+			const now = [onPlane, inBeam, picked, value];
+			for (let i = 0; i < n; i++)
+				for (let j = 0; j < n; j++)
+					for (let k = 0; k < n; k++) {
+						const idx = (i * n + j) * n + k;
+						const mine = i === q;
+						const both = mine && !!sel && j === sel.j && k === sel.k;
+						const beam = mine && !!sel && !both && (j === sel.j || k === sel.k);
+						goal[0][idx] = mine ? 1 : 0;
+						goal[1][idx] = beam ? 1 : 0;
+						goal[2][idx] = both ? 1 : 0;
+						goal[3][idx] = current ? Math.max(0, Math.min(1, current[idx])) : 0;
+						for (let g = 0; g < 4; g++) from[g][idx] = now[g][idx];
+					}
+			slabFrom.copy(slabAt);
+			slabGoal.set(0, 0, centre(q));
+			if (sel) {
+				ringGoal.set(...at(q, sel.j, sel.k));
+				ringFrom.copy(ring.visible ? ringAt : ringGoal);
+			}
+		}
+		/** Place everything at progress `p` of the tween (1 = arrived). */
+		function blend(p: number) {
+			const e = inOut(p);
+			const now = [onPlane, inBeam, picked, value];
+			for (let g = 0; g < 4; g++)
+				for (let idx = 0; idx < N3; idx++)
+					now[g][idx] = from[g][idx] + (goal[g][idx] - from[g][idx]) * e;
+			slabAt.lerpVectors(slabFrom, slabGoal, e);
+			if (sel) ringAt.lerpVectors(ringFrom, ringGoal, e);
+		}
+
+		function draw() {
 			let ns = 0;
 			let ng = 0;
 			for (let i = 0; i < n; i++)
 				for (let j = 0; j < n; j++)
 					for (let k = 0; k < n; k++) {
 						const idx = (i * n + j) * n + k;
-						const v = current ? Math.max(0, Math.min(1, current[idx])) : 0;
-						const r = Math.sqrt(v);
-						if (i === q) {
-							let f = 1;
-							if (sel && (j === sel.j || k === sel.k)) f = 2;
-							if (sel && j === sel.j && k === sel.k) f = 3;
-							const side = cell * (0.1 + 0.8 * Math.pow(v, 0.7));
+						const v = value[idx];
+						const w = onPlane[idx];
+						if (w > 0.002) {
+							const side = cell * (0.1 + 0.8 * Math.pow(v, 0.7)) * w;
 							m4.makeScale(side, side, side).setPosition(...at(i, j, k));
 							solid.mesh.setMatrixAt(ns, m4);
 							solid.v.array[ns] = v;
-							solid.f.array[ns] = f;
+							solid.f.array[ns] = inBeam[idx];
+							solid.s.array[ns] = picked[idx];
 							solid.cellOf[ns++] = idx;
-						} else if (v > GHOST_FLOOR) {
-							const side = cell * (0.2 + 0.62 * r);
+						}
+						if (v > GHOST_FLOOR && w < 0.998) {
+							const side = cell * (0.2 + 0.62 * Math.sqrt(v));
 							m4.makeScale(side, side, side).setPosition(...at(i, j, k));
 							ghost.mesh.setMatrixAt(ng, m4);
 							ghost.v.array[ng] = v;
+							ghost.f.array[ng] = 1 - w;
 							ghost.cellOf[ng++] = idx;
 						}
 					}
@@ -314,11 +403,12 @@
 				layer.mesh.instanceMatrix.needsUpdate = true;
 				layer.v.needsUpdate = true;
 				layer.f.needsUpdate = true;
+				layer.s.needsUpdate = true;
 				layer.mesh.computeBoundingSphere();
 			}
 			ring.visible = !!sel;
-			if (sel) ring.position.set(...at(q, sel.j, sel.k));
-			slabI.position.set(0, 0, centre(q));
+			ring.position.copy(ringAt);
+			slabI.position.copy(slabAt);
 			slabI.visible = !!shown.i;
 			slabJ.visible = !!shown.j && !!sel;
 			slabK.visible = !!shown.k && !!sel;
@@ -327,6 +417,26 @@
 				slabK.position.set(0, centre(sel.k), 0);
 			}
 			stage.invalidate();
+		}
+
+		function frame(t: number) {
+			if (!t0) t0 = t;
+			const p = Math.min(1, (t - t0) / DURATION);
+			blend(p);
+			draw();
+			raf = p < 1 ? requestAnimationFrame(frame) : 0;
+		}
+
+		function refresh() {
+			aim();
+			if (!primed || reduced) {
+				blend(1);
+				draw();
+				primed = true;
+				return;
+			}
+			t0 = 0;
+			if (!raf) raf = requestAnimationFrame(frame);
 		}
 
 		// ── picking: the brightest voxel along the ray ───────────────────────────
@@ -367,6 +477,9 @@
 			setPlanes(p) {
 				shown = p;
 				refresh();
+			},
+			dispose() {
+				cancelAnimationFrame(raf);
 			}
 		};
 	}
@@ -401,7 +514,13 @@
 		/* feather the edges so bloom haze dissolves into the page instead of showing a box */
 		mask-image:
 			linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent),
-			linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+			linear-gradient(
+				to bottom,
+				transparent,
+				#000 var(--feather-top, 28px),
+				#000 calc(100% - 28px),
+				transparent
+			);
 		mask-composite: intersect;
 	}
 	.axis {

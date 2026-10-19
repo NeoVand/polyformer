@@ -104,10 +104,41 @@ def phase_a() -> list[list[str]]:
     return runs
 
 
+def newton_a() -> list[list[str]]:
+    """Newton attention on the Match-k ladder, plus the controls that make it a test, not a demo."""
+    runs = []
+    for steps in (6000, 20000):
+        runs += grid(["zs3", "zs4", "zs5", "arity"], ["newton"], [0, 1, 2], steps=steps)
+    # arity must be offered: order K = 3 cannot see 4-subsets, K = 4 cannot see 5-subsets
+    runs += grid(["zs4"], ["newton"], [0, 1, 2], steps=6000, order=3)
+    runs += grid(["zs5"], ["newton"], [0, 1, 2], steps=20000, order=4)
+    # width: one head, complex rank r; |G| - 1 = 80 real directions = 40 conjugate pairs on Z_3^4
+    for r in (8, 16, 32, 40, 48, 64, 128):
+        runs += grid(["zs4"], ["newton"], [0, 1, 2], steps=10000, heads=1, rank=r)
+    # the replication tasks, same protocol as the baseline grid
+    runs += grid(["set", "set4", "chase", "compose3"], ["newton"], [0, 1, 2], steps=4000)
+    return runs
+
+
+def newton_b() -> list[list[str]]:
+    """Wider Newton attention, its order ablation at that width, and width-matched baselines."""
+    runs = []
+    for r in (128, 256):
+        runs += grid(["zs3", "zs4", "zs5", "arity", "set", "set4"], ["newton"], [0, 1, 2], steps=6000, rank=r)
+    runs += grid(["zs4"], ["newton"], [0, 1, 2], steps=6000, rank=128, order=3)
+    runs += grid(["zs5"], ["newton"], [0, 1, 2], steps=6000, rank=128, order=4)
+    # parameter-matched baselines: width alone does not give pairwise or cubic attention a fourth token
+    runs += grid(["zs4", "zs5"], ["sa"], [0, 1, 2], steps=6000, layers=3, d=256)
+    runs += grid(["zs4", "zs5"], ["cubic"], [0, 1, 2], steps=6000, d=192)
+    return runs
+
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
     "baseline": baseline(),
     "phase_a": phase_a(),
+    "newton_a": newton_a(),
+    "newton_b": newton_b(),
 }
 
 

@@ -345,6 +345,11 @@ def init(key, cfg, vocabs, C, T):
             dv = cfg.vdim
         a = {nm: dense(next(ks), D, H * (dv if nm.startswith("v") else dh)) for nm in names}
         a["o"] = dense(next(ks), H * (dv * dv if cfg.model == "cubic_full" else dv), D)
+        if cfg.model == "newton":
+            # Newton attention: r complex phase channels per head, every arity 1..K read out at once
+            r, K = cfg.rank, cfg.order
+            a = {"th": dense(next(ks), D, H * r), "g": dense(next(ks), D, H * r),
+                 "o": dense(next(ks), H * K * r * 2, D)}
         if cfg.model == "path":
             a["len"] = dense(next(ks), D, H * cfg.plen)
         if cfg.model == "branch":
@@ -443,6 +448,25 @@ def attention(cfg, a, x):
         return sum(attention(sub, a[sub.model + str(sub.plen)], x) for sub in mix_cfgs(cfg))
     def heads(t, w=dh):
         return t.reshape(B, T, H, -1).transpose(0, 2, 1, 3)
+    if cfg.model == "newton":
+        # Newton attention. Channel features phi_i = g_i exp(i theta_i) (a character is one linear map away).
+        # For every query q and m < K, the elementary symmetric polynomial e_m of the OTHER tokens (a sum over
+        # distinct m-subsets) follows from leave-one-out power sums by Newton's identities, so phi_q * e_m is
+        # the sum over (m+1)-subsets containing q of their channel products: arity m+1, linear in T.
+        r, K = cfg.rank, cfg.order
+        th = cfg.phase * heads(lin(a["th"], x))
+        g = jax.nn.sigmoid(heads(lin(a["g"], x)))
+        phi = g * jnp.exp(1j * th)
+        pw = [phi]
+        for _ in range(K - 2):
+            pw.append(pw[-1] * phi)
+        pl = [P.sum(2, keepdims=True) - P for P in pw]
+        e = [jnp.ones_like(phi)]
+        for m in range(1, K):
+            e.append(sum((-1) ** (j - 1) * e[m - j] * pl[j - 1] for j in range(1, m + 1)) / m)
+        out = jnp.stack([phi * e[m] / math.comb(max(T - 2, m), m) for m in range(K)], 3)
+        out = jnp.concatenate([out.real, out.imag], -1)
+        return lin(a["o"], out.transpose(0, 2, 1, 3, 4).reshape(B, T, -1))
     if cfg.model in ("dspa", "dspa2", "dspa3", "dspa4"):
         # Dyson-Schwinger polyattention: ONE trilinear vertex <q_p * clock_r, u_a * w_b> over
         # tokens + vacuum (value = 1, the Hadamard identity) + M virtual modes. A single softmax per parent
@@ -658,7 +682,10 @@ def forward(cfg, p, tok):
     x = sum(p["emb"][f][tok[..., f]] for f in range(tok.shape[-1])) + p["pos"][None, : tok.shape[1]]
     for L in p["layers"]:
         for _ in range(cfg.recur):
-            x = x + attention(cfg, L["attn"], ln(L["ln1"], x))
+            # Newton attention can read its phases from the raw residual stream: LayerNorm divides each
+            # token by its own norm, which breaks the additivity a character needs (theta(a+b) = theta(a)+theta(b))
+            h = x if (cfg.model == "newton" and cfg.rawphase) else ln(L["ln1"], x)
+            x = x + attention(cfg, L["attn"], h)
             x = x + lin(L["fc2"], jax.nn.gelu(lin(L["fc1"], ln(L["ln2"], x))))
     return lin(p["head"], ln(p["lnf"], x))
 
@@ -667,7 +694,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default="match3"); ap.add_argument("--model", default="cubic")
     ap.add_argument("--layers", type=int, default=1); ap.add_argument("--d", type=int, default=64)
-    ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0)
+    ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0)
     ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--batch", type=int, default=128)
     ap.add_argument("--lr", type=float, default=2e-3); ap.add_argument("--seed", type=int, default=0)
     cfg = ap.parse_args()
@@ -727,7 +754,7 @@ def main():
             ta, sa, ba = evaluate(params, etok, etgt, emsk)
             curve.append((it + 1, round(float(l), 4), round(float(ta), 4), round(float(sa), 4), round(float(ba), 4)))
     ta, sa, ba = evaluate(params, etok, etgt, emsk)
-    tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
+    tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") if cfg.model == "newton" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
     print(json.dumps({"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed,
                       "params": int(nparams), "tok_acc": round(float(ta), 4), "seq_acc": round(float(sa), 4),
                       "bal_acc": round(float(ba), 4), "backend": jax.default_backend(),

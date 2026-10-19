@@ -55,9 +55,12 @@
 			sel: { j: number; k: number } | null,
 			s: [number, number, number][]
 		): void;
+		dispose(): void;
 	}
 	let api = $state.raw<GraphApi | null>(null);
 	let nodes = $state<{ x: number; y: number; z: number; s: number }[]>([]);
+	/** Container width, so labels near the right edge can sit on the node's left instead. */
+	let width = $state(0);
 
 	$effect(() => {
 		const q = query;
@@ -89,7 +92,8 @@
 				background,
 				fov: 30,
 				position: [0.35, 0.45, 4.1],
-				fit: [1.42, 1.12],
+				// every card stays in frame as the constellation turns; discs need ~44px of room
+				fitOrbit: { points: positions(N).map(([x, y, z]) => [Math.hypot(x, z), y]), margin: 44 },
 				distance: [2.8, 7],
 				bloom: { strength: 0.35, radius: 0.3, threshold: 0.97 },
 				sway: false,
@@ -100,6 +104,7 @@
 		});
 		return () => {
 			disposed = true;
+			api?.dispose();
 			api = null;
 			stage?.dispose();
 		};
@@ -268,25 +273,111 @@
 			onanchor({ x: r.left + qn.x, y: r.top + qn.y });
 		});
 
+		// membranes are keyed by their vertices, and their brightness eases: a new query
+		// fades the old triangles out and the new ones in, and SETs that stay lit stay put
+		interface Live {
+			mesh: (typeof pool)[number];
+			w: number;
+			sel: number;
+			wFrom: number;
+			selFrom: number;
+			wGoal: number;
+			selGoal: number;
+			attn: boolean;
+			j: number;
+			k: number;
+		}
+		const live: Record<string, Live> = {};
+		const free = [...pool];
+		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+		let primed = false;
+		let raf = 0;
+		let t0 = 0;
+		const DURATION = 850;
+		const inOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+		const paint = (L: Live) => {
+			const mat = L.mesh.material as THREE_NS.ShaderMaterial;
+			mat.uniforms.uW.value = L.w;
+			mat.uniforms.uSel.value = L.sel;
+			L.mesh.userData = L.attn ? { attn: true, j: L.j, k: L.k } : {};
+		};
+		/** Place every membrane at progress `p` of the tween; at 1, retire the ones fading out. */
+		function blend(p: number) {
+			const e = inOut(p);
+			for (const [key, L] of Object.entries(live)) {
+				L.w = L.wFrom + (L.wGoal - L.wFrom) * e;
+				L.sel = L.selFrom + (L.selGoal - L.selFrom) * e;
+				paint(L);
+				if (p >= 1 && L.wGoal === 0) {
+					L.mesh.visible = false;
+					L.mesh.userData = {};
+					free.push(L.mesh);
+					delete live[key];
+				}
+			}
+			stage.invalidate();
+		}
+		function frame(t: number) {
+			if (!t0) t0 = t;
+			const p = Math.min(1, (t - t0) / DURATION);
+			blend(p);
+			raf = p < 1 ? requestAnimationFrame(frame) : 0;
+		}
+
 		return {
 			update(q, e, sel, s) {
-				pool.forEach((m) => {
-					m.visible = false;
-					m.userData = {};
-				});
-				let used = 0;
-				for (const [a, b, c] of s) {
-					if (used >= pool.length) break;
-					place(pool[used++], a, b, c, 0.22, false);
-				}
+				const goals: Record<
+					string,
+					{ a: number; b: number; c: number; w: number; sel: number; attn: boolean }
+				> = {};
+				for (const [a, b, c] of s)
+					goals[`s${a}-${b}-${c}`] = { a, b, c, w: 0.22, sel: 0, attn: false };
 				for (const edge of e) {
-					if (used >= pool.length) break;
 					const isSel = !!sel && sel.j === edge.j && sel.k === edge.k;
-					const m = pool[used++];
-					place(m, q, edge.j, edge.k, 0.25 + 0.75 * edge.weight, isSel);
-					m.userData.attn = true;
+					goals[`a${q}-${edge.j}-${edge.k}`] = {
+						a: q,
+						b: edge.j,
+						c: edge.k,
+						w: 0.25 + 0.75 * edge.weight,
+						sel: isSel ? 1 : 0,
+						attn: true
+					};
 				}
-				stage.invalidate();
+				for (const [key, L] of Object.entries(live)) {
+					const g = goals[key];
+					L.wFrom = L.w;
+					L.selFrom = L.sel;
+					L.wGoal = g ? g.w : 0;
+					L.selGoal = g ? g.sel : 0;
+					L.attn = !!g?.attn;
+				}
+				for (const [key, g] of Object.entries(goals)) {
+					if (live[key] || !free.length) continue;
+					const mesh = free.pop()!;
+					place(mesh, g.a, g.b, g.c, 0, false);
+					live[key] = {
+						mesh,
+						w: 0,
+						sel: 0,
+						wFrom: 0,
+						selFrom: 0,
+						wGoal: g.w,
+						selGoal: g.sel,
+						attn: g.attn,
+						j: g.b,
+						k: g.c
+					};
+				}
+				if (!primed || reduced) {
+					blend(1);
+					primed = true;
+					return;
+				}
+				t0 = 0;
+				if (!raf) raf = requestAnimationFrame(frame);
+			},
+			dispose() {
+				cancelAnimationFrame(raf);
 			}
 		};
 	}
@@ -301,7 +392,7 @@
 					: null;
 </script>
 
-<div class="graph">
+<div class="graph" bind:clientWidth={width}>
 	<canvas
 		{@attach graph}
 		aria-label="Hypergraph of the layout: cards as nodes, SETs and attention as membranes"
@@ -310,6 +401,7 @@
 		{@const role = roleOf(t)}
 		<button
 			class="node {role ?? ''}"
+			class:flip={p.x > width - 96}
 			style:left="{p.x}px"
 			style:top="{p.y}px"
 			style:--s={p.s}
@@ -349,7 +441,13 @@
 		/* feather the edges so bloom haze dissolves into the page instead of showing a box */
 		mask-image:
 			linear-gradient(to right, transparent, #000 28px, #000 calc(100% - 28px), transparent),
-			linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 28px), transparent);
+			linear-gradient(
+				to bottom,
+				transparent,
+				#000 var(--feather-top, 28px),
+				#000 calc(100% - 28px),
+				transparent
+			);
 		mask-composite: intersect;
 	}
 	/* each card is a flat disc over the 3D edges, its glyph inside */
@@ -389,6 +487,7 @@
 		border: 1.25px solid var(--color-ink-2);
 	}
 	.role {
+		animation: role-in 700ms cubic-bezier(0.65, 0, 0.35, 1) both;
 		position: absolute;
 		left: calc(100% + 6px);
 		top: 50%;
@@ -402,6 +501,15 @@
 		text-shadow:
 			0 0 6px var(--color-void),
 			0 0 2px var(--color-void);
+	}
+	@keyframes role-in {
+		from {
+			opacity: 0;
+		}
+	}
+	.flip .role {
+		left: auto;
+		right: calc(100% + 6px);
 	}
 	.role i {
 		font-family: var(--font-math);
