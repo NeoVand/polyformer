@@ -49,9 +49,10 @@
 		accuracy: number;
 		/** Best resultant per class, and the channel that reaches it. */
 		strength: number[];
-		best: Omit<ChannelFit, 'cls'>[];
-		/** Per class: every card's [angle, length] on its best channel. */
-		phases: [number, number][][];
+		/** Null for a class no channel is closest to yet. */
+		best: (Omit<ChannelFit, 'cls'> | null)[];
+		/** Per class: every card's [angle, length] on its best channel, or null. */
+		phases: ([number, number][] | null)[];
 		layout: Card[];
 		probs: number[];
 		knockout: { full: number; without: number[] };
@@ -174,7 +175,7 @@
 			accuracy: r.accuracy,
 			strength: r.strength,
 			best: r.best,
-			phasesOf: (cls) => r.phases[cls].map(([angle, length]) => ({ angle, length })),
+			phasesOf: (cls) => r.phases[cls]?.map(([angle, length]) => ({ angle, length })) ?? null,
 			probs: seed === RECORDED_SEED ? r.probs : null,
 			knockout: r.knockout,
 			history: r.history ?? []
@@ -295,15 +296,14 @@
 			order: probe.order,
 			accuracy: r(liveAccuracy ?? 0),
 			strength: Array.from(view.strength, r),
-			best: liveBest.map((f) => ({
-				head: f!.head,
-				channel: f!.channel,
-				sign: f!.sign,
-				R: r(f!.R),
-				offset: r(f!.offset)
-			})),
+			// a class no channel is closest to yet has no channel to record
+			best: liveBest.map((f) =>
+				f
+					? { head: f.head, channel: f.channel, sign: f.sign, R: r(f.R), offset: r(f.offset) }
+					: null
+			),
 			phases: liveBest.map((f) =>
-				cardPhases(probe!, f!).map((p) => [+p.angle.toFixed(3), +p.length.toFixed(3)])
+				f ? cardPhases(probe!, f).map((p) => [+p.angle.toFixed(3), +p.length.toFixed(3)]) : null
 			),
 			layout: layout.map((c) => [...c]),
 			probs: Array.from(probe.probs, r),
