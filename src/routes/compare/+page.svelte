@@ -54,8 +54,7 @@
 	const RECORDINGS: Record<SuiteId, string> = {
 		set: asset('recorded/set.json'),
 		chase: asset('recorded/chase.json'),
-		// recorded once in a browser; until then the bench simply starts empty
-		match4: asset('recorded/match4.json' as Parameters<typeof asset>[0])
+		match4: asset('recorded/match4.json')
 	};
 	let recorded = $state.raw<Recorded | null>(null);
 	$effect(() => {

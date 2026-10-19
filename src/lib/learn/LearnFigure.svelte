@@ -44,6 +44,8 @@
 	import newtonE from '#lib/report/results/newton_e.json';
 	import newtonDiag from '#lib/report/results/newton_diag.json';
 	import QedDiagram from './QedDiagram.svelte';
+	import ChaseLists from '#lib/ui/ChaseLists.svelte';
+	import { zeroSumMembers } from '#lib/tasks/matchk.ts';
 	import { REFERENCES } from './references.ts';
 
 	let { section }: { section: string } = $props();
@@ -58,6 +60,47 @@
 	})();
 	const sets = findSets(layout);
 	const query = sets[0][0];
+	const inSet = layout.map((_, i) => sets.some((s) => s.includes(i)));
+
+	// ── the puzzles, one example each ─────────────────────────────────────────
+	let puzzle = $state<'set' | 'match4' | 'chase' | 'compose'>('set');
+	const nine: Card[] = (() => {
+		const rng = mulberry32(5);
+		for (;;) {
+			const l = dealLayout(rng, 9);
+			const m = zeroSumMembers(l, 4);
+			if (m.filter(Boolean).length >= 4 && m.filter(Boolean).length <= 6) return l;
+		}
+	})();
+	const nineIn = zeroSumMembers(nine, 4);
+	/** One group of four distinct cards on the nine-card table that sums to zero. */
+	const quad = (() => {
+		for (let a = 0; a < 9; a++)
+			for (let b = a + 1; b < 9; b++)
+				for (let c = b + 1; c < 9; c++)
+					for (let d = c + 1; d < 9; d++)
+						if (
+							[0, 1, 2, 3].every(
+								(t) => (nine[a][t] + nine[b][t] + nine[c][t] + nine[d][t]) % 3 === 0
+							)
+						)
+							return [a, b, c, d];
+		return [];
+	})();
+	// three lookup tables on 0…7 and a start, as in the three-hop task
+	const tables = (() => {
+		const rng = mulberry32(13);
+		return Array.from({ length: 3 }, () => Array.from({ length: 8 }, () => Math.floor(rng() * 8)));
+	})();
+	const x0 = 2;
+	const hops = tables.reduce((path, f) => [...path, f[path[path.length - 1]]], [x0]);
+	const HX = (c: number) => 24 + c * 96;
+	const HY = (v: number) => 18 + v * 24;
+
+	// ── how a card becomes a token ───────────────────────────────────────────
+	const ATTR_NAMES = ['number', 'shape', 'shading', 'colour'];
+	/** The sink, then the first cards of the shared table. */
+	const shown: (Card | null)[] = [null, ...layout.slice(0, 5)];
 	const probe = exactProbe(layout, 3);
 	const edges = topHyperedges(querySlice(probe, 0, query), 5, query);
 	const top = edges[0];
@@ -195,7 +238,132 @@
 	const refNo = (id: string) => REFERENCES.findIndex((r) => r.id === id) + 1;
 </script>
 
-{#if section === 'pairwise'}
+{#if section === 'puzzles'}
+	<figure class="fig wide">
+		<div class="fig-head">
+			<div class="seg" role="group" aria-label="Puzzle">
+				<button aria-pressed={puzzle === 'set'} onclick={() => (puzzle = 'set')}>SET</button>
+				<button aria-pressed={puzzle === 'match4'} onclick={() => (puzzle = 'match4')}
+					>Match-4</button
+				>
+				<button aria-pressed={puzzle === 'chase'} onclick={() => (puzzle = 'chase')}
+					>Pointer chase</button
+				>
+				<button aria-pressed={puzzle === 'compose'} onclick={() => (puzzle = 'compose')}
+					>Three-hop</button
+				>
+			</div>
+		</div>
+		{#if puzzle === 'set' || puzzle === 'match4'}
+			{@const cards = puzzle === 'set' ? layout : nine}
+			{@const label = puzzle === 'set' ? inSet : nineIn}
+			{@const lit = puzzle === 'set' ? sets[0] : quad}
+			<div class="table-grid" class:three={puzzle === 'match4'}>
+				{#each cards as card, i (i)}
+					<div class="slot">
+						<SetCard {card} width={44} selected={lit.includes(i)} dim={!lit.includes(i)} />
+						<span class="answer" class:yes={label[i]} aria-label={label[i] ? 'yes' : 'no'}></span>
+					</div>
+				{/each}
+			</div>
+			<figcaption>
+				{#if puzzle === 'set'}
+					Twelve cards, one table. A filled dot under a card means it is in at least one SET: that
+					yes-or-no is what the network must output for every card. The bright cards are one SET.
+				{:else}
+					Nine cards. A filled dot means the card is in some group of four that adds up to a
+					multiple of 3 in every attribute; the bright cards are one such group.
+				{/if}
+			</figcaption>
+		{:else if puzzle === 'chase'}
+			<div class="chase-wrap"><ChaseLists instance={chase} /></div>
+			<figcaption>
+				Twelve nodes in linked lists, each with its payload as the small number. The query names a
+				start node (underlined); the answer is the payload at the end of its list, here
+				{solveChase(chase).hops} hops away.
+			</figcaption>
+		{:else}
+			<svg
+				class="hops"
+				viewBox="0 0 336 212"
+				role="img"
+				aria-label="Three lookup tables and a path"
+			>
+				{#each [0, 1, 2] as c (c)}
+					{#each tables[c] as to, from (from)}
+						<line
+							class="map"
+							class:on={hops[c] === from}
+							x1={HX(c) + 6}
+							y1={HY(from)}
+							x2={HX(c + 1) - 6}
+							y2={HY(to)}
+						/>
+					{/each}
+					<text class="fn" x={(HX(c) + HX(c + 1)) / 2} y="208">f{c + 1}</text>
+				{/each}
+				{#each [0, 1, 2, 3] as c (c)}
+					{#each Array.from({ length: 8 }, (_, v) => v) as v (v)}
+						<circle class="num-dot" class:on={hops[c] === v} cx={HX(c)} cy={HY(v)} r="4" />
+					{/each}
+				{/each}
+				{#each Array.from({ length: 8 }, (_, v) => v) as v (v)}
+					<text class="val" x="8" y={HY(v) + 3.5}>{v}</text>
+				{/each}
+			</svg>
+			<figcaption>
+				Three lookup tables, each sending every number from 0 to 7 somewhere. Starting from x = {x0},
+				the answer is f3(f2(f1({x0}))) = {hops[3]}.
+			</figcaption>
+		{/if}
+	</figure>
+{:else if section === 'encoding'}
+	<figure class="fig wide">
+		<svg class="tokens" viewBox="0 0 360 236" role="img" aria-label="The first tokens of a table">
+			{#each ATTR_NAMES as a, r (a)}
+				<text class="attr" x="62" y={70 + r * 24 + 4} text-anchor="end">{a}</text>
+			{/each}
+			{#each shown as card, t (t)}
+				{@const x0 = 74 + t * 46}
+				<text class="pos" x={x0 + 17} y="14" text-anchor="middle">{t}</text>
+				{#if card}
+					<foreignObject x={x0 + 5} y="22" width="24" height="24">
+						<SetCard {card} width={24} />
+					</foreignObject>
+				{:else}
+					<text class="sinkname" x={x0 + 17} y="39" text-anchor="middle">sink</text>
+				{/if}
+				{#each [0, 1, 2, 3] as attr (attr)}
+					{#each [0, 1, 2, 3] as v (v)}
+						<rect
+							class="onehot"
+							class:hot={(card ? card[attr] : 3) === v}
+							x={x0 + v * 9}
+							y={62 + attr * 24}
+							width="7"
+							height="16"
+							rx="1"
+						/>
+					{/each}
+				{/each}
+				<text class="lab" x={x0 + 17} y="174" text-anchor="middle"
+					>{card ? (inSet[t - 1] ? 'yes' : 'no') : '–'}</text
+				>
+			{/each}
+			<text class="attr" x="62" y="178" text-anchor="end">label</text>
+			<text class="more" x="352" y="118" text-anchor="end">…</text>
+			<text class="note" x="74" y="206"
+				>each column: one token, 4 attributes × 4 slots = 16 numbers</text
+			>
+			<text class="note" x="74" y="222">→ mapped to width 64, plus a position vector</text>
+		</svg>
+		<figcaption>
+			The first tokens of the twelve-card table. Each attribute is one-hot over four slots: the
+			three values and a fourth that only the sink uses. The bottom row is the label the network is
+			trained to output.
+		</figcaption>
+	</figure>
+{:else if section === 'pairwise'}
 	<figure class="fig">
 		<svg viewBox="0 0 420 300" class="star" aria-label="A query scoring seven keys">
 			{#each keyWeights as w, t (t)}
@@ -338,8 +506,9 @@
 			{#each barrierQueries as q (q)}<span class="q-label num">query {q + 1}</span>{/each}
 		</div>
 		<figcaption>
-			Double-centered <MathTex tex="(j,k)" /> slices for three queries. A degree-2 head with random edge
-			scores gives the same matrix three times; the cubic SET head gives three different ones.
+			Each query's pair scores with row and column averages removed (double centring), for three
+			queries. A degree-2 head, here with random edge scores, gives the same table three times; the
+			hand-built cubic head gives three different ones.
 		</figcaption>
 	</figure>
 {:else if section === 'set'}
@@ -443,7 +612,9 @@
 			{/each}
 		</div>
 		<figcaption>
-			Token accuracy, one layer, 4,000 steps, one seed. The tick is the majority-class rate.
+			Cloud runs, one layer, 4,000 steps, one seed, scored as the share of cards labelled correctly.
+			The four-card task uses tables of eight cards, where answering no is right 63% of the time;
+			the tick marks that rate.
 		</figcaption>
 	</figure>
 {:else if section === 'feynman'}
@@ -990,6 +1161,83 @@
 	.m-val {
 		font-size: var(--text-xs);
 		text-align: right;
+	}
+	.table-grid {
+		display: grid;
+		grid-template-columns: repeat(4, auto);
+		gap: 14px 18px;
+		justify-content: center;
+	}
+	.table-grid.three {
+		grid-template-columns: repeat(3, auto);
+	}
+	.slot {
+		display: grid;
+		justify-items: center;
+		gap: 6px;
+	}
+	.answer {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		border: 1px solid #555;
+	}
+	.answer.yes {
+		border-color: var(--color-ink);
+		background: var(--color-ink);
+	}
+	.chase-wrap {
+		justify-self: center;
+		max-width: 520px;
+	}
+	.hops,
+	.tokens {
+		width: 100%;
+		max-width: 520px;
+		overflow: visible;
+	}
+	.hops .map {
+		stroke: #2c2c2c;
+		stroke-width: 1;
+	}
+	.hops .map.on {
+		stroke: var(--color-ink);
+		stroke-width: 1.6;
+	}
+	.num-dot {
+		fill: #1a1a1a;
+		stroke: #555;
+	}
+	.num-dot.on {
+		fill: var(--color-ink);
+		stroke: var(--color-ink);
+	}
+	.hops text,
+	.tokens text {
+		font-size: 10px;
+		fill: var(--color-ink-3);
+	}
+	.hops .fn {
+		font-family: 'KaTeX_Main', serif;
+		font-style: italic;
+		font-size: 12px;
+		text-anchor: middle;
+		fill: var(--color-ink-2);
+	}
+	.onehot {
+		fill: #1c1c1c;
+	}
+	.onehot.hot {
+		fill: var(--color-ink);
+	}
+	.tokens .sinkname {
+		fill: var(--color-ink-2);
+	}
+	.tokens .lab {
+		fill: var(--color-ink);
+	}
+	.tokens .more {
+		font-size: 16px;
 	}
 	.fig-head {
 		display: flex;
