@@ -34,7 +34,7 @@
 
 <header class="bar">
 	<div class="left">
-		<a class="wordmark" href={resolve('/compare')}><Logo size={20} />polyformer</a>
+		<a class="wordmark" href={resolve('/')}><Logo size={20} />polyformer</a>
 		{#if crumb}
 			<span class="sep" aria-hidden="true"></span>
 			<span class="crumb">{crumb}</span>
@@ -54,7 +54,9 @@
 
 	<div class="right">
 		{#if live}
-			<span class="live num"><i aria-hidden="true"></i>Training, step {live.step.toLocaleString('en-US')}</span>
+			<span class="live num"
+				><i aria-hidden="true"></i>Training, step {live.step.toLocaleString('en-US')}</span
+			>
 		{/if}
 	</div>
 </header>
@@ -183,6 +185,15 @@
 		nav a.active::after {
 			left: 6px;
 			right: 6px;
+		}
+	}
+	/* phones: labels alone, so the four links fit beside the wordmark */
+	@media (max-width: 480px) {
+		nav a {
+			padding: 0 6px;
+		}
+		nav a :global(svg.icon) {
+			display: none;
 		}
 	}
 </style>

@@ -151,7 +151,7 @@
 					float shade = shadeOf(vN);
 					float sel = step(2.5, vF);
 					float beam = step(1.5, vF) - sel;
-					float tone = 0.07 + 0.78 * vV + 0.08 * beam;
+					float tone = 0.05 + 0.85 * vV * vV + 0.08 * beam;
 					vec3 col = vec3(tone * shade * (1.0 - 0.35 * bevel));
 					col = mix(col, vec3(1.08 * shade * (1.0 - 0.2 * bevel)), sel);
 					gl_FragColor = vec4(col, 1.0);
@@ -166,7 +166,7 @@
 				varying float vF;
 				${faces}
 				void main() {
-					gl_FragColor = vec4(vec3(0.006 + 0.04 * vV) * shadeOf(vN), 1.0);
+					gl_FragColor = vec4(vec3(0.006 + 0.055 * vV) * shadeOf(vN), 1.0);
 				}`,
 			transparent: true,
 			depthWrite: false,
@@ -189,7 +189,7 @@
 		const solid = voxelLayer(solidMat, n * n);
 		const ghost = voxelLayer(ghostMat, n * n * n);
 		/** Off-plane cells weaker than this are not drawn at all. */
-		const GHOST_FLOOR = 0.3;
+		const GHOST_FLOOR = 0.45;
 
 		// ── the selection: a crisp outline instead of a glow ─────────────────────
 		const ring = new THREE.LineSegments(
@@ -288,7 +288,7 @@
 							let f = 1;
 							if (sel && (j === sel.j || k === sel.k)) f = 2;
 							if (sel && j === sel.j && k === sel.k) f = 3;
-							const side = cell * (0.1 + 0.8 * r);
+							const side = cell * (0.1 + 0.8 * Math.pow(v, 0.7));
 							m4.makeScale(side, side, side).setPosition(...at(i, j, k));
 							solid.mesh.setMatrixAt(ns, m4);
 							solid.v.array[ns] = v;
