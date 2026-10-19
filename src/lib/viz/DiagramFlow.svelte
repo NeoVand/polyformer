@@ -30,6 +30,7 @@
 		pitch = 18,
 		column = 92,
 		fit = false,
+		align = 'center',
 		animate = true,
 		description = 'Every token and round of a Feynman attention model; the lit lines are what one token reads'
 	}: {
@@ -53,6 +54,8 @@
 		column?: number;
 		/** Fill the parent's height, shrinking the row pitch (never past `pitch`) to fit. */
 		fit?: boolean;
+		/** Where the drawing sits in a tile wider than it needs. */
+		align?: 'center' | 'start';
 		animate?: boolean;
 		description?: string;
 	} = $props();
@@ -60,6 +63,18 @@
 	let width = $state(0);
 	let boxHeight = $state(0);
 	let hovered = $state<number | null>(null);
+	/**
+	 * Changes the reader makes (hover, focus, click) answer quickly; changes that come from
+	 * outside, such as a page cycling through tokens on its own, keep the slow ease.
+	 */
+	let quick = $state(false);
+	let calm: ReturnType<typeof setTimeout> | undefined;
+	function touch() {
+		quick = true;
+		clearTimeout(calm);
+		calm = setTimeout(() => (quick = false), 1600);
+	}
+	$effect(() => () => clearTimeout(calm));
 	const focus = $derived(hovered ?? root);
 
 	const cone = $derived(backwardCone(head, n, rounds, focus, 0.08));
@@ -92,8 +107,9 @@
 		});
 		const height = TOP + 8 + (u - 1) * p + 12;
 		const col = Math.max(40, Math.min(column, (width - LABEL - OUT - 16) / rounds));
-		// centre the drawing when the tile is wider than it needs
-		const left = Math.max(0, (width - (LABEL + 12 + rounds * col + 30 + OUT)) / 2);
+		// centre the drawing when the tile is wider than it needs, unless told to keep left
+		const spare = Math.max(0, width - (LABEL + 12 + rounds * col + 30 + OUT));
+		const left = align === 'start' ? 0 : spare / 2;
 		const x = Array.from({ length: rounds + 1 }, (_, r) => left + LABEL + 12 + r * col);
 		return { y, x, height, left, out: x[rounds] + 30 };
 	});
@@ -144,6 +160,7 @@
 	bind:clientHeight={boxHeight}
 	class:fit
 	style:height={fit ? undefined : `${geo.height}px`}
+	style:--ease-ms={quick ? '260ms' : '1100ms'}
 >
 	{#if width > 0}
 		<svg {width} height={geo.height} aria-hidden="true">
@@ -179,7 +196,11 @@
 				<g class="currents">
 					{#each edges as e, i (i)}
 						{#if e.lit && e.flow >= 0.18 && visible(e) && e.kind !== 'carry' && e.kind !== 'leaf'}
-							<path d={pathOf(e)} class="current" transition:fade={{ duration: 800 }} />
+							<path
+								d={pathOf(e)}
+								class="current"
+								transition:fade={{ duration: quick ? 220 : 800 }}
+							/>
 						{/if}
 					{/each}
 				</g>
@@ -230,11 +251,11 @@
 				style:left="{geo.left}px"
 				style:width="{geo.x[rounds] - geo.left + 8}px"
 				aria-label="Show what token {t} reads"
-				onpointerenter={() => (hovered = t)}
-				onpointerleave={() => (hovered = null)}
-				onfocus={() => (hovered = t)}
-				onblur={() => (hovered = null)}
-				onclick={() => onroot?.(t)}
+				onpointerenter={() => (touch(), (hovered = t))}
+				onpointerleave={() => (touch(), (hovered = null))}
+				onfocus={() => (touch(), (hovered = t))}
+				onblur={() => (touch(), (hovered = null))}
+				onclick={() => (touch(), onroot?.(t))}
 			>
 				<span class="lab">{@render label(t)}</span>
 			</button>
@@ -271,7 +292,7 @@
 		stroke: rgb(255 255 255 / 0.06);
 	}
 	.world {
-		transition: stroke 1100ms cubic-bezier(0.37, 0, 0.63, 1);
+		transition: stroke var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1);
 	}
 	.world.on {
 		stroke: rgb(255 255 255 / 0.16);
@@ -284,9 +305,9 @@
 		opacity: calc(0.12 + 0.4 * var(--w));
 		/* a new focus fades in rather than switching: weight, tone and width all ease */
 		transition:
-			opacity 1100ms cubic-bezier(0.37, 0, 0.63, 1),
-			stroke 1100ms cubic-bezier(0.37, 0, 0.63, 1),
-			stroke-width 1100ms cubic-bezier(0.37, 0, 0.63, 1);
+			opacity var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1),
+			stroke var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1),
+			stroke-width var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1);
 	}
 	.edge.lit {
 		stroke: #f2f2f2;
@@ -313,7 +334,7 @@
 		}
 	}
 	.readout {
-		transition: transform 1100ms cubic-bezier(0.37, 0, 0.63, 1);
+		transition: transform var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1);
 	}
 	.leg {
 		stroke: #f2f2f2;
@@ -327,8 +348,8 @@
 	}
 	.v {
 		transition:
-			fill 1100ms cubic-bezier(0.37, 0, 0.63, 1),
-			opacity 1100ms cubic-bezier(0.37, 0, 0.63, 1);
+			fill var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1),
+			opacity var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1);
 		fill: #5c5c5c;
 		opacity: calc(0.45 + 0.55 * var(--m));
 	}
@@ -401,7 +422,7 @@
 		align-items: baseline;
 		gap: 6px;
 		transform: translateY(-50%);
-		transition: top 1100ms cubic-bezier(0.37, 0, 0.63, 1);
+		transition: top var(--ease-ms) cubic-bezier(0.37, 0, 0.63, 1);
 		font-size: 13px;
 		white-space: nowrap;
 		pointer-events: none;

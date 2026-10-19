@@ -67,3 +67,10 @@ export const Feynman = [
 	['path', { d: 'M2.5 4 L7.5 12 L2.5 20 M21.5 4 L16.5 12 L21.5 20', ...stroke, key: '0' }],
 	['path', { d: 'M7.5 12 q1.125 -2.2 2.25 0 t2.25 0 t2.25 0 t2.25 0', ...stroke, key: '1' }]
 ] as unknown as IconData;
+/** Newton attention: a phase wheel with the three values of a character of Z_3. */
+export const Newton = [
+	['circle', { cx: '12', cy: '12', r: '8', ...stroke, key: '0' }],
+	['circle', { cx: '12', cy: '4', r: '1.6', fill: 'currentColor', ...stroke, key: '1' }],
+	['circle', { cx: '5.07', cy: '16', r: '1.6', fill: 'currentColor', ...stroke, key: '2' }],
+	['circle', { cx: '18.93', cy: '16', r: '1.6', fill: 'currentColor', ...stroke, key: '3' }]
+] as unknown as IconData;

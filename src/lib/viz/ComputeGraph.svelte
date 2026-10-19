@@ -12,55 +12,94 @@
 	let { graph, label }: { graph: Graph; label: string } = $props();
 
 	const R = 15;
-	const JR = 5.5;
+	/** Radii of the junctions: a merge is a dot, ⊙ a small ring, Σ a ring big enough to read. */
+	const JR = { merge: 2.5, hadamard: 6.5, pool: 10 } as const;
 	type P = { x: number; y: number };
-	const at = (id: string): P & { r: number } => {
+	/** Half-height of an op box. */
+	const BOX = 12;
+	type End = P & { input: boolean; rim: (d: P) => number };
+	/** A node's centre, and how far its outline is from the centre in direction d. */
+	const at = (id: string): End => {
 		const n = graph.nodes.find((v) => v.id === id);
-		if (n) return { x: n.x, y: n.y, r: n.r ?? R };
+		if (n?.kind === 'op') {
+			const hw = (n.w ?? 60) / 2;
+			return {
+				x: n.x,
+				y: n.y,
+				input: false,
+				rim: (d) =>
+					Math.min(hw / Math.max(Math.abs(d.x), 1e-6), BOX / Math.max(Math.abs(d.y), 1e-6))
+			};
+		}
+		if (n) return { x: n.x, y: n.y, input: n.kind === 'input', rim: () => n.r ?? R };
 		const j = graph.joins.find((v) => v.id === id);
-		if (j) return { x: j.x, y: j.y, r: j.op === 'merge' ? 2.5 : JR };
+		if (j) return { x: j.x, y: j.y, input: false, rim: () => JR[j.op] };
 		throw new Error(`compute graph: no node ${id}`);
 	};
 	const unit = (x: number, y: number) => {
 		const l = Math.hypot(x, y) || 1;
 		return { x: x / l, y: y / l };
 	};
+	/** A direction in degrees, TikZ style: 0 is right, 90 is up (SVG y points down). */
+	const dir = (deg: number) => ({
+		x: Math.cos((deg * Math.PI) / 180),
+		y: -Math.sin((deg * Math.PI) / 180)
+	});
 
-	/** A quadratic curve from boundary to boundary, bent sideways by `bend` of its length. */
+	/**
+	 * A cubic from boundary to boundary that leaves and arrives in set directions, as TikZ's
+	 * `out` and `in`: edges run level and then turn, so neighbouring streams stay parallel.
+	 */
 	function geometry(e: GraphEdge) {
 		const a = at(e.from);
 		const b = at(e.to);
-		const dx = b.x - a.x;
-		const dy = b.y - a.y;
-		const len = Math.hypot(dx, dy);
-		const n = { x: -dy / len, y: dx / len };
-		const bend = e.bend ?? 0;
-		const c = { x: (a.x + b.x) / 2 + n.x * bend * len, y: (a.y + b.y) / 2 + n.y * bend * len };
-		if (e.via) Object.assign(c, e.via);
-		const ua = unit(c.x - a.x, c.y - a.y);
-		const ub = unit(b.x - c.x, b.y - c.y);
-		const p0 = { x: a.x + ua.x * a.r, y: a.y + ua.y * a.r };
-		const p1 = { x: b.x - ub.x * b.r, y: b.y - ub.y * b.r };
-		const point = (t: number) => ({
-			x: (1 - t) ** 2 * p0.x + 2 * (1 - t) * t * c.x + t * t * p1.x,
-			y: (1 - t) ** 2 * p0.y + 2 * (1 - t) * t * c.y + t * t * p1.y
-		});
-		const tangent = (t: number) =>
-			unit(
-				2 * (1 - t) * (c.x - p0.x) + 2 * t * (p1.x - c.x),
-				2 * (1 - t) * (c.y - p0.y) + 2 * t * (p1.y - c.y)
+		const straight = (Math.atan2(a.y - b.y, b.x - a.x) * 180) / Math.PI;
+		// the input fans out at most of each target's angle, as in the notebook's figure
+		const u = dir(e.out ?? (a.input ? 0.8 * straight : 0));
+		const v = dir(e.enter ?? 0);
+		const ra = a.rim(u);
+		const rb = b.rim(v);
+		const p0 = { x: a.x + u.x * ra, y: a.y + u.y * ra };
+		const p1 = { x: b.x - v.x * rb, y: b.y - v.y * rb };
+		// each end keeps its direction for a length that suits the turn it makes: a long level
+		// run that drops into a junction keeps level until the drop, instead of arching over
+		const dist = Math.hypot(p1.x - p0.x, p1.y - p0.y);
+		const k = e.loose ?? 1;
+		const L0 =
+			k * Math.min(0.45 * dist, (0.55 * Math.abs(p1.x - p0.x)) / Math.max(Math.abs(u.x), 0.3));
+		const L1 =
+			k *
+			(Math.abs(v.y) > 0.05
+				? Math.min(0.45 * dist, (0.8 * Math.abs(p1.y - p0.y)) / Math.abs(v.y))
+				: 0.45 * dist);
+		const [r0, r1] = e.reach ?? [L0, L1];
+		const c1 = { x: p0.x + u.x * r0, y: p0.y + u.y * r0 };
+		const c2 = { x: p1.x - v.x * r1, y: p1.y - v.y * r1 };
+		const point = (t: number) => {
+			const s = 1 - t;
+			return {
+				x: s * s * s * p0.x + 3 * s * s * t * c1.x + 3 * s * t * t * c2.x + t * t * t * p1.x,
+				y: s * s * s * p0.y + 3 * s * s * t * c1.y + 3 * s * t * t * c2.y + t * t * t * p1.y
+			};
+		};
+		const tangent = (t: number) => {
+			const s = 1 - t;
+			return unit(
+				3 * s * s * (c1.x - p0.x) + 6 * s * t * (c2.x - c1.x) + 3 * t * t * (p1.x - c2.x),
+				3 * s * s * (c1.y - p0.y) + 6 * s * t * (c2.y - c1.y) + 3 * t * t * (p1.y - c2.y)
 			);
+		};
 		// the arrowhead sits a little past the middle, as in the notebook's TikZ
 		const m = point(e.arrowAt ?? 0.55);
 		const d = tangent(e.arrowAt ?? 0.55);
-		const s = 4.2;
-		const tip = `M${m.x + d.x * s},${m.y + d.y * s} L${m.x - d.x * s - d.y * s * 0.62},${m.y - d.y * s + d.x * s * 0.62} L${m.x - d.x * s + d.y * s * 0.62},${m.y - d.y * s - d.x * s * 0.62} Z`;
+		const sz = 4.2;
+		const tip = `M${m.x + d.x * sz},${m.y + d.y * sz} L${m.x - d.x * sz - d.y * sz * 0.62},${m.y - d.y * sz + d.x * sz * 0.62} L${m.x - d.x * sz + d.y * sz * 0.62},${m.y - d.y * sz - d.x * sz * 0.62} Z`;
 		const lt = point(e.labelAt ?? 0.5);
 		const ln = tangent(e.labelAt ?? 0.5);
 		const side = e.side ?? -1;
 		const label = { x: lt.x - ln.y * 11 * side, y: lt.y + ln.x * 11 * side };
 		return {
-			d: `M${p0.x},${p0.y} Q${c.x},${c.y} ${p1.x},${p1.y}`,
+			d: `M${p0.x},${p0.y} C${c1.x},${c1.y} ${c2.x},${c2.y} ${p1.x},${p1.y}`,
 			tip,
 			label,
 			arrow: e.arrow !== false
@@ -79,23 +118,37 @@
 			{/each}
 			{#each graph.joins as j (j.id)}
 				{#if j.op === 'merge'}
-					<circle class="merge" cx={j.x} cy={j.y} r="2.5" />
+					<circle class="merge" cx={j.x} cy={j.y} r={JR.merge} />
 				{:else}
-					<circle class="join" cx={j.x} cy={j.y} r={JR} />
+					<circle class="join" cx={j.x} cy={j.y} r={JR[j.op]} />
 					{#if j.op === 'hadamard'}
-						<circle class="merge" cx={j.x} cy={j.y} r="1.5" />
+						<circle class="merge" cx={j.x} cy={j.y} r="1.8" />
 					{:else}
-						<text class="sigma" x={j.x} y={j.y + 3.2} text-anchor="middle">Σ</text>
+						<text class="sigma" x={j.x} y={j.y + 0.5}>Σ</text>
 					{/if}
 				{/if}
 			{/each}
 			{#each graph.nodes as v (v.id)}
-				<circle class="node {v.kind}" cx={v.x} cy={v.y} r={v.r ?? R} />
+				{#if v.kind === 'op'}
+					<rect
+						class="node op"
+						x={v.x - (v.w ?? 60) / 2}
+						y={v.y - BOX}
+						width={v.w ?? 60}
+						height={BOX * 2}
+						rx="4"
+					/>
+				{:else}
+					<circle class="node {v.kind}" cx={v.x} cy={v.y} r={v.r ?? R} />
+				{/if}
 			{/each}
 		</svg>
 		{#each graph.nodes as v (v.id)}
-			<span class="lab node-lab" style:left={pct(v.x, graph.w)} style:top={pct(v.y, graph.h)}
-				><MathTex tex={v.tex} /></span
+			<span
+				class="lab node-lab"
+				class:op={v.kind === 'op'}
+				style:left={pct(v.x, graph.w)}
+				style:top={pct(v.y, graph.h)}><MathTex tex={v.tex} /></span
 			>
 		{/each}
 		{#each edges as { e, g }, i (i)}
@@ -163,6 +216,10 @@
 		fill: #222;
 		stroke: #9a9a9a;
 	}
+	.node.op {
+		fill: var(--color-void);
+		stroke: #9a9a9a;
+	}
 	.node.output {
 		fill: var(--color-void);
 		stroke: var(--color-ink);
@@ -178,8 +235,10 @@
 	}
 	.sigma {
 		font-family: 'KaTeX_Main', serif;
-		font-size: 8.5px;
-		fill: #cfcfcf;
+		font-size: 12px;
+		fill: #e6e6e6;
+		text-anchor: middle;
+		dominant-baseline: central;
 	}
 	/* type scales with the figure: 1cqw is a hundredth of its width */
 	.lab {
@@ -192,6 +251,10 @@
 		transform: translate(-50%, -50%);
 		font-size: calc(12.5cqw * 100 / var(--gw));
 		color: var(--color-ink);
+	}
+	.node-lab.op {
+		font-size: calc(10.5cqw * 100 / var(--gw));
+		color: var(--color-ink-2);
 	}
 	.edge-lab {
 		transform: translate(-50%, -50%);

@@ -60,6 +60,37 @@ export interface ProbeResult {
 	probs: Float32Array;
 }
 
+/**
+ * A Newton attention layer opened up: every card of the deck at every position, as phases.
+ * The 81 cards sit in 81 tables of nine, card (b + 9(p − 1)) mod 81 at position p of table b,
+ * so each card appears once at each position. A final table holds the layout under inspection.
+ */
+export interface NewtonProbe {
+	id: string;
+	step: number;
+	heads: number;
+	/** Sequence length: a sink token, then the cards. */
+	n: number;
+	dh: number;
+	/** Arities on offer, 1 … order. */
+	order: number;
+	/** Phase angle per [table, head, position, channel], tables 0…80 then the inspected one. */
+	angle: Float32Array;
+	/** Gate σ(g) in the same layout. */
+	gate: Float32Array;
+	/** P(positive) for each card of the inspected layout. */
+	probs: Float32Array;
+}
+
+/** Held-out accuracy of a Newton attention run with each arity's term switched off in turn. */
+export interface Knockout {
+	id: string;
+	step: number;
+	full: number;
+	/** Token accuracy with arity k + 1 removed, k = 0 … order − 1. */
+	without: number[];
+}
+
 // ── Feynman attention diagram probe ─────────────────────────────────────────────────────
 
 export type DiagramSector = 'leaf' | 'hop' | 'cubic' | 'exchange' | 'carry';

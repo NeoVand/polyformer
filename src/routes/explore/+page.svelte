@@ -24,6 +24,7 @@
 	import {
 		Dice,
 		Feynman,
+		Newton,
 		Next,
 		Pause,
 		Play,
@@ -235,7 +236,8 @@
 <PageFrame
 	rail={[
 		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') }
+		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
+		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') }
 	]}
 	active="tensor"
 >

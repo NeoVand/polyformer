@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * Figure 4 of the report: the tree expansion of Theorem 3 for two trained models, drawn as
+	 * Figure 5 of the report: the tree expansion of Theorem 3 for two trained models, drawn as
 	 * Feynman diagrams. On SET the probed card's state is one cubic vertex joining its two SET
 	 * partners; on pointer chasing the query's state is a chain of hops along the list.
 	 */
@@ -27,6 +27,15 @@
 			() => {}
 		);
 	});
+	/** One gutter, row pitch and top edge for both panels, so their rows and rounds line up. */
+	const box = {
+		padLeft: 44,
+		padRight: 100,
+		padTop: 34,
+		padBottom: 6,
+		maxRow: 44,
+		valign: 'top' as const
+	};
 	const threshold = (d: DiagramResult, root: number) =>
 		autoThreshold(d.perHead[0], d.n, d.rounds, d.modes, root, 6);
 </script>
@@ -44,6 +53,7 @@
 				modes={d.modes}
 				root={d.token}
 				options={{ threshold: threshold(d, d.token), perRound: 7 }}
+				{box}
 			>
 				{#snippet row(t)}
 					{#if t === 0}
@@ -67,6 +77,7 @@
 				modes={d.modes}
 				root={CHASE_QUERY_POS}
 				options={{ threshold: threshold(d, CHASE_QUERY_POS), perRound: 7 }}
+				{box}
 			>
 				{#snippet row(t)}
 					<span class="leg"
@@ -88,10 +99,17 @@
 	.pair {
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
-		gap: 28px;
+		gap: 36px;
 	}
 	.diagram {
+		display: flex;
+		flex-direction: column;
 		min-width: 0;
+		height: 316px;
+	}
+	.diagram :global(.feyn) {
+		flex: 1;
+		min-height: 0;
 	}
 	.sub {
 		margin: 0 0 4px;

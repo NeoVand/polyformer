@@ -4,17 +4,21 @@
 	 * (a) One query card in zero-sum relations of arity 2, 3 and 4, written as card sums.
 	 * (b) Under a character each card is a phase. A SET makes every character's product
 	 *     point the same way; any other triple splits the characters three ways and cancels.
-	 * (c) Power sums pooled once and Newton's identities give every arity in one pass, at a
-	 *     cost linear in n, next to dense order-k attention.
-	 * Every card and every angle is computed, none is drawn by hand. Text never sits on a
-	 * line: each label has its own column or row.
+	 * (c) Power sums pooled once and Newton's identities give every arity in one pass.
+	 * (d) What one head costs, next to dense order-k attention.
+	 * Four panels of one size on one grid: (a) and (b) share three rows, (c) and (d) share five,
+	 * so every row lines up across the figure. Every card and every angle is computed, none is
+	 * drawn by hand, and text never sits on a line.
 	 */
 	import type { Card } from '#lib/set/cards.ts';
 	import CardFace from '#lib/ui/CardFace.svelte';
 
 	/** Which panels to draw; fewer than all three stack in one column (Learn's side figure). */
-	let { panels = ['a', 'b', 'c'] }: { panels?: ('a' | 'b' | 'c')[] } = $props();
+	let { panels = ['a', 'b', 'c', 'd'] }: { panels?: ('a' | 'b' | 'c' | 'd')[] } = $props();
 	const single = $derived(panels.length < 3);
+	/** The rows every panel shares: three for (a) and (b), five for (c) and (d). */
+	const ROW3 = [54, 108, 162];
+	const ROW5 = [42, 77, 112, 147, 182];
 
 	const card = (...v: number[]) => v as unknown as Card;
 	const sum = (...cs: Card[]) => [0, 1, 2, 3].map((a) => cs.reduce((s, c) => s + c[a], 0) % 3);
@@ -65,9 +69,10 @@
 
 	// ── (c) the pipeline and the cost of one head at n = 64 ────────────────────────
 	type Seg = [string, '' | 'sub' | 'sup'];
-	const STAGES: { what: string; eq: Seg[] }[] = [
+	const STAGES: { what: string; eq: Seg[]; cost: string }[] = [
 		{
 			what: 'Tokens',
+			cost: '',
 			eq: [
 				['x', ''],
 				['1', 'sub'],
@@ -77,6 +82,7 @@
 		},
 		{
 			what: 'Phases',
+			cost: 'one map per token',
 			eq: [
 				['φ(x', ''],
 				['t', 'sub'],
@@ -85,6 +91,7 @@
 		},
 		{
 			what: 'Power sums',
+			cost: 'one pass over the tokens',
 			eq: [
 				['P', ''],
 				['1', 'sub'],
@@ -94,6 +101,7 @@
 		},
 		{
 			what: "Newton's identities",
+			cost: 'K² products, no tokens',
 			eq: [
 				['e', ''],
 				['1', 'sub'],
@@ -103,6 +111,7 @@
 		},
 		{
 			what: 'Counts, every arity',
+			cost: 'one product per token',
 			eq: [
 				['N', ''],
 				['q,2', 'sub'],
@@ -156,7 +165,7 @@
 			<text class="tag" x="0" y="13">(a)</text>
 			<text class="head" x="22" y="13">One card, three arities</text>
 			{#each ROWS as row, r (row.k)}
-				{@const y = 54 + r * 54}
+				{@const y = ROW3[r]}
 				<text class="k" x="0" y={y + 4}>k = {row.k}</text>
 				{#each row.cards as c, i (i)}
 					{@const x = X0 + i * STEP}
@@ -175,7 +184,7 @@
 					{/if}
 				{/each}
 				<text class="op" x={X0 + row.cards.length * STEP - 6} y={y + 5}>= 0</text>
-				<text class="what" x="420" y={y + 4} text-anchor="end">{row.what}</text>
+				<text class="what" x={X0 + 4 * STEP + 30} y={y + 4}>{row.what}</text>
 			{/each}
 		</svg>
 	{/if}
@@ -190,60 +199,73 @@
 			<text class="head" x="22" y="13">A relation is agreement of phases</text>
 			{#each SIDES as side (side.name)}
 				{@const ph = phases(side.cs)}
-				<text class="side" x={side.x0} y="44">{side.name}</text>
+				<text class="side" x={side.x0} y="34">{side.name}</text>
 				{#each side.cs as c, i (i)}
-					<CardFace card={c} x={side.x0 + i * 40 + 3} y={54} width={18} />
-					{@render phasor(side.x0 + i * 40 + 12, 98, 11, ph[i], false)}
+					<CardFace card={c} x={side.x0 + i * 40 + 3} y={ROW3[0] - 9} width={18} />
+					{@render phasor(side.x0 + i * 40 + 12, ROW3[1] - 6, 11, ph[i], false)}
 					{#if i < 2}
-						<text class="op" x={side.x0 + i * 40 + 32} y="103" text-anchor="middle">×</text>
+						<text class="op" x={side.x0 + i * 40 + 32} y={ROW3[1] - 1} text-anchor="middle">×</text>
 					{/if}
 				{/each}
-				<text class="op" x={side.x0 + 128} y="103" text-anchor="middle">=</text>
-				{@render phasor(side.x0 + 150, 98, 11, total(side.cs), true)}
-				<text class="note" x={side.x0} y="130">under one character</text>
-				<g transform="translate({side.x0 + 24} 166)">
-					<circle class="unit" r="22" />
+				<text class="op" x={side.x0 + 128} y={ROW3[1] - 1} text-anchor="middle">=</text>
+				{@render phasor(side.x0 + 150, ROW3[1] - 6, 11, total(side.cs), true)}
+				<text class="note" x={side.x0} y={ROW3[1] + 20}>under one character</text>
+				<g transform="translate({side.x0 + 22} {ROW3[2] + 2})">
+					<circle class="unit" r="20" />
 					{#if side.agree}
-						<line class="ph sum" x1="0" y1="0" x2="22" y2="0" />
+						<line class="ph sum" x1="0" y1="0" x2="20" y2="0" />
 					{:else}
 						{#each [0, 1, 2] as k (k)}
-							{@const p = tip(22, k)}
+							{@const p = tip(20, k)}
 							<line class="ph split" x1="0" y1="0" x2={p.x} y2={p.y} />
 						{/each}
 					{/if}
 					<circle class="hub" r="1.6" />
 				</g>
-				<text class="note" x={side.x0 + 58} y="162">under all 81 characters</text>
-				<text class="res" x={side.x0 + 58} y="177">{side.verdict}</text>
+				<text class="note" x={side.x0 + 52} y={ROW3[2] - 4}>under all 81 characters</text>
+				<text class="res" x={side.x0 + 52} y={ROW3[2] + 12}>{side.verdict}</text>
 			{/each}
 		</svg>
 	{/if}
 
 	{#if panels.includes('c')}
-		<svg class="c" viewBox="0 0 860 112" role="img" aria-labelledby="fig1c">
+		<svg class="c" viewBox="0 0 420 200" role="img" aria-labelledby="fig1c">
 			<title id="fig1c">
 				Tokens become phases, phases are pooled once into power sums, Newton's identities turn them
 				into elementary symmetric polynomials, and those give each token's count of relations of
-				every arity. The cost is linear in n, where dense order-k attention grows as n to the k.
+				every arity, each step linear in the number of tokens.
 			</title>
 			<text class="tag" x="0" y="13">(c)</text>
 			<text class="head" x="22" y="13">Every arity in one pass</text>
+			<line class="flow" x1="150" x2="150" y1={ROW5[0]} y2={ROW5[4]} />
 			{#each STAGES as st, i (i)}
-				{@const x = i * 112}
-				<text class="stage" {x} y="48">{st.what}</text>
-				{@render math(st.eq, x, 70)}
-				{#if i < STAGES.length - 1}
-					<line class="flow" x1={x + 84} y1="66" x2={x + 102} y2="66" />
-					<path class="arrow" d="M{x + 102},63 l4,3 l-4,3 z" />
+				{@const y = ROW5[i]}
+				<text class="stage" x="0" y={y + 4}>{st.what}</text>
+				<circle class="step" cx="150" cy={y} r="2.6" />
+				{#if i > 0}
+					<path class="arrow" d="M146.5,{y - 13} l3.5,5 l3.5,-5 z" />
 				{/if}
+				{@render math(st.eq, 166, y + 4.5)}
+				<text class="what" x="420" y={y + 4} text-anchor="end">{st.cost}</text>
 			{/each}
-			<text class="stage" x="600" y="28">Cost of one head at n = {N}, log scale</text>
+		</svg>
+	{/if}
+
+	{#if panels.includes('d')}
+		<svg class="d" viewBox="0 0 420 200" role="img" aria-labelledby="fig1d">
+			<title id="fig1d">
+				The cost of one head at sequence length 64 on a log scale: pairwise, cubic, quartic and
+				quintic attention grow as n to the k; Newton attention with every arity up to six grows as
+				6n.
+			</title>
+			<text class="tag" x="0" y="13">(d)</text>
+			<text class="head" x="22" y="13">What one head costs at n = {N}, log scale</text>
 			{#each COSTS as c, i (c.label)}
-				{@const y = 40 + i * 14}
-				{@const w = Math.max(3, (Math.log10(c.v) / LOGMAX) * 110)}
-				<text class="bar-label" class:ours={c.ours} x="600" y={y + 7.5}>{c.label}</text>
-				<rect class="bar" class:ours={c.ours} x="680" {y} width={w} height="8" rx="1" />
-				<text class="bar-v" class:ours={c.ours} x={686 + w} y={y + 7.5}>{c.tex} = {fmt(c.v)}</text>
+				{@const y = ROW5[i]}
+				{@const w = Math.max(3, (Math.log10(c.v) / LOGMAX) * 196)}
+				<text class="bar-label" class:ours={c.ours} x="0" y={y + 4}>{c.label}</text>
+				<rect class="bar" class:ours={c.ours} x="96" y={y - 4} width={w} height="8" rx="1" />
+				<text class="bar-v" class:ours={c.ours} x={104 + w} y={y + 4}>{c.tex} = {fmt(c.v)}</text>
 			{/each}
 		</svg>
 	{/if}
@@ -254,9 +276,6 @@
 		display: grid;
 		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 22px 44px;
-	}
-	.c {
-		grid-column: 1 / -1;
 	}
 	.fig1.single {
 		grid-template-columns: minmax(0, 1fr);
@@ -349,11 +368,14 @@
 		fill: var(--color-ink-2);
 	}
 	.flow {
-		stroke: #444;
+		stroke: #3a3a3a;
 		stroke-width: 1;
 	}
 	.arrow {
-		fill: #444;
+		fill: #5a5a5a;
+	}
+	.step {
+		fill: var(--color-ink-2);
 	}
 	.bar {
 		fill: #3a3a3a;

@@ -10,7 +10,17 @@
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import { Dice, Feynman, Next, Pause, Play, Previous, Scissors, Simplex } from '#lib/ui/icons.ts';
+	import {
+		Dice,
+		Feynman,
+		Newton,
+		Next,
+		Pause,
+		Play,
+		Previous,
+		Scissors,
+		Simplex
+	} from '#lib/ui/icons.ts';
 	import ChaseLists from '#lib/ui/ChaseLists.svelte';
 	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
 	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
@@ -288,7 +298,8 @@
 <PageFrame
 	rail={[
 		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') }
+		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
+		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') }
 	]}
 	active="diagrams"
 >

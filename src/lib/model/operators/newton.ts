@@ -12,7 +12,8 @@
  * takes it from there.
  *
  * jax-js has no complex dtype, so complex values are (re, im) pairs; every helper consumes
- * its arguments, and `share` lends a pair for one more use.
+ * its arguments, and `share` lends a pair for one more use. Captured, the layer returns each
+ * token's phase angles and gates as its `values`.
  */
 import { nn, numpy as np, type Array as Tensor } from '@jax-js/jax';
 import type { AttentionOperator, OperatorOptions } from './types.ts';
@@ -66,7 +67,7 @@ export const newton: AttentionOperator = {
 		};
 	},
 
-	attend({ th, g }, s, _capture, ctx) {
+	attend({ th, g }, s, capture, ctx) {
 		if (!ctx) throw new Error('newton needs its layer parameters');
 		const { B, H, n, dh } = s;
 		const { K } = resolve(ctx.options);
@@ -74,6 +75,8 @@ export const newton: AttentionOperator = {
 
 		const gate = nn.sigmoid(g);
 		const angle = th.mul(PHASE);
+		// captured: every token's phase and gate per channel, [B, H, n, dh] each
+		const values = capture ? [angle.ref, gate.ref] : undefined;
 		const phi: Complex = { re: gate.ref.mul(np.cos(angle.ref)), im: gate.mul(np.sin(angle)) };
 
 		// powers φ^1 … φ^{K−1}, then leave-one-out sums over the sequence
@@ -116,7 +119,7 @@ export const newton: AttentionOperator = {
 		for (const x of e) if (x) drop(x);
 		readout.dispose();
 		alpha.dispose();
-		return { y: y! };
+		return { y: y!, values };
 	},
 
 	flops(n, H, dh, options = {}) {

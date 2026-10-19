@@ -31,7 +31,7 @@ import {
 	type Params
 } from '../model/transformer.ts';
 import { getOperator } from '../model/operators/index.ts';
-import { LAYOUT_SIZE } from '../set/cards.ts';
+import { DECK, LAYOUT_SIZE, type Card } from '../set/cards.ts';
 import { deriveSeed } from '../set/rng.ts';
 import { getTask, type TaskBatch, type TaskId, type TaskSpec } from '../tasks/index.ts';
 import { taskEvalExamples, taskTrainBatch } from './data.ts';
@@ -42,6 +42,8 @@ import type {
 	EvalMetric,
 	InitRequest,
 	InitResult,
+	Knockout,
+	NewtonProbe,
 	ProbeResult,
 	StepMetric,
 	WorkerEvent,
@@ -126,8 +128,10 @@ function buildRun(spec: RunSpec, index: number, seed: number): Run {
 		const { logits, captures } = forward(p, cfg, f, true);
 		const out = [logits];
 		const [first, ...rest] = captures;
-		if (first?.weights) out.push(first.weights, ...(first.values ?? []));
-		else first?.values?.forEach((v) => v.dispose());
+		if (first?.weights || cfg.operator === 'newton') {
+			if (first?.weights) out.push(first.weights);
+			out.push(...(first?.values ?? []));
+		} else first?.values?.forEach((v) => v.dispose());
 		out.push(...(first?.rounds ?? []), ...(first?.modes ?? []));
 		rest.forEach(disposeCapture);
 		return out;
@@ -175,13 +179,13 @@ function trainOne(run: Run, b: [Tensor, Tensor, Tensor]): StepMetric {
 	return { id: run.spec.id, step: run.step, loss, accuracy, gradNorm, ms: performance.now() - t0 };
 }
 
-function evaluate(run: Run): EvalMetric {
+function evaluate(run: Run, params: Params = run.params): EvalMetric {
 	const examples = evalSets.get(run.cfg.task)!;
 	const sums = [0, 0, 0];
 	for (let start = 0; start < examples.length; start += EVAL_CHUNK) {
 		const chunk = run.task.encode(examples.slice(start, start + EVAL_CHUNK));
 		const [f, l, w] = batchTensors(chunk, run.cfg);
-		const out = run.evalFn(tree.ref(run.params), f, l, w).dataSync() as Float32Array;
+		const out = run.evalFn(tree.ref(params), f, l, w).dataSync() as Float32Array;
 		for (let i = 0; i < 3; i++) sums[i] += out[i];
 	}
 	const tokens = examples.length * run.task.lossPositions.length;
@@ -205,7 +209,7 @@ async function handleTrain(req: Request) {
 
 	// Baseline evaluation before the first step, so curves start at chance.
 	const fresh = active.filter((r) => r.step === 0);
-	if (fresh.length) post({ id: req.id, event: 'eval', metrics: fresh.map(evaluate) });
+	if (fresh.length) post({ id: req.id, event: 'eval', metrics: fresh.map((r) => evaluate(r)) });
 
 	while (!stopRequested) {
 		const pending = active.filter((r) => r.step < until);
@@ -225,7 +229,7 @@ async function handleTrain(req: Request) {
 		}
 		post({ id: req.id, event: 'step', metrics });
 		const due = cohort.filter((r) => r.step % evalEvery === 0 || r.step === until);
-		if (due.length) post({ id: req.id, event: 'eval', metrics: due.map(evaluate) });
+		if (due.length) post({ id: req.id, event: 'eval', metrics: due.map((r) => evaluate(r)) });
 		await yieldToEvents();
 	}
 	return { steps: Object.fromEntries(runs.map((r) => [r.spec.id, r.step])) };
@@ -267,6 +271,78 @@ function handleProbe(req: Request): ProbeResult & { __transfer: Transferable[] }
 		...result,
 		__transfer: [result.weights.buffer, result.v1.buffer, result.v2.buffer, probs.buffer]
 	};
+}
+
+function newtonRun(id: unknown): Run {
+	const run = findRun(id);
+	if (run.cfg.operator !== 'newton' || run.cfg.task !== 'match4')
+		throw new Error('needs a Newton attention run on Match-4');
+	return run;
+}
+
+function handleNewton(req: Request): NewtonProbe & { __transfer: Transferable[] } {
+	const run = newtonRun(req.run);
+	if (!run.task.isExample(req.layout)) throw new Error('bad layout');
+	const n = run.cfg.seqLen;
+	const size = n - 1;
+	const deck = DECK.length;
+	const tables: Card[][] = Array.from({ length: deck }, (_, b) =>
+		Array.from({ length: size }, (_, p) => DECK[(b + p * size) % deck])
+	);
+	tables.push(req.layout as Card[]);
+	const [f, , w] = batchTensors(run.task.encode(tables), run.cfg);
+	w.dispose();
+	const [logits, angle, gate] = run.probeFn(tree.ref(run.params), f);
+	const lg = (logits.dataSync() as Float32Array).subarray(deck * n * 2);
+	const probs = new Float32Array(size);
+	for (let p = 0; p < size; p++) {
+		const r = p + 1;
+		probs[p] = 1 / (1 + Math.exp(lg[r * 2] - lg[r * 2 + 1]));
+	}
+	const result: NewtonProbe = {
+		id: run.spec.id,
+		step: run.step,
+		heads: run.cfg.heads,
+		n,
+		dh: run.cfg.dModel / run.cfg.heads,
+		order: run.cfg.options.order ?? 4,
+		angle: angle.dataSync() as Float32Array,
+		gate: gate.dataSync() as Float32Array,
+		probs
+	};
+	return {
+		...result,
+		__transfer: [result.angle.buffer, result.gate.buffer, probs.buffer]
+	};
+}
+
+function handleKnockout(req: Request): Knockout {
+	const run = newtonRun(req.run);
+	const K = run.cfg.options.order ?? 4;
+	const dh = run.cfg.dModel / run.cfg.heads;
+	const without: number[] = [];
+	for (let m = 0; m < K; m++) {
+		// a copy of the parameters whose per-arity scale is zero for this arity
+		const mask = new Float32Array(K * dh).fill(1).fill(0, m * dh, (m + 1) * dh);
+		const base = tree.ref(run.params);
+		const [first, ...rest] = base.layers;
+		const masked: Params = {
+			...base,
+			layers: [
+				{
+					...first,
+					extra: {
+						...first.extra,
+						alpha: first.extra!.alpha.mul(np.array(mask).reshape([K, dh]))
+					}
+				},
+				...rest
+			]
+		};
+		without.push(evaluate(run, masked).tokenAccuracy);
+		tree.dispose(masked);
+	}
+	return { id: run.spec.id, step: run.step, full: evaluate(run).tokenAccuracy, without };
 }
 
 function handleDiagram(req: Request): DiagramResult {
@@ -356,6 +432,8 @@ const handlers: Record<string, (req: Request) => unknown> = {
 	train: handleTrain,
 	probe: handleProbe,
 	diagram: handleDiagram,
+	newton: handleNewton,
+	knockout: handleKnockout,
 	export: handleExport,
 	load: handleLoad,
 	reset: handleReset,
@@ -395,7 +473,13 @@ ctx.onmessage = (e: MessageEvent<Request>) => {
 	}
 	// Probes only read weights and run synchronously, so they may interleave
 	// with a training loop between steps instead of waiting for it to finish.
-	if (req.op === 'probe' || req.op === 'diagram' || req.op === 'export') {
+	if (
+		req.op === 'probe' ||
+		req.op === 'diagram' ||
+		req.op === 'export' ||
+		req.op === 'newton' ||
+		req.op === 'knockout'
+	) {
 		void dispatch(req);
 		return;
 	}

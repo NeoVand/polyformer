@@ -326,8 +326,11 @@
 					under all 81 characters of <MathTex tex={String.raw`\mathbb Z_3^4`} />, so they add to 81;
 					any other triple splits them 27, 27, 27 and they cancel. (c) Phases pooled once into power
 					sums and combined by Newton's identities give every token its count of relations of every
-					arity, at a cost linear in <MathTex tex="n" />, where dense order-<MathTex tex="k" /> attention
-					grows as <MathTex tex="n^k" />.
+					arity, each step linear in <MathTex tex="n" />. (d) The cost of one head: dense order-<MathTex
+						tex="k"
+					/> attention grows as <MathTex tex="n^k" />, Newton attention with every arity up to six
+					as
+					<MathTex tex="6n" />.
 				</figcaption>
 			</figure>
 			<p class="contrib">
@@ -533,28 +536,29 @@
 			{#if setModel}
 				{@const d = setModel.diagram}
 				{@const cards = setModel.layout as unknown as Card[]}
-				<figure class="wide fig split">
-					<div>
+				<figure class="wide fig">
+					<div class="keyed">
 						<DiagramFlow
+							align="start"
 							head={d.perHead[0]}
 							n={d.n}
 							rounds={d.rounds}
 							rows={[Array.from({ length: cards.length }, (_, i) => i + 1)]}
 							root={root ?? d.token}
 							onroot={(t) => (root = t)}
-							pitch={19}
-							column={130}
+							pitch={20}
+							column={220}
 						>
 							{#snippet label(t)}<SetCard card={cards[t - 1]} width={15} />{/snippet}
 						</DiagramFlow>
+						<div class="key"><FlowLegend /></div>
 					</div>
 					<figcaption>
-						<b>Figure 4.</b> Theorem 3 for a Feynman attention model trained in a browser on SET
-						(two rounds, step 1,500, 99.98% held out). Every token's state at every round, marked
-						with the vertex of the sector it mostly uses. Lines show what one card reads, weighted
-						by the share of its output they carry: each card in a SET reads its two partners at one
-						cubic vertex. Hover or click a card to expand another.
-						<span class="fig-key"><FlowLegend compact /></span>
+						<b>Figure 4.</b> Theorem 3 for a Feynman attention model trained in a browser on SET (two
+						rounds, step 1,500, 99.98% held out). Every token's state at every round, marked with the
+						vertex of the sector it mostly uses. Lines show what one card reads, weighted by the share
+						of its output they carry: each card in a SET reads its two partners at one cubic vertex. Hover
+						or click a card to expand another.
 					</figcaption>
 				</figure>
 			{/if}
@@ -988,7 +992,7 @@
 					most character-like channels of a layer trained on Match-3, shaded by the character's value
 					on that card: the 81 cards fall into three tight clusters a third of a turn apart. (b) Every
 					run's balanced accuracy against the number of distinct characters its channels contain, over
-					every configuration of Tables 6 and 7.
+					every configuration of Tables 6 and 7; the dashed line is ½ + ½ · found/40.
 				</figcaption>
 			</figure>
 			<p>
@@ -1309,12 +1313,6 @@
 		clear: both;
 		margin: 22px 0 28px;
 	}
-	.fig.split {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) var(--side);
-		gap: var(--gap);
-		align-items: end;
-	}
 	.sub {
 		margin: 0 0 4px;
 		font-size: var(--text-xs);
@@ -1325,9 +1323,12 @@
 		font-family: 'KaTeX_Main', serif;
 		color: var(--color-ink-3);
 	}
-	.fig-key {
-		display: block;
-		margin-top: 10px;
+	/* a drawing with its key in one line beneath, both on the text column's left edge */
+	.keyed {
+		max-width: var(--text);
+	}
+	.keyed .key {
+		margin-top: 6px;
 	}
 	figcaption {
 		margin-top: 12px;
@@ -1335,9 +1336,6 @@
 		font-size: var(--text-xs);
 		line-height: 1.55;
 		color: var(--color-ink-3);
-	}
-	.split figcaption {
-		margin: 0;
 	}
 	figcaption b {
 		color: var(--color-ink-2);
@@ -1432,12 +1430,6 @@
 			width: auto;
 			max-width: var(--text);
 			margin: 0 0 14px;
-		}
-		.fig.split {
-			display: block;
-		}
-		.split figcaption {
-			margin-top: 12px;
 		}
 	}
 	@media (max-width: 700px) {

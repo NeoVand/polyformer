@@ -229,6 +229,10 @@ export interface LayoutBox {
 	padRight?: number;
 	padTop?: number;
 	padBottom?: number;
+	/** Largest row pitch, so diagrams side by side can share one. */
+	maxRow?: number;
+	/** Rows hang from the top, or sit centred in the room left over. */
+	valign?: 'top' | 'center';
 }
 
 /** Lay the expansion out: columns are rounds 0…R, rows are tokens; every edge is straight. */
@@ -241,12 +245,21 @@ export function layoutDiagram(
 	box: LayoutBox,
 	opts: ExpandOptions = {}
 ): FeynmanLayout {
-	const { width, height, padLeft = 120, padRight = 90, padTop = 44, padBottom = 20 } = box;
+	const {
+		width,
+		height,
+		padLeft = 120,
+		padRight = 90,
+		padTop = 44,
+		padBottom = 20,
+		maxRow = 58,
+		valign = 'center'
+	} = box;
 	const { levels, terms } = expand(head, n, rounds, modes, root, opts);
 	const order = rowOrder(levels, root);
 	const room = height - padTop - padBottom;
-	const rowH = Math.min(58, room / Math.max(order.length, 1));
-	const top = padTop + (room - rowH * order.length) / 2;
+	const rowH = Math.min(maxRow, room / Math.max(order.length, 1));
+	const top = padTop + (valign === 'top' ? 0 : (room - rowH * order.length) / 2);
 	const yOf = new Map(order.map((t, i) => [t, top + (i + 0.5) * rowH]));
 	const cw = (width - padLeft - padRight) / Math.max(rounds, 1);
 	const xOf = (r: number) => padLeft + r * cw;

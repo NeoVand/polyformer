@@ -4,6 +4,7 @@
  * can inspect the models Compare trained. `getBench()` is the SET bench;
  * `getBench('chase')` is the pointer-chase bench, with its own worker.
  */
+import type { Card } from '../set/cards.ts';
 import { getTask, type TaskSpec } from '../tasks/index.ts';
 import { dealExample, majorityBaseline } from './data.ts';
 import { Engine } from './engine.ts';
@@ -13,6 +14,8 @@ import type {
 	DiagramResult,
 	EvalMetric,
 	InitResult,
+	Knockout,
+	NewtonProbe,
 	RunInfo,
 	StepMetric
 } from './protocol.ts';
@@ -112,6 +115,20 @@ export class Bench {
 		await this.ensure();
 		if (!this.engine) throw new Error('engine unavailable');
 		return this.engine.diagram(run, example, token, topK);
+	}
+
+	/** A Newton attention run's phases for the whole deck, and its view of `layout`. */
+	async newton(run: string, layout: Card[]): Promise<NewtonProbe> {
+		await this.ensure();
+		if (!this.engine) throw new Error('engine unavailable');
+		return this.engine.newton(run, layout);
+	}
+
+	/** Held-out accuracy of a Newton attention run with each arity switched off in turn. */
+	async knockout(run: string): Promise<Knockout> {
+		await this.ensure();
+		if (!this.engine) throw new Error('engine unavailable');
+		return this.engine.knockout(run);
 	}
 
 	private engine: Engine | null = null;

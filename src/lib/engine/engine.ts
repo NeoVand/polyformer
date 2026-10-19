@@ -7,6 +7,8 @@ import type {
 	EvalMetric,
 	InitRequest,
 	InitResult,
+	Knockout,
+	NewtonProbe,
 	ProbeResult,
 	StepMetric,
 	WorkerEvent,
@@ -102,6 +104,16 @@ export class Engine {
 	 */
 	diagram(run: string, example: unknown, token: number, topK = 4): Promise<DiagramResult> {
 		return this.call('diagram', { run, example, token, topK });
+	}
+
+	/** A Newton attention run's phases for every card of the deck, and its view of `layout`. */
+	newton(run: string, layout: Card[]): Promise<NewtonProbe> {
+		return this.call('newton', { run, layout: layout.map((c) => [...c]) });
+	}
+
+	/** Held-out accuracy of a Newton attention run with each arity switched off in turn. */
+	knockout(run: string): Promise<Knockout> {
+		return this.call('knockout', { run });
 	}
 
 	exportWeights(run: string): Promise<{ weights: Float32Array; step: number }> {

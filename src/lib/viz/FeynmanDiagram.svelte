@@ -9,7 +9,7 @@
 	import type { Snippet } from 'svelte';
 	import type { DiagramHead } from '#lib/engine/protocol.ts';
 	import MathTex from '#lib/ui/Math.svelte';
-	import { layoutDiagram, type ExpandOptions, type Term } from './feynman.ts';
+	import { layoutDiagram, type ExpandOptions, type LayoutBox, type Term } from './feynman.ts';
 
 	let {
 		head,
@@ -22,6 +22,7 @@
 		highlight = [],
 		row,
 		output = '\\hat y',
+		box = {},
 		onterm
 	}: {
 		head: DiagramHead;
@@ -39,6 +40,8 @@
 		row?: Snippet<[number]>;
 		/** TeX label at the end of the output leg. */
 		output?: string;
+		/** Overrides for the layout's padding, row pitch and vertical alignment. */
+		box?: Omit<LayoutBox, 'width' | 'height'>;
 		onterm?: (term: Term | null) => void;
 	} = $props();
 
@@ -51,7 +54,7 @@
 			rounds,
 			modes,
 			root,
-			{ width, height, padLeft: 96, padRight: 150, padTop: 36, padBottom: 12 },
+			{ width, height, padLeft: 96, padRight: 150, padTop: 36, padBottom: 12, ...box },
 			options
 		)
 	);
