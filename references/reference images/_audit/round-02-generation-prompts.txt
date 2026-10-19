@@ -1,0 +1,119 @@
+Polyformer — image inspiration round 2
+Mode: built-in image generation
+Delivered preview dimensions: 1672 × 941 pixels. Prompts describe a larger desktop layout; these are not native 4K exports.
+No application code changed. These images are visual design studies; small labels, dimensions, map correspondence and mathematical wiring remain draft and need precise typesetting and validation before implementation/publication.
+
+COMMON STYLE PROMPT
+Use case: ui-mockup. Refine the supplied reference concept(s) into one highly polished desktop research application screen for 'polyformer'. These images are STYLE AND STRUCTURE REFERENCES, not exact edit targets; develop a richer next iteration. Image output landscape 16:9, aim for 3840×2160 pixels with the information density of a 2560×1440 professional desktop UI, razor-sharp fine geometry and legible text. Flat straight-on screen, no monitor or device frame. Full dark theme ONLY: black #080808 background, graphite #151515 panels, #262626 raised controls, #555555 secondary rules, #a6a6a6 secondary type, #f5f5f5 primary type. All RGB channels equal: absolutely no colored accents, no blue cast. Cohesive refined Teenage Engineering OP-XY instrument precision with modern scientific software usability. Compact 44px top bar, 48px icon rail, restrained 14px UI labels, 24px page headings, 28px compact buttons, thin dividers, 4px corner radius. Do NOT make giant headlines or oversized dials. Contemporary refined grotesk UI typography with mathematical serif solely for equations. Intentional consistent Hugeicons-like 1.5px rounded-outline icons, 18px optical size, next to navigation, view controls and inspector sections: cube, network, layers, grid, sliders, bracket, swap, search, expand, reset, play. Icons must be purposeful and identifiable, never a random symbol strip. Sparse very subtle white glow ONLY around selected tensor cells and selected hyperedge; muted neutral gray geometry elsewhere. Small components but generous breathing room inside dominant visualizations, premium hierarchy, no generic SaaS metrics cards. Shared top nav 'Learn   Explore   Compare   Notes', Explore active unless otherwise specified. Small visible direction identifier as specified, all labels in sentence case. Scientific invariants: attention score A has three token indices i,j,k; distinct role-specific projections K¹,K² and V¹,V². Aᵢⱼₖ = ⟨Qᵢ, K¹ⱼ ⊙ K²ₖ⟩. Dⱼₖ = V¹ⱼ ⊙ V²ₖ is a feature vector; entire D has shape n×n×dᵥ. Output Yᵢ = ∑ⱼₖ Pᵢⱼₖ Dⱼₖ, with P labeled 'normalized weights'; do not invent a normalization axis. Only include equations requested in the specific composition; don't invent others. Hypergraph is a role-labeled visual interpretation: mark query port i, role 1 j, role 2 k, not an unlabeled unordered triangle. All displayed states are illustrative, not experimental results. No invented benchmarks, competitors, proof claims or claims of superiority. Render one coherent screen, not a collage of screens.
+
+11 — Linked tensor lab
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-9b7670e3-ae51-4734-87bc-9da238d68fa7.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a69c8fab-69d2-44df-8133-fa6c5dce91ce.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7413194d-161d-4890-8b99-1d7ad8ff346e.png
+
+Specific composition prompt:
+Direction label '11 / Linked tensor lab'. This is the flagship concept. Compact header 'Cubic attention' plus mode chips 'Tensor / Relations / Linked', Linked selected. Three connected inspection zones: dominant translucent wireframe 8×8×8 attention cube on the LEFT center, with a sharply glowing white selected voxel and one faint illuminated query slice; equally elegant role-labeled hypergraph on CENTER RIGHT, floating neutral spheres and 5 translucent triangular surfaces, one white selected triangle with small vertex labels i,j,k and distinct small role-port symbols. Far right a slim 260px inspector holds selected coordinate (i=3,j=5,k=2), exact score formula and two value feature strips V¹ⱼ, V²ₖ multiplying into Dⱼₖ. Lower middle a full-width ribbon of eight distinct grayscale maps labeled i=0 through i=7, selected i=3 outlined white; paired j,k cell visibly marked in that slice. Same selected coordinate appears on cube, hyperedge and matrix. A compact 48px bottom transport has reset/step/play icons, small query stepper, temperature slider, 'Link selections' switch. Left icon rail for project, cube, network, maps, algebra, compare. Room around cube and graph, quietly populated functional chrome. The two dominant geometries should feel like two views of the SAME state, with matching selected nodes and map. A gorgeous next evolution of the first two references with smaller much more sophisticated UI.
+
+========================================================================
+
+12 — Role-aware hypergraph
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-91a8db90-5d3a-4d57-bad6-3f77af55cdd1.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7413194d-161d-4890-8b99-1d7ad8ff346e.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-66b5bdc2-a3c4-421a-8719-685b237c15fa.png
+
+Specific composition prompt:
+Direction label '12 / Role-aware hypergraph'. Main heading 'Inspect a three-way interaction' modest at top. This screen puts the luminous hypergraph at 65% width as hero, while the cube and maps become a disciplined right-side stacked inspector. The graph has a carefully composed spatial constellation of 10 small metallic-gray token spheres and overlapping translucent triangular membranes, not chaotic threads. One selected three-role relation is bright white and all others subdued. Its vertices have distinct tiny port outlines (circle query i, square role 1 j, diamond role 2 k), with a minimal three-item legend. Show small callouts 'Query', 'Role 1', 'Role 2' beside these nodes, and an active route into a small output vector at query node. Right panel: small glass-like attention cube with selected voxel; below a clearly legible 8×8 selected query slice labeled 'Pᵢ,:,:', same cell bracketed; below two compact maps 'V¹' and 'V²' and a joined Dⱼₖ strip. Bottom horizontal role assignment controls with swap icon labeled 'Swap role assignments', compact topology visibility switches 'Nodes / Faces / Ports'. Sidebar includes consistent outline icons. Exact formula in a calm bottom equation strip 'Dⱼₖ = V¹ⱼ ⊙ V²ₖ'. No claim multiplication itself is ordered, no claims about competitors. Luminous mathematical sculpture with credible dense UI.
+
+========================================================================
+
+13 — Attention map atlas
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-cdfb6df0-4141-4c9a-bb2a-cb902afe8fe0.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a69c8fab-69d2-44df-8133-fa6c5dce91ce.png
+
+Specific composition prompt:
+Direction label '13 / Attention map atlas'. Main page title 'Every query, every pair'. This concept is a beautifully designed full map inspection workspace. Main center occupies 65% width as an immaculate 4-column by 2-row atlas of EIGHT 8×8 grayscale matrix slices, each with tiny j horizontal / k vertical index rulers and labels 'Query 0' through 'Query 7'. Every map has a different subtle sparse pattern; all use one shared grayscale legend. Query 3 selected with a bright fine border and cell (j=5,k=2) white bracket. Each map has a small expand icon, carefully aligned controls, no bulky card shadows. Right 30% tall panel holds a precise glowing attention cube Aᵢⱼₖ with selected plane lifted a few pixels, below it a tiny linked hyperedge with i,j,k labeled, and a short vector composition V¹ⱼ ⊙ V²ₖ = Dⱼₖ. Compact toolbar above atlas: small icons 'Scores', 'Weights', 'Values', 'Difference'; Weights selected. Bottom quiet map strip 'Q / K¹ / K² / V¹ / V² / Y' with six small projection matrix previews and readable labels. Matrices are the visual hero; clear grayscale information, no rainbow heatmap. In left slim rail one Layers icon selected. High desktop density, nuanced dark surfaces, attractive real scientific software rather than a poster.
+
+========================================================================
+
+14 — Role swap experiment
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-81317f18-9411-494f-8958-8b93d3784382.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7413194d-161d-4890-8b99-1d7ad8ff346e.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a2f32e25-6663-4376-9c88-b42741ded6c5.png
+
+Specific composition prompt:
+Direction label '14 / Role swap experiment'. Main heading 'What changes when roles swap?' This is an intimate, highly polished interactive explanation screen for role-sensitive value mixing. Two broad dark side-by-side canvases share one fixed query i and SAME three token identities, title left 'j in role 1 · k in role 2', right 'k in role 1 · j in role 2'. Each shows a beautiful luminous selected three-port hyperedge with role 1 square port and role 2 diamond port; the two token labels trade positions in those role ports while query stays fixed. Directly beneath each graph a compact vector computation: left 'V¹ⱼ ⊙ V²ₖ', right 'V¹ₖ ⊙ V²ⱼ'. Show illustrative grayscale feature strips, with a central small double-arrow icon button between panels labeled 'Swap roles'. Bottom left-to-right: selected query 8×8 attention slice with a pair of off-diagonal cells mirrored around its diagonal; small output feature strips side by side; short explanation 'Different projections assign different roles.' A slim right inspector has 'Role projections' with a 'Tie projections' toggle currently off and exact copy 'Swapping role assignments can change the result.' Very small note 'Elementwise multiplication remains commutative.' Keep this text tasteful and accurate, no claimed proof or metric. Small top toolbar, appropriate Hugeicons-like swap, link, lock, matrix, network icons. Monochrome glow distinguishes selected assignment, not warm/cool colors. High readability, no enormous titles.
+
+========================================================================
+
+15 — Value flow studio
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-7690f650-5fca-4ae8-913b-4e96e5cc05c1.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7397163d-d0eb-41cd-8892-eecf16b44470.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-66b5bdc2-a3c4-421a-8719-685b237c15fa.png
+
+Specific composition prompt:
+Direction label '15 / Value flow studio'. Convert the reference algebra-builder idea into a breathtaking dark compact node-editor instrument with faithful computational flow. Title 'Follow the value'. Central canvas 70% width contains small precise modules and exquisitely routed thin gray cables, selected path white. X branches into FIVE separate projections. Top row V¹ and V² combine via one ⊙ into D, depicted as a j×k grid of tiny vector glyphs, then connect to a weighted sum. Lower lane K¹ and K² combine via ⊙, their feature-vector result contracts with separate Q using a dot-product node, making luminous cubic A; A then passes through 'Normalize' into P; P joins D at weighted sum; result Y on far right. No missing branch, and do not route Q into the elementwise product operator. Labels only, avoid dense dimensions on every module. A wide bottom shelf exposes map previews 'Q', 'K¹', 'K²', 'V¹', 'V²', 'D[:,:,c]', 'P[i,:,:]', 'Y' in aligned order; selected V¹ and V² previews bright. Right inspector contains an elegant hyperedge above the exact equation 'Dⱼₖ = V¹ⱼ ⊙ V²ₖ' and two feature vectors multiplying to Dⱼₖ. Put discrete i,j,k selectors and feature channel c selector in right inspector. Small icons for node add, fit view, layers, inspect, undo. Bottom 40px stepping control 'Project / Interact / Score / Normalize / Aggregate', Interact selected. Premium dark scientific software, subtle glows, all essential shapes compact.
+
+========================================================================
+
+16 — Projection map wall
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-4da54443-fb96-4fd8-975c-b594eafef3d1.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a69c8fab-69d2-44df-8133-fa6c5dce91ce.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7397163d-d0eb-41cd-8892-eecf16b44470.png
+
+Specific composition prompt:
+Direction label '16 / Projection map wall'. This screen explores ALL maps together in a deliberately engineered dark matrix workspace. Header 'From projections to output'. A spacious top row contains five slim but tall grayscale 8×8 projection matrices with clear column headings 'Q', 'K¹', 'K²', 'V¹', 'V²'. Each has shared token-row indices and a selected row bracket. Across the center, a large isometric cubic score tensor A is flanked on left by a small role-labeled hypergraph and on right by a large flat 8×8 value-interaction map headed 'D[:,:,c]' with a small feature channel c selector. Critically the D map is ONE selected feature channel across (j,k), not the whole D scalarized without explanation; place tiny note 'One feature across value pairs'. Thin quiet connectors show Q,K¹,K² feeding the score cube and V¹,V² feeding D. Bottom row normalized query slice 'P[i,:,:]' and value feature strip 'D[j,k,:]' feed a compact output map 'Y' using a small ∑ⱼₖ marker. Every visual has concise meaningful labels, small expandable-panel icons, selected coordinates tied across them. Bottom playback bar compact. Preserve empty space between graphics and avoid line crossings. Do not generate fake numerical matrices; use neutral gray cells. This is a wide high-resolution dense application view with sophisticated icons and no huge title.
+
+========================================================================
+
+17 — Dark comparison bench
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-804c373c-4e22-4e49-ba06-7617e1a270dc.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a2f32e25-6663-4376-9c88-b42741ded6c5.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a69c8fab-69d2-44df-8133-fa6c5dce91ce.png
+
+Specific composition prompt:
+Direction label '17 / Dark comparison bench'. Top nav Compare active. Page title 'Compare how values are mixed'. Full dark recreation and advancement of reference comparison bench, smaller richer controls. Left narrow shared input rail has eight compact token chips and 'Shared input' header with dataset icon. Main area divided into two symmetrical large scientific canvases: left 'Pairwise attention', right 'Cubic polyattention'. Left shows Q,K flowing into one flat attention matrix, and V flowing separately into weighted aggregation then Y. Right shows Q,K¹,K² into a glowing cubic attention tensor, normalized into P; V¹ and V² pass through a very visible ⊙ into D, and BOTH P and D feed weighted aggregation then Y. Beside cubic tensor show a small beautiful three-role hyperedge and linked matrix slice. Keep structures explicit but compact, critical value-mixing path picked out in luminous white. Below each model, one row of mini maps Q,K,V,Y versus Q,K¹,K²,V¹,V²,Y. Bottom comparative evaluation area small and quiet, empty with exact text 'Evaluation not run'. Toolbar has linked playback toggle, reset, step, inspectors, and 'Add reference model' icon button. A pin-coordinate control keeps selected query fixed across both models. No winner label, no accuracy metrics, no assertion about actual competing higher-order models. Dark scientific compare screen with clear model difference and consistent outline iconography.
+
+========================================================================
+
+18 — Tensor tomography
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-9918683e-293a-40bd-b21e-1a3e815dd537.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a69c8fab-69d2-44df-8133-fa6c5dce91ce.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7413194d-161d-4890-8b99-1d7ad8ff346e.png
+
+Specific composition prompt:
+Direction label '18 / Tensor tomography'. A cinematic but functional dense scientific application screen focused on slicing a cube. Title 'Read the tensor from every axis' modest in top toolbar. Huge elegant 3D attention cube at center-left rendered with 8×8×8 fine silver cell edges, translucent gray volumes, luminous white selected cells, three orthogonal slicing planes with tiny i,j,k labels. Surrounding UI is compact, dark and quiet. Right 30% vertical stack of THREE high-quality 8×8 grayscale slice maps with precise titles 'Fix i · vary j,k', 'Fix j · vary i,k', 'Fix k · vary i,j'; fine crosshair marks show same selected voxel, shared scale, corresponding compact axis sliders. Beneath cube an expansive horizontal set of eight query slices as small thumbnail maps with i=0..7; selected slice outlined. Left narrow layers rail with visibility icons for 'Volume', 'Planes', 'Cells', 'Hyperedges'. An elegant small ghost hyperedge is linked to cube selection in lower-left inset, with role 1 and role 2 ports marked. Bottom exact readout 'i 3 / j 5 / k 2' and transport. Glow is grayscale and very controlled, enough to feel beautiful but grid stays crisp. Strong empty space around cube. Not generic medical scan UI; attention equation in tiny inspector 'Aᵢⱼₖ = ⟨Qᵢ, K¹ⱼ ⊙ K²ₖ⟩'.
+
+========================================================================
+
+19 — Feature interaction lens
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-a9815128-28fd-401a-9e59-6747b35807f0.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7397163d-d0eb-41cd-8892-eecf16b44470.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7413194d-161d-4890-8b99-1d7ad8ff346e.png
+
+Specific composition prompt:
+Direction label '19 / Feature interaction lens'. Title 'Inside one value pair'. This concept zooms deeply into HOW value mixing happens. Main center features two refined parallel horizontal banks of 16 small gray feature bars labeled 'V¹ⱼ' and 'V²ₖ', aligned vertically feature by feature; fine paired vertical connectors enter 16 small ⊙ operators and emerge into a third bar bank 'Dⱼₖ'. The design feels like a tiny precision audio mixing instrument but is obviously linear algebra; faint ruled guides make matching channels effortless. Above the feature banks, a gorgeous small role-aware hypergraph shows query i with j assigned role1 and k role2; adjacent glowing attention cube with one selected cell and normalized weight label 'Pᵢⱼₖ'. Below the computed D strip a precise simple multiplication by the scalar weight, labeled 'Pᵢⱼₖ Dⱼₖ', goes to a strip 'Contribution to Yᵢ'. Right inspector stacks selected query slice, a compact role-swap control, and equation 'Dⱼₖ = V¹ⱼ ⊙ V²ₖ'. Far left token and projection selection with outline icons. Bottom ribbon shows tiny projection maps Q,K¹,K²,V¹,V²,Y. Exact short explanation 'Compose features, then weight the contribution.' No numerical benchmark, no invented formula. High resolution small clean components, nuanced matte surfaces, fine luminous selected path, less giant cube and more meaningful feature interaction.
+
+Correction prompt:
+Make only one localized correction to this precise dark UI image, preserving all other pixels, composition, title, fonts, data visuals, 19 label and layout. The BOTTOM HORIZONTAL RIBBON currently titled 'Full pipeline (context)' incorrectly connects separate projections sequentially with arrows. Replace only that bottom ribbon with a quiet row headed 'Representation maps'. Show NINE compact separate independent map thumbnails labeled X, Q, K¹, K², V¹, V², D[:,:,c], P[i,:,:], Y. Each thumbnail is a tiny gray matrix with its mathematical label above. NO arrows or connectors whatsoever between these thumbnail tiles; they are independent map tabs, not stages of a sequence. Keep V¹ and V² tabs subtly outlined white as active. Remove all Normalize and Weighted sum blocks from that bottom ribbon. Do not change the hero feature multiplication banks, formulas, top hyperedge, inspectors, or any other content. Exact original grayscale style with crisp fine typography.
+
+========================================================================
+
+20 — Research cockpit
+Final image: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-22208fa3-cc0a-4651-8473-1d1a07b73899.png
+Reference images:
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-a69c8fab-69d2-44df-8133-fa6c5dce91ce.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7413194d-161d-4890-8b99-1d7ad8ff346e.png
+/var/folders/gz/kmzkq37n5kd3zqj75h46ktww0000gn/T/codex-clipboard-7397163d-d0eb-41cd-8892-eecf16b44470.png
+
+Specific composition prompt:
+Direction label '20 / Research cockpit'. The most complete, stunning unified dark research application of this iteration. Small top header with polyformer wordmark, 'Learn / Explore / Compare / Notes', project selector 'Cubic attention', search icon, settings icon. Compact left project rail with consistent icons and labels 'Input', 'Projections', 'Tensor', 'Relations', 'Values', 'Output'. Main upper workspace consists of two large linked viewports without heavy card chrome: left a translucent 8×8×8 cube with sparse glowing white interactions and selected plane; right a beautiful role-labeled hypergraph with selected triangular membrane and small port labels Q,K¹,K². A slim inspector on far right displays exact score and value equations, query/key selectors, and a compact selected pair value strip. Lower workspace a carefully aligned row of small grayscale projection maps Q,K¹,K²,V¹,V² and Y, then a second low-height ribbon of eight query attention slices. It should feel spacious at 2560×1440 even with all these maps; no text blocks, every map has legible small title. Lower edge a thin pipeline overview X→projections→interactions→normalize→aggregate→Y rendered as tiny diagram plus 32px step/play controls. Show 'Linked selection' indicator and selected i=3,j=5,k=2 consistently. Use two subtle gray surface layers and sparing white focus borders. Avoid overload: cube and hypergraph remain obvious focal points; controls approximately half the visual scale of those in first reference. A beautiful plausible desktop screenshot from a sophisticated research lab, compact Hugeicons-like icon system, accurate math, no unearned results.
+

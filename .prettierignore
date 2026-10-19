@@ -7,3 +7,10 @@ bun.lockb
 
 # Miscellaneous
 /static/
+
+# Agent tooling and research material (not app source)
+/.agents/
+/.claude/
+/.cursor/
+/references/
+skills-lock.json

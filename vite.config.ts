@@ -5,6 +5,9 @@ import adapter from '@sveltejs/adapter-static';
 import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
+	// jax-js lazily imports its backends, which needs ES-module workers
+	worker: { format: 'es' },
+	optimizeDeps: { include: ['@jax-js/jax'] },
 	plugins: [
 		tailwindcss(),
 		sveltekit({

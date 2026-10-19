@@ -10,6 +10,8 @@ const gitignorePath = path.resolve(import.meta.dirname, '.gitignore');
 
 export default defineConfig(
 	includeIgnoreFile(gitignorePath),
+	// agent tooling and research material, not app source
+	{ ignores: ['.agents/', '.claude/', '.cursor/', 'references/'] },
 	js.configs.recommended,
 	ts.configs.recommended,
 	svelte.configs.recommended,

@@ -1,0 +1,59 @@
+Audit and repair record — concepts 18–20
+Tool: built-in image_gen (not CLI).
+Final actual generated images were visually inspected. No remaining serious mathematical-label, numeric-example, pipeline or duplicate-index bloopers identified. Heatmap intensities/cube fields remain schematic visual mockups, not computed research results. This is not a claim of pixel-perfect typesetting or exact simulated tensor samples.
+
+Concept 18 — Tensor tomography
+Final path: /Users/neo/.codex/generated_images/01a151f6-9498-7580-877b-642a6103cc3e/exec-d1cc0830-335a-4b62-a0a5-b29e511bf555.png
+Corrected: Removed contradictory numeric coordinates and sliders; used symbolic selected i*,j*,k* with appropriately labelled orthogonal slices, aligned crosshairs, single selected cube intersection, correct score formula.
+
+Initial repair prompt:
+Use case: precise-object-edit. Edit the supplied UI screenshot, preserving its superb compact black/white/grayscale instrument-panel aesthetic, clean outlined icons, central luminous attention cube, sidebar triangular hyperedge, all three orthogonal slice panels and bottom row of eight miniature maps. Keep title "18 / Tensor tomography" and polyformer.
+Correct all scientific and coordinate bloopers, using SYMBOLIC selection rather than pretending exact numeric simulation. The field is A ∈ R^(n×n×n). Keep equation A_ijk = ⟨Q_i, K¹_j ⊙ K²_k⟩.
+Central cube: axes exactly i, j, k once each, REMOVE ALL NUMERIC TICKS from the cube. Keep three perpendicular translucent planes meeting at exactly one bright voxel. A thin leader from this voxel says "(i*, j*, k*)". It is a conceptual visualization.
+Three slice panels on right: first "Fix i = i*" with formula "A[i*, :, :]" and axes horizontal j, vertical k; second "Fix j = j*" with "A[:, j*, :]" axes horizontal i, vertical k; third "Fix k = k*" with "A[:, :, k*]" axes horizontal i, vertical j. Each is a square grayscale heatmap, exactly one white crosshair; replace every numbered heatmap tick with symbolic crosshair coordinate labels. First crosshair intersects at j*, k*, second i*, k*, third i*, j*. Thus equal k* height in first and second; equal i* horizontal position in second and third; j* horizontal first equals j* vertical third after coordinates. For explicit consistency choose crosshair position 3/8 from left for i*, 5/8 from left for j*, 2/8 up from bottom for k*. Show NO numeric index values anywhere. Replace right sliders with small precise arrow or minus/plus segmented symbolic index controls labelled i*, j*, k* rather than numeric sliders. Bottom playback displays "i*" / "j*" / "k*" and footer "Illustrative tensor · linked slice views".
+Bottom query thumbnails: eight distinct square grayscale heatmaps without numerical labels and without selecting a thumbnail, heading "Query slices · one plane per query". No extra equations. Do not add false numeric readings. Preserve breathtaking clean lines, ample microspacing, high resolution crisp typography, no color. Render full screenshot with no external mockup or frame.
+
+Targeted follow-up prompt:
+Precise local scientific correction. Preserve this screenshot and layout unchanged except the three square heatmaps on the right. ALL THREE must have the white selected crosshair at the EXACT HORIZONTAL AND VERTICAL CENTER, with gray field rearranged gracefully to suit. Centered exactly half from left, half from bottom in all three panels. This makes symbolic i*, j*, k* coordinate positions coherent. First crosshair labels horizontal j*, vertical k*; second horizontal i*, vertical k*; third horizontal i*, vertical j*. Keep axis names outside unchanged. White selected voxel in central cube remains at the intersection of its three planes. Keep all existing correct formulas, all title/navigation/sidebar/bottom maps intact. High resolution grayscale research UI. Do not introduce numeric indices or values.
+
+Concept 19 — Feature interaction lens
+Final path: /Users/neo/.codex/generated_images/01a151f6-9498-7580-877b-642a6103cc3e/exec-81ab34a8-abcb-4cc5-8cf2-dcbf188b68e7.png
+Corrected: Replaced impossible bar products with exact 8-feature binary example. Hadamard product [1,0,0,0,1,0,0,0] and weighted contribution [0.25,0,0,0,0.25,0,0,0] verified. Repaired full cube versus 2D slice label, dimensions of all maps and sidebar query.
+
+Initial repair prompt:
+Use case: precise-object-edit. Audit repair of the supplied screenshot; preserve its sophisticated flat near-black grayscale UI, small Hugeicons-like outlines, serif feature title, dense layout, hypergraph triangle and luminous attention cube. Keep "19 / Feature interaction lens" and "Inside one value pair". Rebuild the central feature composition as a mathematically EXACT binary worked example with 8 features, labelled "d_v = 8". Replace all inaccurate bar charts in this central worked example with EIGHT equally sized square numeric cells in each vector row. Display the following exact rows:
+V¹_j, j=1: [1, 1, 0, 0, 1, 0, 1, 0]
+V²_k, k=6: [1, 0, 1, 0, 1, 1, 0, 0]
+D_jk: [1, 0, 0, 0, 1, 0, 0, 0].
+Feature numbers across top 1 2 3 4 5 6 7 8 exactly. Light-gray filled cells denote 1, dark cells 0. A single downward "⊙" relation between the first two rows and D, or compact elementwise connector labels, never up-pointing arrows. Formula D_jk = V¹_j ⊙ V²_k. Footer to this panel: "Multiply corresponding features." Clear literal cell digits take priority over tiny decorations.
+Weighted contribution underneath: weight box "P₍₃,₁,₆₎ = 0.25", multiplication sign, D row, equals output row [0.25, 0, 0, 0, 0.25, 0, 0, 0]. Label "Contribution to Y₃" (not full output). Eight cells. Remove any repeated schematic bars that suggest inconsistent numbers.
+All sidebars showing the same vectors must use the SAME 8-element binary rows, or replace duplicated vector diagrams with simple text "8 features". Right selected indices i=3, j=1, k=6; right normalized weight 0.25; selected D shape d_v=8. Upper cube is full P tensor, NOT a slice: label "Attention weights P ∈ R^(n×n×n)" and no index tick claims. A leader from one glowing voxel to P₍₃,₁,₆₎=0.25. Triangle vertices i(query), j(role1), k(role2).
+Correct bottom representation map dimensions: X n×d, Q n×d_k, K¹ n×d_k, K² n×d_k, V¹ n×d_v, V² n×d_v, D[:,:,c] n×n, P[i,:,:] n×n, Y n×d_v. These bottom panels are full maps and their labels have no selected row subscripts. Typography must be sharp, beautiful and legible. Keep mathematical details correct. No invented performance claims.
+
+Targeted follow-up prompt:
+Precise local text correction. Keep the supplied screenshot essentially unchanged, all beautiful layout, feature-cell digits, equations, correct weighted 0.25 result, cube, hypergraph, maps and icons. Change ONLY the left sidebar "Projection views" row for Q: its dimension must be n × d_k, with subscript k, exactly matching K¹ and K² in the rows below and the Q map label at bottom. Current n×d is wrong. Ensure every central 8-cell vector remains EXACTLY unchanged: V1 [1,1,0,0,1,0,1,0]; V2 [1,0,1,0,1,1,0,0]; D [1,0,0,0,1,0,0,0]; contribution [0.25,0,0,0,0.25,0,0,0]. No other changes.
+
+Concept 20 — Research cockpit
+Final path: /Users/neo/.codex/generated_images/01a151f6-9498-7580-877b-642a6103cc3e/exec-1cf2c412-7b83-4c49-8233-59ff58e94a64.png
+Corrected: Repaired missing/duplicate query slice labels to 0–7 exactly once. Full projection maps now labelled Q,K1,K2,V1,V2,Y with correct shapes. Removed misleading identical selected row indices, made selection symbolic. Rebuilt branched pipeline with normalized score tensor P and separately composed feature tensor D both feeding aggregation. D thumbnail now a stack of feature planes. Fixed malformed cube dimension text to plain Shape: n × n × n.
+
+Initial repair prompt:
+Use case: precise-object-edit. Repair the supplied "20 / Research cockpit" UI screenshot while preserving its superb dense full-dark grayscale design, restrained white highlights, precise separators, compact outline icons, prominent luminous cube and selected triangular hyperedge. Make scientifically correct, remove numeric synchronization claims that cannot be demonstrated.
+Top cube label "Attention scores A ∈ R^(n×n×n)". Remove ALL numerical ticks on cube, leave i, j, k once each on its three axes. Three luminous planes intersect in one selected bright voxel. Linked selection box uses purely symbolic "i*", "j*", "k*" instead of numeric 3,5,2. Hypergraph vertices Q_i*, K¹_j*, K²_k* with textual roles query, role 1, role 2; do not annotate numeric indices. Right inspector retains exact math A_ijk=⟨Q_i, K¹_j⊙K²_k⟩ and D_jk=V¹_j⊙V²_k. Selector controls are i*, j*, k*. Selected pair value D_j*k* is one horizontal FEATURE VECTOR (not a matrix), with label "d_v features"; no exact numeric values.
+Middle row of projection maps is SIX full rectangular matrices labelled exactly Q, K¹, K², V¹, V², Y; correct respective dimensions n×d_k, n×d_k, n×d_k, n×d_v, n×d_v, n×d_v. Remove all numerical row ticks and all selected row boxes to avoid implying one shared selected index for every role. Use small square-cell grayscale maps.
+Bottom query-map row contains EIGHT miniature maps, labels IN ORDER and EACH ONCE: i=0, i=1, i=2, i=3, i=4, i=5, i=6, i=7. Each has a distinct pattern, no map selected. Heading "Query slices A[i,:,:] · n×n". Right slice panel is ONE flat 2D heatmap labelled "Selected query plane A[i*,:,:]"; horizontal j, vertical k, no numbered ticks.
+Most important: REBUILD bottom computation pipeline with TWO correct branches and clear arrows, sufficiently roomy and legible:
+X → Projections.
+Upper branch: "Q, K¹, K²" → "Scores A" → "Normalize P".
+Lower branch: "V¹, V²" → "Compose D".
+Both "P" and "D" feed one "Aggregate" node → "Y".
+Under Aggregate write Y_i = Σ_{j,k} P_ijk D_jk.
+Never send only attention scores to Y; never omit D. Simplify thumbnails in the bottom pipeline if needed for space. Footer "Illustrative state". No fake benchmark claims. Keep layout polished at high-resolution desktop scale.
+
+Targeted follow-up prompt:
+Precise local scientific-thumbnail correction. Preserve entire supplied dark Research cockpit screenshot unchanged except the tiny thumbnail INSIDE "Compose D" at the bottom. D has shape n×n×d_v, so replace that one flat thumbnail with a beautiful small stack of grayscale square heatmap planes (several slightly offset planes), visibly a 3D tensor with feature slices. Keep its text dimension n×n×d_v. Both P and D arrows must still independently reach Aggregate, formula Y_i=Σ_{j,k}P_ijk D_jk intact. Keep all eight query slice labels i=0,1,2,3,4,5,6,7 exactly once; all six full projection map labels Q,K¹,K²,V¹,V²,Y correct. Keep all other artwork, cube, symbolic selectors, triangle and equations unchanged. Maintain polished high resolution grayscale only.
+
+Final text-only prompt:
+Precise text-only edit to supplied screenshot. Preserve EVERYTHING except the small dimension line beneath 'Cubic attention tensor' at upper left. Its superscript has become malformed. Replace that entire line with plainly typeset sans-serif text EXACTLY 'Shape: n × n × n' in a normal baseline, no superscripts. Keep generous spacing, legibility. All other math, 8 slice labels, full matrices, composed-D stack, arrows, layouts and grayscale art unchanged.
+
+

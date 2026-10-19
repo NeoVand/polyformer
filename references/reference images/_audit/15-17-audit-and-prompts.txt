@@ -1,0 +1,108 @@
+Polyformer UI audit — concepts 15, 16, 17
+Method: built-in image_gen editing only. Each returned raster was visually reinspected.
+All paths below are generated-image source files; root agent copies final files into user-requested project folder.
+
+FINAL FILES
+
+Concept 15
+/Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-338124c4-acf5-461e-a7eb-2106fe56997c.png
+Cleared after one repair pass: sum operator replaces multiplication, output shape d_v, D axes j/k/c rather than query axis, D inspector selection controls, cleaner matrix preview labels.
+
+Concept 16
+/Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-86d6b7df-e9d7-4f5f-a17b-15b12fc2026a.png
+Cleared after three repair passes: removed A->D and P->D false dependencies; A maps to P; P and whole D feed sum; selected vector is an inspector only; correct D[:,:,c] map label and vector shape; all top row badges symbolic; cubic normalization unspecified and generic.
+
+Concept 17
+/Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-8a4f779a-6c38-4927-ad05-499b35dfe255.png
+Cleared after five repair passes: repaired pairwise P,V into sum; removed false K->sum; cubic Q/K1/K2 all feed A, A passes through Normalize to P and P,D feed sum; scalar/vector/tensor shapes corrected; irrelevant sentence task replaced with toy tokens; orphan connector, duplicate dimensions and dangling formula removed; cubic normalization convention remains unspecified.
+
+Scope: visual inspiration mockups. Heatmaps and voxel values are illustrative, not actual calculated experiment results. No remaining serious flow/math bloopers identified. Final images are not a claim of numerical validation or exact interactive behavior.
+
+EXACT PROMPT HISTORY
+
+=== Pass 1; Concept 15 ===
+Edit input: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-7690f650-5fca-4ae8-913b-4e96e5cc05c1.png
+Use case: precise-object-edit; scientific UI correction.
+Edit this exact Polyformer concept 15 screenshot, preserving its composition, beautiful black/graphite monochrome instrument UI, thin lines, crisp icons, glowing tensor renderings, serif mathematical symbols, compact controls, all top and left navigation.
+Correct the scientific bloopers carefully:
+1. The circular weighted sum operator immediately before Y must show a summation sign Σ, not ×. Caption it "Sum over j, k". Its two incoming arrows from D above and P left remain. This contracts normalized weights with pair values.
+2. Change BOTH output Y dimension labels (main output card and bottom preview) from n × d to n × dᵥ.
+3. In the right Value interaction inspector, the tensor D has axes j, k, c — never query i. Replace the lower-left "i (query)" with "c (feature)", upper j label with "j (value 1)", lower-right k label with "k (value 2)". Keep the cube beautiful.
+4. In the right inspector index controls remove the entire query i selector; keep j, k, and feature channel c selectors, laid out neatly.
+5. Correct the bottom preview mini-heatmap axes: Q, K¹, K², V¹, V², Y are matrices; vertical axis is token (i/j/k appropriate), horizontal axis is feature. To prevent unreadably small mixed labels, remove tiny arrow/tick labels from these six preview cards entirely, retain only their mathematical titles, dimension labels, and grayscale maps. For D[:,:,c] and P[i,:,:] preview cards retain only titles and "fixed feature c" or "fixed query i" respectively, with j and k axes.
+Keep existing independent X→V¹,V²,Q,K¹,K² projection branches, V¹⊙V²→D, Q and K¹⊙K²→A→Normalize→P, and D,P→Σ→Y precisely. Do not alter the equation D_jk = V¹_j ⊙ V²_k. Add small footer "Illustrative state". No color, no new claims, no chart metrics. Produce a polished readable landscape image matching the original.
+
+=== Pass 1; Concept 16 ===
+Edit input: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-4da54443-fb96-4fd8-975c-b594eafef3d1.png
+Use case: precise-object-edit; scientific UI correction.
+Edit this exact Polyformer concept 16 "Projection map wall" image. Preserve its lovely dense black/grayscale layout, compact UI, outline icons, glowing score cube, all five top projection maps and seven map panels. This is a polished scientifically accurate UI reference, not decorative fake math.
+Crucial: correct data dependencies. Current arrows incorrectly suggest A produces D and P produces D. REMOVE all arrows that connect the attention score tensor panel horizontally to the value interaction map, or normalized query slice panel horizontally to value feature vectors. Score and value branches are independent.
+Use the space between panels to show only these connections, with clear right-angle thin lines: Q,K¹,K² feed score tensor A; V¹,V² feed interaction map D. A feeds a tiny labeled "softmax over (j,k)" node before P. D feeds the selected vector inspector D[j,k,:]. BOTH P and D feed a shared small output operator labeled Σ_(j,k), leading to Y. Route the P line beneath the bottom panels so it never enters D's inspector. If any routing would be ambiguous, omit that connector rather than drawing a false dependency.
+In the top-right replace "8 × 8 tokens / d = 8" with "n = 8 / dₖ = 8 / dᵥ = 8".
+Top maps dimensions: Q,K¹,K² are n × dₖ; V¹,V² are n × dᵥ.
+The cube is raw A with formula A_ijk = ⟨Q_i, K¹_j ⊙ K²_k⟩. The query slice is P_i,:,: = softmax_(j,k)(A_i,:,: / √dₖ), normalized over key pairs for each query.
+D map formula is D_jk = V¹_j ⊙ V²_k; full D has 8 × 8 × dᵥ dimensions.
+Selected feature vector inspector D[j,k,:] is a single dᵥ vector; label its dimensions "dᵥ features", remove "1 × dᵥ".
+Output Y has 8 × dᵥ dimensions and exact equation Y_i = Σ_(j,k) P_ijk D_jk.
+Simplify tiny repeated axis tick labels across maps: remove numeric ticks and retain j,k or token/feature axis words, while keeping selected-index badges i=3, j=3, k=5, c=3. Keep left navigation and bottom transport. Add discreet "Illustrative state". Preserve design and do not add metrics or unsupported comparative claims.
+
+=== Pass 1; Concept 17 ===
+Edit input: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-804c373c-4e22-4e49-ba06-7617e1a270dc.png
+Use case: precise-object-edit; scientific UI correction.
+Edit this exact Polyformer concept 17 "Dark comparison bench", preserving the polished full-black monochrome scientific instrument layout, left shared-input sidebar, two side-by-side comparisons, small grayscale projection maps, beautiful attention cube and three-role hyperedge, compact icon transport, and bottom Evaluation not run panels. Correct the math and data-flow visibly, without extra clutter.
+PAIRWISE panel:
+Use raw score label S = QKᵀ. The heatmap label is P = softmax(S / √dₖ). Remove duplicate contradictory softmax equations. Use a single compact formula at panel top "P = softmax(QKᵀ / √dₖ)".
+Connect BOTH the attention P heatmap and V branch into the SAME summation node Σ_j, then one outgoing line to Y. Do not connect the heatmap directly to the output bypassing the sum. Replace the current × node with Σ_j. Caption "Weighted sum".
+CUBIC panel:
+A_ijk = ⟨Q_i, K¹_j ⊙ K²_k⟩ is RAW score. All Q,K¹,K² projection arrows feed the A cube. From the A cube draw an explicit small "Normalize" box followed by a clean arrow labeled P_ijk into the aggregation node. Normalization is softmax over j,k per query, with √dₖ scaling; include small "P = softmax_(j,k)(A / √dₖ)" underneath the cube.
+Value branch V¹,V²→⊙→D_jk is separate and feeds the SAME aggregation node. Label this branch "D_jk", NEVER P_ijk. The value formula remains D_jk = V¹_j ⊙ V²_k; beneath it say "feature vector", not the full tensor dimensions.
+Replace cubic × aggregation node with Σ_(j,k), caption "Weighted sum"; output formula small "Y_i = Σ_(j,k) P_ijk D_jk".
+Make shapes consistent without dense microtext: projection Q/K matrices labels "n × dₖ"; V and output Y labels "n × dᵥ"; A cube label "n × n × n". Remove tiny numeric axis ticks and duplicate dimension declarations from bottom preview strips; keep map names.
+Replace the incomplete eight-token example sentence in the sidebar with eight concrete toy tokens: "query", "red", "square", "blue", "circle", "green", "triangle", "target". Sidebar task label "Toy relations". Do not claim task results or model superiority. Keep "Evaluation not run" and add discreet "Illustrative state".
+Precise equations and unambiguous arrows are essential. Produce a highly polished landscape image in the same design style.
+
+=== Pass 2; Concept 16 ===
+Edit input: /Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-9f993f1b-e188-4f26-9ba0-655b34e5f9a7.png
+Precise correction of this scientific UI screenshot. Preserve the complete design and all existing elements except the following corrections; no redesign.
+1. The small "softmax over (j,k)" box beneath the central A cube currently points DOWN into panel 6 Value feature vector. This is scientifically false. DELETE this downward arrow. Draw a line from the softmax box LEFT to panel 5 "Normalized query slice", ending with an arrow entering panel 5. It must not touch panel 6. If there is insufficient room, remove both the softmax box and its connectors completely; the correct P formula already appears inside panel 5.
+2. Panel 4 title directly above its square heatmap currently reads D[j,k,:] and 8×8×d_v. Change these two texts to exactly "D[:,:,c]" and "8 × 8". Change subtitle to exactly "One feature across value pairs." Keep existing correct D_jk formula and full-D dimensions to the right. This panel shows a j,k slice at fixed feature c.
+3. REMOVE the horizontal arrow from panel6 selected value vector into Σ on its right. A single selected vector must not appear to be the complete summed operand. Retain the D whole-map arrow entering Σ from above and P query-slice arrow entering Σ from below. Those TWO incoming branches go to the sum and Y.
+4. Top map K² and V² selected-index badges must display "5" matching bottom k=5; Q, K¹, V¹ remain3.
+5. Remove incoming connections from Q and K² to the middle panels entirely (the short top-to-middle connector lines), retain the clear captions "Q, K¹, K² feed the attention score A." and "V¹,V² feed the value interaction map D." It is better to have card-based map inspectors than false wiring.
+Everything else unchanged: black, grayscale, fine icons, bright cube, compact scientific interface. No extra formulas or arrows.
+
+=== Pass 2; Concept 17 ===
+Edit input: /Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-e0b6afe1-2cf1-413a-abb0-16d4b7992837.png
+Precise local correction of this Polyformer comparison UI screenshot. Preserve all layout, typography, black/grayscale style, maps, correct equations, icons, and three-role hyperedge.
+Fix these exact residual scientific/UX errors:
+1. In the LEFT pairwise diagram there is an erroneous vertical line extending from the bottom of K around x=475 down to the summation at x=610. DELETE this K-to-summation connection entirely. K only feeds the score S with Q. The Σ_j node must have exactly TWO incoming arrows: one from V on the left and one from normalized P above. Keep its one outgoing arrow to Y.
+2. In the RIGHT cubic panel, the dimension label on the normalized weight arrow currently says P_ijk ∈ R^(n×n×n), which incorrectly assigns tensor dimensions to a scalar. Change only that label to "P ∈ ℝⁿˣⁿˣⁿ" (plain whole-tensor P, no ijk subscript). Prefer remove this dimension annotation entirely if difficult. Keep the correct arrow label P_ijk above it.
+3. Sidebar task explanation still mentions subject/relation/object in a sentence though these are toy color/shape tokens. Replace that short paragraph with exactly "Inspect role-sensitive interactions among toy tokens."
+4. At the bottom small map preview strips, REMOVE all tiny token-name row lists beside each mini-map. Keep only titles Q,K,V,Y or Q,K¹,K²,V¹,V²,Y and heatmaps. This cleans clutter and avoids unreadable microtext.
+5. In both weighted sum captions show "Weighted sum" and leave sums as Σ_j and Σ_(j,k). Keep the cubic D_jk feature-vector label and both P and D arrows entering Σ.
+No new dimensions, no new arrows, no metrics, no new claims. Preserve all other text and imagery exactly.
+
+=== Pass 3; Concept 17 ===
+Edit input: /Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-813de68e-a125-4c65-9542-59b8fff244da.png
+One precise wiring repair only. Preserve EVERY pixel of the Polyformer dark comparison layout as closely as possible, all text, maps, and existing equations.
+In the right Cubic polyattention panel, the K¹ projection matrix (middle of Q,K¹,K²) is NOT visibly connected to the score cube. There is a short orphan vertical white line to the right of K¹ around x=1150 from y=385 to425. Delete that orphan line. Instead draw a short vertical white connector starting at the exact bottom-center of K¹'s matrix (approximately x=1093,y=392) down to the existing horizontal white Q-to-score trunk at y=425. Join it with a tiny clear junction dot. This establishes Q and K¹ feeding the same arrow into A, while K² already feeds A separately. No other arrows or text change. Scientific requirement: all three projection cards Q,K¹,K² visibly connect to raw score cube A. Keep the beautiful thin bright-white scientific diagram styling and all other elements unchanged.
+
+=== Pass 4; Concept 16 ===
+Edit input: /Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-72b78c27-4677-4312-9bde-b70e6204bc0d.png
+Precise local scientific UI edit; preserve this complete image, its design, maps, edges, and all layout.
+1. In panel 5 Normalized query slice, REMOVE the detailed softmax equation with sqrt(d_k) and (j,k). Replace it with a single simple two-line caption: "P = normalized" / "attention weights". Do not assert any normalization axis or scaling convention anywhere in this image.
+2. In the five TOP projection maps, change numeric badges adjacent to the selected row to symbolic badges: Q badge "i"; K¹ badge "j"; K² badge "k"; V¹ badge "j"; V² badge "k". Leave their approximate positions as schematic row indicators. Remove all exact numeric indices from top maps. Keep full matrix shape labels and feature axis captions.
+Everything else unchanged, including score equation A_ijk = ⟨Q_i,K¹_j⊙K²_k⟩, D_jk formula, output summation, and all connectors. Do not add formulas. Preserve the polished monochrome dark instrument aesthetic.
+
+=== Pass 4; Concept 17 ===
+Edit input: /Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-60c9ff77-bfd8-4c19-be70-8e2545fee85d.png
+Precisely edit only these tiny residual elements in this dark Polyformer comparison UI; preserve everything else.
+1. In CUBIC panel beneath the Normalize box, replace the entire softmax_(j,k)(A/√d_k) equation with plain words "Normalized attention weights". Do not assert the cubic normalization axis or scaling convention.
+2. Under each tall projection matrix in BOTH diagrams, remove the redundant lower dimension labels. These are duplicated under Q,K,V,Y on the left and Q,K¹,K²,V¹,V²,Y on the right. Keep their proper original mathematical title-and-dimension labels ABOVE each matrix. In particular remove the stray little character under K¹.
+3. In cubic panel remove the orphan short vertical line at approximately x=1150,y=384 to425. IMPORTANT: keep the correct connected K¹ line at x=1094 from its bottom at392 to425, including its junction dot. All three Q,K¹,K² must remain visibly connected to score A.
+No other changes: retain the correctly scaled pairwise softmax equation, raw score formula, output formula, both weighted sums and all P/D arrows. Preserve exact monochrome styling and scientific layout.
+
+=== Pass 5; Concept 17 ===
+Edit input: /Users/neo/.codex/generated_images/01a151f6-52a7-75a0-b0de-043bb3b783f1/exec-dacb3d49-515e-4c92-a246-152a76a9d99f.png
+Edit this exact image with ONE tiny text cleanup. In the LEFT pairwise panel directly beneath the square score heatmap, around x=765,y=425, there is an incomplete dangling expression "(S / sqrt(d_k))". REMOVE that entire dangling expression. Replace it in the same position with the simple word "Normalize" in small white UI text. Keep the proper complete equation "P = softmax(QKᵀ / √dₖ)" at the top of the left panel untouched. Keep the nearby label "P ∈ ℝⁿˣⁿ" and every wire untouched. Preserve absolutely everything else in both panels, sidebar, top navigation, maps, equations and bottom controls. Do not add, replace, or remove anything else.
+

@@ -1,0 +1,110 @@
+{
+  "scope": "Concepts 12,13,14 only",
+  "repositoryWrites": "None by this subagent; root will copy final images and this audit into the requested reference folder.",
+  "records": [
+    {
+      "concept": 12,
+      "original": "/Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-91a8db90-5d3a-4d57-bad6-3f77af55cdd1.png",
+      "final": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-f97df6d2-60c5-45ac-aae2-9a52716e9018.png",
+      "nativePixels": {
+        "width": 1672,
+        "height": 941
+      },
+      "method": "Built-in image_gen edits only",
+      "fixes": [
+        "Replaced misleading full-matrix output shape with the selected weighted pair contribution P_ijk D_jk.",
+        "Labeled the selected P query slice explicitly as a two-dimensional slice, not full P.",
+        "Removed incorrect n×d_v labels from selected value vectors and incorrect combined V,D tensor annotation.",
+        "Preserved correct full A and D tensor shapes and score/Hadamard-product equations.",
+        "Aligned all three value-path feature strips to eight equally sized cells; the selected heatmap cell corresponds to j=4,k=6."
+      ],
+      "inspection": "Each final image was visually reinspected. No serious mathematical, dimension-label, dataflow, or UI-mode contradiction found in the final image. Concept 12 additionally independently cleared by root.",
+      "limitations": "Illustrative UI concept art; map intensities and feature values are not computed experimental data. Numerical performance claims are absent.",
+      "edits": [
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-91a8db90-5d3a-4d57-bad6-3f77af55cdd1.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target, concept 12, a dark grayscale scientific UI for cubic polyattention. Correct its mathematical labels while preserving its composition, refined serif typography, dark black canvas, glowing triangular hypergraph, thin borders, monochrome icons, and existing high-resolution widescreen layout. Do not redesign it.\nRequired precise corrections:\n1. The small vector bar above the hypergraph is ONE weighted pair contribution, not a full n by d_v matrix. Replace its caption with \"Selected contribution\" and its lower label with \"P_ijk D_jk\". Remove the erroneous \"n × d_v\" label there.\n2. In the middle right panel, keep the title \"Selected query slice P_i,:,:\". Replace the top-right shape annotation with \"P_i,:,: ∈ ℝ^(n×n)\" so this explicitly describes only the slice. The selected-weight formula must be \"P_ijk\", not a fixed numerical index. Keep row j and column k clear and the highlighted cell.\n3. The bottom right panel should be titled \"Pair value features\". Remove the incorrect global \"V,D ∈ ...\" annotation. Above the two horizontal vector strips write only \"V¹_j\" and \"V²_k\"; remove both incorrect \"(n × d_v)\" labels. Their arrows must converge into a Hadamard-product circle marked ⊙. The resulting single row is labeled \"D_jk\", with the small caption \"feature vector\". No matrix-size label on these selected vectors.\n4. Preserve the correct score formula \"A_ijk = ⟨Q_i, K¹_j ⊙ K²_k⟩\" in the top right, and the correct lower-left formula \"D_jk = V¹_j ⊙ V²_k\". Preserve \"D ∈ ℝ^(n×n×d_v)\" in the bottom explanation because that denotes the FULL collection.\n5. Add a tiny unobtrusive \"Illustrative view\" caption, not numerical performance results.\nKeep all text legible, all geometry polished, all panels inside the canvas. No new claims, no colors, no invented dimensions. Preserve layout and aesthetic.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-8cdb531b-2d9d-4d20-bb5a-5a9b1ad68b45.png"
+        },
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-8cdb531b-2d9d-4d20-bb5a-5a9b1ad68b45.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target. Preserve this corrected dark grayscale concept 12 exactly, including all text and equations, high-resolution widescreen layout, glowing hypergraph, cube and heatmap. Make ONE small scientific-diagram repair in the lower-right \"Pair value features\" panel: the two input strips V¹_j and V²_k and the output strip D_jk must each contain EXACTLY EIGHT equal rectangular cells, because elementwise multiplication preserves feature width. Show all three strips at the SAME displayed length and cell width. The output D_jk currently has too few cells: extend that strip to eight cells while retaining its arrow from the ⊙ circle and moving \"feature vector\" slightly if needed. Preserve the correct formulas D_jk = V¹_j ⊙ V²_k and A_ijk = ⟨Q_i, K¹_j ⊙ K²_k⟩, preserve the selected contribution P_ijk D_jk, preserve all slice labels. No extra text, no new dimensions, no other changes.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-f02c7b32-c20b-46d3-8fef-89d5d3c9401b.png"
+        },
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-f02c7b32-c20b-46d3-8fef-89d5d3c9401b.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target. Make a tiny correction ONLY in the lower-right \"Pair value features\" panel. Preserve every other pixel and all text elsewhere. The D_jk output row currently looks shorter than its input feature rows. Delete the words \"feature vector\" to free horizontal space. Extend and redraw the D_jk output bar so its LEFT EDGE and RIGHT EDGE align exactly with the V²_k bar directly above it. Copy the same eight-cell partitioning from that upper V²_k bar: D_jk must also have eight equal-width cells. Thus D_jk and V²_k have identical displayed widths and partitions. Keep the D_jk label immediately above its output bar, and keep the incoming arrow from the Hadamard-product circle. Do not change the formulas, heatmap, hypergraph, top selected-contribution strip, or any other panel. Dark grayscale, identical precise lines and materials, same high-resolution widescreen canvas.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-f97df6d2-60c5-45ac-aae2-9a52716e9018.png"
+        }
+      ]
+    },
+    {
+      "concept": 13,
+      "original": "/Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-cdfb6df0-4141-4c9a-bb2a-cb902afe8fe0.png",
+      "final": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-584880e3-7219-4db5-bbbd-d4845a6c1ede.png",
+      "nativePixels": {
+        "width": 1672,
+        "height": 941
+      },
+      "method": "Built-in image_gen edits only",
+      "fixes": [
+        "Changed active UI mode to Scores and all legends to raw A scores; removed probability-range ticks.",
+        "Replaced unsupported fixed numeric selection readouts with generic i,j,k roles.",
+        "Renamed projection-matrix pictures as token feature maps and distinguished features from projection weights.",
+        "Removed the faulty all-d_v/all-d_k channel claim, using rows/tokens and columns/channels instead.",
+        "Removed numeric rulers on all map/cube axes to prevent skipped/duplicated tick values; retained symbolic axes and query-card labels."
+      ],
+      "inspection": "Each final image was visually reinspected. No serious mathematical, dimension-label, dataflow, or UI-mode contradiction found in the final image. Concept 12 additionally independently cleared by root.",
+      "limitations": "Illustrative UI concept art; map intensities and feature values are not computed experimental data. Numerical performance claims are absent.",
+      "edits": [
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-cdfb6df0-4141-4c9a-bb2a-cb902afe8fe0.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target, concept 13, a precise monochrome attention-map atlas. Preserve the eight small heatmaps, large wireframe cube, overall high-resolution widescreen layout, typography, thin line icons, grayscale materials, dark theme, and polished compact components. Correct only inconsistent scientific labels and selections.\n1. Make the \"Scores\" tab selected and the \"Weights\" tab unselected. This entire screen shows raw attention scores A, so preserve the heading \"Attention tensor A\" and formula \"A_ijk = ⟨Q_i, K¹_j ⊙ K²_k⟩\". The subtitle may remain \"Inspect the attention map A_ijk for each query i over all key pairs (j,k).\"\n2. Under the heatmap atlas replace \"Normalized weight P_ijk\" with \"Raw score A_ijk\". Remove all numeric 0.0 to 1.0 ticks and replace them with only \"low\" at the dark end and \"high\" at the bright end. Add the small caption \"Illustrative scores\".\n3. In the cube's information block preserve \"Dimensions 8 × 8 × 8\". Remove numerical selected-query, selected-pair, and plane readouts. Use three clean generic lines instead: \"Query axis i\", \"Role axes j, k\", \"View: score tensor\". The small three-node interaction diagram below should be labeled only \"i\", \"j\", and \"k\", with \"query\", \"key role 1\", and \"key role 2\" respectively. Remove explicit numerical token assignments there to avoid suggesting an unsupported exact correspondence.\n4. The bottom section shows activations, not projection matrices. Rename its heading \"Token feature maps\". Replace the explanation with the exact text \"Q, K¹, K² use d_k channels. V¹, V², Y use d_v channels. Illustrative maps.\" Rename the six mini-map captions respectively \"Q  Query features\", \"K¹  Key features · role 1\", \"K²  Key features · role 2\", \"V¹  Value features · role 1\", \"V²  Value features · role 2\", \"Y  Output features\". No claim that every map uses d_v, no claim that these pictures are weight matrices, no exact displayed-window-size assertion.\n5. Keep the valid value equation \"D_jk = V¹_j ⊙ V²_k\" and its feature-vector labels. Keep the selected heatmap and selected-cell bracket as an illustrative inspection state.\nMaintain immaculate spacing and readable text, no accent colors, no invented results, no unnecessary new equations.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-e842141d-73dc-44e9-956e-34bd5eb33555.png"
+        },
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-e842141d-73dc-44e9-956e-34bd5eb33555.png",
+          "prompt": "Use case: text-localization. Image 1 is the edit target. Preserve this corrected monochrome scientific attention atlas exactly: layout, high-resolution widescreen image, all eight maps, glowing cube, equations, generic i/j/k role labels, active Scores tab, Raw score legend and every other detail. Change ONLY the small explanatory sentence immediately to the right of the bottom section heading \"Token feature maps\". Remove the entire existing sentence beginning \"Q,K¹,K² use...\" and replace it with the exact plain-language sentence: \"Rows: tokens. Columns: channels. Illustrative features.\" Do not write d_k or d_v anywhere in this replacement sentence. It is essential that no feature-width claim remain in this one sentence. Retain all other text and all graphics unchanged.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-2bb01824-b3ff-4dcb-8bd5-456188f7ab09.png"
+        },
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-2bb01824-b3ff-4dcb-8bd5-456188f7ab09.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target, corrected dark grayscale concept 13. Preserve layout, typography, every equation, all eight maps and their textures, the glowing cube, Scores selection, low/high legend, and the bottom token-feature maps. Make ONLY this final cleanup: remove every NUMERIC AXIS TICK LABEL from all eight attention heatmaps, from the cube's three axes, and from the six small token-feature maps at the bottom. Do not remove the grid lines. Retain the axis LETTERS j, k, i wherever present, retain Query 0 through Query 7 card titles, retain the full tensor dimension 8 × 8 × 8 in the information panel, retain generic selection labels i,j,k, and retain Layer 03. The purpose is to eliminate unreliable dense numeric rulers while preserving all mathematical content and the visual atlas. Do not add text or change any other part of the image. Same widescreen high-resolution composition and entirely grayscale aesthetic.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-584880e3-7219-4db5-bbbd-d4845a6c1ede.png"
+        }
+      ]
+    },
+    {
+      "concept": 14,
+      "original": "/Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-81317f18-9411-494f-8958-8b93d3784382.png",
+      "final": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-cf3e29e1-1c69-4e6c-b6ae-bf7013bbbb84.png",
+      "nativePixels": {
+        "width": 1672,
+        "height": 941
+      },
+      "method": "Built-in image_gen edits only",
+      "fixes": [
+        "Replaced full-output Y_i labels with the individual weighted contributions P_ijk D_jk and P_ikj D_kj.",
+        "Moved highlighted score-slice cells to the exact transposed pair (03,06) and (06,03).",
+        "Preserved correctly swapped role-specific value equations and commutativity explanation.",
+        "Labeled the sidebar Left assignment to make its particular projection roles unambiguous.",
+        "Marked every feature strip with an ellipsis and labeled Feature previews, avoiding false equal-size claims from different displayed crop lengths."
+      ],
+      "inspection": "Each final image was visually reinspected. No serious mathematical, dimension-label, dataflow, or UI-mode contradiction found in the final image. Concept 12 additionally independently cleared by root.",
+      "limitations": "Illustrative UI concept art; map intensities and feature values are not computed experimental data. Numerical performance claims are absent.",
+      "edits": [
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-81317f18-9411-494f-8958-8b93d3784382.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target, concept 14, a dark polished role-swap comparison UI. Preserve composition, paired luminous triangular hypergraphs, value-vector pathways, compact line icons, understated grayscale, typography, and high-resolution widescreen layout. Repair the scientific interpretation precisely.\nThe experiment compares TWO ORDERED PAIR CONTRIBUTIONS within one fixed-query attention slice. It must NOT imply that relabeling one pair changes the full sum Y_i.\n1. Replace the lower middle panel title \"Output features for query i\" with \"Weighted pair contributions\".\n2. In that panel replace the upper vector's Y_i label with the exact expression \"P_ijk D_jk\" and the secondary caption \"j in role 1 · k in role 2\". Replace the lower vector's Y_i label with \"P_ikj D_kj\" and secondary caption \"k in role 1 · j in role 2\". These are individual summands, not full outputs. Do not put Y_i anywhere on these bars.\n3. The lower-left attention heatmap must highlight two TRANSPOSED cells. Keep an 8 by 8 grid with row indices 01–08 and column indices 01–08. Put the two white outline highlights at row 03 column 06 and row 06 column 03, exactly mirrored across the main diagonal. Remove the existing wrong highlights. Keep the row axis j (role 1) and column axis k (role 2). The explanatory text beside it should read \"One query slice. Compare entries (j,k) and (k,j).\" Keep the valid raw-score equation \"A_ijk = ⟨Q_i, K¹_j ⊙ K²_k⟩\". Label the heatmap \"Score slice for query i\".\n4. Keep the upper left value equation \"D_jk = V¹_j ⊙ V²_k\" and upper right \"D_kj = V¹_k ⊙ V²_j\". Selected value strips remain feature vectors. Preserve all role labels and correctly swapped token positions in the two hypergraphs.\n5. Replace the Explanation panel body with \"Role-specific projections can make the two ordered pair contributions different. Elementwise multiplication itself remains commutative.\" Keep the short headline \"Different projections assign different roles.\"\n6. In the right sidebar change its title to \"Left assignment\" so its listed projections clearly describe the left-hand example. Preserve the listed K¹_j, K²_k, Q_i, V¹_j, V²_k. Under the \"Tie projections\" toggle write \"Distinct role projections can change pair contributions.\" Preserve the bottom statement \"Elementwise multiplication remains commutative.\"\n7. Add a small \"Illustrative features\" caption. No fabricated numeric results or superiority claims.\nAll important formulas must be typeset accurately and legibly, with subscripts and superscripts. Preserve layout and aesthetic; change only these scientific and textual errors.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-6ddde644-15d8-4df7-872a-3df130e059d5.png"
+        },
+        {
+          "input": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-6ddde644-15d8-4df7-872a-3df130e059d5.png",
+          "prompt": "Use case: precise-object-edit. Image 1 is the edit target, corrected dark grayscale concept 14. Preserve its composition, triangular hypergraphs, role labels, all formulas, corrected pair-contribution labels P_ijk D_jk and P_ikj D_kj, mirrored heatmap highlights at (03,06) and (06,03), exact explanatory text, and fine icons. Make only a small visual-legibility cleanup: explicitly show that every feature strip is a CROPPED PREVIEW rather than a complete vector. Add a clearly visible typographic ellipsis \"…\" immediately after EACH horizontal segmented feature strip: the three strips in the left Value mixing panel, the three strips in the right Value mixing panel, both weighted-pair-contribution strips in the lower middle panel, and all five short strips in the right-hand Left assignment sidebar. Shorten those bars slightly if needed to make room for their ellipses without crowding, preserving formulas and layout. Change the small caption \"Illustrative features\" above the lower pair-contribution strips to \"Feature previews\". Add the same small caption \"Feature previews\" beneath the right sidebar's introductory text. No other changes. In particular do not change the fixed correct weighted-contribution math or heatmap selections. Preserve high-resolution widescreen, all-grayscale precision.",
+          "output": "/Users/neo/.codex/generated_images/01a151d9-83f5-7743-bf65-2cfbc61891bf/exec-cf3e29e1-1c69-4e6c-b6ae-bf7013bbbb84.png"
+        }
+      ]
+    }
+  ]
+}
+

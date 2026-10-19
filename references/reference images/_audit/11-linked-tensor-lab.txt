@@ -1,0 +1,23 @@
+11 — Linked tensor lab
+Final image: ../11-linked-tensor-lab.png
+Source: /Users/neo/.codex/generated_images/01a151d9-2e88-75a1-a1aa-a4942af5e9c4/exec-64e1412c-11b9-4c8e-bd70-d86513657b70.png
+Method: built-in image generation, localized edit.
+
+Audit findings corrected:
+- Removed scalar attention quantities depicted as feature-vector strips.
+- Removed uncomputed numeric attention values.
+- Removed false precision in linked voxel/map coordinates; retained a clearly labeled schematic view.
+- Reworded the topology visual as a role-labeled hyperedge representation.
+- Preserved separate key/value roles and score/value equations.
+
+Visual reinspection: equations and scalar/vector labels are legible; no serious remaining semantic defect observed. Grayscale cell patterns are schematic design graphics, not a numerical run.
+
+EXACT EDIT PROMPT
+Use case: precise-object-edit. Audit repair of this exact dark grayscale scientific UI, concept 11. Preserve its refined visual design, all panels, icon system, luminous cube and hypergraph, dark palette and typography. Correct misleading labels and avoid presenting uncomputed measurements.
+1. Under 'Linked view', replace the two-sentence description with 'A role-labeled hyperedge represents one selected triple.' Keep query i, role 1 j, role 2 k correctly labeled at the three vertices.
+2. Main cube: keep the wireframe and selected bright cell but remove every numeric tick label from its three axes, retaining only i, j, k. Replace the small size annotation A∈R^(8×8×8) with the simple title 'Attention scores A'. Add a discreet caption 'Schematic view' under the cube. Preserve its glow and planes.
+3. In right inspector, keep both exact equations Aᵢⱼₖ = ⟨Qᵢ, K¹ⱼ ⊙ K²ₖ⟩ and Dⱼₖ = V¹ⱼ ⊙ V²ₖ. Replace numerical i=3,j=5,k=2 input fields with three small readable token-selection chips labeled 'Query i', 'Role 1 j', 'Role 2 k'. Remove all exact numerical coordinates from this entire screenshot, including '(5,2)' and specific selected-vector j=5/k=2 annotations. Selected vector strips remain labeled V¹ⱼ, V²ₖ, Dⱼₖ; replace 'Selected vectors (dᵥ=16)' with 'Value features'. These tiny strips are schematic glyphs, not measured values.
+4. In lower right replace 'Recap at (3,5,2)' and its entire fake numeric recap table with 'Selected quantities' followed by exactly three clean rows: 'Aᵢⱼₖ    Scalar score'; 'Pᵢⱼₖ    Scalar weight'; 'Dⱼₖ    Feature vector'. Remove numbers 0.184 and 0.021, and remove vector strips from the A and P rows. Leave just a small feature strip only on D row. No invented values.
+5. Keep eight query slice thumbnails and their labels i=0 through i=7, but selected fourth map label becomes 'Selected query i' rather than specific i=3; others labels may remain 'Query' without numbers if needed to avoid duplicate selection semantics. Remove '(8×8)' hard-count assertion from ribbon heading. Heading 'Query slices of A'. Remove the exact numeric cell selection frame from fourth map and replace with a simple white selected-map border. Bottom Query control value reads 'i' (symbolic query). We are communicating the linking design, not asserting numerically computed heatmap contents.
+Everything else unchanged. No mathematical dimensions invented, no new arrows, no new text beyond specified short labels. Preserve one excellent coherent desktop UI.
+
