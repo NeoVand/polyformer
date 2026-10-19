@@ -13,7 +13,7 @@
 		{ label: 'Learn', href: resolve('/learn'), match: '/learn', icon: Book },
 		{ label: 'Explore', href: resolve('/explore'), match: '/explore', icon: Cube },
 		{ label: 'Compare', href: resolve('/compare'), match: '/compare', icon: Compare },
-		{ label: 'Notes', href: resolve('/notes'), match: '/notes', icon: Note }
+		{ label: 'Report', href: resolve('/report'), match: '/report', icon: Note }
 	];
 
 	const titles: Record<string, string> = {
@@ -21,7 +21,7 @@
 		'/explore': 'Cubic attention',
 		'/explore/diagrams': 'DS-PA, a sum over diagrams',
 		'/compare': 'Bench',
-		'/notes': 'Research log'
+		'/report': 'Working paper'
 	};
 
 	const route = $derived(page.route.id ?? '/');

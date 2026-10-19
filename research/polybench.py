@@ -1,0 +1,737 @@
+# Quick separation experiments: pairwise attention vs Columbia tree/Strassen vs cubic polyattention.
+import argparse, json, math, time
+import numpy as np
+import jax, jax.numpy as jnp
+import optax
+
+# ----------------------------------------------------------------------------- tasks
+# Each generator returns fields [B,T,F] (int), targets [B,T] (int), loss mask [B,T] (float).
+# Position 0 is always a BOS/sink token.
+
+def task_match3(rng, B, n=16, M=128):
+    x = rng.integers(0, M, size=(B, n))
+    s = (x[:, :, None, None] + x[:, None, :, None] + x[:, None, None, :]) % M == 0
+    i = np.arange(n)
+    distinct = (i[:, None, None] != i[None, :, None]) & (i[:, None, None] != i[None, None, :]) & (i[None, :, None] != i[None, None, :])
+    y = (s & distinct[None]).any(axis=(2, 3)).astype(np.int32)
+    tok = np.concatenate([np.full((B, 1), M), x], 1)[..., None]
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return tok, tgt, msk
+
+def task_set(rng, B, n=12):
+    # SET cards = Z_3^4. Three distinct cards form a SET iff they sum to 0 coordinate-wise.
+    ids = np.argsort(rng.random((B, 81)), axis=1)[:, :n]
+    feats = np.stack([(ids // 3 ** a) % 3 for a in range(4)], -1)  # [B,n,4]
+    s = ((feats[:, :, None, None] + feats[:, None, :, None] + feats[:, None, None, :]) % 3 == 0).all(-1)
+    i = np.arange(n)
+    distinct = (i[:, None, None] != i[None, :, None]) & (i[:, None, None] != i[None, None, :]) & (i[None, :, None] != i[None, None, :])
+    y = (s & distinct[None]).any(axis=(2, 3)).astype(np.int32)
+    tok = np.concatenate([np.full((B, 1, 4), 3), feats], 1)  # attribute value 3 = BOS
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return tok, tgt, msk
+
+def task_compose(rng, B, n=8, hops=2):
+    # Function tables f_1..f_h as (slot, value) tokens, then the query x; predict f_h(...f_1(x)).
+    fs = rng.integers(0, n, size=(hops, B, n))
+    x = rng.integers(0, n, size=B)
+    ans = x.copy()
+    for h in range(hops):
+        ans = fs[h, np.arange(B), ans]
+    slots = np.concatenate([np.arange(n) + h * n for h in range(hops)])
+    slot_tok = np.concatenate([np.full((B, 1), hops * n + 1), np.broadcast_to(slots, (B, hops * n)), np.full((B, 1), hops * n)], 1)
+    val_tok = np.concatenate([np.full((B, 1), n), np.concatenate(list(fs), 1), x[:, None]], 1)
+    tok = np.stack([slot_tok, val_tok], -1)
+    T = tok.shape[1]
+    tgt = np.zeros((B, T), np.int32); tgt[:, -1] = ans
+    msk = np.zeros((B, T)); msk[:, -1] = 1
+    return tok, tgt, msk
+
+def task_triangle(rng, B, V=8, m=10):
+    # Tokens are edges of a random graph; label = edge lies on a triangle.
+    pairs = np.array([(u, v) for u in range(V) for v in range(u + 1, V)])
+    sel = np.argsort(rng.random((B, len(pairs))), axis=1)[:, :m]
+    e = pairs[sel]  # [B,m,2]
+    adj = np.zeros((B, V, V), bool)
+    bi = np.repeat(np.arange(B), m)
+    adj[bi, e[..., 0].ravel(), e[..., 1].ravel()] = True
+    adj = adj | adj.transpose(0, 2, 1)
+    common = (adj[np.arange(B)[:, None], e[..., 0]] & adj[np.arange(B)[:, None], e[..., 1]]).any(-1)
+    y = common.astype(np.int32)
+    tok = np.concatenate([np.full((B, 1, 2), V), e], 1)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, m))], 1)
+    return tok, tgt, msk
+
+def _pairs(rng, B, n, M, P):
+    key = rng.integers(0, M, size=(B, n)); pay = rng.integers(0, P, size=(B, n))
+    i = np.arange(n)
+    distinct = (i[:, None, None] != i[None, :, None]) & (i[:, None, None] != i[None, None, :]) & (i[None, :, None] != i[None, None, :])
+    match = ((key[:, :, None, None] + key[:, None, :, None] + key[:, None, None, :]) % M == 0) & distinct[None]  # [B,i,j,k]
+    return key, pay, match
+
+def _wrap(key, pay, M, P):
+    B = key.shape[0]
+    return np.stack([np.concatenate([np.full((B, 1), M), key], 1), np.concatenate([np.full((B, 1), P), pay], 1)], -1)
+
+def task_pairbind(rng, B, n=16, M=64, P=4):
+    # Label at i: some matched pair (x_i+x_j+x_k = 0 mod M) has EQUAL payloads. Needs binding of j with k.
+    key, pay, match = _pairs(rng, B, n, M, P)
+    eq = pay[:, None, :, None] == pay[:, None, None, :]
+    y = (match & eq).any(axis=(2, 3)).astype(np.int32)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return _wrap(key, pay, M, P), tgt, msk
+
+def task_pairjoint(rng, B, n=16, M=96, P=5):
+    # Multi-label at i: which joint payload combos (p_j, p_k) occur among matched pairs.
+    key, pay, match = _pairs(rng, B, n, M, P)
+    joint = pay[:, :, None] * P + pay[:, None, :]  # [B,j,k]
+    oh = np.eye(P * P)[joint]  # [B,j,k,P*P]
+    y = (np.einsum("bijk,bjkc->bic", match.astype(np.float32), oh) > 0).astype(np.float32)
+    tgt = np.concatenate([np.zeros((B, 1, P * P), np.float32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return _wrap(key, pay, M, P), tgt, msk
+
+def task_setbind(rng, B, n=12, P=2):
+    # Query card (last slot) lies in exactly two SETs. Target = how many of those SETs have partners with
+    # equal payloads (0/1/2). Additive pair values see only the payload histogram, which is ambiguous.
+    cards = np.array([[(c // 3 ** a) % 3 for a in range(4)] for c in range(81)])
+    toks = np.zeros((B, n + 1, 5), np.int64); tgt = np.zeros((B, n + 1), np.int32); msk = np.zeros((B, n + 1))
+    toks[:, 0] = [3, 3, 3, 3, P]
+    for b in range(B):
+        while True:
+            q = rng.integers(81)
+            j1 = rng.integers(81)
+            if j1 == q: continue
+            k1 = int(((-(cards[q] + cards[j1])) % 3) @ (3 ** np.arange(4)))
+            j2 = rng.integers(81)
+            if j2 in (q, j1, k1): continue
+            k2 = int(((-(cards[q] + cards[j2])) % 3) @ (3 ** np.arange(4)))
+            if k2 in (q, j1, k1): continue
+            chosen = [j1, k1, j2, k2]
+            pool = [c for c in rng.permutation(81) if c not in chosen and c != q]
+            ok = True
+            for c in pool:
+                if len(chosen) == n - 1: break
+                comp = int(((-(cards[q] + cards[c])) % 3) @ (3 ** np.arange(4)))
+                if comp in chosen: continue  # would create a third SET through q
+                chosen.append(c)
+            if len(chosen) == n - 1: break
+        perm = rng.permutation(n - 1); chosen = [chosen[i] for i in perm]
+        pay = rng.integers(0, P, size=n)
+        pos = {c: i for i, c in enumerate(chosen)}
+        y = int(pay[pos[j1]] == pay[pos[k1]]) + int(pay[pos[j2]] == pay[pos[k2]])
+        ids = chosen + [q]
+        toks[b, 1:, :4] = cards[ids]; toks[b, 1:, 4] = pay
+        tgt[b, n] = y; msk[b, n] = 1
+    return toks, tgt, msk
+
+def task_set4(rng, B, n=8):
+    # Card i belongs to 4 distinct cards summing to 0 in Z_3^4 (arity-4 constraint, no chain structure).
+    ids = np.argsort(rng.random((B, 81)), axis=1)[:, :n]
+    f = np.stack([(ids // 3 ** a) % 3 for a in range(4)], -1)
+    s = ((f[:, :, None, None, None] + f[:, None, :, None, None] + f[:, None, None, :, None] + f[:, None, None, None, :]) % 3 == 0).all(-1)
+    i = np.arange(n)
+    I, J, K, L = i[:, None, None, None], i[None, :, None, None], i[None, None, :, None], i[None, None, None, :]
+    distinct = (I != J) & (I != K) & (I != L) & (J != K) & (J != L) & (K != L)
+    y = (s & distinct[None]).any(axis=(2, 3, 4)).astype(np.int32)
+    tok = np.concatenate([np.full((B, 1, 4), 3), f], 1)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return tok, tgt, msk
+
+def _zero_sum_members(f, k):
+    # f: [B, n, m] cards; returns [B, n] bool, card i is in some k-subset of distinct cards summing to 0
+    import itertools
+    B, n, _ = f.shape
+    y = np.zeros((B, n), bool)
+    for comb in itertools.combinations(range(n), k):
+        hit = (f[:, list(comb)].sum(1) % 3 == 0).all(-1)
+        if hit.any():
+            y[:, list(comb)] |= hit[:, None]
+    return y
+
+def _deal(rng, B, n, m):
+    ids = np.argsort(rng.random((B, 3 ** m)), axis=1)[:, :n]
+    return np.stack([(ids // 3 ** a) % 3 for a in range(m)], -1)
+
+def task_matchk(rng, B, n=10, k=4, m=4):
+    # Match-k on Z_3^m: does card i lie in a k-subset of distinct cards summing to zero?
+    f = _deal(rng, B, n, m)
+    y = _zero_sum_members(f, k).astype(np.int32)
+    tok = np.concatenate([np.full((B, 1, m), 3), f], 1)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return tok, tgt, msk
+
+def task_arity(rng, B, n=9, m=4, ks=(3, 4, 5)):
+    # The smallest k in ks for which card i completes a zero-sum k-subset (class 1..len(ks)), or 0 for none.
+    f = _deal(rng, B, n, m)
+    y = np.zeros((B, n), np.int32)
+    for c, k in enumerate(ks):
+        hit = _zero_sum_members(f, k)
+        y = np.where((y == 0) & hit, c + 1, y)
+    tok = np.concatenate([np.full((B, 1, m), 3), f], 1)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return tok, tgt, msk
+
+def task_chase(rng, B, n=12, NID=16, P=8):
+    # Linked lists; terminals point to themselves. The query token is a bare pointer to a start node.
+    # Target: payload of the terminal reached from the start (0-3 hops after the first lookup).
+    toks = np.zeros((B, n + 2, 3), np.int64); tgt = np.zeros((B, n + 2), np.int32); msk = np.zeros((B, n + 2))
+    toks[:, 0] = [NID, NID, P]
+    for b in range(B):
+        ids = rng.permutation(NID)[:n]; pay = rng.integers(0, P, n)
+        lens, left = [], n
+        while left > 0:
+            L = min(left, rng.integers(1, 5)); lens.append(L); left -= L
+        ptr = np.empty(n, np.int64); term = np.empty(n, np.int64); pos = 0
+        for L in lens:
+            seg = np.arange(pos, pos + L)
+            ptr[seg[:-1]] = ids[seg[1:]]; ptr[seg[-1]] = ids[seg[-1]]; term[seg] = seg[-1]; pos += L
+        perm = rng.permutation(n)
+        start = rng.integers(n)
+        toks[b, 1:n + 1, 0] = ids[perm]; toks[b, 1:n + 1, 1] = ptr[perm]; toks[b, 1:n + 1, 2] = pay[perm]
+        toks[b, n + 1] = [NID + 1, ids[start], P + 1]
+        tgt[b, n + 1] = pay[term[start]]; msk[b, n + 1] = 1
+    return toks, tgt, msk
+
+def task_xortree(rng, B, n=14, NID=24, maxd=3):
+    # Shuffled expression-tree records: LEAF(bit) | ID(child) | XOR(child1, child2). The query points at a
+    # root; target = root value. Depth 1..maxd plus distractor trees. XOR of +-1 values = Hadamard product.
+    NONE = NID; LEAF, IDN, XOR = 0, 1, 2
+    toks = np.zeros((B, n + 2, 5), np.int64); tgt = np.zeros((B, n + 2), np.int32); msk = np.zeros((B, n + 2))
+    toks[:, 0] = [NID + 1, 4, NID + 1, NID + 1, 3]
+    def gen(depth, recs, ids):
+        my = ids.pop()
+        if depth == 0:
+            b = int(rng.integers(2)); recs.append([my, LEAF, NONE, NONE, b]); return my, b
+        if rng.random() < 0.7:
+            c1, v1 = gen(depth - 1, recs, ids); c2, v2 = gen(int(rng.integers(0, depth)), recs, ids)
+            if rng.random() < 0.5: c1, c2, v1, v2 = c2, c1, v2, v1
+            recs.append([my, XOR, c1, c2, 2]); return my, v1 ^ v2
+        c, v = gen(depth - 1, recs, ids); recs.append([my, IDN, c, NONE, 2]); return my, v
+    for b in range(B):
+        while True:
+            ids = list(rng.permutation(NID)); recs = []
+            root, val = gen(int(rng.integers(1, maxd + 1)), recs, ids)
+            if len(recs) <= n - 2: break
+        while len(recs) < n:
+            extra = []
+            try:
+                gen(int(rng.integers(0, 2)), extra, ids)
+            except IndexError:
+                break
+            if len(recs) + len(extra) <= n: recs += extra
+        while len(recs) < n:
+            recs.append([ids.pop() if ids else NONE, LEAF, NONE, NONE, int(rng.integers(2))])
+        recs = np.array(recs)[rng.permutation(n)]
+        toks[b, 1:n + 1] = recs
+        toks[b, n + 1] = [NID + 1, 3, root, NONE, 3]
+        tgt[b, n + 1] = val; msk[b, n + 1] = 1
+    return toks, tgt, msk
+
+def task_andortree(rng, B, n=14, NID=24, maxd=3):
+    # Like task_xortree but with monotone gates on {0,1}: AND = Hadamard product, OR = 1-(1-a)(1-b).
+    NONE = NID; LEAF, IDN, AND, OR = 0, 1, 2, 3
+    toks = np.zeros((B, n + 2, 5), np.int64); tgt = np.zeros((B, n + 2), np.int32); msk = np.zeros((B, n + 2))
+    toks[:, 0] = [NID + 1, 5, NID + 1, NID + 1, 3]
+    def gen(depth, recs, ids):
+        my = ids.pop()
+        if depth == 0:
+            b = int(rng.integers(2)); recs.append([my, LEAF, NONE, NONE, b]); return my, b
+        r = rng.random()
+        if r < 0.7:
+            c1, v1 = gen(depth - 1, recs, ids); c2, v2 = gen(int(rng.integers(0, depth)), recs, ids)
+            if rng.random() < 0.5: c1, c2, v1, v2 = c2, c1, v2, v1
+            op = AND if r < 0.35 else OR
+            recs.append([my, op, c1, c2, 2]); return my, (v1 & v2) if op == AND else (v1 | v2)
+        c, v = gen(depth - 1, recs, ids); recs.append([my, IDN, c, NONE, 2]); return my, v
+    for b in range(B):
+        while True:
+            ids = list(rng.permutation(NID)); recs = []
+            root, val = gen(int(rng.integers(1, maxd + 1)), recs, ids)
+            if len(recs) <= n - 2: break
+        while len(recs) < n:
+            extra = []
+            try:
+                gen(int(rng.integers(0, 2)), extra, ids)
+            except IndexError:
+                break
+            if len(recs) + len(extra) <= n: recs += extra
+        while len(recs) < n:
+            recs.append([ids.pop() if ids else NONE, LEAF, NONE, NONE, int(rng.integers(2))])
+        recs = np.array(recs)[rng.permutation(n)]
+        toks[b, 1:n + 1] = recs
+        toks[b, n + 1] = [NID + 1, 4, root, NONE, 3]
+        tgt[b, n + 1] = val; msk[b, n + 1] = 1
+    return toks, tgt, msk
+
+TASKS = {
+    "zs3": (lambda r, B: task_matchk(r, B, 12, 3, 4), [4, 4, 4, 4], 2, False),
+    "zs4": (lambda r, B: task_matchk(r, B, 9, 4, 4), [4, 4, 4, 4], 2, False),
+    "zs5": (lambda r, B: task_matchk(r, B, 9, 5, 4), [4, 4, 4, 4], 2, False),
+    "arity": (lambda r, B: task_arity(r, B, 9, 4), [4, 4, 4, 4], 4, False),
+    "andortree": (task_andortree, [26, 6, 26, 26, 4], 2, False),
+    "xortree": (task_xortree, [26, 5, 26, 26, 4], 2, False),
+    "set4": (task_set4, [4, 4, 4, 4], 2, False),
+    "compose3s": (lambda r, B: task_compose(r, B, 5, 3), [17, 6], 5, False),
+    "chase": (task_chase, [18, 18, 10], 8, False),
+    "setbind": (task_setbind, [4, 4, 4, 4, 3], 3, False),
+    "match3s": (lambda r, B: task_match3(r, B, 8, 32), [129], 2, False),
+    "match3m": (lambda r, B: task_match3(r, B, 12, 64), [129], 2, False),
+    "pairbind": (task_pairbind, [65, 5], 2, False),
+    "pairjoint": (task_pairjoint, [97, 6], 25, "multilabel"),
+    "match3": (task_match3, [129], 2, False),
+    "set": (task_set, [4, 4, 4, 4], 2, True),   # True = all fields share one table per field index
+    "compose2": (lambda r, B: task_compose(r, B, 8, 2), [18, 9], 8, False),
+    "compose3": (lambda r, B: task_compose(r, B, 8, 3), [26, 9], 8, False),
+    "triangle": (task_triangle, [9, 9], 2, "shared"),
+}
+
+# ----------------------------------------------------------------------------- model
+ORDER3 = {"tree", "strassen", "cubic", "cubic_add", "cubic_marg", "cubic_qgate", "cubic_wide"}
+
+def dense(key, fan_in, fan_out):
+    return {"w": jax.random.normal(key, (fan_in, fan_out)) / math.sqrt(fan_in), "b": jnp.zeros(fan_out)}
+
+def mix_cfgs(cfg):
+    # cubic, quartic, hyperchain (L=3) and path walk (L=4): one head each, head dim d/heads
+    import copy
+    out = []
+    for m, L in (("cubic", 3), ("quartic", 3), ("chain", 3), ("path", 4)):
+        c = copy.copy(cfg); c.model, c.plen, c.heads, c.dh, c.layers, c.recur = m, L, 1, cfg.d // cfg.heads, 1, 1
+        out.append(c)
+    return out
+
+def init(key, cfg, vocabs, C, T):
+    D, H, dh = cfg.d, cfg.heads, (getattr(cfg, "dh", 0) or cfg.d // cfg.heads)
+    ks = iter(jax.random.split(key, 256))
+    p = {"emb": [jax.random.normal(next(ks), (v, D)) * 0.5 for v in vocabs],
+         "pos": jax.random.normal(next(ks), (T, D)) * 0.5, "layers": []}
+    if cfg.model == "mix":
+        p["layers"] = []
+        for _ in range(cfg.layers):
+            subs = {}
+            for sub in mix_cfgs(cfg):
+                sp = init(next(ks), sub, vocabs, C, T)
+                subs[sub.model + str(sub.plen)] = sp["layers"][0]["attn"]
+            p["layers"].append({"ln1": {"g": jnp.ones(D), "b": jnp.zeros(D)}, "attn": subs,
+                                "ln2": {"g": jnp.ones(D), "b": jnp.zeros(D)},
+                                "fc1": dense(next(ks), D, 4 * D), "fc2": dense(next(ks), 4 * D, D)})
+        p["lnf"] = {"g": jnp.ones(D), "b": jnp.zeros(D)}
+        p["head"] = dense(next(ks), D, C)
+        return p
+    for _ in range(cfg.layers):
+        names = {"sa": ["q", "k", "v"],
+                 "quartic": ["q", "k1", "k2", "k3", "v1", "v2", "v3"],
+                 "chain": ["q0", "k0"] + [f"{n}{t}" for t in range(2, cfg.plen + 1) for n in ("q", "a", "b")] + [f"v{t}" for t in range(1, cfg.plen + 1)],
+                 "path": ["q0", "k0", "q", "a", "b", "v1", "ve"],
+                 "branch": ["q", "k", "q3", "u", "w", "v"],
+                 "branchg": ["q", "k", "q3", "u", "w", "v", "leaf"],
+                 "boson": ["q", "k1", "k2", "k3", "v1", "v2", "v3"],
+                 "dspa": ["q", "u", "w", "v"],
+                 "dspa2": ["q", "u", "w", "v"],
+                 "dspa3": ["q", "u", "w", "v"],
+                 "dspa4": ["q", "u", "w", "v"],
+                 "dspa5": ["q", "u", "w", "v"],
+                 "dpa": ["q", "k", "q3", "u", "w", "q4", "u4", "w4", "z4", "v"],
+                 }.get(cfg.model, ["q", "k1", "k2", "v1", "v2"])
+        dv = dh * (cfg.wide if cfg.model == "cubic_wide" else 1)
+        if cfg.model == "cubic_full":
+            dv = cfg.vdim
+        a = {nm: dense(next(ks), D, H * (dv if nm.startswith("v") else dh)) for nm in names}
+        a["o"] = dense(next(ks), H * (dv * dv if cfg.model == "cubic_full" else dv), D)
+        if cfg.model == "path":
+            a["len"] = dense(next(ks), D, H * cfg.plen)
+        if cfg.model == "branch":
+            a["gate"] = dense(next(ks), D, H * 3)
+        if cfg.model == "branchg":
+            a["leaf"] = dense(next(ks), D, H)
+        if cfg.model in ("dspa", "dspa2", "dspa3", "dspa4"):
+            for nm in ("u0", "w0", "uc", "wc"):
+                a[nm] = jax.random.normal(next(ks), (H, dh))
+            for nm in ("um", "wm", "qm"):
+                a[nm] = jax.random.normal(next(ks), (H, cfg.modes, dh))
+            a["tau"] = jnp.ones((H,)) if cfg.model == "dspa" else jnp.zeros((H,))
+            a["clock"] = jnp.ones((cfg.plen, H, dh))
+            if cfg.model in ("dspa2", "dspa3", "dspa4"):
+                a["mu"] = jnp.tile(-jnp.log(jnp.array([1.0, T, T * T, T * cfg.modes, 1.0])), (H, 1))
+        if cfg.model == "dspa5":
+            for nm in ("u0", "w0", "uc", "wc", "us", "ws"):
+                a[nm] = jax.random.normal(next(ks), (H, dh))
+            for nm in ("um", "wm", "gk"):
+                a[nm] = jax.random.normal(next(ks), (H, cfg.modes, dh))
+            a["gb"] = jnp.zeros((H, cfg.modes))
+            a["clock"] = jnp.ones((cfg.plen, H, dh))
+            a["remb"] = jnp.zeros((cfg.plen, H, dh))
+            # learned maps before every product, so complex character products are reachable
+            for nm in ("Ls", "Rs", "Lt", "Rt", "Lm", "Rm"):
+                a[nm] = jnp.tile(jnp.eye(dh), (H, 1, 1)) + 0.1 * jax.random.normal(next(ks), (H, dh, dh)) / math.sqrt(dh)
+            M = cfg.modes
+            # sectors: leaf | hop | cubic | carry | self | token x pool | pool x pool | pool
+            sizes = [1.0, T, T * T, 1.0, 1.0, M, M * M, M]
+            a["mu"] = jnp.tile(-jnp.log(jnp.array(sizes)), (H, 1))
+        if cfg.model == "dpa":
+            a["gate"] = dense(next(ks), D, H * 4)
+            a["BL"] = jax.random.normal(next(ks), (H, cfg.modes, dh))
+            a["BR"] = jax.random.normal(next(ks), (H, cfg.modes, dh))
+            a["gam"] = jnp.ones((H,))
+        if cfg.model == "boson":
+            a["BL"] = jax.random.normal(next(ks), (H, cfg.modes, dh))
+            a["BR"] = jax.random.normal(next(ks), (H, cfg.modes, dh))
+            a["gam"] = jnp.ones((H,))
+        p["layers"].append({"ln1": {"g": jnp.ones(D), "b": jnp.zeros(D)}, "attn": a,
+                            "ln2": {"g": jnp.ones(D), "b": jnp.zeros(D)},
+                            "fc1": dense(next(ks), D, 4 * D), "fc2": dense(next(ks), 4 * D, D)})
+    p["lnf"] = {"g": jnp.ones(D), "b": jnp.zeros(D)}
+    p["head"] = dense(next(ks), D, C)
+    return p
+
+def ln(p, x):
+    mu = x.mean(-1, keepdims=True); var = ((x - mu) ** 2).mean(-1, keepdims=True)
+    return (x - mu) / jnp.sqrt(var + 1e-5) * p["g"] + p["b"]
+
+def lin(p, x):
+    return x @ p["w"] + p["b"]
+
+def triple_mask(T):
+    i = jnp.arange(T)
+    I, J, K = i[:, None, None], i[None, :, None], i[None, None, :]
+    return ((J != K) | (J == 0)) & (J != I) & (K != I)
+
+def path_attention(cfg, a, x, heads, dh):
+    # Globally normalised sum over pointer paths i -> j1 -> ... -> jL with query-dressed cubic transfer
+    # matrices s^(i)_{jk} = <q_i ⊙ a_j, b_k>. "chain": untied steps, Hadamard of role values, arity L+1.
+    # "path": tied steps (a transfer matrix), learned per-query mixture over lengths 1..L, values =
+    # (first-hop value carried along) ⊙ (endpoint value). Self-loops allowed; the BOS token acts as a sink.
+    B, T, D = x.shape; H = cfg.heads; sc = 1 / math.sqrt(dh); L = cfg.plen
+    i = jnp.arange(T)
+    first_ok = i[None, :] != i[:, None]                        # [i,k]: k != i
+    step_ok = (i[None, None, :] != i[:, None, None])           # [i,j,k]: k != i
+    q0, k0 = heads(lin(a["q0"], x)), heads(lin(a["k0"], x))
+    alpha = jnp.where(first_ok, jnp.einsum("bhic,bhkc->bhik", q0, k0) * sc, -1e9)
+    beta = jnp.broadcast_to(heads(lin(a["v1"], x))[:, :, None], (B, H, T, T, dh))
+    alphas, betas = [alpha], [beta]
+    for t in range(2, L + 1):
+        tag = "" if cfg.model == "path" else str(t)
+        q, aa, bb = heads(lin(a["q" + tag], x)), heads(lin(a["a" + tag], x)), heads(lin(a["b" + tag], x))
+        s = jnp.where(step_ok, jnp.einsum("bhic,bhjc,bhkc->bhijk", q, aa, bb) * sc, -1e9)
+        z = alpha[..., :, :, None] + s                        # [b,h,i,j,k]
+        alpha = jax.scipy.special.logsumexp(z, axis=3)        # [b,h,i,k]
+        w = jnp.exp(z - alpha[..., :, None, :])
+        beta = jnp.einsum("bhijk,bhijc->bhikc", w, beta)
+        if cfg.model == "chain":
+            beta = beta * heads(lin(a[f"v{t}"], x))[:, :, None]
+        alphas.append(alpha); betas.append(beta)
+    if cfg.model == "chain":
+        P = jax.nn.softmax(alpha, -1)
+        return jnp.einsum("bhik,bhikc->bhic", P, beta)
+    omega = heads(lin(a["len"], x))                           # [b,h,i,L] per-query length preference
+    logits = jnp.stack(alphas, 3) + omega[..., None]          # [b,h,i,L,k]
+    P = jax.nn.softmax(logits.reshape(B, H, T, -1), -1).reshape(B, H, T, L, T)
+    ve = heads(lin(a["ve"], x))
+    return jnp.einsum("bhitk,bhitkc,bhkc->bhic", P, jnp.stack(betas, 3), ve)
+
+def attention(cfg, a, x):
+    B, T, D = x.shape
+    H = cfg.heads; dh = getattr(cfg, "dh", 0) or D // H
+    if cfg.model == "mix":   # one head per diagram type, each with its own projections; outputs summed
+        return sum(attention(sub, a[sub.model + str(sub.plen)], x) for sub in mix_cfgs(cfg))
+    def heads(t, w=dh):
+        return t.reshape(B, T, H, -1).transpose(0, 2, 1, 3)
+    if cfg.model in ("dspa", "dspa2", "dspa3", "dspa4"):
+        # Dyson-Schwinger polyattention: ONE trilinear vertex <q_p * clock_r, u_a * w_b> over
+        # tokens + vacuum (value = 1, the Hadamard identity) + M virtual modes. A single softmax per parent
+        # chooses leaf (vac,vac) | hop (j,vac) | cubic (j,k) | exchange (j,m); values recurse R rounds.
+        q, u, w = (heads(lin(a[n], x)) for n in ("q", "u", "w"))
+        v = jnp.tanh(heads(lin(a["v"], x)))
+        M = cfg.modes; sc = 1 / math.sqrt(dh)
+        i_ = jnp.arange(T)
+        offd = i_[:, None] != i_[None, :]
+        trip = triple_mask(T)
+        Phi = v
+        for r in range(cfg.plen):
+            om = a["clock"][r]
+            qr = q * om[None, :, None, :]
+            Sm = jnp.einsum("hmc,bhkc,bhlc->bhmkl", a["qm"] * om[:, None, :], u, w) * sc
+            Sm = jnp.where(offd, Sm, -1e9).reshape(B, H, M, T * T)
+            Fm = jax.scipy.special.logsumexp(Sm, -1)
+            Pm = jax.nn.softmax(Sm, -1).reshape(B, H, M, T, T)
+            Phim = jnp.einsum("bhmkl,bhkc,bhlc->bhmc", Pm, Phi, Phi)
+            leaf = jnp.einsum("bhpc,hc->bhp", qr, a["u0"] * a["w0"])[..., None] * sc
+            hop = jnp.where(offd, jnp.einsum("bhpc,bhjc,hc->bhpj", qr, u, a["w0"]) * sc, -1e9)
+            cub = jnp.where(trip, jnp.einsum("bhpc,bhjc,bhkc->bhpjk", qr, u, w) * sc, -1e9)
+            exc = jnp.einsum("bhpc,bhjc,hmc->bhpjm", qr, u, a["wm"]) * sc + a["tau"][None, :, None, None, None] * Fm[:, :, None, None, :]
+            exc = jnp.where(offd[None, None, :, :, None], exc, -1e9)
+            if cfg.model in ("dspa2", "dspa3", "dspa4"):   # sector chemical potentials: equal prior mass per diagram type at init
+                mu = a["mu"][None, :, None, :]
+                leaf, hop = leaf + mu[..., 0:1], hop + mu[..., 1:2]
+                cub, exc = cub + mu[..., 2:3, None], exc + mu[..., 3:4, None]
+            parts = [leaf, hop, cub.reshape(B, H, T, T * T), exc.reshape(B, H, T, T * M)]
+            if cfg.model == "dspa4":   # absorbing carry state: keep this token's previous-round value
+                parts.append(jnp.einsum("bhpc,hc->bhp", qr, a["uc"] * a["wc"])[..., None] * sc + a["mu"][None, :, None, 4:5])
+            z = jnp.concatenate(parts, -1)
+            P = jax.nn.softmax(z, -1)
+            pl, ph = P[..., 0:1], P[..., 1:T + 1]
+            pc = P[..., T + 1:T + 1 + T * T].reshape(B, H, T, T, T)
+            pe = P[..., T + 1 + T * T:T + 1 + T * T + T * M].reshape(B, H, T, T, M)
+            carry = P[..., T + 1 + T * T + T * M:] * Phi if cfg.model == "dspa4" else 0.0
+            Phi = carry + (pl * v + jnp.einsum("bhpj,bhjc->bhpc", ph, Phi)
+                   + jnp.einsum("bhpjk,bhjc,bhkc->bhpc", pc, Phi, Phi)
+                   + jnp.einsum("bhpjm,bhjc,bhmc->bhpc", pe, Phi, Phim))
+        if cfg.model in ("dspa3", "dspa4"):   # products of bounded values shrink; renormalise at readout
+            Phi = Phi * jax.lax.rsqrt(jnp.mean(Phi ** 2, -1, keepdims=True) + 1e-6)
+        y = Phi
+    elif cfg.model == "dspa5":
+        # DS-PA v5: the primitives Newton's identities need, offered in one softmax per token and round.
+        # Sum-pooled modes S_m = sum_t sigmoid(gate) Phi_t (counts, not averages, empty buckets allowed),
+        # a self-product Phi_p * v_p (Hadamard powers), token x pool and pool x pool products (the
+        # recursion), plus the v4 sectors. Signed combinations happen in the output projection and MLP.
+        q, u, w = (heads(lin(a[n], x)) for n in ("q", "u", "w"))
+        v = jnp.tanh(heads(lin(a["v"], x)))
+        M = cfg.modes; sc = 1 / math.sqrt(dh)
+        i_ = jnp.arange(T)
+        offd = i_[:, None] != i_[None, :]
+        trip = triple_mask(T)
+        tok_map = lambda W, X: jnp.einsum("hcd,bhtd->bhtc", W, X)
+        use_cubic = not cfg.nocubic
+        Phi = v
+        for r in range(cfg.plen):
+            om = a["clock"][r]
+            qr = q * om[None, :, None, :] + a["remb"][r][None, :, None, :]
+            gate = jax.nn.sigmoid(jnp.einsum("bhtc,hmc->bhmt", u * om[None, :, None, :], a["gk"]) * sc
+                                  + a["gb"][None, :, :, None])
+            S = jnp.einsum("bhmt,bhtc->bhmc", gate, Phi) / T
+            mu = a["mu"][None, :, None, :]
+            parts = [
+                jnp.einsum("bhpc,hc->bhp", qr, a["u0"] * a["w0"])[..., None] * sc + mu[..., 0:1],
+                jnp.where(offd, jnp.einsum("bhpc,bhjc,hc->bhpj", qr, u, a["w0"]) * sc, -1e9) + mu[..., 1:2],
+            ]
+            if use_cubic:
+                cub = jnp.where(trip, jnp.einsum("bhpc,bhjc,bhkc->bhpjk", qr, u, w) * sc, -1e9) + mu[..., 2:3, None]
+                parts.append(cub.reshape(B, H, T, T * T))
+            parts += [
+                jnp.einsum("bhpc,hc->bhp", qr, a["uc"] * a["wc"])[..., None] * sc + mu[..., 3:4],
+                jnp.einsum("bhpc,hc->bhp", qr, a["us"] * a["ws"])[..., None] * sc + mu[..., 4:5],
+                jnp.einsum("bhpc,hc,hmc->bhpm", qr, a["u0"], a["wm"]) * sc + mu[..., 5:6],
+                (jnp.einsum("bhpc,hmc,hnc->bhpmn", qr, a["um"], a["wm"]) * sc + mu[..., 6:7, None]).reshape(B, H, T, M * M),
+                jnp.einsum("bhpc,hmc,hc->bhpm", qr, a["um"], a["w0"]) * sc + mu[..., 7:8],
+            ]
+            P = jax.nn.softmax(jnp.concatenate(parts, -1), -1)
+            o = 0
+            def take(width):
+                nonlocal o
+                out = P[..., o:o + width]; o += width
+                return out
+            pl, ph = take(1), take(T)
+            pc = take(T * T).reshape(B, H, T, T, T) if use_cubic else None
+            pcar, pself, ptm = take(1), take(1), take(M)
+            pmm, ppm = take(M * M).reshape(B, H, T, M, M), take(M)
+            new = (pl * v + jnp.einsum("bhpj,bhjc->bhpc", ph, Phi) + pcar * Phi
+                   + pself * (tok_map(a["Ls"], Phi) * tok_map(a["Rs"], v))
+                   + jnp.einsum("bhpm,bhpc,bhmc->bhpc", ptm, tok_map(a["Lt"], Phi), tok_map(a["Rt"], S))
+                   + jnp.einsum("bhpmn,bhmc,bhnc->bhpc", pmm, tok_map(a["Lm"], S), tok_map(a["Rm"], S))
+                   + jnp.einsum("bhpm,bhmc->bhpc", ppm, S))
+            if use_cubic:
+                new = new + jnp.einsum("bhpjk,bhjc,bhkc->bhpc", pc, Phi, Phi)
+            Phi = new
+        Phi = Phi * jax.lax.rsqrt(jnp.mean(Phi ** 2, -1, keepdims=True) + 1e-6)
+        y = Phi
+    elif cfg.model == "dpa":
+        # Diagrammatic polyattention: tree-level resummation with four Feynman rules sharing one value field H:
+        # leaf (stop), propagator (pairwise hop), cubic 3-vertex, and a 4-vertex split by boson exchange.
+        q, k, q3, u, w, q4, u4, w4, z4 = (heads(lin(a[n], x)) for n in ("q", "k", "q3", "u", "w", "q4", "u4", "w4", "z4"))
+        v = jnp.tanh(heads(lin(a["v"], x)))
+        i_ = jnp.arange(T)
+        A = jax.nn.softmax(jnp.einsum("bhic,bhjc->bhij", q, k) / math.sqrt(dh), -1)
+        s3 = jnp.where(triple_mask(T), jnp.einsum("bhic,bhjc,bhkc->bhijk", q3, u, w) / math.sqrt(dh), -1e9)
+        C = jax.nn.softmax(s3.reshape(B, H, T, T * T), -1).reshape(B, H, T, T, T)
+        pair_ok = (i_[:, None] != i_[None, :]) | (i_[:, None] == 0)
+        R = jnp.where(pair_ok, jnp.einsum("hmc,bhkc,bhlc->bhmkl", a["BR"], w4, z4) / math.sqrt(dh), -1e9).reshape(B, H, cfg.modes, T * T)
+        Z = jax.scipy.special.logsumexp(R, -1)
+        PR = jax.nn.softmax(R, -1).reshape(B, H, cfg.modes, T, T)
+        Lg = jnp.einsum("hmc,bhic,bhjc->bhijm", a["BL"], q4, u4) / math.sqrt(dh) + a["gam"][None, :, None, None, None] * Z[:, :, None, None, :]
+        Lg = jnp.where((i_[:, None] != i_[None, :])[None, None, :, :, None], Lg, -1e9)
+        PL = jax.nn.softmax(Lg.reshape(B, H, T, -1), -1).reshape(B, H, T, T, cfg.modes)
+        g = jax.nn.softmax(heads(lin(a["gate"], x)), -1)       # stop / hop / 3-vertex / 4-vertex
+        Hs = v
+        for _ in range(cfg.plen):
+            U = jnp.einsum("bhmkl,bhkc,bhlc->bhmc", PR, Hs, Hs)
+            Hs = (g[..., 0:1] * v + g[..., 1:2] * jnp.einsum("bhij,bhjc->bhic", A, Hs)
+                  + g[..., 2:3] * jnp.einsum("bhijk,bhjc,bhkc->bhic", C, Hs, Hs)
+                  + g[..., 3:4] * jnp.einsum("bhijm,bhjc,bhmc->bhic", PL, Hs, U))
+        y = Hs
+    elif cfg.model == "branchg":
+        # Berends-Giele / inside recursion: options at node i are leaf, hop to j, or branch to (j,k); each
+        # option is dressed by the children's free energies F, so the tree distribution is globally normalised.
+        q, k, q3, u, w = (heads(lin(a[n], x)) for n in ("q", "k", "q3", "u", "w"))
+        v = jnp.tanh(heads(lin(a["v"], x)))
+        sl = heads(lin(a["leaf"], x))[..., 0]                   # [b,h,i] leaf energy
+        i_ = jnp.arange(T)
+        A0 = jnp.where(i_[None, :] != i_[:, None], jnp.einsum("bhic,bhjc->bhij", q, k) / math.sqrt(dh), -1e9)
+        C0 = jnp.where(triple_mask(T), jnp.einsum("bhic,bhjc,bhkc->bhijk", q3, u, w) / math.sqrt(dh), -1e9)
+        F, Hs = sl, v
+        for _ in range(cfg.plen):
+            un = A0 + F[:, :, None, :]
+            bi = (C0 + F[:, :, None, :, None] + F[:, :, None, None, :]).reshape(B, H, T, T * T)
+            z = jnp.concatenate([sl[..., None], un, bi], -1)
+            F = jax.scipy.special.logsumexp(z, -1)
+            p = jax.nn.softmax(z, -1)
+            pl, pu, pb = p[..., :1], p[..., 1:T + 1], p[..., T + 1:].reshape(B, H, T, T, T)
+            Hs = pl * v + jnp.einsum("bhij,bhjc->bhic", pu, Hs) + jnp.einsum("bhijk,bhjc,bhkc->bhic", pb, Hs, Hs)
+        y = Hs
+    elif cfg.model == "boson":
+        # Hubbard-Stratonovich split of a 4-body vertex: (k,l) pairs are hashed into M virtual modes once;
+        # each (i,j) then couples to a mode. Arity 4 at O(n^2 M d) instead of O(n^4 d).
+        q, k1, k2, k3, v1, v2, v3 = (heads(lin(a[n], x)) for n in ("q", "k1", "k2", "k3", "v1", "v2", "v3"))
+        i_ = jnp.arange(T)
+        pair_ok = (i_[:, None] != i_[None, :]) | (i_[:, None] == 0)
+        R = jnp.einsum("hmc,bhkc,bhlc->bhmkl", a["BR"], k2, k3) / math.sqrt(dh)
+        R = jnp.where(pair_ok, R, -1e9).reshape(B, H, cfg.modes, T * T)
+        Z = jax.scipy.special.logsumexp(R, -1)                  # [b,h,m]
+        PR = jax.nn.softmax(R, -1).reshape(B, H, cfg.modes, T, T)
+        U = jnp.einsum("bhmkl,bhkc,bhlc->bhmc", PR, v2, v3)     # [b,h,m,c]
+        Lg = jnp.einsum("hmc,bhic,bhjc->bhijm", a["BL"], q, k1) / math.sqrt(dh) + a["gam"][None, :, None, None, None] * Z[:, :, None, None, :]
+        Lg = jnp.where((i_[:, None] != i_[None, :])[None, None, :, :, None], Lg, -1e9)
+        P = jax.nn.softmax(Lg.reshape(B, H, T, -1), -1).reshape(B, H, T, T, cfg.modes)
+        y = jnp.einsum("bhijm,bhjc,bhmc->bhic", P, v1, U)
+    elif cfg.model == "branch":
+        # Branching resummation (tree-level Dyson-Schwinger for a phi^3 theory): random computation trees
+        # whose vertices stop (leaf value), hop (pairwise attention) or branch (cubic attention, value product).
+        q, k, q3, u, w = (heads(lin(a[n], x)) for n in ("q", "k", "q3", "u", "w"))
+        v = jnp.tanh(heads(lin(a["v"], x)))
+        A = jax.nn.softmax(jnp.einsum("bhic,bhjc->bhij", q, k) / math.sqrt(dh), -1)
+        s = jnp.where(triple_mask(T), jnp.einsum("bhic,bhjc,bhkc->bhijk", q3, u, w) / math.sqrt(dh), -1e9)
+        C = jax.nn.softmax(s.reshape(B, H, T, T * T), -1).reshape(B, H, T, T, T)
+        g = jax.nn.softmax(heads(lin(a["gate"], x)), -1)       # [b,h,i,3] stop / hop / branch
+        Hs = v
+        for _ in range(cfg.plen):
+            Hs = (g[..., 0:1] * v + g[..., 1:2] * jnp.einsum("bhij,bhjc->bhic", A, Hs)
+                  + g[..., 2:3] * jnp.einsum("bhijk,bhjc,bhkc->bhic", C, Hs, Hs))
+        y = Hs
+    elif cfg.model in ("chain", "path"):
+        y = path_attention(cfg, a, x, heads, dh)
+    elif cfg.model == "quartic":
+        q, k1, k2, k3, v1, v2, v3 = (heads(lin(a[n], x)) for n in ("q", "k1", "k2", "k3", "v1", "v2", "v3"))
+        s = jnp.einsum("bhic,bhjc,bhkc,bhlc->bhijkl", q, k1, k2, k3) / math.sqrt(dh)
+        i = jnp.arange(T)
+        I, J, K, L = i[:, None, None, None], i[None, :, None, None], i[None, None, :, None], i[None, None, None, :]
+        ok = (J != I) & (K != I) & (L != I) & ((J != K) | (J == 0)) & ((J != L) | (J == 0)) & ((K != L) | (K == 0))
+        s = jnp.where(ok, s, -1e9)
+        P = jax.nn.softmax(s.reshape(B, H, T, T ** 3), -1).reshape(B, H, T, T, T, T)
+        Dv = v1[:, :, :, None, None, :] * v2[:, :, None, :, None, :] * v3[:, :, None, None, :, :]
+        y = jnp.einsum("bhijkl,bhjklc->bhic", P, Dv)
+    elif cfg.model == "sa":
+        q, k, v = (heads(lin(a[n], x)) for n in ("q", "k", "v"))
+        s = jnp.einsum("bhic,bhjc->bhij", q, k) / math.sqrt(dh)
+        y = jnp.einsum("bhij,bhjc->bhic", jax.nn.softmax(s, -1), v)
+    else:
+        q, k1, k2, v1, v2 = (heads(lin(a[n], x)) for n in ("q", "k1", "k2", "v1", "v2"))
+        sc = 1 / math.sqrt(dh)
+        if cfg.model == "tree":       # h = x1x2 + x2x3  (Columbia tree attention)
+            s = (jnp.einsum("bhic,bhjc->bhij", q, k1)[..., None] + jnp.einsum("bhjc,bhkc->bhjk", k1, k2)[:, :, None]) * sc
+        elif cfg.model == "strassen":  # h = x1x2 + x2x3 + x3x1
+            s = (jnp.einsum("bhic,bhjc->bhij", q, k1)[..., None] + jnp.einsum("bhjc,bhkc->bhjk", k1, k2)[:, :, None]
+                 + jnp.einsum("bhic,bhkc->bhik", q, k2)[:, :, :, None, :]) * sc
+        else:                          # h = x1x2x3  (trilinear polyattention)
+            s = jnp.einsum("bhic,bhjc,bhkc->bhijk", q, k1, k2) * sc
+        s = jnp.where(triple_mask(T), s, -1e9)
+        P = jax.nn.softmax(s.reshape(B, H, T, T * T), -1).reshape(B, H, T, T, T)
+        if cfg.model == "cubic_add":     # additive pair value: no binding
+            y = jnp.einsum("bhijk,bhjc->bhic", P, v1) + jnp.einsum("bhijk,bhkc->bhic", P, v2)
+        elif cfg.model == "cubic_marg":  # sum out k: plain pairwise value of j
+            y = jnp.einsum("bhijk,bhjc->bhic", P, v1)
+        elif cfg.model == "cubic_qgate":  # the official tree_simple indexing: V at query i
+            y = v1 * jnp.einsum("bhijk,bhkc->bhic", P, v2)
+        elif cfg.model == "cubic_full":  # full pair-moment M_i = V1^T P_i V2 (Hadamard keeps only its diagonal)
+            y = jnp.einsum("bhja,bhijk,bhkc->bhiac", v1, P, v2).reshape(B, H, T, -1)
+        else:                            # D_jk = V1_j ⊙ V2_k
+            y = jnp.einsum("bhijk,bhjc,bhkc->bhic", P, v1, v2)
+    y = y.transpose(0, 2, 1, 3).reshape(B, T, -1)
+    return lin(a["o"], y)
+
+def forward(cfg, p, tok):
+    x = sum(p["emb"][f][tok[..., f]] for f in range(tok.shape[-1])) + p["pos"][None, : tok.shape[1]]
+    for L in p["layers"]:
+        for _ in range(cfg.recur):
+            x = x + attention(cfg, L["attn"], ln(L["ln1"], x))
+            x = x + lin(L["fc2"], jax.nn.gelu(lin(L["fc1"], ln(L["ln2"], x))))
+    return lin(p["head"], ln(p["lnf"], x))
+
+# ----------------------------------------------------------------------------- train
+def main():
+    ap = argparse.ArgumentParser()
+    ap.add_argument("--task", default="match3"); ap.add_argument("--model", default="cubic")
+    ap.add_argument("--layers", type=int, default=1); ap.add_argument("--d", type=int, default=64)
+    ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0)
+    ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--batch", type=int, default=128)
+    ap.add_argument("--lr", type=float, default=2e-3); ap.add_argument("--seed", type=int, default=0)
+    cfg = ap.parse_args()
+    gen, vocabs, C, kind = TASKS[cfg.task]
+    multilabel = kind == "multilabel"
+    rng = np.random.default_rng(cfg.seed)
+    tok0, _, _ = gen(rng, 2); T = tok0.shape[1]
+    params = init(jax.random.PRNGKey(cfg.seed), cfg, vocabs, C, T)
+    nparams = sum(x.size for x in jax.tree_util.tree_leaves(params))
+    sched = optax.warmup_cosine_decay_schedule(0.0, cfg.lr, min(200, cfg.steps // 10), cfg.steps, cfg.lr * 0.02)
+    opt = optax.chain(optax.clip_by_global_norm(1.0), optax.adamw(sched, weight_decay=0.01))
+    st = opt.init(params)
+
+    def loss_fn(p, tok, tgt, msk):
+        lg = forward(cfg, p, tok)
+        if multilabel:
+            ce = optax.sigmoid_binary_cross_entropy(lg, tgt).sum(-1)
+        else:
+            ce = optax.softmax_cross_entropy_with_integer_labels(lg, tgt)
+        return (ce * msk).sum() / msk.sum()
+
+    @jax.jit
+    def step(p, st, tok, tgt, msk):
+        l, g = jax.value_and_grad(loss_fn)(p, tok, tgt, msk)
+        up, st = opt.update(g, st, p)
+        return optax.apply_updates(p, up), st, l
+
+    @jax.jit
+    def evaluate(p, tok, tgt, msk):
+        lg = forward(cfg, p, tok)
+        if multilabel:
+            hit = ((lg > 0) == (tgt > 0.5)).all(-1)
+        else:
+            hit = lg.argmax(-1) == tgt
+        ok = hit | (msk == 0)
+        tokacc = (hit * msk).sum() / msk.sum()
+        if multilabel:
+            return tokacc, ok.all(-1).mean(), tokacc
+        # balanced accuracy: mean per-class recall over the classes present, immune to label imbalance
+        recalls = []
+        present = []
+        for c in range(C):
+            cm = (tgt == c) * msk
+            recalls.append((hit * cm).sum() / jnp.maximum(cm.sum(), 1))
+            present.append((cm.sum() > 0).astype(jnp.float32))
+        bal = (jnp.stack(recalls) * jnp.stack(present)).sum() / jnp.maximum(jnp.stack(present).sum(), 1)
+        return tokacc, ok.all(-1).mean(), bal
+
+    erng = np.random.default_rng(10_000 + cfg.seed)
+    etok, etgt, emsk = gen(erng, 2048)
+    base = float((etgt.reshape(etgt.shape[0], etgt.shape[1], -1).max(-1) * emsk).sum() / emsk.sum())
+    t0 = time.time(); curve = []
+    for it in range(cfg.steps):
+        tok, tgt, msk = gen(rng, cfg.batch)
+        params, st, l = step(params, st, tok, tgt, msk)
+        if (it + 1) % max(1, cfg.steps // 10) == 0:
+            ta, sa, ba = evaluate(params, etok, etgt, emsk)
+            curve.append((it + 1, round(float(l), 4), round(float(ta), 4), round(float(sa), 4), round(float(ba), 4)))
+    ta, sa, ba = evaluate(params, etok, etgt, emsk)
+    tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
+    print(json.dumps({"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed,
+                      "params": int(nparams), "tok_acc": round(float(ta), 4), "seq_acc": round(float(sa), 4),
+                      "bal_acc": round(float(ba), 4), "backend": jax.default_backend(),
+                      "pos_rate": round(base, 3), "secs": round(time.time() - t0, 1), "curve": curve}))
+
+if __name__ == "__main__":
+    main()

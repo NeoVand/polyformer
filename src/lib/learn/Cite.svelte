@@ -1,9 +1,10 @@
 <script lang="ts">
-	/** Numbered citation(s) linking to the reference list, e.g. [3, 4]. */
-	import { cite } from './references.ts';
+	/** Numbered citation(s) linking to a reference list, e.g. [3, 4]. Learn's list by default. */
+	import { REFERENCES, type Reference } from './references.ts';
 
-	let { id }: { id: string | string[] } = $props();
+	let { id, refs = REFERENCES }: { id: string | string[]; refs?: Reference[] } = $props();
 	const ids = $derived(Array.isArray(id) ? id : [id]);
+	const cite = (r: string) => refs.findIndex((x) => x.id === r) + 1;
 </script>
 
 <span class="cite"
