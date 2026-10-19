@@ -151,6 +151,60 @@ def main():
     # the first position has no past: every subset is empty slots, so every arity reads 1
     check("causal first position reads the vacuum", max(float(np.abs(np.asarray(A[m])[:, :, 0] - 1).max()) for m in range(cl.order)), 1e-12)
 
+    # 5. causal walk sector: A^l V against explicit sums over backward paths q >= t1 >= ... >= tl
+    Tw, Hw, dw = 6, 2, 3
+    sw = rng.normal(size=(1, Hw, Tw, Tw)) * 2
+    sw = np.where(np.tril(np.ones((Tw, Tw), bool)), sw, -np.inf)
+    Aw = np.exp(sw - sw.max(-1, keepdims=True))
+    Aw /= Aw.sum(-1, keepdims=True)
+    vw = rng.normal(size=(1, Hw, Tw, dw))
+    cw = argparse.Namespace(hops=4)
+    lyr = {"o": {"w": jnp.eye(Hw * dw), "b": jnp.zeros(Hw * dw)}, "beta": jnp.ones((3, Hw * dw))}
+    got = np.asarray(lm.walk_sector(cw, lyr, jnp.asarray(Aw), jnp.asarray(vw)))  # sum of W_2 + W_3 + W_4
+    want = np.zeros((1, Tw, Hw * dw))
+    for h in range(Hw):
+        for q in range(Tw):
+            for L in (2, 3, 4):
+                for path in itertools.product(range(Tw), repeat=L):
+                    w = Aw[0, h, q, path[0]] * np.prod([Aw[0, h, path[i], path[i + 1]] for i in range(L - 1)])
+                    want[0, q, h * dw:(h + 1) * dw] += w * vw[0, h, path[-1]]
+    check("causal walks vs explicit path sums (hops 2..4, float64)", float(np.abs(got - want).max()), 1e-10)
+
+    # 6. look-back keys: k~_u = k_u + gamma * sum_{u' < u} B[u, u'] k_{u'}
+    cb = argparse.Namespace(heads=2, lbdim=4)
+    xb = jnp.asarray(rng.normal(size=(1, Tw, 8)))
+    lb = {"lbq": {"w": jnp.asarray(rng.normal(size=(8, 8))), "b": jnp.zeros(8)},
+          "lbk": {"w": jnp.asarray(rng.normal(size=(8, 8))), "b": jnp.zeros(8)},
+          "gamma": jnp.asarray(rng.normal(size=(2, 1, 3)))}
+    kb = jnp.asarray(rng.normal(size=(1, 2, Tw, 3)))
+    got = np.asarray(lm.lookback_keys(cb, lb, xb, kb))
+    bq = np.asarray(xb[0] @ lb["lbq"]["w"]).reshape(Tw, 2, 4).transpose(1, 0, 2)
+    bk = np.asarray(xb[0] @ lb["lbk"]["w"]).reshape(Tw, 2, 4).transpose(1, 0, 2)
+    want = np.asarray(kb).copy()
+    for h in range(2):
+        for u in range(1, Tw):
+            sc = np.array([bq[h, u] @ bk[h, t] / 2.0 for t in range(u)])
+            wb = np.exp(sc - sc.max()); wb /= wb.sum()
+            want[0, h, u] += np.asarray(lb["gamma"])[h, 0] * sum(wb[t] * np.asarray(kb)[0, h, t] for t in range(u))
+    check("look-back keys vs explicit sums (float64)", float(np.abs(got - want).max()), 1e-10)
+
+    # 7. the whole causal model (free-field with walks and look-back) never reads the future
+    cm = argparse.Namespace(arch="sfa", d=32, layers=2, heads=2, rank=3, order=4, phase=2.0, vac=0.05, alpha0=0, cap=0.0,
+                            hops=3, lookback=1, lbdim=4, ctx=12, vocab=50, mlp=64, remat=0, nheads=2)
+    pm = lm.init(jax.random.PRNGKey(5), cm)
+    pm = jax.tree_util.tree_map(lambda t: t + 0.1 if t.ndim == 2 and t.shape[0] == 3 else t, pm)  # walks on
+    for lyr_ in pm["layers"]:
+        lyr_["beta"] = jnp.ones_like(lyr_["beta"]); lyr_["gamma"] = jnp.ones_like(lyr_["gamma"])
+        lyr_["alpha"] = jnp.ones_like(lyr_["alpha"])
+    ids = rng.integers(0, 50, (1, 12))
+    base = np.asarray(lm.forward(cm, pm, jnp.asarray(ids)))
+    worst_leak = 0.0
+    for t in range(1, 12):
+        ids2 = ids.copy(); ids2[0, t] = (ids2[0, t] + 7) % 50
+        out2 = np.asarray(lm.forward(cm, pm, jnp.asarray(ids2)))
+        worst_leak = max(worst_leak, float(np.abs(out2[0, :t] - base[0, :t]).max()))
+    check("causal model: changing token t leaves every earlier output unchanged", worst_leak, 1e-9)
+
     print("all checks passed" if ok else "SOME CHECKS FAILED")
     sys.exit(0 if ok else 1)
 
