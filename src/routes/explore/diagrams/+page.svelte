@@ -1,11 +1,6 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
-	import {
-		CHASE_QUERY_POS,
-		dealChase,
-		solveChase,
-		type ChaseInstance
-	} from '#lib/chase/chase.ts';
+	import { asset, resolve } from '$app/paths';
+	import { CHASE_QUERY_POS, dealChase, solveChase, type ChaseInstance } from '#lib/chase/chase.ts';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import type { DiagramHead, DiagramResult, DiagramSector } from '#lib/engine/protocol.ts';
 	import { dealLayout, findSets, type Card } from '#lib/set/cards.ts';
@@ -15,16 +10,19 @@
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import { Atom, Cube, Dice, Next, Pause, Play, Previous, Scissors } from '#lib/ui/icons.ts';
+	import { Dice, Feynman, Next, Pause, Play, Previous, Scissors, Simplex } from '#lib/ui/icons.ts';
 	import ChaseLists from '#lib/ui/ChaseLists.svelte';
+	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
+	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
 	import FeynmanDiagram from '#lib/viz/FeynmanDiagram.svelte';
+	import FlowLegend from '#lib/viz/FlowLegend.svelte';
 	import FeynmanRule from '#lib/viz/FeynmanRule.svelte';
 	import { autoThreshold, flowOn, idealChase, idealSet, type Term } from '#lib/viz/feynman.ts';
 
 	type TaskKey = 'chase' | 'set';
-	type Source = 'ideal' | 'trained';
-	let task = $state<TaskKey>('chase');
-	let source = $state<Source>('ideal');
+	type Source = 'recorded' | 'ideal' | 'trained';
+	let task = $state<TaskKey>('set');
+	let source = $state<Source>('recorded');
 	let seed = $state(4);
 	/** Prune threshold the user set, or null to choose one per diagram. */
 	let manualThreshold = $state<number | null>(null);
@@ -41,16 +39,35 @@
 	});
 	const answer = $derived(solveChase(chase));
 	const layout = $derived.by(() => {
-		const rng = mulberry32(seed * 7717 + 3);
+		// seed 4 deals the landing page's twelve cards, which have a recorded model
+		const rng = mulberry32((seed - 1) * 7717 + 3);
 		for (;;) {
 			const l: Card[] = dealLayout(rng);
-			if (findSets(l).length >= 2) return l;
+			if (findSets(l).length >= 3) return l;
 		}
 	});
 	const sets = $derived(findSets(layout));
 	const setCard = $derived(sets[0][0]);
 
-	// ── ideal construction, or the trained DS-PA run ─────────────────────────
+	// ── a model recorded in a browser, the ideal construction, or a live run ──
+	interface Recording {
+		diagram: DiagramResult;
+	}
+	/** The examples that have a recorded model: the first deal of each task. */
+	const RECORDED_SEED = 4;
+	let recorded = $state.raw<Record<TaskKey, Recording | null>>({ set: null, chase: null });
+	$effect(() => {
+		const get = (path: Parameters<typeof asset>[0]) =>
+			fetch(asset(path)).then((r) => (r.ok ? r.json() : null));
+		Promise.all([get('recorded/set-diagram.json'), get('recorded/chase-diagram.json')]).then(
+			([set, chase]) =>
+				(recorded = { set: set?.diagram ? set : null, chase: chase?.diagram ? chase : null }),
+			() => {}
+		);
+	});
+	const hasRecording = $derived(seed === RECORDED_SEED && !!recorded[task]);
+	const showingRecorded = $derived(source === 'recorded' && hasRecording);
+
 	const bench = $derived(getBench(task));
 	const step = $derived.by(() => {
 		void bench.version;
@@ -63,11 +80,15 @@
 	const checkpoint = $derived(Math.floor(step / 50));
 	const token = $derived(task === 'chase' ? CHASE_QUERY_POS : setCard + 1);
 
+	/** The token whose diagram is expanded; clicking a row in the flow picks another. */
+	let rootPick = $state<number | null>(null);
+	const root = $derived(rootPick ?? token);
 	// a new task or example starts from the ideal view until its first probe returns
 	$effect(() => {
 		void task;
 		void example;
 		trained = null;
+		rootPick = null;
 	});
 	$effect(() => {
 		if (source !== 'trained' || step === 0) return;
@@ -100,6 +121,10 @@
 	});
 	const headIndex = $derived(pickedHead ?? bestHead);
 	const view = $derived.by<View>(() => {
+		if (showingRecorded) {
+			const d = recorded[task]!.diagram;
+			return { head: d.perHead[0], n: d.n, rounds: d.rounds, modes: d.modes, heads: 1 };
+		}
 		if (source === 'trained' && trained) {
 			const h = Math.min(headIndex, trained.heads - 1);
 			return {
@@ -116,19 +141,50 @@
 	});
 	const showingTrained = $derived(source === 'trained' && !!trained);
 	const threshold = $derived(
-		manualThreshold ?? autoThreshold(view.head, view.n, view.rounds, view.modes, token)
+		manualThreshold ?? autoThreshold(view.head, view.n, view.rounds, view.modes, root)
 	);
 
 	// ── the root's sector spectrum, round by round ───────────────────────────
-	const SECTORS: { id: DiagramSector; label: string; shade: number; tex: string; says: string }[] = [
-		{ id: 'leaf', label: 'Leaf', shade: 0.32, tex: '\\pi_{\\text{leaf}}\\, v_t', says: 'its own value' },
-		{ id: 'hop', label: 'Hop', shade: 0.95, tex: '\\pi_j\\, \\Phi^{r-1}_j', says: 'another token' },
-		{ id: 'cubic', label: 'Cubic', shade: 0.72, tex: '\\pi_{jk}\\, \\Phi_j \\odot \\Phi_k', says: 'two tokens at once' },
-		{ id: 'exchange', label: 'Exchange', shade: 0.52, tex: '\\pi_{jm}\\, \\Phi_j \\odot \\Psi_m', says: 'via a virtual mode' },
-		{ id: 'carry', label: 'Carry', shade: 0.18, tex: '\\pi_{\\text{carry}}\\, \\Phi^{r-1}_t', says: 'keep the state' }
-	];
+	const SECTORS: { id: DiagramSector; label: string; shade: number; tex: string; says: string }[] =
+		[
+			{
+				id: 'leaf',
+				label: 'Leaf',
+				shade: 0.32,
+				tex: '\\pi_{\\text{leaf}}\\, v_t',
+				says: 'its own value'
+			},
+			{
+				id: 'hop',
+				label: 'Hop',
+				shade: 0.95,
+				tex: '\\pi_j\\, \\Phi^{r-1}_j',
+				says: 'another token'
+			},
+			{
+				id: 'cubic',
+				label: 'Cubic',
+				shade: 0.72,
+				tex: '\\pi_{jk}\\, \\Phi_j \\odot \\Phi_k',
+				says: 'two tokens at once'
+			},
+			{
+				id: 'exchange',
+				label: 'Exchange',
+				shade: 0.52,
+				tex: '\\pi_{jm}\\, \\Phi_j \\odot \\Psi_m',
+				says: 'via a virtual mode'
+			},
+			{
+				id: 'carry',
+				label: 'Carry',
+				shade: 0.18,
+				tex: '\\pi_{\\text{carry}}\\, \\Phi^{r-1}_t',
+				says: 'keep the state'
+			}
+		];
 	const spectrum = $derived(
-		Array.from({ length: view.rounds }, (_, r) => view.head.states[r * view.n + token]?.sectors)
+		Array.from({ length: view.rounds }, (_, r) => view.head.states[r * view.n + root]?.sectors)
 	);
 
 	// ── reveal: build the diagram from the values to the readout ─────────────
@@ -195,11 +251,34 @@
 		bench.start({ only: ['dspa'], until: Math.max(task === 'chase' ? 3000 : 2000, step + 1000) });
 	}
 	const highlight = $derived(
-		task === 'chase' ? [CHASE_QUERY_POS, ...answer.path.map((i) => i + 1)] : [setCard + 1, ...sets[0].slice(1).map((c) => c + 1)]
+		task === 'chase'
+			? [CHASE_QUERY_POS, ...answer.path.map((i) => i + 1)]
+			: [setCard + 1, ...sets[0].slice(1).map((c) => c + 1)]
 	);
 
-	const probs = $derived(showingTrained && trained ? trained.probs : null);
+	const probs = $derived(
+		showingRecorded
+			? recorded[task]!.diagram.probs
+			: showingTrained && trained
+				? trained.probs
+				: null
+	);
 	const predicted = $derived(probs ? probs.indexOf(Math.max(...probs)) : null);
+	/** Rows of the every-token view: lists in pointer order for chase, the table for SET. */
+	const flowRows = $derived(
+		task === 'chase' ? flowGroups(chase) : [Array.from({ length: layout.length }, (_, i) => i + 1)]
+	);
+	const held = $derived(
+		task === 'chase' ? heldPayloads(view.head, view.n, view.rounds, chase) : null
+	);
+	const rootHighlight = $derived(root === token ? highlight : [root]);
+	const rootOutput = $derived(
+		root !== token
+			? `\\Phi^{${view.rounds}}`
+			: task === 'chase'
+				? `\\hat y = ${predicted ?? answer.payload}`
+				: '\\hat y'
+	);
 </script>
 
 <svelte:head>
@@ -208,8 +287,8 @@
 
 <PageFrame
 	rail={[
-		{ id: 'tensor', label: 'Tensor lab', icon: Cube, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Diagrams', icon: Atom, href: resolve('/explore/diagrams') }
+		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
+		{ id: 'diagrams', label: 'DS-PA', icon: Feynman, href: resolve('/explore/diagrams') }
 	]}
 	active="diagrams"
 >
@@ -218,57 +297,116 @@
 			<div class="title-row">
 				<h1>Sum over diagrams</h1>
 				<div class="seg" role="group" aria-label="Task">
-					<button aria-pressed={task === 'chase'} onclick={() => (task = 'chase')}>Pointer chase</button>
 					<button aria-pressed={task === 'set'} onclick={() => (task = 'set')}>SET</button>
+					<button aria-pressed={task === 'chase'} onclick={() => (task = 'chase')}
+						>Pointer chase</button
+					>
 				</div>
 			</div>
 			<p class="sub">
-				DS-PA rebuilds every token for several rounds from a sum of terms. Expanding one token's sum gives its
-				computation tree, drawn here as a Feynman diagram: line weight is how much each path contributes.
+				DS-PA rebuilds every token for several rounds from a sum of terms. On the left, every token
+				at once; on the right, one token's sum expanded into its Feynman diagram. Click a row to
+				expand that token.
 			</p>
 		</header>
 
-		<section class="diagram" aria-label="Computation tree">
+		<section class="diagram" aria-label="Computation">
 			<div class="d-head">
 				<span>
 					{#if task === 'chase'}
-						The query's state <MathTex tex={`\\Phi^{${view.rounds}}_q`} /> must hold the payload at the end of its list.
+						{#if root === CHASE_QUERY_POS}
+							The query's state <MathTex tex={`\\Phi^{${view.rounds}}_q`} /> must hold the payload at
+							the end of its list.
+						{:else}
+							Node {chase.nodes[root - 1]?.id}'s state <MathTex tex={`\\Phi^{${view.rounds}}`} />,
+							built from what it points to.
+						{/if}
 					{:else}
-						Card {setCard + 1}'s state <MathTex tex={`\\Phi^{${view.rounds}}_{${setCard + 1}}`} /> must say whether it is in a
-						SET.
+						Card {root}'s state <MathTex tex={`\\Phi^{${view.rounds}}_{${root}}`} /> must say whether
+						it is in a SET.
 					{/if}
 				</span>
-				<span class="status num" class:live={showingTrained}>
-					{showingTrained ? `Trained, step ${step.toLocaleString('en-US')}, head ${headIndex + 1}` : 'Ideal computation'}
+				<span class="status num" class:live={showingTrained || showingRecorded}>
+					{#if showingRecorded}
+						{@const d = recorded[task]!.diagram}
+						Recorded in a browser, step {d.step.toLocaleString('en-US')}, head {d.perHead[0].head +
+							1} of {d.heads}
+					{:else if showingTrained}
+						Trained, step {step.toLocaleString('en-US')}, head {headIndex + 1}
+					{:else}
+						Ideal computation
+					{/if}
 				</span>
 			</div>
-			<div class="canvas">
-				{#key `${task}-${source}`}
-					<FeynmanDiagram
+			<div class="panes">
+				<div class="pane every">
+					<h3 class="p-title">Every token</h3>
+					<DiagramFlow
 						head={view.head}
 						n={view.n}
 						rounds={view.rounds}
-						modes={view.modes}
-						root={token}
-						options={{ threshold, perRound: 9 }}
-						{reveal}
-						{highlight}
-						output={task === 'chase' ? `\\hat y = ${predicted ?? answer.payload}` : '\\hat y'}
-						onterm={(t) => (term = t)}
+						rows={flowRows}
+						{root}
+						onroot={(t) => (rootPick = t === token ? null : t)}
+						pitch={task === 'chase' ? 27 : 32}
+						column={task === 'chase' ? 74 : 124}
+						annotate={held
+							? (r, t) => {
+									const v = held[r]?.[t];
+									return v === null || v === undefined ? null : String(v);
+								}
+							: undefined}
+						output={rootOutput}
 					>
-						{#snippet row(t)}
-							{#if t === 0}
-								<span class="leg"><MathTex tex="\varnothing" /></span>
-							{:else if task === 'chase'}
-								<span class="leg"
-									><MathTex tex={t === CHASE_QUERY_POS ? 'q' : `v_{${chase.nodes[t - 1].id}}`} /></span
-								>
+						{#snippet label(t)}
+							{#if task === 'chase'}
+								{#if t === CHASE_QUERY_POS}<MathTex tex="q" />{:else}{chase.nodes[t - 1]?.id}{/if}
 							{:else}
-								<SetCard card={layout[t - 1]} width={24} />
+								<SetCard card={layout[t - 1]} width={15} />
 							{/if}
 						{/snippet}
-					</FeynmanDiagram>
-				{/key}
+					</DiagramFlow>
+					<div class="p-legend"><FlowLegend compact /></div>
+				</div>
+				<div class="pane one">
+					<h3 class="p-title">
+						{task === 'chase'
+							? root === CHASE_QUERY_POS
+								? 'The query, expanded'
+								: `Node ${chase.nodes[root - 1]?.id}, expanded`
+							: `Card ${root}, expanded`}
+					</h3>
+					<div class="canvas">
+						{#key `${task}-${source}-${root}`}
+							<FeynmanDiagram
+								head={view.head}
+								n={view.n}
+								rounds={view.rounds}
+								modes={view.modes}
+								{root}
+								options={{ threshold, perRound: 9 }}
+								{reveal}
+								highlight={rootHighlight}
+								output={rootOutput}
+								onterm={(t) => (term = t)}
+							>
+								{#snippet row(t)}
+									{#if t === 0}
+										<span class="leg"><MathTex tex="\varnothing" /></span>
+									{:else if task === 'chase'}
+										<span class="leg"
+											><MathTex
+												tex={t === CHASE_QUERY_POS ? 'q' : `v_{${chase.nodes[t - 1].id}}`}
+											/></span
+										>
+									{:else}
+										<SetCard card={layout[t - 1]} width={22} />
+									{/if}
+								{/snippet}
+							</FeynmanDiagram>
+						{/key}
+					</div>
+				</div>
 			</div>
 		</section>
 
@@ -280,7 +418,12 @@
 				<span class="s-label">Table</span>
 				<div class="cards">
 					{#each layout as c, i (i)}
-						<SetCard card={c} width={30} selected={sets[0].includes(i)} dim={!sets.some((s) => s.includes(i))} />
+						<SetCard
+							card={c}
+							width={30}
+							selected={sets[0].includes(i)}
+							dim={!sets.some((s) => s.includes(i))}
+						/>
 					{/each}
 				</div>
 			{/if}
@@ -295,61 +438,83 @@
 				/>
 			</div>
 			<p class="note">
-				One softmax <MathTex tex="\pi" /> over every term, scored by a single trilinear vertex. Each term is a Feynman
-				rule:
+				One softmax <MathTex tex="\pi" /> over every term, scored by a single trilinear vertex. Each term
+				is a Feynman rule:
 			</p>
+			<div class="rules-head">
+				<span>Rule</span>
+				<span class="rh-mass">
+					{#each Array.from({ length: view.rounds }, (_, r) => r) as r (r)}<i
+							><MathTex tex={`\\Phi^{${r + 1}}`} /></i
+						>{/each}
+				</span>
+			</div>
 			<ul class="rules">
 				{#each SECTORS as sec (sec.id)}
-					<li>
-						<FeynmanRule kind={sec.id} width={64} height={26} />
+					{@const last = spectrum.at(-1)?.[sec.id] ?? 0}
+					<li class:dominant={last >= 0.5}>
+						<FeynmanRule kind={sec.id} width={52} height={22} />
 						<span class="r-name">{sec.label}<small>{sec.says}</small></span>
-						<span class="r-tex"><MathTex tex={sec.tex} /></span>
+						<span
+							class="r-mass"
+							role="img"
+							aria-label="{sec.label}: {pct(last, 0)} of the mass in the last round"
+						>
+							{#each spectrum as sm, r (r)}
+								{@const v = sm?.[sec.id] ?? 0}
+								<i title="Round {r + 1}: {pct(v, 1)}"
+									><b style:height="{Math.max(v > 0.004 ? 1.5 : 0, v * 100)}%"></b></i
+								>
+							{/each}
+						</span>
+						<span class="r-pct num"
+							>{last >= 0.995 ? '100%' : last < 0.005 ? '<1%' : pct(last, 0)}</span
+						>
 					</li>
 				{/each}
 			</ul>
-
-			<h3>Where the mass goes</h3>
-			<div class="spectrum">
-				{#each spectrum as sm, r (r)}
-					<span class="r-label"><MathTex tex={`\\Phi^{${r + 1}}`} /></span>
-					<div class="bar" role="img" aria-label="Round {r + 1} sector mass">
-						{#each SECTORS as sec (sec.id)}
-							{@const v = sm?.[sec.id] ?? 0}
-							{#if v > 0.004}
-								<span
-									style:flex-grow={v}
-									style:background="rgb({255 * sec.shade} {255 * sec.shade} {255 * sec.shade})"
-									title="{sec.label} {pct(v, 0)}"
-								></span>
-							{/if}
-						{/each}
-					</div>
-				{/each}
-			</div>
-			<div class="keys">
-				{#each SECTORS as sec (sec.id)}
-					<span><i style:background="rgb({255 * sec.shade} {255 * sec.shade} {255 * sec.shade})"></i>{sec.label}</span>
-				{/each}
-			</div>
+			<p class="note mass-note">
+				Bars: how much of {task === 'chase' && root === CHASE_QUERY_POS
+					? "the query's"
+					: task === 'chase'
+						? "this node's"
+						: "this card's"}
+				state each rule supplies, round by round.
+			</p>
 
 			<h3>Under the pointer</h3>
 			<p class="note hover">
 				{#if term}
-					<span class="num">Round {term.round}:</span> {describe(term)}, {pct(term.flow, 1)} of the root.
+					<span class="num">Round {term.round}:</span>
+					{describe(term)}, {pct(term.flow, 1)} of the root.
 				{:else}
 					Hover a line to read its term.
 				{/if}
 			</p>
 
-			<h3>{showingTrained ? 'Trained model' : 'Ideal computation'}</h3>
-			{#if !showingTrained}
+			<h3>
+				{showingRecorded
+					? 'Recorded model'
+					: showingTrained
+						? 'Trained model'
+						: 'Ideal computation'}
+			</h3>
+			{#if showingRecorded}
+				<p class="note">
+					Trained for {recorded[task]!.diagram.step.toLocaleString('en-US')} steps on WebGPU and saved,
+					so it shows without waiting. Live trains a fresh model here.
+				</p>
+			{/if}
+			{#if !showingTrained && !showingRecorded}
 				<p class="note">
 					{#if task === 'chase'}
-						A perfect model hops one pointer per round, and the query hops to its start. Here the answer is payload
+						A perfect model hops one pointer per round, and the query hops to its start. Here the
+						answer is payload
 						{answer.payload}, {answer.hops}
 						{answer.hops === 1 ? 'hop' : 'hops'} from the start.
 					{:else}
-						A perfect model needs one cubic vertex: each card multiplies the values of its two SET partners.
+						A perfect model needs one cubic vertex: each card multiplies the values of its two SET
+						partners.
 					{/if}
 				</p>
 			{:else if probs}
@@ -368,13 +533,19 @@
 					{:else if bench.status === 'error'}
 						{bench.error}
 					{:else if training}
-						Training on {bench.device === 'webgpu' ? 'WebGPU' : bench.device === 'wasm' ? 'WebAssembly' : bench.device},
-						step {step.toLocaleString('en-US')}. The diagram redraws as it learns.
+						Training on {bench.device === 'webgpu'
+							? 'WebGPU'
+							: bench.device === 'wasm'
+								? 'WebAssembly'
+								: bench.device}, step {step.toLocaleString('en-US')}. The diagram redraws as it
+						learns.
 					{:else if step > 0}
 						Trained to step {step.toLocaleString('en-US')}.
 						<button class="link-btn" onclick={train}>Train 1,000 more</button>
 					{:else}
-						<button class="btn primary" onclick={train}><Icon icon={Play} size={13} />Train DS-PA</button>
+						<button class="btn primary" onclick={train}
+							><Icon icon={Play} size={13} />Train DS-PA</button
+						>
 					{/if}
 				</p>
 			{/if}
@@ -384,18 +555,30 @@
 			<div class="group timeline" role="group" aria-label="Build the diagram">
 				{#each Array.from({ length: view.rounds + 2 }, (_, r) => r) as r (r)}
 					{#if r > 0}<span class="rail-line" class:on={stage >= r}></span>{/if}
-					<button class="tick" class:on={stage >= r} class:at={stage === r} onclick={() => stepTo(r)}>
+					<button
+						class="tick"
+						class:on={stage >= r}
+						class:at={stage === r}
+						onclick={() => stepTo(r)}
+					>
 						<span class="dot"></span>
-						<span class="t-name">{r === 0 ? 'Values' : r === view.rounds + 1 ? 'Readout' : `Round ${r}`}</span>
+						<span class="t-name"
+							>{r === 0 ? 'Values' : r === view.rounds + 1 ? 'Readout' : `Round ${r}`}</span
+						>
 					</button>
 				{/each}
 			</div>
 			<div class="group keys-row">
-				<button class="key" onclick={() => stepTo(stage - 1)}><Icon icon={Previous} size={17} /><span>Back</span></button>
-				<button class="key play" onclick={play}
-					><Icon icon={playing ? Pause : Play} size={17} /><span>{playing ? 'Pause' : 'Build'}</span></button
+				<button class="key" onclick={() => stepTo(stage - 1)}
+					><Icon icon={Previous} size={17} /><span>Back</span></button
 				>
-				<button class="key" onclick={() => stepTo(stage + 1)}><Icon icon={Next} size={17} /><span>Step</span></button>
+				<button class="key play" onclick={play}
+					><Icon icon={playing ? Pause : Play} size={17} /><span>{playing ? 'Pause' : 'Build'}</span
+					></button
+				>
+				<button class="key" onclick={() => stepTo(stage + 1)}
+					><Icon icon={Next} size={17} /><span>Step</span></button
+				>
 			</div>
 			<div class="group prune">
 				<Icon icon={Scissors} size={16} />
@@ -410,23 +593,44 @@
 					oninput={(e) => (manualThreshold = +e.currentTarget.value)}
 				/>
 				<span class="num val">{pct(threshold, 1)}</span>
-				<button class="auto" aria-pressed={manualThreshold === null} onclick={() => (manualThreshold = null)}>Auto</button>
+				<button
+					class="auto"
+					aria-pressed={manualThreshold === null}
+					onclick={() => (manualThreshold = null)}>Auto</button
+				>
 			</div>
 			<div class="group">
 				<div class="seg" role="group" aria-label="Model">
-					<button aria-pressed={source === 'ideal'} onclick={() => (source = 'ideal')}>Ideal</button>
-					<button aria-pressed={source === 'trained'} onclick={() => (source = 'trained')}>Trained</button>
+					<button
+						aria-pressed={showingRecorded}
+						disabled={!hasRecording}
+						title={hasRecording
+							? 'A model trained earlier in a browser'
+							: 'Recorded for the first deal only'}
+						onclick={() => (source = 'recorded')}>Recorded</button
+					>
+					<button
+						aria-pressed={source === 'ideal' || (source === 'recorded' && !hasRecording)}
+						onclick={() => (source = 'ideal')}>Ideal</button
+					>
+					<button aria-pressed={source === 'trained'} onclick={() => (source = 'trained')}
+						>Live</button
+					>
 				</div>
 				{#if showingTrained && view.heads > 1}
 					<div class="seg" role="group" aria-label="Head">
 						{#each Array.from({ length: view.heads }, (_, h) => h) as h (h)}
-							<button aria-pressed={headIndex === h} onclick={() => (pickedHead = h)}>H{h + 1}</button>
+							<button aria-pressed={headIndex === h} onclick={() => (pickedHead = h)}
+								>H{h + 1}</button
+							>
 						{/each}
 					</div>
 				{/if}
 			</div>
 			<div class="group right">
-				<button class="key" onclick={newExample}><Icon icon={Dice} size={17} /><span>Deal</span></button>
+				<button class="key" onclick={newExample}
+					><Icon icon={Dice} size={17} /><span>Deal</span></button
+				>
 			</div>
 		</footer>
 	</div>
@@ -491,9 +695,37 @@
 	.status.live {
 		color: var(--color-ink);
 	}
-	.canvas {
+	.panes {
+		display: grid;
+		grid-template-columns: minmax(280px, 0.8fr) minmax(0, 1.2fr);
+		gap: 22px;
 		min-height: 0;
-		padding: 14px 0 8px;
+		padding-top: 12px;
+	}
+	.pane {
+		display: flex;
+		flex-direction: column;
+		min-width: 0;
+		min-height: 0;
+	}
+	.pane.every {
+		overflow-y: auto;
+		padding-right: 18px;
+		border-right: 1px solid #191919;
+	}
+	.p-title {
+		margin: 0 0 8px;
+		font-size: var(--text-xs);
+		font-weight: 500;
+		color: var(--color-ink-2);
+	}
+	.p-legend {
+		margin-top: 12px;
+	}
+	.canvas {
+		flex: 1;
+		min-height: 0;
+		padding: 2px 0 8px;
 	}
 	.leg {
 		font-size: 15px;
@@ -557,8 +789,8 @@
 	}
 	.rules li {
 		display: grid;
-		grid-template-columns: 64px 1fr auto;
-		gap: 12px;
+		grid-template-columns: 52px 1fr auto 34px;
+		gap: 10px;
 		align-items: center;
 	}
 	.r-name {
@@ -571,48 +803,57 @@
 		font-size: var(--text-2xs);
 		color: var(--color-ink-3);
 	}
-	.r-tex {
-		font-size: 13px;
-	}
-	.spectrum {
+	.rules-head {
 		display: grid;
-		grid-template-columns: 26px 1fr;
-		gap: 6px 8px;
-		align-items: center;
-	}
-	.r-label {
-		font-size: 12px;
-	}
-	.r-label :global(.katex) {
-		color: var(--color-ink-3);
-	}
-	.bar {
-		display: flex;
-		gap: 1px;
-		height: 8px;
-		border-radius: 2px;
-		overflow: hidden;
-	}
-	.bar span {
-		flex-basis: 0;
-	}
-	.keys {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 4px 12px;
-		margin-top: 10px;
+		grid-template-columns: 52px 1fr auto 34px;
+		gap: 10px;
+		margin-top: 12px;
 		font-size: var(--text-2xs);
 		color: var(--color-ink-3);
 	}
-	.keys span {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
+	.rules-head > span:first-child {
+		grid-column: 1 / 3;
 	}
-	.keys i {
-		width: 8px;
-		height: 8px;
+	.rh-mass,
+	.r-mass {
+		display: flex;
+		gap: 3px;
+	}
+	.rh-mass i {
+		width: 14px;
+		font-size: 9px;
+		font-style: normal;
+		text-align: center;
+	}
+	.r-mass i {
+		position: relative;
+		width: 14px;
+		height: 20px;
 		border-radius: 2px;
+		background: #1a1a1a;
+		overflow: hidden;
+	}
+	.r-mass b {
+		position: absolute;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background: #8f8f8f;
+	}
+	.rules li.dominant .r-mass b {
+		background: #f2f2f2;
+	}
+	.r-pct {
+		width: 34px;
+		font-size: var(--text-2xs);
+		text-align: right;
+		color: var(--color-ink-3);
+	}
+	.rules li.dominant .r-pct {
+		color: var(--color-ink);
+	}
+	.mass-note {
+		margin-top: 8px;
 	}
 	.hover {
 		min-height: 36px;

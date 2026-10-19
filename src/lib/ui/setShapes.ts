@@ -12,7 +12,8 @@ export const SPADE =
 	'M0,-11 C1.8,-8.6 11,-3.6 11,2.4 C11,5.8 8.6,7.8 5.8,7.8 C3.8,7.8 2.2,6.8 1.2,5.2 C1.5,7.9 2.8,10 5,11.2 L-5,11.2 C-2.8,10 -1.5,7.9 -1.2,5.2 C-2.2,6.8 -3.8,7.8 -5.8,7.8 C-8.6,7.8 -11,5.8 -11,2.4 C-11,-3.6 -1.8,-8.6 0,-11 Z';
 
 /** The card diamond: a rhombus with gently pinched sides. */
-export const DIAMOND = 'M0,-11.5 Q3.4,-5.2 8.8,0 Q3.4,5.2 0,11.5 Q-3.4,5.2 -8.8,0 Q-3.4,-5.2 0,-11.5 Z';
+export const DIAMOND =
+	'M0,-11.5 Q3.4,-5.2 8.8,0 Q3.4,5.2 0,11.5 Q-3.4,5.2 -8.8,0 Q-3.4,-5.2 0,-11.5 Z';
 
 /** A club: three lobes and a flared stem, traced as a single outline. */
 export const CLUB = (() => {
@@ -55,4 +56,8 @@ export const CLUB = (() => {
 /** The three suits a card's shape attribute takes. */
 export const SHAPES = [SPADE, HEART, CLUB] as const;
 
-export const SET_COLOURS = ['var(--color-card-ink)', 'var(--color-card-red)', 'var(--color-card-gold)'];
+export const SET_COLOURS = [
+	'var(--color-card-blue)',
+	'var(--color-card-green)',
+	'var(--color-card-purple)'
+];

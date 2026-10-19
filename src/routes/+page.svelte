@@ -1,18 +1,23 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { asset, resolve } from '$app/paths';
-	import type { ChaseInstance } from '#lib/chase/chase.ts';
+	import { CHASE_QUERY_POS, type ChaseInstance } from '#lib/chase/chase.ts';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import type { DiagramResult } from '#lib/engine/protocol.ts';
 	import { SUITES, type SuiteId } from '#lib/engine/runs.ts';
 	import { querySlice, topHyperedges } from '#lib/explore/analysis.ts';
 	import { exactProbe, scoreSlice } from '#lib/explore/exact.ts';
-	import { dealLayout, findSets, isSet, LAYOUT_SIZE, type Card } from '#lib/set/cards.ts';
+	import { dealLayout, findSets, LAYOUT_SIZE, type Card } from '#lib/set/cards.ts';
 	import { mulberry32 } from '#lib/set/rng.ts';
+	import Icon from '#lib/ui/Icon.svelte';
 	import LineChart, { type Series } from '#lib/ui/LineChart.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import ChaseFlow from '#lib/viz/ChaseFlow.svelte';
+	import { Pause, Play } from '#lib/ui/icons.ts';
+	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
+	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
+	import FlowLegend from '#lib/viz/FlowLegend.svelte';
 	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
 	import TensorCube from '#lib/viz/TensorCube.svelte';
 
@@ -52,32 +57,85 @@
 		return top.map((e) => ({ j: e.j, k: e.k, weight: e.weight / w }));
 	};
 
-	// ── the cube and the hypergraph share one query and one selected triple ──
+	// ── the cube, the hypergraph and the trained model share one query card ──
 	let query = $state(sets[0][0]);
 	let pick = $state<{ j: number; k: number } | null>(null);
 	const edges = $derived(strongest(query));
 	const selected = $derived(pick ?? (edges[0] ? { j: edges[0].j, k: edges[0].k } : null));
-	const trio = $derived(selected ? [query, selected.j, selected.k] : null);
-	const trioIsSet = $derived(!!trio && isSet(layout[trio[0]], layout[trio[1]], layout[trio[2]]));
 
-	// ── recordings: the bench curves and one trained DS-PA diagram ───────────
+	// ── the tour: every card in a SET, once per SET it belongs to ────────────
+	interface Stop {
+		i: number;
+		pair: { j: number; k: number } | null;
+	}
+	const STOPS: Stop[] = (() => {
+		const out: Stop[] = [];
+		const members = [...new Set(sets.flat())].sort((a, b) => a - b);
+		for (const i of members)
+			for (const s of sets.filter((x) => x.includes(i))) {
+				const [j, k] = s.filter((c) => c !== i);
+				out.push({ i, pair: { j, k } });
+			}
+		// one card in no SET, to show what nothing looks like
+		const loner = layout.findIndex((_, c) => !sets.some((s) => s.includes(c)));
+		if (loner >= 0) out.splice(Math.ceil(out.length / 2), 0, { i: loner, pair: null });
+		return out;
+	})();
+	const STEP_MS = 3600;
+	let touring = $state(false);
+	let stop = $state(0);
+	let chaseStop = $state(0);
+	function goTo(n: number) {
+		stop = (n + STOPS.length) % STOPS.length;
+		query = STOPS[stop].i;
+		pick = STOPS[stop].pair;
+	}
+	/** Anything the visitor clicks takes over from the tour. */
+	function takeOver() {
+		touring = false;
+	}
+	function choose(card: number) {
+		takeOver();
+		query = card;
+		pick = null;
+	}
+	onMount(() => {
+		goTo(0);
+		touring = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+	});
+	$effect(() => {
+		if (!touring) return;
+		const id = setInterval(() => {
+			if (document.hidden) return;
+			goTo(stop + 1);
+			chaseStop += 1;
+		}, STEP_MS);
+		return () => clearInterval(id);
+	});
+
+	// ── recordings: bench curves and two trained DS-PA diagrams ──────────────
 	interface RecordedRun {
 		evalSteps: number[];
 		evalAccuracy: number[];
 		params: number;
 	}
-	interface RecordedDiagram {
-		recordedAt: string;
+	interface ChaseRecording {
 		accuracy: number;
 		instance: ChaseInstance;
 		diagram: DiagramResult;
 	}
+	interface SetRecording {
+		accuracy: number;
+		diagram: DiagramResult;
+	}
 	let suite = $state<SuiteId>('set');
+	let flowTask = $state<SuiteId>('set');
 	const recordings: Record<SuiteId, Record<string, RecordedRun> | null> = $state({
 		set: null,
 		chase: null
 	});
-	let recordedDiagram = $state.raw<RecordedDiagram | null>(null);
+	let chaseRec = $state.raw<ChaseRecording | null>(null);
+	let setRec = $state.raw<SetRecording | null>(null);
 	$effect(() => {
 		const get = (path: Parameters<typeof asset>[0]) =>
 			fetch(asset(path)).then((r) => (r.ok ? r.json() : null));
@@ -90,9 +148,33 @@
 			() => {}
 		);
 		get('recorded/chase-diagram.json').then(
-			(j) => j?.diagram && (recordedDiagram = j),
+			(j) => j?.diagram && (chaseRec = j),
 			() => {}
 		);
+		get('recorded/set-diagram.json').then(
+			(j) => j?.diagram && (setRec = j),
+			() => {}
+		);
+	});
+	const chaseGroups = $derived(chaseRec ? flowGroups(chaseRec.instance) : []);
+	/** On the chase tab the tour visits the query and the head of every other list. */
+	const chaseRoots = $derived(chaseGroups.map((g) => g[0]));
+	const chaseRoot = $derived(
+		chaseRoots.length ? chaseRoots[chaseStop % chaseRoots.length] : CHASE_QUERY_POS
+	);
+	const chaseHeld = $derived(
+		chaseRec
+			? heldPayloads(
+					chaseRec.diagram.perHead[0],
+					chaseRec.diagram.n,
+					chaseRec.diagram.rounds,
+					chaseRec.instance
+				)
+			: null
+	);
+	const chaseAnswer = $derived.by(() => {
+		const p = chaseRec?.diagram.probs;
+		return p ? p.indexOf(Math.max(...p)) : null;
 	});
 
 	const runs = $derived(SUITES[suite].runs.filter((r) => recordings[suite]?.[r.id]));
@@ -121,32 +203,66 @@
 		return `rgb(${v} ${v} ${v})`;
 	};
 	let chartH = $state(0);
+	const CARD_ROWS = [Array.from({ length: C }, (_, i) => i + 1)];
 </script>
 
 <svelte:head>
-	<title>Polyformer | Attention over triples</title>
+	<title>Polyformer | Higher-order attention</title>
 	<meta
 		name="description"
-		content="Cubic attention scores each query against pairs of keys. See the tensor, the hypergraph, a trained model's diagram and the bench, all computed in your browser."
+		content="Higher-order attention: cubic heads that read triples and DS-PA, which learns how many tokens to combine. See the tensor, the hypergraph, a trained model and the bench, all computed in your browser."
 	/>
 </svelte:head>
 
 <main class="deck">
 	<!-- ── the idea ─────────────────────────────────────────────────────── -->
 	<section class="intro">
-		<h1>Attention that reads three tokens at once</h1>
+		<h1>Higher-order attention</h1>
 		<div class="eq">
-			<MathTex tex={'A_{ijk} = \\langle\\, Q_i,\\; K^{1}_{j} \\odot K^{2}_{k} \\,\\rangle'} />
+			<MathTex
+				display
+				tex={'\\begin{aligned} A_{ij} &= \\langle Q_i,\\, K_j \\rangle && \\text{pairs} \\\\ A_{ijk} &= \\langle Q_i,\\, K^{1}_{j} \\odot K^{2}_{k} \\rangle && \\text{triples} \\end{aligned}'}
+			/>
 		</div>
 		<p>
-			A transformer head compares a query with one key at a time. A cubic head scores it against
-			every pair of keys, so one layer sees relations that exist only among three tokens. DS-PA goes
-			further and learns, step by step, how many tokens to combine. Everything here was trained in a
-			browser.
+			A transformer head scores a query against one key at a time, so it sees pairs. Higher-order
+			heads score whole tuples: cubic attention reads the query with every pair of keys, and DS-PA
+			learns how many tokens each step should combine. On tasks built from triples and chains, both
+			win with fewer layers and fewer parameters.
+		</p>
+		<p class="small">
+			Every model on this page was trained in a browser with jax-js. There is no server.
 		</p>
 		<div class="ctas">
 			<a class="cta primary" href={resolve('/learn')}>Read how it works</a>
-			<a class="cta" href={resolve('/compare')}>Run the bench</a>
+			<a class="cta" href={resolve('/explore')}>Explore the models</a>
+		</div>
+		<div class="tour" aria-label="Tour of the SETs on the table">
+			<button
+				class="tour-btn"
+				aria-pressed={touring}
+				onclick={() => (touring = !touring)}
+				title={touring ? 'Pause the tour' : 'Play the tour'}
+			>
+				<Icon icon={touring ? Pause : Play} size={13} />
+				{touring ? 'Touring the SETs' : 'Tour paused'}
+			</button>
+			<span class="dots">
+				{#each STOPS as s, n (n)}
+					<button
+						class="dot"
+						class:on={n === stop}
+						class:loner={!s.pair}
+						aria-label="Card {s.i + 1}{s.pair
+							? ` with cards ${s.pair.j + 1} and ${s.pair.k + 1}`
+							: ', in no SET'}"
+						onclick={() => {
+							takeOver();
+							goTo(n);
+						}}
+					></button>
+				{/each}
+			</span>
 		</div>
 	</section>
 
@@ -155,8 +271,15 @@
 		<header>
 			<h2>The attention tensor</h2>
 			<p>
-				One block per triple <MathTex tex="(i, j, k)" /> of twelve SET cards, sized by its score.
+				Every triple of the twelve cards gets one score, a block sized by its value; the solid plane
+				is the query's slice. This hand-built head counts the attributes <MathTex tex="m" /> where the
+				three cards fail, so it scores 4 exactly on a SET:
 			</p>
+			<div class="t-math">
+				<MathTex
+					tex={'A_{ijk} = \\sum_{t=1}^{4} \\cos \\tfrac{2\\pi}{3}\\big(a_t + b_t + c_t\\big) = 4 - \\tfrac{3}{2}\\, m_{ijk}'}
+				/>
+			</div>
 		</header>
 		<div class="stage">
 			<TensorCube
@@ -165,69 +288,31 @@
 				{query}
 				{selected}
 				background={TILE}
+				spin={0.9}
 				label="The attention tensor of twelve SET cards"
 				onpick={(c) => {
+					takeOver();
 					query = c.i;
 					pick = { j: c.j, k: c.k };
 				}}
 			/>
 		</div>
-		{#if trio}
-			<footer>
-				<span class="trio"
-					>{#each trio as t, n (n)}<SetCard card={layout[t]} width={22} />{/each}</span
-				>
-				<span>
-					Query <MathTex tex={`i = ${query + 1}`} />, the solid plane.
-					{trioIsSet ? 'Its outlined block is a SET.' : 'The outlined block is not a SET.'}
-				</span>
-			</footer>
-		{/if}
-	</section>
-
-	<!-- ── the trained model, every token and round ─────────────────────── -->
-	<section class="tile flow">
-		<header>
-			<h2>What a trained DS-PA model does</h2>
-			<p>
-				Pointer chasing: follow links from the query to a payload. Each node learned to read the
-				node it points to, so payloads climb their lists one link per round until one reaches the
-				query.
-			</p>
-		</header>
-		<div class="stage">
-			{#if recordedDiagram}
-				{@const d = recordedDiagram.diagram}
-				<ChaseFlow
-					head={d.perHead[0]}
-					n={d.n}
-					rounds={d.rounds}
-					instance={recordedDiagram.instance}
-					probs={d.probs}
-				/>
-			{/if}
-		</div>
-		<footer class="legend">
-			<span
-				><svg width="26" height="8" aria-hidden="true"><path d="M1 4 H25" class="k-hop" /></svg
-				>reads another token</span
-			>
-			<span
-				><svg width="26" height="8" aria-hidden="true"><path d="M1 4 H25" class="k-carry" /></svg
-				>keeps its state</span
-			>
-			<span><b class="k-reg">4</b>payload a state holds</span>
-			<span class="lit-note">Bright: what the answer depends on</span>
-		</footer>
 	</section>
 
 	<!-- ── the same cards as a hypergraph ───────────────────────────────── -->
 	<section class="tile graph">
 		<header>
-			<h2>The same cards as a hypergraph</h2>
+			<h2>Attention on hyperedges</h2>
 			<p>
-				Every SET is a membrane; the lit triangle is the query's strongest triple. Click a card.
+				The same cards. The weight lands on triangles, not edges: the query spreads one softmax over
+				every pair and reads the product of their values. Each SET on the table is a membrane; the
+				lit one is where the weight went.
 			</p>
+			<div class="t-math">
+				<MathTex
+					tex={'y_i = \\sum_{j,k} \\operatorname{softmax}_{jk}\\big(A_{ijk}\\big)\\; V^{1}_{j} \\odot V^{2}_{k}'}
+				/>
+			</div>
 		</header>
 		<div class="stage">
 			<Hypergraph3D
@@ -237,13 +322,99 @@
 				{selected}
 				{sets}
 				background={TILE}
-				onquery={(q) => {
-					query = q;
-					pick = null;
+				spin={1.4}
+				onquery={choose}
+				onedge={(e) => {
+					takeOver();
+					pick = e;
 				}}
-				onedge={(e) => (pick = e)}
 			/>
 		</div>
+	</section>
+
+	<!-- ── what a trained DS-PA model does ──────────────────────────────── -->
+	<section class="tile flow">
+		<header class="row">
+			<div>
+				<h2>What a trained DS-PA model does</h2>
+				<p>
+					Each round, one softmax picks what a token reads: its value, one token, two at once or a
+					virtual mode.
+					{#if flowTask === 'set'}
+						On SET, every card in a SET learned to read its two partners at one cubic vertex.
+					{:else}
+						On pointer chasing, every node learned to read the node it points to.
+					{/if}
+				</p>
+			</div>
+			<div class="seg" role="group" aria-label="Task">
+				<button
+					class:on={flowTask === 'set'}
+					aria-pressed={flowTask === 'set'}
+					onclick={() => (flowTask = 'set')}>SET</button
+				>
+				<button
+					class:on={flowTask === 'chase'}
+					aria-pressed={flowTask === 'chase'}
+					onclick={() => (flowTask = 'chase')}>Chase</button
+				>
+			</div>
+		</header>
+		<div class="t-math pad">
+			<MathTex
+				tex={'\\Phi^{r}_t = \\pi_{\\text{leaf}}\\, v_t + \\sum_j \\pi_j\\, \\Phi^{r-1}_j + \\sum_{jk} \\pi_{jk}\\, \\Phi^{r-1}_j \\odot \\Phi^{r-1}_k + \\cdots'}
+			/>
+		</div>
+		<div class="stage flow-stage">
+			{#if flowTask === 'set' && setRec}
+				{@const d = setRec.diagram}
+				<DiagramFlow
+					head={d.perHead[0]}
+					n={d.n}
+					rounds={d.rounds}
+					rows={CARD_ROWS}
+					root={query + 1}
+					onroot={(t) => choose(t - 1)}
+					pitch={17}
+					column={120}
+					fit
+					output="\hat y"
+					note={STOPS.some((s) => s.i === query && s.pair) ? 'in a SET' : 'no SET'}
+				>
+					{#snippet label(t)}<SetCard card={layout[t - 1]} width={14} />{/snippet}
+				</DiagramFlow>
+			{:else if flowTask === 'chase' && chaseRec}
+				{@const d = chaseRec.diagram}
+				{@const inst = chaseRec.instance}
+				<DiagramFlow
+					head={d.perHead[0]}
+					n={d.n}
+					rounds={d.rounds}
+					rows={chaseGroups}
+					root={chaseRoot}
+					onroot={(t) => {
+						takeOver();
+						chaseStop = Math.max(0, chaseRoots.indexOf(t));
+					}}
+					pitch={16}
+					column={78}
+					fit
+					annotate={(r, t) => {
+						const v = chaseHeld?.[r]?.[t];
+						return v === null || v === undefined ? null : String(v);
+					}}
+					output={chaseRoot === CHASE_QUERY_POS
+						? `\\hat y = ${chaseAnswer ?? ''}`
+						: `\\Phi^{${d.rounds}}`}
+					note={chaseRoot === CHASE_QUERY_POS ? pct(d.probs[chaseAnswer ?? 0] ?? 0, 1) : undefined}
+				>
+					{#snippet label(t)}
+						{#if t === CHASE_QUERY_POS}<MathTex tex="q" />{:else}{inst.nodes[t - 1].id}{/if}
+					{/snippet}
+				</DiagramFlow>
+			{/if}
+		</div>
+		<footer><FlowLegend compact /></footer>
 	</section>
 
 	<!-- ── the bench ────────────────────────────────────────────────────── -->
@@ -251,7 +422,15 @@
 		<header class="row">
 			<div>
 				<h2>Held-out accuracy</h2>
-				<p>Same data and seed for every model, recorded on WebGPU.</p>
+				<p>
+					{#if suite === 'set'}
+						Each card is labelled by whether it belongs to a SET on the table. One cubic layer
+						reaches 100%; two standard layers, with more parameters, reach 64%.
+					{:else}
+						The query must return the payload at the end of its start node's list. DS-PA reaches
+						100% with 61k parameters; three standard layers reach 94% with 154k.
+					{/if}
+				</p>
 			</div>
 			<div class="seg" role="group" aria-label="Task">
 				<button
@@ -266,6 +445,17 @@
 				>
 			</div>
 		</header>
+		<div class="t-math pad">
+			{#if suite === 'set'}
+				<MathTex
+					tex={'y_i = \\mathbf{1}\\big[\\, \\exists\\, j,k :\\ \\{i,j,k\\} \\text{ is a SET} \\,\\big]'}
+				/>
+			{:else}
+				<MathTex
+					tex={'\\hat y = \\text{payload}\\big(\\text{next}^{\\,h}(\\text{start})\\big),\\quad h \\le 3'}
+				/>
+			{/if}
+		</div>
 		<div class="plot" bind:clientHeight={chartH}>
 			{#if series.length && chartH > 60}
 				<LineChart
@@ -304,16 +494,16 @@
 </main>
 
 <style>
-	/* One screen, four instruments: the idea, the tensor, a trained model and the bench. */
+	/* One screen: the idea on the left, four instruments on the right. */
 	.deck {
 		display: grid;
 		height: calc(100dvh - var(--bar-h));
-		min-height: 640px;
-		grid-template-columns: minmax(300px, 0.92fr) minmax(0, 1.5fr) minmax(320px, 1fr);
-		grid-template-rows: minmax(0, 1.06fr) minmax(0, 1fr);
+		min-height: 660px;
+		grid-template-columns: minmax(300px, 0.74fr) minmax(0, 1fr) minmax(0, 1fr);
+		grid-template-rows: minmax(0, 1fr) minmax(0, 1fr);
 		grid-template-areas:
-			'intro flow graph'
-			'cube flow chart';
+			'intro cube graph'
+			'intro flow chart';
 		gap: 12px;
 		padding: 12px 16px 16px;
 	}
@@ -324,32 +514,41 @@
 		display: flex;
 		flex-direction: column;
 		justify-content: center;
-		padding: 0 14px 0 10px;
+		padding: 0 16px 2vh 12px;
 	}
 	h1 {
 		margin: 0;
-		font-size: clamp(28px, 4.6vh, 46px);
+		font-size: clamp(34px, 6vh, 58px);
 		font-weight: 500;
-		line-height: 1.04;
-		letter-spacing: -0.024em;
+		line-height: 1.02;
+		letter-spacing: -0.028em;
 		text-wrap: balance;
 	}
 	.eq {
-		margin: 2.6vh 0 1.8vh;
-		font-size: clamp(18px, 2.5vh, 24px);
+		margin: 2.4vh 0 1.6vh;
+		font-size: clamp(15px, 2.1vh, 19px);
+		color: var(--color-ink);
+	}
+	.eq :global(.katex-display) {
+		margin: 0;
 	}
 	.intro p {
 		margin: 0;
 		max-width: 44ch;
-		font-size: clamp(13px, 1.65vh, 15px);
-		line-height: 1.58;
+		font-size: clamp(13px, 1.7vh, 15px);
+		line-height: 1.6;
 		color: var(--color-ink-2);
+	}
+	.intro p.small {
+		margin-top: 1.6vh;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
 	}
 	.ctas {
 		display: flex;
 		flex-wrap: wrap;
 		gap: 8px;
-		margin-top: 2.6vh;
+		margin-top: 3vh;
 	}
 	.cta {
 		display: inline-flex;
@@ -372,6 +571,56 @@
 	}
 	.cta.primary:hover {
 		background: #fff;
+	}
+	.tour {
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+		gap: 10px 14px;
+		margin-top: 3.4vh;
+	}
+	.tour-btn {
+		display: inline-flex;
+		align-items: center;
+		gap: 7px;
+		padding: 0;
+		border: 0;
+		background: none;
+		color: var(--color-ink-3);
+		font: inherit;
+		font-size: var(--text-xs);
+		cursor: pointer;
+	}
+	.tour-btn:hover,
+	.tour-btn[aria-pressed='true'] {
+		color: var(--color-ink-2);
+	}
+	.dots {
+		display: inline-flex;
+		gap: 5px;
+	}
+	.dot {
+		width: 7px;
+		height: 7px;
+		padding: 0;
+		border: 0;
+		border-radius: 50%;
+		background: #2a2a2a;
+		cursor: pointer;
+		transition:
+			background 200ms ease,
+			transform 200ms ease;
+	}
+	.dot.loner {
+		background: transparent;
+		box-shadow: inset 0 0 0 1px #3a3a3a;
+	}
+	.dot:hover {
+		background: #555;
+	}
+	.dot.on {
+		background: var(--color-ink);
+		transform: scale(1.25);
 	}
 
 	/* ── tiles ─────────────────────────────────────────────────────────── */
@@ -406,10 +655,21 @@
 	}
 	.tile header p {
 		margin: 3px 0 0;
-		max-width: 62ch;
+		max-width: 64ch;
 		font-size: var(--text-xs);
 		line-height: 1.5;
 		color: var(--color-ink-3);
+	}
+	.t-math {
+		margin-top: 7px;
+		font-size: 13px;
+		color: var(--color-ink-2);
+		overflow-x: auto;
+		overflow-y: hidden;
+	}
+	.t-math.pad {
+		margin: 6px 0 0;
+		padding: 0 16px;
 	}
 	.stage {
 		position: relative;
@@ -424,61 +684,24 @@
 		font-size: var(--text-xs);
 		color: var(--color-ink-3);
 	}
-	.trio {
-		display: inline-flex;
-		gap: 3px;
-		flex: none;
-	}
-
 	.cube {
 		grid-area: cube;
+	}
+	.cube .stage {
+		margin-bottom: 22px;
 	}
 	.graph {
 		grid-area: graph;
 	}
+	/* room for the role labels that sit right of the outer nodes */
+	.graph .stage {
+		margin: 0 30px 6px 6px;
+	}
 	.flow {
 		grid-area: flow;
 	}
-	.flow .stage {
-		margin: 4px 10px 0 4px;
-	}
-	.cube .stage {
-		margin-bottom: 30px;
-	}
-	.legend {
-		flex-wrap: wrap;
-		gap: 6px 18px !important;
-	}
-	.legend span {
-		display: inline-flex;
-		align-items: center;
-		gap: 7px;
-	}
-	.legend svg {
-		display: block;
-	}
-	.k-hop,
-	.k-carry {
-		stroke: var(--color-ink);
-		stroke-width: 1.6;
-	}
-	.k-carry {
-		stroke-dasharray: 3 4;
-		stroke-width: 1.2;
-	}
-	.k-reg {
-		display: inline-grid;
-		place-items: center;
-		width: 20px;
-		height: 16px;
-		border-radius: 4px;
-		background: #2c2c2c;
-		color: var(--color-ink);
-		font-size: 10px;
-		font-weight: 400;
-	}
-	.lit-note {
-		margin-left: auto;
+	.flow-stage {
+		padding: 2px 14px 0 8px;
 	}
 
 	/* ── the bench ─────────────────────────────────────────────────────── */
@@ -488,12 +711,12 @@
 	.plot {
 		flex: 1;
 		min-height: 0;
-		padding: 6px 8px 0 0;
+		padding: 4px 8px 0 0;
 	}
 	.board {
 		display: grid;
 		grid-template-columns: 1fr 1fr;
-		gap: 3px 16px;
+		gap: 2px 16px;
 		margin: 0;
 		padding: 0 16px 12px;
 		list-style: none;
@@ -543,13 +766,10 @@
 		color: var(--color-ink);
 	}
 
-	/* short laptop screens: the tensor tile keeps its picture and drops the caption */
+	/* short laptop screens: captions give way to the pictures */
 	@media (max-height: 860px) and (min-width: 1101px) {
-		.cube footer {
+		.board {
 			display: none;
-		}
-		.cube .stage {
-			margin-bottom: 18px;
 		}
 	}
 
@@ -558,12 +778,11 @@
 		.deck {
 			height: auto;
 			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-			grid-template-rows: auto 640px 380px 400px;
+			grid-template-rows: auto 460px 460px;
 			grid-template-areas:
 				'intro intro'
-				'flow flow'
 				'cube graph'
-				'chart chart';
+				'flow chart';
 		}
 		.intro {
 			padding: 28px 8px 20px;
@@ -572,12 +791,12 @@
 	@media (max-width: 700px) {
 		.deck {
 			grid-template-columns: minmax(0, 1fr);
-			grid-template-rows: auto 620px 380px 380px 420px;
-			grid-template-areas: 'intro' 'flow' 'cube' 'graph' 'chart';
+			grid-template-rows: auto 440px 440px auto 460px;
+			grid-template-areas: 'intro' 'cube' 'graph' 'flow' 'chart';
 			padding: 8px 12px 16px;
 		}
-		.lit-note {
-			margin-left: 0;
+		.flow-stage {
+			padding-bottom: 8px;
 		}
 	}
 </style>

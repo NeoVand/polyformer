@@ -25,7 +25,7 @@ export const VALUE_NAMES = [
 	['one', 'two', 'three'],
 	['spade', 'heart', 'club'],
 	['solid', 'striped', 'open'],
-	['ink', 'red', 'gold']
+	['blue', 'green', 'purple']
 ] as const;
 
 export function cardFromId(id: number): Card {

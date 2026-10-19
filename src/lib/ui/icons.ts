@@ -43,3 +43,27 @@ export { default as GitGraph } from '@hugeicons/core-free-icons/GitGraphIcon';
 export { default as Wave } from '@hugeicons/core-free-icons/Cosine01Icon';
 export { default as Scissors } from '@hugeicons/core-free-icons/ScissorIcon';
 export { default as Workflow } from '@hugeicons/core-free-icons/WorkflowSquare01Icon';
+export { default as Github } from '@hugeicons/core-free-icons/GithubIcon';
+
+/*
+ * Two marks drawn for this project on the same 24px grid and 1.5px stroke, so they
+ * sit beside the Hugeicons set: a 2-simplex for cubic attention (one query, a pair
+ * of keys) and a textbook Feynman diagram for DS-PA (two lines meet, exchange a
+ * photon, and part).
+ */
+const stroke = {
+	stroke: 'currentColor',
+	strokeLinecap: 'round',
+	strokeLinejoin: 'round',
+	strokeWidth: '1.5'
+};
+export const Simplex = [
+	['path', { d: 'M10.7 6.5 L5.8 16.2 M13.3 6.5 L18.2 16.2 M7 18.5 H17', ...stroke, key: '0' }],
+	['circle', { cx: '12', cy: '4.5', r: '2', ...stroke, key: '1' }],
+	['circle', { cx: '4.75', cy: '18.5', r: '2', ...stroke, key: '2' }],
+	['circle', { cx: '19.25', cy: '18.5', r: '2', ...stroke, key: '3' }]
+] as unknown as IconData;
+export const Feynman = [
+	['path', { d: 'M2.5 4 L7.5 12 L2.5 20 M21.5 4 L16.5 12 L21.5 20', ...stroke, key: '0' }],
+	['path', { d: 'M7.5 12 q1.125 -2.2 2.25 0 t2.25 0 t2.25 0 t2.25 0', ...stroke, key: '1' }]
+] as unknown as IconData;

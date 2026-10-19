@@ -5,7 +5,8 @@
 	 * sector sizes, and runs recorded with the in-browser engine.
 	 */
 	import { asset } from '$app/paths';
-	import { dealChase, solveChase } from '#lib/chase/chase.ts';
+	import { CHASE_QUERY_POS, dealChase, solveChase, type ChaseInstance } from '#lib/chase/chase.ts';
+	import type { DiagramResult } from '#lib/engine/protocol.ts';
 	import { majorityBaseline } from '#lib/engine/data.ts';
 	import { pairMoment, querySlice, topHyperedges } from '#lib/explore/analysis.ts';
 	import { exactProbe } from '#lib/explore/exact.ts';
@@ -17,7 +18,10 @@
 	import MathTex from '#lib/ui/Math.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
+	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
+	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
 	import FeynmanDiagram from '#lib/viz/FeynmanDiagram.svelte';
+	import FlowLegend from '#lib/viz/FlowLegend.svelte';
 	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
 	import TensorCube from '#lib/viz/TensorCube.svelte';
 	import { idealChase, idealSet } from '#lib/viz/feynman.ts';
@@ -53,7 +57,8 @@
 	const cubeValues = (() => {
 		let lo = Infinity;
 		let hi = -Infinity;
-		for (const v of probe.scores) if (!Number.isNaN(v)) [lo, hi] = [Math.min(lo, v), Math.max(hi, v)];
+		for (const v of probe.scores)
+			if (!Number.isNaN(v)) [lo, hi] = [Math.min(lo, v), Math.max(hi, v)];
 		const out = new Float32Array(C * C * C);
 		const n = probe.n;
 		for (let i = 0; i < C; i++)
@@ -84,8 +89,10 @@
 	const CW = 360;
 	const CH = 240;
 	const lx = (n: number) => 40 + ((Math.log2(n) - 4) / (Math.log2(8192) - 4)) * (CW - 120);
-	const ly = (f: number) => CH - 28 - ((Math.log10(f) - 4) / (Math.log10(4 * 8192 ** 3 * 64) - 4)) * (CH - 44);
-	const poly = (key: 'pairwise' | 'cubic' | 'windowed') => cost.map((c) => `${lx(c.n)},${ly(c[key])}`).join(' ');
+	const ly = (f: number) =>
+		CH - 28 - ((Math.log10(f) - 4) / (Math.log10(4 * 8192 ** 3 * 64) - 4)) * (CH - 44);
+	const poly = (key: 'pairwise' | 'cubic' | 'windowed') =>
+		cost.map((c) => `${lx(c.n)},${ly(c[key])}`).join(' ');
 
 	const sizes = sectorSizes(14, 16);
 	const sizeTotal = sizes.reduce((a, s) => a + s.size, 0);
@@ -118,7 +125,29 @@
 				.catch(() => null);
 		load(asset('recorded/set.json')).then((r) => (recordedSet = r));
 		load(asset('recorded/chase.json')).then((r) => (recordedChase = r));
+		const raw = (url: string) =>
+			fetch(url)
+				.then((r) => (r.ok ? r.json() : null))
+				.catch(() => null);
+		raw(asset('recorded/chase-diagram.json')).then((j) => j?.diagram && (chaseModel = j));
+		raw(asset('recorded/set-diagram.json')).then((j) => j?.diagram && (setModel = j));
 	});
+
+	// trained DS-PA models, recorded in a browser, read token by token
+	let chaseModel = $state.raw<{ instance: ChaseInstance; diagram: DiagramResult } | null>(null);
+	let setModel = $state.raw<{ layout: number[][]; diagram: DiagramResult } | null>(null);
+	let learnedTask = $state<'chase' | 'set'>('chase');
+	let learnedRoot = $state<number | null>(null);
+	const chaseHeld = $derived(
+		chaseModel
+			? heldPayloads(
+					chaseModel.diagram.perHead[0],
+					chaseModel.diagram.n,
+					chaseModel.diagram.rounds,
+					chaseModel.instance
+				)
+			: null
+	);
 	const LABELS: Record<string, [string, number, string]> = {
 		cubic: ['Cubic', 1, ''],
 		dspa: ['DS-PA', 0.86, '10 3'],
@@ -162,31 +191,63 @@
 		<svg viewBox="0 0 420 300" class="star" aria-label="A query scoring seven keys">
 			{#each keyWeights as w, t (t)}
 				{@const y = 30 + t * 40}
-				<path d="M80,150 L330,{y}" stroke-width={0.8 + 7 * w} stroke-opacity={0.25 + 0.75 * Math.sqrt(w)} />
+				<path
+					d="M80,150 L330,{y}"
+					stroke-width={0.8 + 7 * w}
+					stroke-opacity={0.25 + 0.75 * Math.sqrt(w)}
+				/>
 				<circle cx="336" cy={y} r="5" class="node" />
 				<text x="350" y={y + 4} class="w num">{pct(w, 0)}</text>
 			{/each}
 			<circle cx="74" cy="150" r="9" class="node q" />
 		</svg>
-		<figcaption><MathTex tex={'P_{ij}'} /> for one query over seven keys. Every line joins exactly two tokens.</figcaption>
+		<figcaption>
+			<MathTex tex={'P_{ij}'} /> for one query over seven keys. Every line joins exactly two tokens.
+		</figcaption>
 	</figure>
 {:else if section === 'product'}
 	<figure class="fig">
 		<div class="strips">
-			<MathTex tex="a" /><FeatureStrip values={vecA} max={1} cell={24} height={24} label="Vector a" />
-			<MathTex tex="b" /><FeatureStrip values={vecB} max={1} cell={24} height={24} label="Vector b" />
-			<MathTex tex="e" /><FeatureStrip values={vecE} max={1} cell={24} height={24} label="Vector e" />
-			<MathTex tex="a \odot b \odot e" /><FeatureStrip values={triple} max={0.6} cell={24} height={24} label="Elementwise product" />
+			<MathTex tex="a" /><FeatureStrip
+				values={vecA}
+				max={1}
+				cell={24}
+				height={24}
+				label="Vector a"
+			/>
+			<MathTex tex="b" /><FeatureStrip
+				values={vecB}
+				max={1}
+				cell={24}
+				height={24}
+				label="Vector b"
+			/>
+			<MathTex tex="e" /><FeatureStrip
+				values={vecE}
+				max={1}
+				cell={24}
+				height={24}
+				label="Vector e"
+			/>
+			<MathTex tex="a \odot b \odot e" /><FeatureStrip
+				values={triple}
+				max={0.6}
+				cell={24}
+				height={24}
+				label="Elementwise product"
+			/>
 		</div>
 		<p class="sum"><MathTex tex={`\\langle a, b, e\\rangle = ${tripleSum.toFixed(2)}`} /></p>
-		<figcaption>Bright is positive, dark is negative. A coordinate counts only where all three are large.</figcaption>
+		<figcaption>
+			Bright is positive, dark is negative. A coordinate counts only where all three are large.
+		</figcaption>
 	</figure>
 {:else if section === 'cubic'}
 	<figure class="fig tall">
 		<div class="three"><TensorCube values={cubeValues} n={C} {query} {selected} /></div>
 		<figcaption>
-			The <MathTex tex="12 \times 12 \times 12" /> score tensor of one table. The lit slab is query {query + 1}'s slice; the
-			brightest voxel is the pair that completes a SET with it.
+			The <MathTex tex="12 \times 12 \times 12" /> score tensor of one table. The lit slab is query {query +
+				1}'s slice; the brightest voxel is the pair that completes a SET with it.
 		</figcaption>
 	</figure>
 {:else if section === 'cost'}
@@ -206,8 +267,9 @@
 			<text x={lx(16) + 4} y="22" class="tick start">tasks here</text>
 		</svg>
 		<figcaption>
-			FLOPs for one head of width 64, on log–log axes. Cubic grows as <MathTex tex="n^3" />; restricting each role to
-			a window of 128 keys brings it back to linear in <MathTex tex="n" />. The tasks here have 13 or 14 tokens.
+			FLOPs for one head of width 64, on log–log axes. Cubic grows as <MathTex tex="n^3" />;
+			restricting each role to a window of 128 keys brings it back to linear in <MathTex tex="n" />.
+			The tasks here have 13 or 14 tokens.
 		</figcaption>
 	</figure>
 {:else if section === 'degree2'}
@@ -228,10 +290,12 @@
 				</div>
 			{/each}
 		</div>
-		<div class="tri-keys"><MathTex tex="i" /> query (top), <MathTex tex="j" /> and <MathTex tex="k" /> keys</div>
+		<div class="tri-keys">
+			<MathTex tex="i" /> query (top), <MathTex tex="j" /> and <MathTex tex="k" /> keys
+		</div>
 		<figcaption>
-			Which edges of the triangle carry a score. Degree-2 designs light up edges; the cubic head fills the face with one
-			term that depends on all three tokens at once.
+			Which edges of the triangle carry a score. Degree-2 designs light up edges; the cubic head
+			fills the face with one term that depends on all three tokens at once.
 		</figcaption>
 	</figure>
 {:else if section === 'barrier'}
@@ -239,18 +303,34 @@
 		<div class="grid3">
 			<span class="g-label">Degree 2</span>
 			{#each barrier.degree2 as m, q (q)}
-				<Heatmap values={m} rows={12} cols={12} size={104} scale="signed" max={barrier.max2} label="Degree-2 slice" />
+				<Heatmap
+					values={m}
+					rows={12}
+					cols={12}
+					size={104}
+					scale="signed"
+					max={barrier.max2}
+					label="Degree-2 slice"
+				/>
 			{/each}
 			<span class="g-label">Cubic</span>
 			{#each barrier.cubic as m, q (q)}
-				<Heatmap values={m} rows={12} cols={12} size={104} scale="signed" max={barrier.maxCubic} label="Cubic slice" />
+				<Heatmap
+					values={m}
+					rows={12}
+					cols={12}
+					size={104}
+					scale="signed"
+					max={barrier.maxCubic}
+					label="Cubic slice"
+				/>
 			{/each}
 			<span></span>
 			{#each barrierQueries as q (q)}<span class="q-label num">query {q + 1}</span>{/each}
 		</div>
 		<figcaption>
-			Double-centered <MathTex tex="(j,k)" /> slices for three queries. A degree-2 head with random edge scores gives the
-			same matrix three times; the cubic SET head gives three different ones.
+			Double-centered <MathTex tex="(j,k)" /> slices for three queries. A degree-2 head with random edge
+			scores gives the same matrix three times; the cubic SET head gives three different ones.
 		</figcaption>
 	</figure>
 {:else if section === 'set'}
@@ -265,33 +345,52 @@
 			/>
 		</div>
 		<figcaption>
-			The table as a hypergraph. Faint membranes are its {sets.length} SETs; the bright one is where query {query + 1} puts
-			its weight.
+			The table as a hypergraph. Faint membranes are its {sets.length} SETs; the bright one is where query
+			{query + 1} puts its weight.
 		</figcaption>
 	</figure>
 {:else if section === 'head'}
 	<figure class="fig">
-		<div class="hist" role="img" aria-label="Distribution of the hand-built head's scores over every triple">
+		<div
+			class="hist"
+			role="img"
+			aria-label="Distribution of the hand-built head's scores over every triple"
+		>
 			{#each scores as s (s.m)}
 				<div class="h-col">
 					<span class="h-val num">{pct(s.share, 1)}</span>
-					<div class="h-bar" class:set={s.m === 0} style:height="{8 + (s.share / maxShare) * 150}px"></div>
+					<div
+						class="h-bar"
+						class:set={s.m === 0}
+						style:height="{8 + (s.share / maxShare) * 150}px"
+					></div>
 					<span class="h-score"><MathTex tex={s.score.toString()} /></span>
 					<span class="h-m num">{s.m === 0 ? 'SET' : `${s.m} broken`}</span>
 				</div>
 			{/each}
 		</div>
 		<figcaption>
-			The hand-built head's score on all 85,320 triples of distinct cards. Exactly the 1,080 SETs score 4; every other
-			triple scores 2.5 or less, a margin of 1.5 that the softmax temperature turns into near-certainty.
+			The hand-built head's score on all 85,320 triples of distinct cards. Exactly the 1,080 SETs
+			score 4; every other triple scores 2.5 or less, a margin of 1.5 that the softmax temperature
+			turns into near-certainty.
 		</figcaption>
 	</figure>
 {:else if section === 'binding'}
 	<figure class="fig">
-		<Heatmap values={moment} rows={probe.dh} cols={probe.dh} size={300} scale="signed" diagonal label="Pair moment" />
+		<Heatmap
+			values={moment}
+			rows={probe.dh}
+			cols={probe.dh}
+			size={300}
+			scale="signed"
+			diagonal
+			label="Pair moment"
+		/>
 		<figcaption>
-			The pair moment <MathTex tex="M_i" /> of the hand-built head for query {query + 1}: 16 value channels in role 1
-			against 16 in role 2. The outlined diagonal is the Hadamard output <MathTex tex="Y_i" />.
+			The pair moment <MathTex tex="M_i" /> of the hand-built head for query {query + 1}: 16 value
+			channels in role 1 against 16 in role 2. The outlined diagonal is the Hadamard output <MathTex
+				tex="Y_i"
+			/>.
 		</figcaption>
 	</figure>
 {:else if section === 'training'}
@@ -312,8 +411,8 @@
 			/>
 		{/if}
 		<figcaption>
-			Held-out accuracy on SET, one layer each, recorded with this app's engine on WebGPU (seed 0). Cubic reaches 95% by
-			step 500 and 100% after; DS-PA by step 700.
+			Held-out accuracy on SET, one layer each, recorded with this app's engine on WebGPU (seed 0).
+			Cubic reaches 95% by step 500 and 100% after; DS-PA by step 700.
 		</figcaption>
 	</figure>
 {:else if section === 'arity'}
@@ -327,13 +426,16 @@
 					<span class="m-label">{m.label}</span>
 					<div class="track">
 						<span class="base" style:left="{base * 100}%"></span>
-						{#if acc !== null}<span class="fill" class:win={acc > 0.99} style:width="{acc * 100}%"></span>{/if}
+						{#if acc !== null}<span class="fill" class:win={acc > 0.99} style:width="{acc * 100}%"
+							></span>{/if}
 					</div>
 					<span class="m-val num">{acc === null ? 'not run' : pct(acc, 0)}</span>
 				{/each}
 			{/each}
 		</div>
-		<figcaption>Token accuracy, one layer, 4,000 steps, one seed. The tick is the majority-class rate.</figcaption>
+		<figcaption>
+			Token accuracy, one layer, 4,000 steps, one seed. The tick is the majority-class rate.
+		</figcaption>
 	</figure>
 {:else if section === 'feynman'}
 	<figure class="fig">
@@ -341,44 +443,65 @@
 			<span class="order"><MathTex tex="e^2" /><small>one photon exchanged</small></span>
 			<div class="row">
 				<div class="cell"><QedDiagram kind="tree-t" width={120} /><span>exchange</span></div>
-				<div class="cell"><QedDiagram kind="tree-u" width={120} /><span>crossed exchange</span></div>
+				<div class="cell">
+					<QedDiagram kind="tree-u" width={120} /><span>crossed exchange</span>
+				</div>
 			</div>
 			<span class="order"><MathTex tex="e^4" /><small>one loop</small></span>
 			<div class="row">
-				<div class="cell"><QedDiagram kind="vacuum" width={120} /><span>vacuum polarization</span></div>
-				<div class="cell"><QedDiagram kind="vertex" width={120} /><span>vertex correction</span></div>
+				<div class="cell">
+					<QedDiagram kind="vacuum" width={120} /><span>vacuum polarization</span>
+				</div>
+				<div class="cell">
+					<QedDiagram kind="vertex" width={120} /><span>vertex correction</span>
+				</div>
 				<div class="cell"><QedDiagram kind="box" width={120} /><span>box</span></div>
 			</div>
 		</div>
 		<figcaption>
-			Electron–electron scattering, expanded in the coupling. Each vertex costs a factor of <MathTex tex="e" />, so diagrams
-			with more vertices count for less: at <MathTex tex="\alpha \approx 1/137" /> each extra pair of vertices is about a
-			hundred times smaller.
+			Electron–electron scattering, expanded in the coupling. Each vertex costs a factor of <MathTex
+				tex="e"
+			/>, so diagrams with more vertices count for less: at <MathTex tex="\alpha \approx 1/137" /> each
+			extra pair of vertices is about a hundred times smaller.
 		</figcaption>
 	</figure>
 {:else if section === 'dyson'}
 	<figure class="fig">
 		<div class="dyson">
-			<DiagramSum lhs="dressed" width={110} more={false} terms={[{ kind: 'bare' }, { kind: 'bare-sigma-dressed' }]} />
+			<DiagramSum
+				lhs="dressed"
+				width={110}
+				more={false}
+				terms={[{ kind: 'bare' }, { kind: 'bare-sigma-dressed' }]}
+			/>
 			<MathTex display tex="G = G_0 + G_0\,\Sigma\,G" />
 			<span class="unroll">unrolled</span>
 			<DiagramSum
 				lhs="dressed"
 				width={84}
-				terms={[{ kind: 'bare' }, { kind: 'bare-sigma-bare' }, { kind: 'bare-sigma-bare-sigma-bare' }]}
+				terms={[
+					{ kind: 'bare' },
+					{ kind: 'bare-sigma-bare' },
+					{ kind: 'bare-sigma-bare-sigma-bare' }
+				]}
 			/>
 		</div>
 		<figcaption>
-			The Dyson equation for a dressed propagator (double line) in terms of the bare one (single line) and the
-			self-energy (hatched blob). One self-consistent equation stands for the whole infinite series below it.
+			The Dyson equation for a dressed propagator (double line) in terms of the bare one (single
+			line) and the self-energy (hatched blob). One self-consistent equation stands for the whole
+			infinite series below it.
 		</figcaption>
 	</figure>
 {:else if section === 'diagrams'}
 	<figure class="fig tall">
 		<div class="fig-head">
 			<div class="seg" role="group" aria-label="Example">
-				<button aria-pressed={diagramTask === 'set'} onclick={() => (diagramTask = 'set')}>SET</button>
-				<button aria-pressed={diagramTask === 'chase'} onclick={() => (diagramTask = 'chase')}>Pointer chase</button>
+				<button aria-pressed={diagramTask === 'set'} onclick={() => (diagramTask = 'set')}
+					>SET</button
+				>
+				<button aria-pressed={diagramTask === 'chase'} onclick={() => (diagramTask = 'chase')}
+					>Pointer chase</button
+				>
 			</div>
 		</div>
 		<div class="three">
@@ -388,13 +511,15 @@
 				</FeynmanDiagram>
 			{:else}
 				<FeynmanDiagram head={chaseHead} n={14} rounds={4} modes={0} root={13} output="\hat y">
-					{#snippet row(t)}<MathTex tex={t === 13 ? 'q' : `v_{${chase.nodes[t - 1]?.id}}`} />{/snippet}
+					{#snippet row(t)}<MathTex
+							tex={t === 13 ? 'q' : `v_{${chase.nodes[t - 1]?.id}}`}
+						/>{/snippet}
 				</FeynmanDiagram>
 			{/if}
 		</div>
 		<figcaption>
-			The ideal computation tree. On SET a card needs one cubic vertex; on pointer chasing the query needs a chain of hops
-			as long as its list.
+			The ideal computation tree. On SET a card needs one cubic vertex; on pointer chasing the query
+			needs a chain of hops as long as its list.
 		</figcaption>
 	</figure>
 {:else if section === 'sectors'}
@@ -407,7 +532,9 @@
 						{@const share = balanced ? 1 / sizes.length : s.size / sizeTotal}
 						<span
 							style:flex-grow={share}
-							style:background="rgb({255 * SHADES[i]} {255 * SHADES[i]} {255 * SHADES[i]})"
+							style:background="rgb({255 * SHADES[i]}
+							{255 * SHADES[i]}
+							{255 * SHADES[i]})"
 							title="{s.label} {pct(share, 1)}"
 						></span>
 					{/each}
@@ -417,18 +544,83 @@
 		<div class="mass-keys">
 			{#each sizes as s, i (s.id)}
 				<span
-					><i style:background="rgb({255 * SHADES[i]} {255 * SHADES[i]} {255 * SHADES[i]})"></i>{s.label}
+					><i style:background="rgb({255 * SHADES[i]} {255 * SHADES[i]} {255 * SHADES[i]})"
+					></i>{s.label}
 					<b class="num">{s.size}</b></span
 				>
 			{/each}
 		</div>
 		<figcaption>
-			Prior mass per sector for the query in pointer chase (14 tokens, 16 modes), before any learning. Without the bias,
-			cubic and exchange start with 99% of the mass because they offer the most options.
+			Prior mass per sector for the query in pointer chase (14 tokens, 16 modes), before any
+			learning. Without the bias, cubic and exchange start with 99% of the mass because they offer
+			the most options.
 		</figcaption>
 	</figure>
 {:else if section === 'chase'}
 	<figure class="fig wide">
+		<div class="fig-head">
+			<div class="seg" role="group" aria-label="Task">
+				<button
+					aria-pressed={learnedTask === 'chase'}
+					onclick={() => ((learnedTask = 'chase'), (learnedRoot = null))}>Pointer chase</button
+				>
+				<button
+					aria-pressed={learnedTask === 'set'}
+					onclick={() => ((learnedTask = 'set'), (learnedRoot = null))}>SET</button
+				>
+			</div>
+		</div>
+		{#if learnedTask === 'chase' && chaseModel}
+			{@const d = chaseModel.diagram}
+			{@const inst = chaseModel.instance}
+			<DiagramFlow
+				head={d.perHead[0]}
+				n={d.n}
+				rounds={d.rounds}
+				rows={flowGroups(inst)}
+				root={learnedRoot ?? CHASE_QUERY_POS}
+				onroot={(t) => (learnedRoot = t)}
+				pitch={18}
+				column={76}
+				annotate={(r, t) => {
+					const v = chaseHeld?.[r]?.[t];
+					return v === null || v === undefined ? null : String(v);
+				}}
+				output={(learnedRoot ?? CHASE_QUERY_POS) === CHASE_QUERY_POS
+					? `\\hat y = ${d.probs.indexOf(Math.max(...d.probs))}`
+					: `\\Phi^{${d.rounds}}`}
+			>
+				{#snippet label(t)}
+					{#if t === CHASE_QUERY_POS}<MathTex tex="q" />{:else}{inst.nodes[t - 1].id}{/if}
+				{/snippet}
+			</DiagramFlow>
+		{:else if learnedTask === 'set' && setModel}
+			{@const d = setModel.diagram}
+			{@const cards = setModel.layout as unknown as Card[]}
+			<DiagramFlow
+				head={d.perHead[0]}
+				n={d.n}
+				rounds={d.rounds}
+				rows={[Array.from({ length: cards.length }, (_, i) => i + 1)]}
+				root={learnedRoot ?? d.token}
+				onroot={(t) => (learnedRoot = t)}
+				pitch={19}
+				column={120}
+			>
+				{#snippet label(t)}<SetCard card={cards[t - 1]} width={15} />{/snippet}
+			</DiagramFlow>
+		{/if}
+		<div class="learned-key"><FlowLegend compact /></div>
+		<p class="learned-note">
+			{#if learnedTask === 'chase'}
+				A DS-PA model trained in a browser, every token and round. Each node learned to read the
+				node it points to, so each list's payload climbs one link per round, and the query reads its
+				start at the last round. Hover a row to see what that token reads.
+			{:else}
+				The same model family trained on SET. Each card in a SET reads its two partners through one
+				cubic vertex, the triple a pairwise head cannot see. Cards in no SET keep their own value.
+			{/if}
+		</p>
 		{#if recordedChase}
 			<LineChart
 				label="Held-out accuracy on pointer chase, recorded"
@@ -444,8 +636,8 @@
 			/>
 		{/if}
 		<figcaption>
-			Held-out accuracy on pointer chase, recorded with this app's engine. One DS-PA layer (61k parameters) reaches 95%
-			by step 250 and 100% after; three standard layers (154k) reach 94%.
+			Held-out accuracy on pointer chase, recorded with this app's engine. One DS-PA layer (61k
+			parameters) reaches 95% by step 250 and 100% after; three standard layers (154k) reach 94%.
 		</figcaption>
 	</figure>
 {:else}
@@ -455,11 +647,15 @@
 				<li class:ours={!e.ref || e.ref === 'neo'}>
 					<span class="t-year num">{e.year}</span>
 					<span class="t-dot" aria-hidden="true"></span>
-					<span class="t-what">{e.what}{#if e.ref}&nbsp;<span class="t-ref">[{refNo(e.ref)}]</span>{/if}</span>
+					<span class="t-what"
+						>{e.what}{#if e.ref}&nbsp;<span class="t-ref">[{refNo(e.ref)}]</span>{/if}</span
+					>
 				</li>
 			{/each}
 		</ol>
-		<figcaption>Where the pieces come from. Filled dots are this project and its origin.</figcaption>
+		<figcaption>
+			Where the pieces come from. Filled dots are this project and its origin.
+		</figcaption>
 	</figure>
 {/if}
 
@@ -480,6 +676,15 @@
 	}
 	.fig.wide {
 		justify-items: stretch;
+	}
+	.learned-key {
+		margin: 10px 0 8px;
+	}
+	.learned-note {
+		margin: 0 0 22px;
+		font-size: var(--text-xs);
+		line-height: 1.55;
+		color: var(--color-ink-3);
 	}
 	.three {
 		position: relative;

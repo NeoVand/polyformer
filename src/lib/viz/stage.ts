@@ -57,6 +57,11 @@ export interface StageOptions {
 	bloom?: { strength: number; radius: number; threshold: number };
 	/** Gentle idle sway of the camera; disabled for reduced motion and once the user orbits. */
 	sway?: boolean;
+	/**
+	 * Slow turntable rotation (OrbitControls speed; 2 is one turn a minute). Stops while
+	 * the user orbits and resumes after a pause; off under reduced motion.
+	 */
+	spin?: number;
 	environment?: boolean;
 }
 
@@ -136,6 +141,19 @@ export function createStage(
 	const base = camera.position.clone();
 	const t0 = performance.now();
 	controls.addEventListener('start', () => (swaying = false));
+	let resume = 0;
+	if (opts.spin && !reduced) {
+		controls.autoRotate = true;
+		controls.autoRotateSpeed = opts.spin;
+		controls.addEventListener('start', () => {
+			controls.autoRotate = false;
+			clearTimeout(resume);
+		});
+		controls.addEventListener('end', () => {
+			clearTimeout(resume);
+			resume = window.setTimeout(() => (controls.autoRotate = true), 6000);
+		});
+	}
 	controls.addEventListener('change', () => (dirty = true));
 
 	const size = () => ({ w: host.clientWidth, h: host.clientHeight });
@@ -195,6 +213,7 @@ export function createStage(
 		size,
 		dispose() {
 			cancelAnimationFrame(raf);
+			clearTimeout(resume);
 			ro.disconnect();
 			controls.dispose();
 			scene.traverse((o) => {

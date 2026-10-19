@@ -22,14 +22,14 @@
 	import RolePicker from '#lib/ui/RolePicker.svelte';
 	import { pct } from '#lib/ui/format.ts';
 	import {
-		Atom,
-		Cube,
 		Dice,
+		Feynman,
 		Next,
 		Pause,
 		Play,
 		Previous,
 		Reset,
+		Simplex,
 		Thermometer
 	} from '#lib/ui/icons.ts';
 	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
@@ -145,7 +145,12 @@
 	const cubeValues = $derived.by(() => {
 		if (shown === 'scores') {
 			const u = new Float32Array(C * C * C);
-			ribbon.forEach((s, i) => u.set(s.map((v) => (Number.isNaN(v) ? 0 : v ** 1.25)), i * C * C));
+			ribbon.forEach((s, i) =>
+				u.set(
+					s.map((v) => (Number.isNaN(v) ? 0 : v ** 1.25)),
+					i * C * C
+				)
+			);
 			return u;
 		}
 		return unit(cardTensor(probe, head));
@@ -217,7 +222,9 @@
 			: null
 	);
 	/** Twelve slices across the ribbon: width minus gaps, padding and borders. */
-	const sliceSize = $derived(Math.max(48, Math.min(84, Math.floor((ribbonWidth - 11 * 8 - 12 * 10) / C))));
+	const sliceSize = $derived(
+		Math.max(48, Math.min(84, Math.floor((ribbonWidth - 11 * 8 - 12 * 10) / C)))
+	);
 </script>
 
 <svelte:head>
@@ -227,8 +234,8 @@
 
 <PageFrame
 	rail={[
-		{ id: 'tensor', label: 'Tensor lab', icon: Cube, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Diagrams', icon: Atom, href: resolve('/explore/diagrams') }
+		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
+		{ id: 'diagrams', label: 'DS-PA', icon: Feynman, href: resolve('/explore/diagrams') }
 	]}
 	active="tensor"
 >
@@ -292,7 +299,6 @@
 		<aside class="inspector" id="algebra" aria-label="Selected interaction">
 			<div class="insp-head">
 				<h2>Selected interaction</h2>
-
 			</div>
 
 			<div class="pickers">
@@ -312,7 +318,9 @@
 
 			<div class="block">
 				<h3>Attention score</h3>
-				<div class="eq"><MathTex display tex={'A_{ijk} = \\langle Q_i,\\ K^1_j \\odot K^2_k \\rangle'} /></div>
+				<div class="eq">
+					<MathTex display tex={'A_{ijk} = \\langle Q_i,\\ K^1_j \\odot K^2_k \\rangle'} />
+				</div>
 				<p class="note">A query scores a pair of keys.</p>
 			</div>
 
@@ -326,12 +334,30 @@
 				<h3>Value features</h3>
 				{#if v1 && v2 && dvec}
 					<div class="strips">
-						<MathTex tex="V^1_j" /><FeatureStrip values={v1} max={vmax} cell={11} height={16} label="Role 1 value features" />
-						<MathTex tex="V^2_k" /><FeatureStrip values={v2} max={vmax} cell={11} height={16} label="Role 2 value features" />
+						<MathTex tex="V^1_j" /><FeatureStrip
+							values={v1}
+							max={vmax}
+							cell={11}
+							height={16}
+							label="Role 1 value features"
+						/>
+						<MathTex tex="V^2_k" /><FeatureStrip
+							values={v2}
+							max={vmax}
+							cell={11}
+							height={16}
+							label="Role 2 value features"
+						/>
 					</div>
 					<h3 class="mt">Resulting feature vector</h3>
 					<div class="strips">
-						<MathTex tex={'D_{jk}'} /><FeatureStrip values={dvec} max={dmax} cell={11} height={16} label="Pair value features" />
+						<MathTex tex={'D_{jk}'} /><FeatureStrip
+							values={dvec}
+							max={dmax}
+							cell={11}
+							height={16}
+							label="Pair value features"
+						/>
 					</div>
 				{/if}
 			</div>
@@ -369,23 +395,26 @@
 				</table>
 			</div>
 
-			<div class="block source">
+			<div class="source block">
 				<h3>{source === 'exact' ? 'Constructed head' : 'Trained head'}</h3>
 				{#if source === 'exact'}
 					<p class="note">
 						Built by hand, not learned: 16 trilinear channels compute
-						<MathTex tex={'\\sum_t \\cos\\tfrac{2\\pi}{3}(a_t+b_t+c_t)'} />, which is 4 for every SET and at
-						most 2.5 otherwise. Switch the head to Trained to see what gradient descent finds.
+						<MathTex tex={'\\sum_t \\cos\\tfrac{2\\pi}{3}(a_t+b_t+c_t)'} />, which is 4 for every
+						SET and at most 2.5 otherwise. Switch the head to Trained to see what gradient descent
+						finds.
 					</p>
 				{:else if cubicStep === 0}
-					<p class="note">The cubic model has not trained yet, so this view still shows the constructed head.</p>
+					<p class="note">
+						The cubic model has not trained yet, so this view still shows the constructed head.
+					</p>
 					<button class="btn primary" onclick={trainCubic} disabled={training}>
 						<Icon icon={Play} size={14} />Train to step 1,500
 					</button>
 				{:else}
 					<p class="note num">
-						Learned by gradient descent, step {cubicStep.toLocaleString('en-US')}. Head {head + 1} lines up
-						best with the true SETs.
+						Learned by gradient descent, step {cubicStep.toLocaleString('en-US')}. Head {head + 1} lines
+						up best with the true SETs.
 					</p>
 				{/if}
 			</div>
@@ -437,7 +466,9 @@
 						><Icon icon={Previous} size={16} /></button
 					>
 					<span class="num">{query + 1}</span>
-					<button onclick={() => step(1)} aria-label="Next query"><Icon icon={Next} size={16} /></button>
+					<button onclick={() => step(1)} aria-label="Next query"
+						><Icon icon={Next} size={16} /></button
+					>
 				</div>
 			</div>
 			<div class="group temp">
@@ -457,20 +488,30 @@
 			<div class="group">
 				<span class="t-label">Head</span>
 				<div class="seg" role="group" aria-label="Head">
-					<button aria-pressed={source === 'exact'} onclick={() => (source = 'exact')}>Constructed</button>
-					<button aria-pressed={source === 'trained'} onclick={() => (source = 'trained')}>Trained</button>
+					<button aria-pressed={source === 'exact'} onclick={() => (source = 'exact')}
+						>Constructed</button
+					>
+					<button aria-pressed={source === 'trained'} onclick={() => (source = 'trained')}
+						>Trained</button
+					>
 				</div>
 			</div>
 			<div class="group keys">
-				<button class="key" onclick={reset}><Icon icon={Reset} size={17} /><span>Reset</span></button>
+				<button class="key" onclick={reset}
+					><Icon icon={Reset} size={17} /><span>Reset</span></button
+				>
 				<button class="key" onclick={() => step(-1)}
 					><Icon icon={Previous} size={17} /><span>Back</span></button
 				>
 				<button class="key play" class:on={touring} onclick={() => (touring = !touring)}>
 					<Icon icon={touring ? Pause : Play} size={17} /><span>{touring ? 'Pause' : 'Tour'}</span>
 				</button>
-				<button class="key" onclick={() => step(1)}><Icon icon={Next} size={17} /><span>Step</span></button>
-				<button class="key" onclick={newLayout}><Icon icon={Dice} size={17} /><span>Deal</span></button>
+				<button class="key" onclick={() => step(1)}
+					><Icon icon={Next} size={17} /><span>Step</span></button
+				>
+				<button class="key" onclick={newLayout}
+					><Icon icon={Dice} size={17} /><span>Deal</span></button
+				>
 			</div>
 			<div class="group right">
 				<span class="t-label num">{sets.length} SETs on the table</span>

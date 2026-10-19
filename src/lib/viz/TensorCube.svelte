@@ -19,7 +19,8 @@
 		onpick,
 		onanchor,
 		background = 0x080808,
-		label = 'Attention tensor as a voxel cube'
+		label = 'Attention tensor as a voxel cube',
+		spin = 0
 	}: {
 		/** Intensities in [0, 1], flattened [i][j][k]. */
 		values: Float32Array | null;
@@ -33,6 +34,8 @@
 		onanchor?: (p: { x: number; y: number } | null) => void;
 		background?: number;
 		label?: string;
+		/** Slow turntable rotation; 0 keeps the camera still. */
+		spin?: number;
 	} = $props();
 
 	interface CubeApi {
@@ -65,7 +68,8 @@
 				fit: [0.98, 0.98],
 				distance: [2.6, 7],
 				// only the selected block's lit top face crosses the threshold
-				bloom: { strength: 0.22, radius: 0.2, threshold: 0.93 }
+				bloom: { strength: 0.22, radius: 0.2, threshold: 0.93 },
+				spin
 			});
 			api = build(stage);
 		});

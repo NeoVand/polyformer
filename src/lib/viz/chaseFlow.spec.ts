@@ -1,7 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { CHASE_NODES, CHASE_QUERY_POS, type ChaseInstance } from '#lib/chase/chase.ts';
 import type { DiagramHead, DiagramState, SectorMass } from '#lib/engine/protocol.ts';
-import { backwardCone, flowEdges, flowGroups, heldPayloads, pointerOf } from './chaseFlow.ts';
+import { flowGroups, heldPayloads, pointerOf } from './chaseFlow.ts';
+import { backwardCone, flowEdges } from './diagramFlow.ts';
 
 /** Node i has id i and payload i mod 8; ids 0 → 1 → 2 form a list, every other node ends at itself. */
 function instance(): ChaseInstance {
@@ -67,7 +68,7 @@ describe('chase flow', () => {
 		const inst = instance();
 		const head = pointerHead(inst, 3);
 		const cone = backwardCone(head, N, 3, CHASE_QUERY_POS);
-		expect([...cone[3]]).toEqual([CHASE_QUERY_POS]);
+		expect([...cone[3].keys()]).toEqual([CHASE_QUERY_POS]);
 		const lit = flowEdges(head, N, 3, cone).filter((e) => e.lit);
 		expect(lit.map((e) => [e.r, e.from, e.to])).toEqual(
 			expect.arrayContaining([

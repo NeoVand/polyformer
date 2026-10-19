@@ -4,7 +4,7 @@
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import Icon from './Icon.svelte';
 	import Logo from './Logo.svelte';
-	import { Book, Compare, Cube, Note } from './icons.ts';
+	import { Book, Compare, Cube, Github, Note } from './icons.ts';
 
 	const sets = getBench('set');
 	const chase = getBench('chase');
@@ -18,8 +18,8 @@
 
 	const titles: Record<string, string> = {
 		'/learn': 'From pairs to diagrams',
-		'/explore': 'Linked tensor lab',
-		'/explore/diagrams': 'Sum over diagrams',
+		'/explore': 'Cubic attention',
+		'/explore/diagrams': 'DS-PA, a sum over diagrams',
 		'/compare': 'Bench',
 		'/notes': 'Research log'
 	};
@@ -58,6 +58,12 @@
 				><i aria-hidden="true"></i>Training, step {live.step.toLocaleString('en-US')}</span
 			>
 		{/if}
+		<a
+			class="gh"
+			href="https://github.com/NeoVand/polyformer"
+			title="Source on GitHub"
+			aria-label="Source on GitHub"><Icon icon={Github} size={18} /></a
+		>
 	</div>
 </header>
 
@@ -139,7 +145,24 @@
 	}
 	.right {
 		display: flex;
+		align-items: center;
 		justify-content: flex-end;
+		gap: 16px;
+	}
+	.gh {
+		display: grid;
+		place-items: center;
+		width: 30px;
+		height: 30px;
+		border-radius: var(--radius-ui);
+		color: var(--color-ink-3);
+		transition:
+			color 120ms ease,
+			background 120ms ease;
+	}
+	.gh:hover {
+		color: var(--color-ink);
+		background: var(--color-panel);
 	}
 	.live {
 		display: inline-flex;

@@ -58,7 +58,14 @@
 <g transform="translate({x} {y})" class={['card', selected && 'selected', dim && 'dim']}>
 	<defs>
 		<pattern id="stripe-{uid}" width={pitch * 4} height={pitch} patternUnits="userSpaceOnUse">
-			<line x1="0" y1={pitch * 0.5} x2={pitch * 4} y2={pitch * 0.5} stroke={colour} stroke-width={0.8 / scale} />
+			<line
+				x1="0"
+				y1={pitch * 0.5}
+				x2={pitch * 4}
+				y2={pitch * 0.5}
+				stroke={colour}
+				stroke-width={0.7 / scale}
+			/>
 		</pattern>
 	</defs>
 	{#if selected}
@@ -70,7 +77,7 @@
 			transform="translate({width / 2 + dx * width} {width / 2 + dy * width}) scale({scale})"
 			{fill}
 			stroke={colour}
-			stroke-width={1.3 / scale}
+			stroke-width={0.95 / scale}
 			stroke-linejoin="round"
 		/>
 	{/each}

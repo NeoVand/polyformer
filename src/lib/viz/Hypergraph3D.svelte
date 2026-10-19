@@ -26,7 +26,8 @@
 		onedge,
 		onanchor,
 		background = 0x080808,
-		showCards = true
+		showCards = true,
+		spin = 0
 	}: {
 		layout: readonly Card[];
 		query: number;
@@ -41,6 +42,8 @@
 		onanchor?: (p: { x: number; y: number } | null) => void;
 		background?: number;
 		showCards?: boolean;
+		/** Slow turntable rotation; 0 keeps the camera still. */
+		spin?: number;
 	} = $props();
 
 	const N = $derived(layout.length);
@@ -90,6 +93,7 @@
 				distance: [2.8, 7],
 				bloom: { strength: 0.35, radius: 0.3, threshold: 0.97 },
 				sway: false,
+				spin,
 				environment: true
 			});
 			api = build(stage);
