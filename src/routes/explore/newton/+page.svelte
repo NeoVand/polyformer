@@ -61,7 +61,7 @@
 	}
 	let recording = $state.raw<Recording | null>(null);
 	$effect(() => {
-		fetch(asset('recorded/newton.json' as Parameters<typeof asset>[0]))
+		fetch(asset('recorded/newton.json'))
 			.then((r) => (r.ok ? r.json() : null))
 			.then(
 				(j) => (recording = j?.strength ? j : null),

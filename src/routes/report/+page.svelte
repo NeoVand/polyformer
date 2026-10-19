@@ -983,7 +983,10 @@
 				/> runs, balanced accuracy is within five points of <MathTex
 					tex={String.raw`\tfrac12 + \tfrac12 \cdot \tfrac{\text{found}}{40}`}
 				/>, as if each character carried an equal share of the answer. Why the relation is linear we
-				do not yet know.
+				do not yet know. It holds in a browser too: a width-128 layer trained by this site's engine
+				on Match-4 sits at chance for 1,500 steps, then finds characters and gains accuracy
+				together, ending at 32 characters and 90.9% held-out token accuracy, where the line gives
+				90% (Explore, Newton).
 			</p>
 			<figure class="wide fig">
 				<CharactersFigure examples={newtonDiag.examples} points={newtonDiag.scatter} />
