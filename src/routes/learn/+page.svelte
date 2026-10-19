@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import Cite from '#lib/learn/Cite.svelte';
 	import LearnFigure from '#lib/learn/LearnFigure.svelte';
+	import DiagramSum from '#lib/learn/DiagramSum.svelte';
 	import { REFERENCES } from '#lib/learn/references.ts';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
@@ -27,6 +28,8 @@
 		{ id: 'binding', title: 'Values as binding', part: 'part-new' },
 		{ id: 'training', title: 'What training shows', part: 'part-new' },
 		{ id: 'arity', title: 'Order k needs a k-way term', part: 'part-new' },
+		{ id: 'feynman', title: 'Where Feynman diagrams come from', part: 'part-beyond' },
+		{ id: 'dyson', title: 'Summing them all at once', part: 'part-beyond' },
 		{ id: 'diagrams', title: 'Sum over diagrams', part: 'part-beyond' },
 		{ id: 'sectors', title: 'Making it train', part: 'part-beyond' },
 		{ id: 'chase', title: 'What DS-PA learns', part: 'part-beyond' }
@@ -395,43 +398,160 @@
 
 			<!-- ── Part III ───────────────────────────────────────────────── -->
 			<h2 class="part" id="part-beyond">Letting the data choose the arity</h2>
+			<p class="part-lede">
+				Chapter 11 ended on a fixed bet: a head of order <MathTex tex="k" /> pays for <MathTex tex="k" />-way terms whether
+				the data needs them or not. Physics met the same problem in the 1940s, how to add up interactions among any number
+				of particles, and answered it with a picture language. This part tells that story first, then borrows it.
+			</p>
 
-			<section id="diagrams">
-				<h3><span class="n">12</span>Sum over diagrams</h3>
-				<p class="src">
-					<span class="mark new"></span>New in this project: Dyson–Schwinger polyattention (DS-PA), after
-					<Cite id={['dyson', 'schwinger', 'feynman']} />
+			<section id="feynman">
+				<h3><span class="n">12</span>Where Feynman diagrams come from</h3>
+				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['feynman', 'dyson']} /></p>
+				<p>
+					In quantum electrodynamics, the theory of electrons and light, the quantity you want is an
+					<em>amplitude</em>: a number whose square gives the probability of a process, say two electrons flying at each
+					other and leaving with given momenta. The theory cannot be solved exactly. What it offers instead is a small
+					number, the electron's charge <MathTex tex="e" />, with <MathTex tex="\alpha = e^2/4\pi \approx 1/137" />.
+					So the amplitude is computed as a power series in <MathTex tex="e" />: perturbation theory.
 				</p>
 				<p>
-					In quantum field theory, the Dyson–Schwinger equations define a quantity self-consistently in terms of itself;
-					iterating them generates every Feynman diagram, each weighted by its couplings. DS-PA borrows that shape. Each
-					token's state <MathTex tex="\Phi_t" /> is rebuilt for <MathTex tex="R" /> rounds from the previous round's
-					states, choosing among five kinds of term with one softmax:
+					In 1949 Feynman showed that every term of that series can be drawn. A straight line is a particle moving freely
+					(a <em>propagator</em>), a wavy line is a photon, and a dot where three lines meet is an <em>interaction</em>, the
+					place where an electron emits or absorbs a photon. Each dot contributes one factor of <MathTex tex="e" />, so a
+					diagram with <MathTex tex="V" /> dots is a term of order <MathTex tex="e^V" />. The same year Dyson showed that the
+					pictures follow exactly from the formal calculations of Schwinger and Tomonaga, which turned them from a heuristic
+					into a method. For two electrons scattering:
+				</p>
+				<DiagramSum
+					lhs="blob"
+					width={64}
+					terms={[
+						{ kind: 'tree-t', caption: 'e^2' },
+						{ kind: 'tree-u', caption: 'e^2' },
+						{ kind: 'vacuum', caption: 'e^4' },
+						{ kind: 'vertex', caption: 'e^4' },
+						{ kind: 'box', caption: 'e^4' }
+					]}
+				/>
+				<p>
+					The hatched blob is everything that can happen; the right side lists the ways it can happen. At lowest order the
+					electrons exchange one photon, either way round. At the next order the photon briefly becomes an
+					electron–positron pair (the loop), or one electron emits and reabsorbs a photon of its own, or the electrons trade
+					two photons. Every picture is one term, with exact rules for turning it into a number: a factor for each line, a
+					coupling for each vertex, an integral for each loop.
+				</p>
+				<p>
+					Two ideas carry over to attention. A complicated interaction among many particles is built from one small vertex,
+					used over and over. And nobody decides in advance how many particles take part: the theory sums over all the
+					diagrams, and the couplings decide how much each one contributes.
+				</p>
+			</section>
+
+			<section id="dyson">
+				<h3><span class="n">13</span>Summing them all at once</h3>
+				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['dyson', 'schwinger']} /></p>
+				<p>
+					Listing diagrams one at a time never ends. Dyson and Schwinger found equations that sum whole families of them at
+					once. The simplest is for a single particle. Draw the <em>dressed</em> propagator, everything that can happen to
+					an electron on its way from one point to another, as a double line, and let the blob <MathTex tex="\Sigma" />,
+					the self-energy, stand for every diagram that cannot be split in two by cutting one line. Then
+				</p>
+				<DiagramSum
+					lhs="dressed"
+					width={92}
+					more={false}
+					terms={[{ kind: 'bare' }, { kind: 'bare-sigma-dressed' }]}
+				/>
+				<MathTex display tex="G = G_0 + G_0\, \Sigma\, G" />
+				<p>
+					The dressed line appears on both sides, so the equation is self-consistent. Substituting it into itself unrolls
+					it into an infinite series:
+				</p>
+				<DiagramSum
+					lhs="dressed"
+					width={92}
+					terms={[{ kind: 'bare' }, { kind: 'bare-sigma-bare' }, { kind: 'bare-sigma-bare-sigma-bare' }]}
+				/>
+				<MathTex
+					display
+					tex={'G = G_0 + G_0 \\Sigma G_0 + G_0 \\Sigma G_0 \\Sigma G_0 + \\cdots = G_0\\,\\bigl(1 - \\Sigma\\, G_0\\bigr)^{-1}'}
+				/>
+				<p>
+					Solving the equation sums every term of that series in one go. In the full theory <MathTex tex="\Sigma" /> itself
+					depends on dressed propagators and vertices, so the equations form a tower that is cut off in practice; stopping
+					after <MathTex tex="R" /> substitutions keeps exactly the diagrams up to depth <MathTex tex="R" />.
+				</p>
+				<p>
+					That is the shape DS-PA borrows. Read "a particle's dressed line" as "a token's state", "one more application of
+					the interaction" as "one more round of attention", and "the couplings" as "softmax weights". A token's final state
+					is then a sum over diagrams up to depth <MathTex tex="R" />, built from one vertex, with the weights learned from
+					data.
+				</p>
+			</section>
+
+			<section id="diagrams">
+				<h3><span class="n">14</span>Sum over diagrams</h3>
+				<p class="src"><span class="mark new"></span>New in this project: Dyson–Schwinger polyattention (DS-PA)</p>
+				<p>
+					Each token's state <MathTex tex="\Phi_t" /> is rebuilt for <MathTex tex="R" /> rounds from the previous
+					round's states. Round 0 is the token's own value, <MathTex tex="\Phi^0_t = v_t" />. Each later round chooses,
+					with one softmax, among five kinds of term:
 				</p>
 				<MathTex
 					display
 					tex={'\\begin{aligned}\\Phi^{r}_t = \\;& \\pi_{\\text{leaf}}\\, v_t + \\sum_j \\pi_j\\, \\Phi^{r-1}_j \\\\ &+ \\sum_{jk} \\pi_{jk}\\, \\Phi^{r-1}_j \\odot \\Phi^{r-1}_k \\\\ &+ \\sum_{jm} \\pi_{jm}\\, \\Phi^{r-1}_j \\odot \\Psi^{r}_m + \\pi_{\\text{carry}}\\, \\Phi^{r-1}_t\\end{aligned}'}
 				/>
 				<p>
-					All five are scored by a single trilinear vertex,
+					Read term by term: keep your own value (a leaf), copy another token's state (a hop, a propagator), multiply two
+					tokens' states (a cubic vertex), multiply one token's state by a virtual mode (an exchange), or keep what you had
+					(a carry). The dictionary between the two pictures:
+				</p>
+				<table class="dict">
+					<thead><tr><th>Field theory</th><th>DS-PA</th></tr></thead>
+					<tbody>
+						<tr><td>a particle's dressed line</td><td>a token's state <MathTex tex="\Phi_t" /></td></tr>
+						<tr><td>the bare propagator <MathTex tex="G_0" /></td><td>the token's own value <MathTex tex="v_t" /></td></tr>
+						<tr><td>the interaction vertex</td><td>one trilinear score</td></tr>
+						<tr><td>the coupling <MathTex tex="e" /></td><td>a softmax weight <MathTex tex="\pi" /></td></tr>
+						<tr><td>order in perturbation theory</td><td>the round <MathTex tex="r" /></td></tr>
+						<tr><td>a virtual photon</td><td>a virtual mode <MathTex tex="\Psi_m" /></td></tr>
+						<tr><td>the vacuum</td><td>a vacuum token of value 1</td></tr>
+					</tbody>
+				</table>
+				<p>
+					All five terms are scored by a single vertex,
 					<MathTex tex="\langle q_t \odot \omega_r,\; u_\alpha \odot w_\beta \rangle" />, where
 					<MathTex tex="\omega_r" /> is a learned clock for round <MathTex tex="r" /> and
-					<MathTex tex="\alpha, \beta" /> range over tokens, a vacuum of value 1, and <MathTex tex="M" /> virtual modes. A
-					mode <MathTex tex={'\\Psi^r_m = \\sum_{kl} \\rho_{m,kl}\\, \\Phi^{r-1}_k \\odot \\Phi^{r-1}_l'} /> is a learned query
-					that binds a pair of tokens by itself, so an exchange term reaches three tokens at once.
+					<MathTex tex="\alpha, \beta" /> range over tokens, the vacuum and <MathTex tex="M" /> virtual modes: a leaf
+					pairs the vacuum with itself, a hop pairs a token with the vacuum, a cubic term pairs two tokens. A mode
+					<MathTex tex={'\\Psi^r_m = \\sum_{kl} \\rho_{m,kl}\\, \\Phi^{r-1}_k \\odot \\Phi^{r-1}_l'} /> is a learned query that
+					binds a pair of tokens by itself, so an exchange reaches three other tokens at once.
 				</p>
 				<p>
-					Unrolled, a state is a weighted sum of trees: a hop extends a chain, a cubic vertex doubles the number of leaves,
-					an exchange adds a pair. After <MathTex tex="R" /> rounds one token can draw on anything from one token to
-					<MathTex tex="3^R" /> of them, and the softmax weights decide which. Each round costs
-					<MathTex tex="O(n^3 d + n^2 M d)" />, like one cubic layer. The figure draws those trees in the style of
-					TikZ-Feynman <Cite id="ellis" />; the <a href={resolve('/explore/diagrams')}>Diagrams</a> screen draws them for a
-					model training live.
+					<strong>Two worked expansions.</strong> On SET, a card needs one cubic vertex: its round-1 state reads the product
+					of the two cards that complete a SET with it,
+				</p>
+				<MathTex display tex={'\\Phi^1_i \\approx \\sum_{(j,k)\\,\\in\\,\\text{SETs}(i)} \\pi_{jk}\\; v_j \\odot v_k'} />
+				<p>
+					On pointer chasing, the query needs a chain of hops as long as its list. If the query starts at node
+					<MathTex tex="a" />, which points to <MathTex tex="b" />, which points to the last node <MathTex tex="c" />, then
+				</p>
+				<MathTex
+					display
+					tex="\Phi^4_q \approx \Phi^3_a \approx \Phi^2_b \approx \Phi^1_c \approx \cdots \approx v_c"
+				/>
+				<p>
+					one hop per round, carried once the end is reached. In the language of chapter 12 the first is a single vertex,
+					the second a long propagator; the same layer can be either, and which one is decided by the weights. Unrolled, a
+					state is a weighted sum of trees: after <MathTex tex="R" /> rounds one token can draw on anything from one token
+					to <MathTex tex="3^R" /> of them. Each round costs <MathTex tex="O(n^3 d + n^2 M d)" />, like one cubic layer.
+					The figure draws those trees in the style of TikZ-Feynman <Cite id="ellis" />; the
+					<a href={resolve('/explore/diagrams')}>Diagrams</a> screen draws them for a model training live.
 				</p>
 			</section>
 
 			<section id="sectors">
-				<h3><span class="n">13</span>Making it train</h3>
+				<h3><span class="n">15</span>Making it train</h3>
 				<p class="src"><span class="mark new"></span>New in this project</p>
 				<p>The first versions did not learn. Three changes fixed that, each for a reason that can be stated:</p>
 				<p>
@@ -454,7 +574,7 @@
 			</section>
 
 			<section id="chase">
-				<h3><span class="n">14</span>What DS-PA learns</h3>
+				<h3><span class="n">16</span>What DS-PA learns</h3>
 				<p class="src"><span class="mark measured"></span>Measured with this app's engine</p>
 				<p>
 					Pointer chasing asks for a depth that varies by example <Cite id="chakrabarti07" />: twelve nodes form linked lists,
@@ -631,6 +751,34 @@
 	}
 	strong {
 		font-weight: 500;
+		color: var(--color-ink);
+	}
+	em {
+		font-style: italic;
+		color: var(--color-ink);
+	}
+	.part-lede {
+		margin-top: 10px;
+		color: var(--color-ink-2);
+	}
+	.dict {
+		width: 100%;
+		margin: 2px 0 16px;
+		border-collapse: collapse;
+		font-size: var(--text-sm);
+	}
+	.dict th {
+		padding: 0 12px 6px 0;
+		text-align: left;
+		font-weight: 400;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+	}
+	.dict td {
+		padding: 4px 12px 4px 0;
+		color: var(--color-ink-2);
+	}
+	.dict td:last-child {
 		color: var(--color-ink);
 	}
 	a {

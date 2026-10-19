@@ -1,9 +1,9 @@
 <script lang="ts">
 	/**
-	 * The layout as a luminous hypergraph: each card is a chrome sphere, every SET on the
+	 * The layout as a luminous hypergraph: each card is a flat disc holding its glyph, every SET on the
 	 * table is a faint glass membrane, the query's top hyperedges are brighter membranes
-	 * weighted by attention, and the selected 2-simplex (i, j, k) glows. Role ports mark
-	 * the query (circle), role 1 (square) and role 2 (diamond).
+	 * weighted by attention, and the selected 2-simplex (i, j, k) glows. The query's disc
+	 * is ringed in white, the two keys' in grey.
 	 */
 	import type * as THREE_NS from 'three';
 	import type { Card } from '#lib/set/cards.ts';
@@ -49,7 +49,7 @@
 		update(q: number, e: WeightedEdge[], sel: { j: number; k: number } | null, s: [number, number, number][]): void;
 	}
 	let api = $state.raw<GraphApi | null>(null);
-	let nodes = $state<{ x: number; y: number; z: number }[]>([]);
+	let nodes = $state<{ x: number; y: number; z: number; s: number }[]>([]);
 
 	$effect(() => {
 		const q = query;
@@ -99,34 +99,6 @@
 	function build(stage: Stage): GraphApi {
 		const { THREE, scene } = stage;
 		const P = positions(N).map((p) => new THREE.Vector3(...p));
-		scene.add(new THREE.AmbientLight(0xffffff, 0.22));
-		const key = new THREE.DirectionalLight(0xffffff, 0.7);
-		key.position.set(2, 3, 4);
-		scene.add(key);
-
-		// chrome spheres
-		const sphereGeo = new THREE.SphereGeometry(1, 48, 32);
-		// matte, softly lit spheres: enough shading to read as 3D, no specular glare
-		const chrome = new THREE.MeshStandardMaterial({
-			color: 0x4c4c4c,
-			metalness: 0,
-			roughness: 0.7,
-			envMapIntensity: 0.25
-		});
-		const lit = new THREE.MeshStandardMaterial({
-			color: 0x9e9e9e,
-			metalness: 0,
-			roughness: 0.6,
-			envMapIntensity: 0.3
-		});
-		const spheres = P.map((p) => {
-			const m = new THREE.Mesh(sphereGeo, chrome);
-			m.position.copy(p);
-			m.scale.setScalar(0.062);
-			scene.add(m);
-			return m;
-		});
-
 		// a faint crystal: every triangle of mutually-near cards becomes a glass facet
 		const near: Record<string, true> = {};
 		const pairKey = (a: number, b: number) => (a < b ? `${a}-${b}` : `${b}-${a}`);
@@ -256,20 +228,21 @@
 			const r = el.getBoundingClientRect();
 			ndc.set(((e.clientX - r.left) / r.width) * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1);
 			ray.setFromCamera(ndc, stage.camera);
-			const hitSphere = ray.intersectObjects(spheres)[0];
-			if (hitSphere) {
-				onquery?.(spheres.indexOf(hitSphere.object as (typeof spheres)[number]));
-				return;
-			}
 			const hitMem = ray.intersectObjects(pool.filter((m) => m.visible && m.userData.attn))[0];
 			if (hitMem) onedge?.({ j: hitMem.object.userData.j, k: hitMem.object.userData.k });
 		});
 
 		stage.onRender(() => {
-			nodes = P.map((p) => {
+			const raw = P.map((p) => {
 				const s = project(stage, p);
-				return { x: s.x, y: s.y, z: p.clone().applyMatrix4(stage.camera.matrixWorldInverse).z };
+				return { x: s.x, y: s.y, z: p.clone().applyMatrix4(stage.camera.matrixWorldInverse).z, s: 1 };
 			});
+			// nearer cards draw a little larger, so the disc layer keeps the scene's depth
+			const zs = raw.map((n) => n.z);
+			const lo = Math.min(...zs);
+			const span = Math.max(...zs) - lo || 1;
+			for (const n of raw) n.s = 0.8 + 0.32 * ((n.z - lo) / span);
+			nodes = raw;
 			const qn = nodes[query];
 			if (!onanchor || !qn) return;
 			const r = stage.host.getBoundingClientRect();
@@ -294,11 +267,6 @@
 					place(m, q, edge.j, edge.k, 0.25 + 0.75 * edge.weight, isSel);
 					m.userData.attn = true;
 				}
-				spheres.forEach((sp, t) => {
-					const active = t === q || (!!sel && (t === sel.j || t === sel.k));
-					sp.scale.setScalar(t === q ? 0.078 : active ? 0.068 : 0.05);
-					sp.material = active ? lit : chrome;
-				});
 				stage.invalidate();
 			}
 		};
@@ -313,24 +281,21 @@
 	{#each nodes as p, t (t)}
 		{@const role = roleOf(t)}
 		<button
-			class="node"
-			class:active={!!role}
+			class="node {role ?? ''}"
 			style:left="{p.x}px"
 			style:top="{p.y}px"
+			style:--s={p.s}
 			style:z-index={role ? 1000 : Math.round(100 + p.z * 10)}
-			aria-label="Card {t + 1}{role ? `, ${role}` : ''}"
+			aria-label="Card {t + 1}{role ? `, ${role === 'query' ? 'query' : role === 'role1' ? 'role 1' : 'role 2'}` : ''}"
 			onclick={() => onquery?.(t)}
 		>
+			{#if showCards && layout[t]}<SetCard card={layout[t]} width={24} />{/if}
 			{#if role}
-				<span class="port {role}" aria-hidden="true"></span>
 				<span class="role"
 					><i>{role === 'query' ? 'i' : role === 'role1' ? 'j' : 'k'}</i><small
-						>({role === 'query' ? 'query' : role === 'role1' ? 'role 1' : 'role 2'})</small
+						>{role === 'query' ? 'query' : role === 'role1' ? 'role 1' : 'role 2'}</small
 					></span
 				>
-			{/if}
-			{#if showCards && layout[t]}
-				<span class="card"><SetCard card={layout[t]} width={26} /></span>
 			{/if}
 		</button>
 	{/each}
@@ -357,55 +322,50 @@
 			linear-gradient(to bottom, transparent, #000 28px, #000 calc(100% - 28px), transparent);
 		mask-composite: intersect;
 	}
+	/* each card is a flat disc over the 3D edges, its glyph inside */
 	.node {
 		position: absolute;
-		transform: translate(-50%, -50%);
-		width: 34px;
-		height: 34px;
+		display: grid;
+		place-items: center;
+		width: 40px;
+		height: 40px;
 		padding: 0;
-		border: 0;
+		border: 1px solid #2e2e2e;
 		border-radius: 50%;
-		background: transparent;
+		background: #0e0e0e;
+		transform: translate(-50%, -50%) scale(var(--s, 1));
 		cursor: pointer;
+		transition:
+			border-color 160ms ease,
+			box-shadow 160ms ease;
+	}
+	.node:hover {
+		border-color: #5a5a5a;
+	}
+	.node:focus {
+		outline: none;
 	}
 	.node:focus-visible {
-		box-shadow: var(--focus);
+		border-color: var(--color-ink);
 	}
-	.port {
-		position: absolute;
-		left: 50%;
-		top: 50%;
-		width: 14px;
-		height: 14px;
-		transform: translate(-50%, -50%);
-		border: 1px solid rgb(245 245 245 / 0.75);
-		background: transparent;
-		pointer-events: none;
+	.node.query {
+		width: 48px;
+		height: 48px;
+		border: 1.5px solid var(--color-ink);
+		box-shadow: 0 0 18px rgb(255 255 255 / 0.18);
 	}
-	.port.query {
-		width: 30px;
-		height: 30px;
-		border-radius: 50%;
-	}
-	.port.role1 {
-		width: 24px;
-		height: 24px;
-		border-radius: 2px;
-	}
-	.port.role2 {
-		width: 21px;
-		height: 21px;
-		transform: translate(-50%, -50%) rotate(45deg);
-		border-radius: 2px;
+	.node.role1,
+	.node.role2 {
+		border: 1.25px solid var(--color-ink-2);
 	}
 	.role {
 		position: absolute;
-		left: 50%;
-		bottom: calc(100% + 4px);
-		transform: translateX(-50%);
+		left: calc(100% + 6px);
+		top: 50%;
+		transform: translateY(-50%);
 		display: flex;
-		gap: 4px;
 		align-items: baseline;
+		gap: 4px;
 		line-height: 1;
 		white-space: nowrap;
 		pointer-events: none;
@@ -415,23 +375,11 @@
 	}
 	.role i {
 		font-family: var(--font-math);
-		font-size: 18px;
+		font-size: 17px;
 		color: var(--color-ink);
 	}
 	.role small {
-		font-family: 'KaTeX_Main', 'Times New Roman', serif;
-		font-size: 12px;
-		color: var(--color-ink-2);
-	}
-	.card {
-		position: absolute;
-		left: 50%;
-		top: calc(100% - 4px);
-		transform: translateX(-50%);
-		pointer-events: none;
-		opacity: 0.5;
-	}
-	.node.active .card {
-		opacity: 1;
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
 	}
 </style>

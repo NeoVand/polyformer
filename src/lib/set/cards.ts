@@ -23,9 +23,9 @@ export type Card = readonly [number, number, number, number];
 export const ATTR_NAMES = ['number', 'shape', 'shading', 'colour'] as const;
 export const VALUE_NAMES = [
 	['one', 'two', 'three'],
-	['diamond', 'circle', 'square'],
+	['spade', 'heart', 'club'],
 	['solid', 'striped', 'open'],
-	['red', 'green', 'purple']
+	['ink', 'red', 'gold']
 ] as const;
 
 export function cardFromId(id: number): Card {

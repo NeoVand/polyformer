@@ -19,9 +19,11 @@
 	--color-ink-2: #a6a6a6;
 	--color-ink: #f5f5f5;
 
-	--color-set-red: #e5484d;
-	--color-set-green: #3dbd7d;
-	--color-set-purple: #9b6cf0;
+	/* card colours, after playing cards: ink (the "black" suits), card red and court gold.
+	   Set in OKLCH at lightness 0.93, 0.665 and 0.80 so they stay apart in greyscale too. */
+	--color-card-ink: #e8e8e8;
+	--color-card-red: #ec5f5a;
+	--color-card-gold: #e3b662;
 
 	--font-sans: 'Geist Variable', ui-sans-serif, system-ui, sans-serif;
 	--font-mono: 'Geist Mono Variable', ui-monospace, monospace;

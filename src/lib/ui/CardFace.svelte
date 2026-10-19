@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * One SET card as a square glyph inside a parent <svg>, top-left at (x, y): no
-	 * face, no frame, just 1:1 symbols. One sits centred, two side by side, three
+	 * face, no frame, just suit symbols. One sits centred, two side by side, three
 	 * in a triangle, so every card fits the same square. Colour is allowed here and
 	 * only here.
 	 */

@@ -29,6 +29,8 @@
 		sectorSizes,
 		softmax
 	} from './figures.ts';
+	import DiagramSum from './DiagramSum.svelte';
+	import QedDiagram from './QedDiagram.svelte';
 	import { REFERENCES } from './references.ts';
 
 	let { section }: { section: string } = $props();
@@ -332,6 +334,44 @@
 			{/each}
 		</div>
 		<figcaption>Token accuracy, one layer, 4,000 steps, one seed. The tick is the majority-class rate.</figcaption>
+	</figure>
+{:else if section === 'feynman'}
+	<figure class="fig">
+		<div class="atlas">
+			<span class="order"><MathTex tex="e^2" /><small>one photon exchanged</small></span>
+			<div class="row">
+				<div class="cell"><QedDiagram kind="tree-t" width={120} /><span>exchange</span></div>
+				<div class="cell"><QedDiagram kind="tree-u" width={120} /><span>crossed exchange</span></div>
+			</div>
+			<span class="order"><MathTex tex="e^4" /><small>one loop</small></span>
+			<div class="row">
+				<div class="cell"><QedDiagram kind="vacuum" width={120} /><span>vacuum polarization</span></div>
+				<div class="cell"><QedDiagram kind="vertex" width={120} /><span>vertex correction</span></div>
+				<div class="cell"><QedDiagram kind="box" width={120} /><span>box</span></div>
+			</div>
+		</div>
+		<figcaption>
+			Electron–electron scattering, expanded in the coupling. Each vertex costs a factor of <MathTex tex="e" />, so diagrams
+			with more vertices count for less: at <MathTex tex="\alpha \approx 1/137" /> each extra pair of vertices is about a
+			hundred times smaller.
+		</figcaption>
+	</figure>
+{:else if section === 'dyson'}
+	<figure class="fig">
+		<div class="dyson">
+			<DiagramSum lhs="dressed" width={110} more={false} terms={[{ kind: 'bare' }, { kind: 'bare-sigma-dressed' }]} />
+			<MathTex display tex="G = G_0 + G_0\,\Sigma\,G" />
+			<span class="unroll">unrolled</span>
+			<DiagramSum
+				lhs="dressed"
+				width={84}
+				terms={[{ kind: 'bare' }, { kind: 'bare-sigma-bare' }, { kind: 'bare-sigma-bare-sigma-bare' }]}
+			/>
+		</div>
+		<figcaption>
+			The Dyson equation for a dressed propagator (double line) in terms of the bare one (single line) and the
+			self-energy (hatched blob). One self-consistent equation stands for the whole infinite series below it.
+		</figcaption>
 	</figure>
 {:else if section === 'diagrams'}
 	<figure class="fig tall">
@@ -705,6 +745,42 @@
 	.mass-keys b {
 		font-weight: 400;
 		color: var(--color-ink-2);
+	}
+	.atlas {
+		display: grid;
+		grid-template-columns: 70px auto;
+		gap: 18px 16px;
+		align-items: center;
+	}
+	.order {
+		display: grid;
+		gap: 2px;
+		font-size: 17px;
+	}
+	.order small {
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+	}
+	.row {
+		display: flex;
+		gap: 22px;
+	}
+	.cell {
+		display: grid;
+		justify-items: center;
+		gap: 6px;
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+	}
+	.dyson {
+		display: grid;
+		justify-items: center;
+		gap: 6px;
+		font-size: 17px;
+	}
+	.unroll {
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
 	}
 	.timeline {
 		display: grid;

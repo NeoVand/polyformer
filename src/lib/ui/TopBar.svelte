@@ -3,6 +3,7 @@
 	import { resolve } from '$app/paths';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import Icon from './Icon.svelte';
+	import Logo from './Logo.svelte';
 	import { Book, Compare, Cube, Note } from './icons.ts';
 
 	const sets = getBench('set');
@@ -33,7 +34,7 @@
 
 <header class="bar">
 	<div class="left">
-		<a class="wordmark" href={resolve('/compare')}>polyformer</a>
+		<a class="wordmark" href={resolve('/compare')}><Logo size={20} />polyformer</a>
 		{#if crumb}
 			<span class="sep" aria-hidden="true"></span>
 			<span class="crumb">{crumb}</span>
@@ -78,6 +79,9 @@
 		min-width: 0;
 	}
 	.wordmark {
+		display: inline-flex;
+		align-items: center;
+		gap: 9px;
 		font-size: 17px;
 		font-weight: 450;
 		letter-spacing: -0.015em;

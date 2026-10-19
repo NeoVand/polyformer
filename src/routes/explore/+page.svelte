@@ -19,7 +19,7 @@
 	import Icon from '#lib/ui/Icon.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
-	import SetCard from '#lib/ui/SetCard.svelte';
+	import RolePicker from '#lib/ui/RolePicker.svelte';
 	import { pct } from '#lib/ui/format.ts';
 	import {
 		Atom,
@@ -205,7 +205,6 @@
 		source = 'trained';
 		bench.start({ only: ['cubic'], until: Math.max(1500, cubicStep + 500) });
 	}
-	const cardOptions = $derived(layout.map((_, t) => t));
 	let ribbonWidth = $state(1100);
 	let innerWidth = $state(1600);
 
@@ -297,35 +296,18 @@
 			</div>
 
 			<div class="pickers">
-				<label class="picker">
-					<span class="p-label"><span class="port q" aria-hidden="true"></span>Query <i>i</i></span>
-					<select value={query} onchange={(e) => setQuery(+e.currentTarget.value)}>
-						{#each cardOptions as t (t)}<option value={t}>Card {t + 1}</option>{/each}
-					</select>
-					<SetCard card={layout[query]} width={34} />
-				</label>
-				<label class="picker">
-					<span class="p-label"><span class="port r1" aria-hidden="true"></span>Role 1 <i>j</i></span>
-					<select
-						value={selected?.j ?? 0}
-						onchange={(e) => (pick = { j: +e.currentTarget.value, k: selected?.k ?? 0 })}
-					>
-						{#each cardOptions as t (t)}<option value={t} disabled={t === query}>Card {t + 1}</option
-							>{/each}
-					</select>
-					{#if selected}<SetCard card={layout[selected.j]} width={34} />{/if}
-				</label>
-				<label class="picker">
-					<span class="p-label"><span class="port r2" aria-hidden="true"></span>Role 2 <i>k</i></span>
-					<select
-						value={selected?.k ?? 0}
-						onchange={(e) => (pick = { j: selected?.j ?? 0, k: +e.currentTarget.value })}
-					>
-						{#each cardOptions as t (t)}<option value={t} disabled={t === query}>Card {t + 1}</option
-							>{/each}
-					</select>
-					{#if selected}<SetCard card={layout[selected.k]} width={34} />{/if}
-				</label>
+				{#if selected}
+					<RolePicker
+						{layout}
+						{query}
+						j={selected.j}
+						k={selected.k}
+						onchange={(next) => {
+							if (next.query !== query) setQuery(next.query);
+							else pick = { j: next.j, k: next.k };
+						}}
+					/>
+				{/if}
 			</div>
 
 			<div class="block">
@@ -615,50 +597,13 @@
 		color: var(--color-ink);
 	}
 	.pickers {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 10px;
-		padding: 12px 0 6px;
+		padding: 12px 0 4px;
 	}
-	.picker {
-		display: grid;
-		justify-items: center;
-		gap: 8px;
-	}
-	.p-label {
-		display: flex;
-		align-items: center;
-		gap: 6px;
-		font-size: var(--text-xs);
-		color: var(--color-ink-3);
-	}
-	.p-label i,
 	.t-label i,
 	.s-label i {
 		font-family: var(--font-math);
 		font-size: 1.15em;
 		color: var(--color-ink);
-	}
-	.picker select {
-		width: 100%;
-	}
-	.port {
-		flex: none;
-		display: inline-block;
-		width: 8px;
-		height: 8px;
-		border: 1px solid var(--color-ink-2);
-	}
-	.port.q {
-		border-radius: 50%;
-	}
-	.port.r1 {
-		border-radius: 1px;
-	}
-	.port.r2 {
-		width: 7px;
-		height: 7px;
-		transform: rotate(45deg);
 	}
 	.block {
 		padding: 14px 0 4px;

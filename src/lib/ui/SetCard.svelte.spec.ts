@@ -6,14 +6,14 @@ import SetCard from './SetCard.svelte';
 describe('SetCard.svelte', () => {
 	it('draws one symbol per count and names the card for screen readers', async () => {
 		render(SetCard, { card: [2, 1, 0, 2] });
-		const card = page.getByRole('img', { name: 'three solid purple circles' });
+		const card = page.getByRole('img', { name: 'three solid gold hearts' });
 		await expect.element(card).toBeInTheDocument();
 		expect(card.element().querySelectorAll('path').length).toBe(3);
 	});
 
 	it('uses a stripe pattern for striped shading', async () => {
 		render(SetCard, { card: [0, 0, 1, 0] });
-		const card = page.getByRole('img', { name: 'one striped red diamond' });
+		const card = page.getByRole('img', { name: 'one striped ink spade' });
 		await expect.element(card).toBeInTheDocument();
 		expect(card.element().querySelector('path')?.getAttribute('fill')).toMatch(/^url\(#stripe-/);
 	});
