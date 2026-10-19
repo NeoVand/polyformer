@@ -30,6 +30,12 @@ def label(r: dict) -> str:
         m += "-fnorm" if opt("--fnorm") == "1" else ""
         m += "-raw" if opt("--rawphase") == "1" else ""
         m += f"-L{r['layers']}" if r.get("layers", 1) > 1 else ""
+    if m == "sfa":
+        m = f"sfa-K{opt('--order') or 6}-r{opt('--rank') or 32}-h{opt('--heads') or 4}"
+        m += "-bose" if opt("--stats") == "bose" else ""
+        m += f"-vac{opt('--vac')}" if opt("--vac") else ""
+        m += f"-w{opt('--hops')}" if opt("--hops") else ""
+        m += f"-L{r['layers']}" if r.get("layers", 1) > 1 else ""
     if opt("--d"):
         m += f"-d{opt('--d')}"
     if opt("--steps") and m.startswith("newton") and opt("--steps") != "4000" and opt("--steps") != "6000":
@@ -37,7 +43,7 @@ def label(r: dict) -> str:
     return m
 
 
-def main(grid: str) -> None:
+def main(grid: str, write: bool = True) -> None:
     rows = [json.loads(l) for l in (ROOT / "research" / "results" / f"{grid}.jsonl").read_text().splitlines() if l.strip()]
     rows = [r for r in rows if not r.get("error")]
     cells: dict[tuple[str, str], list[dict]] = {}
@@ -64,9 +70,10 @@ def main(grid: str) -> None:
                 "curves": [[[c[0], c[4]] for c in r.get("curve", [])] for r in rs],
             }
         )
-    dest = ROOT / "src" / "lib" / "report" / "results"
-    dest.mkdir(parents=True, exist_ok=True)
-    (dest / f"{grid}.json").write_text(json.dumps(out, indent=1) + "\n")
+    if write:
+        dest = ROOT / "src" / "lib" / "report" / "results"
+        dest.mkdir(parents=True, exist_ok=True)
+        (dest / f"{grid}.json").write_text(json.dumps(out, indent=1) + "\n")
     tasks = sorted({o["task"] for o in out})
     print("| model | " + " | ".join(tasks) + " |")
     print("|---|" + "---|" * len(tasks))
@@ -79,4 +86,6 @@ def main(grid: str) -> None:
 
 
 if __name__ == "__main__":
-    main(sys.argv[1] if len(sys.argv) > 1 else "baseline")
+    # --print: table only, leave the report's data files alone
+    args = [a for a in sys.argv[1:] if a != "--print"]
+    main(args[0] if args else "baseline", write="--print" not in sys.argv)
