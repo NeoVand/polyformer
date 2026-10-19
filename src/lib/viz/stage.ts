@@ -77,10 +77,18 @@ export interface Stage {
 	dispose(): void;
 }
 
-export function createStage(canvas: HTMLCanvasElement, kit: StageKit, opts: StageOptions = {}): Stage {
+export function createStage(
+	canvas: HTMLCanvasElement,
+	kit: StageKit,
+	opts: StageOptions = {}
+): Stage {
 	const { THREE } = kit;
 	const host = canvas.parentElement!;
-	const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
+	const renderer = new THREE.WebGLRenderer({
+		canvas,
+		antialias: true,
+		powerPreference: 'high-performance'
+	});
 	renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
 	renderer.toneMapping = THREE.ACESFilmicToneMapping;
 	renderer.toneMappingExposure = 1.0;
@@ -105,10 +113,18 @@ export function createStage(canvas: HTMLCanvasElement, kit: StageKit, opts: Stag
 	controls.target.set(...(opts.target ?? [0, 0, 0]));
 	if (opts.distance) [controls.minDistance, controls.maxDistance] = opts.distance;
 
-	const composer = new kit.EffectComposer(renderer);
+	// the composer renders offscreen, where the context's own antialias does not apply;
+	// a multisampled target keeps thin edges from shimmering as the camera moves
+	const target = new THREE.WebGLRenderTarget(1, 1, { type: THREE.HalfFloatType, samples: 4 });
+	const composer = new kit.EffectComposer(renderer, target);
 	composer.addPass(new kit.RenderPass(scene, camera));
 	const b = opts.bloom ?? { strength: 0.9, radius: 0.55, threshold: 0.92 };
-	const bloom = new kit.UnrealBloomPass(new THREE.Vector2(256, 256), b.strength, b.radius, b.threshold);
+	const bloom = new kit.UnrealBloomPass(
+		new THREE.Vector2(256, 256),
+		b.strength,
+		b.radius,
+		b.threshold
+	);
 	composer.addPass(bloom);
 	composer.addPass(new kit.OutputPass());
 
@@ -215,11 +231,19 @@ function toneMappedBackground(THREE: Three, hex: number): THREE_NS.Color {
 		return lo * 0.6; // three.js scales by exposure / 0.6 before the fit
 	};
 	const c = new THREE.Color(hex); // sRGB hex → linear working space
-	return new THREE.Color().setRGB(invert(c.r), invert(c.g), invert(c.b), THREE.LinearSRGBColorSpace);
+	return new THREE.Color().setRGB(
+		invert(c.r),
+		invert(c.g),
+		invert(c.b),
+		THREE.LinearSRGBColorSpace
+	);
 }
 
 /** Project a world point to pixel coordinates inside the stage's host element. */
-export function project(stage: Stage, p: THREE_NS.Vector3): { x: number; y: number; behind: boolean } {
+export function project(
+	stage: Stage,
+	p: THREE_NS.Vector3
+): { x: number; y: number; behind: boolean } {
 	const v = p.clone().project(stage.camera);
 	const { w, h } = stage.size();
 	return { x: ((v.x + 1) / 2) * w, y: ((1 - v.y) / 2) * h, behind: v.z > 1 };

@@ -1,9 +1,9 @@
 <script lang="ts">
 	/**
-	 * The attention tensor as a luminous glass cube: one instanced voxel per (i, j, k).
-	 * A shader draws each cell's glass edges and fill in proportion to its value, the
-	 * query plane and the selected cell's row and column are lit, and the selected
-	 * voxel is rendered above white so the bloom pass catches only it.
+	 * The attention tensor as a cube of blocks, one per (i, j, k), each sized by its
+	 * value like a Hinton diagram. The query plane is drawn solid; strong cells on other
+	 * planes appear as faint ghosts and weak ones are left out, so the cube stays
+	 * legible. The selected cell is white and outlined.
 	 *
 	 * Axes: j (role 1) → right, k (role 2) → up, i (query) → toward the viewer.
 	 */
@@ -64,8 +64,8 @@
 				position: [3.05, 1.75, 3.45],
 				fit: [0.98, 0.98],
 				distance: [2.6, 7],
-				bloom: { strength: 0.75, radius: 0.32, threshold: 0.88 },
-				sway: true
+				// only the selected block's lit top face crosses the threshold
+				bloom: { strength: 0.22, radius: 0.2, threshold: 0.93 }
 			});
 			api = build(stage);
 		});
@@ -85,171 +85,154 @@
 		// world position of voxel (i, j, k): j → x, k → y, i → z (toward viewer)
 		const at = (i: number, j: number, k: number) => [centre(j), centre(k), centre(i)] as const;
 
-		// ── frame: outer edges, faint back-plane grids, faint glass faces ──────────
-		const line = (pts: number[], color: number, opacity: number) => {
+		// ── frame: the outer box and a floor grid; the walls stay empty ───────────
+		const line = (pts: number[], color: number, opacity = 1) => {
 			const g = new THREE.BufferGeometry();
 			g.setAttribute('position', new THREE.Float32BufferAttribute(pts, 3));
 			return new THREE.LineSegments(
 				g,
-				new THREE.LineBasicMaterial({ color, transparent: true, opacity, depthWrite: false })
+				new THREE.LineBasicMaterial({
+					color,
+					transparent: opacity < 1,
+					opacity,
+					depthWrite: opacity >= 1
+				})
 			);
 		};
 		scene.add(
 			new THREE.LineSegments(
 				new THREE.EdgesGeometry(new THREE.BoxGeometry(S, S, S)),
-				new THREE.LineBasicMaterial({ color: 0x9a9a9a, transparent: true, opacity: 0.85 })
+				new THREE.LineBasicMaterial({ color: 0x5c5c5c })
 			)
 		);
-		const grid: number[] = [];
+		const floor: number[] = [];
 		for (let t = 1; t < n; t++) {
 			const c = o + t * cell;
-			grid.push(c, o, o, c, -o, o, o, c, o, -o, c, o); // back wall z = o
-			grid.push(c, o, o, c, o, -o, o, o, c, -o, o, c); // floor y = o
-			grid.push(o, c, o, o, c, -o, o, o, c, o, -o, c); // left wall x = o
+			floor.push(c, o, o, c, o, -o, o, o, c, -o, o, c);
 		}
-		scene.add(line(grid, 0x343434, 0.55));
-		const wallMat = new THREE.MeshBasicMaterial({
-			color: 0xffffff,
-			transparent: true,
-			opacity: 0.025,
-			depthWrite: false,
-			side: THREE.DoubleSide
-		});
-		const wall = (w: THREE_NS.Mesh, f: (m: THREE_NS.Mesh) => void) => (f(w), scene.add(w));
-		wall(new THREE.Mesh(new THREE.PlaneGeometry(S, S), wallMat), (m) => (m.position.z = o));
-		wall(new THREE.Mesh(new THREE.PlaneGeometry(S, S), wallMat), (m) => {
-			m.rotation.x = -Math.PI / 2;
-			m.position.y = o;
-		});
-		wall(new THREE.Mesh(new THREE.PlaneGeometry(S, S), wallMat), (m) => {
-			m.rotation.y = Math.PI / 2;
-			m.position.x = o;
-		});
+		scene.add(line(floor, 0x272727));
 
-		// ── voxels: glass blocks, depth-sorted back to front ────────────────────
-		const shrink = 0.9;
-		const box = new THREE.BoxGeometry(cell * shrink, cell * shrink, cell * shrink);
-		const count = n * n * n;
-		const aI = new THREE.InstancedBufferAttribute(new Float32Array(count), 1);
-		const aF = new THREE.InstancedBufferAttribute(new Float32Array(count), 1);
-		box.setAttribute('aI', aI);
-		box.setAttribute('aF', aF);
-		const mat = new THREE.ShaderMaterial({
-			uniforms: { uEdge: { value: 0.06 } },
-			vertexShader: /* glsl */ `
-				attribute float aI;
-				attribute float aF;
-				varying vec3 vP;
-				varying vec3 vN;
-				varying float vI;
-				varying float vF;
-				void main() {
-					vP = position / ${(cell * shrink).toFixed(6)};
-					vN = normal;
-					vI = aI;
-					vF = aF;
-					gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
-				}`,
+		// ── voxels: a 3D Hinton diagram, size by value ──────────────────────────
+		// The query plane is solid and depth-tested, so it needs no sorting and cannot
+		// pop as the camera turns. Strong cells elsewhere are faint additive ghosts,
+		// which are order independent for the same reason.
+		const faces = /* glsl */ `
+			float shadeOf(vec3 n) { return n.y > 0.5 ? 1.0 : n.z > 0.5 ? 0.7 : n.x > 0.5 ? 0.48 : 0.34; }`;
+		const vertexShader = /* glsl */ `
+			attribute float aV;
+			attribute float aF;
+			varying vec3 vP;
+			varying vec3 vN;
+			varying float vV;
+			varying float vF;
+			void main() {
+				vP = position;
+				vN = normal;
+				vV = aV;
+				vF = aF;
+				gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
+			}`;
+		const solidMat = new THREE.ShaderMaterial({
+			vertexShader,
 			fragmentShader: /* glsl */ `
-				uniform float uEdge;
 				varying vec3 vP;
 				varying vec3 vN;
-				varying float vI;
+				varying float vV;
 				varying float vF;
+				${faces}
 				void main() {
 					vec3 a = 0.5 - abs(vP);
 					float lo = min(a.x, min(a.y, a.z));
 					float hi = max(a.x, max(a.y, a.z));
 					float mid = a.x + a.y + a.z - lo - hi;
-					float edge = 1.0 - smoothstep(0.0, uEdge, mid);
-					float plane = step(0.5, vF);
-					float beam = step(1.5, vF);
+					float w = fwidth(mid);
+					// a soft bevel, antialiased in screen space, separates neighbouring blocks
+					float bevel = 1.0 - smoothstep(0.07 - w, 0.07 + w, mid);
+					float shade = shadeOf(vN);
 					float sel = step(2.5, vF);
-					// faces lit from above and in front, like frosted glass blocks
-					float shade = vN.y > 0.5 ? 1.0 : vN.z > 0.5 ? 0.74 : vN.x > 0.5 ? 0.52 : 0.38;
-					float body = (0.08 + 0.92 * vI) * shade;
-					float rim = edge * (0.16 + 0.5 * vI + 0.2 * plane + 0.25 * beam);
-					vec3 col = vec3(body + rim) * (1.0 + sel * 2.4);
-					float alpha = 0.02 + 0.45 * vI + 0.05 * plane + 0.12 * beam + rim * 0.45 + sel;
-					gl_FragColor = vec4(col, clamp(alpha, 0.0, 1.0));
+					float beam = step(1.5, vF) - sel;
+					float tone = 0.07 + 0.78 * vV + 0.08 * beam;
+					vec3 col = vec3(tone * shade * (1.0 - 0.35 * bevel));
+					col = mix(col, vec3(1.08 * shade * (1.0 - 0.2 * bevel)), sel);
+					gl_FragColor = vec4(col, 1.0);
+				}`
+		});
+		const ghostMat = new THREE.ShaderMaterial({
+			vertexShader,
+			fragmentShader: /* glsl */ `
+				varying vec3 vP;
+				varying vec3 vN;
+				varying float vV;
+				varying float vF;
+				${faces}
+				void main() {
+					gl_FragColor = vec4(vec3(0.006 + 0.04 * vV) * shadeOf(vN), 1.0);
 				}`,
 			transparent: true,
-			depthWrite: false
+			depthWrite: false,
+			blending: THREE.AdditiveBlending
 		});
-		const voxels = new THREE.InstancedMesh(box, mat, count);
-		voxels.frustumCulled = false;
-		scene.add(voxels);
+		const voxelLayer = (mat: THREE_NS.ShaderMaterial, capacity: number) => {
+			const g = new THREE.BoxGeometry(1, 1, 1);
+			const v = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
+			const f = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
+			g.setAttribute('aV', v);
+			g.setAttribute('aF', f);
+			const mesh = new THREE.InstancedMesh(g, mat, capacity);
+			mesh.frustumCulled = false;
+			mesh.count = 0;
+			scene.add(mesh);
+			/** The tensor cell drawn in each instance slot, for picking. */
+			const cellOf = new Int32Array(capacity);
+			return { mesh, v, f, cellOf };
+		};
+		const solid = voxelLayer(solidMat, n * n);
+		const ghost = voxelLayer(ghostMat, n * n * n);
+		/** Off-plane cells weaker than this are not drawn at all. */
+		const GHOST_FLOOR = 0.3;
 
-		// logical state per cell; written to instance slots in back-to-front order
-		const centres = new Float32Array(count * 3);
-		for (let i = 0; i < n; i++)
-			for (let j = 0; j < n; j++)
-				for (let k = 0; k < n; k++) centres.set(at(i, j, k), ((i * n + j) * n + k) * 3);
-		const cellI = new Float32Array(count);
-		const cellF = new Float32Array(count);
-		const order = Uint32Array.from({ length: count }, (_, t) => t);
-		const depth = new Float32Array(count);
-		const m4 = new THREE.Matrix4();
-		const eye = new THREE.Vector3(Infinity, 0, 0);
-		let unsorted = true;
-		stage.beforeRender(() => {
-			const cam = stage.camera.position;
-			if (eye.distanceToSquared(cam) > 1e-6) {
-				eye.copy(cam);
-				for (let t = 0; t < count; t++) {
-					const dx = centres[t * 3] - cam.x;
-					const dy = centres[t * 3 + 1] - cam.y;
-					const dz = centres[t * 3 + 2] - cam.z;
-					depth[t] = dx * dx + dy * dy + dz * dz;
-				}
-				order.sort((x, y) => depth[y] - depth[x]);
-				for (let slot = 0; slot < count; slot++) {
-					const t = order[slot];
-					m4.makeTranslation(centres[t * 3], centres[t * 3 + 1], centres[t * 3 + 2]);
-					voxels.setMatrixAt(slot, m4);
-				}
-				voxels.instanceMatrix.needsUpdate = true;
-				unsorted = true;
-			}
-			if (unsorted) {
-				const I = aI.array as Float32Array;
-				const F = aF.array as Float32Array;
-				for (let slot = 0; slot < count; slot++) {
-					I[slot] = cellI[order[slot]];
-					F[slot] = cellF[order[slot]];
-				}
-				aI.needsUpdate = true;
-				aF.needsUpdate = true;
-				unsorted = false;
-			}
-		});
+		// ── the selection: a crisp outline instead of a glow ─────────────────────
+		const ring = new THREE.LineSegments(
+			new THREE.EdgesGeometry(new THREE.BoxGeometry(cell * 1.08, cell * 1.08, cell * 1.08)),
+			new THREE.LineBasicMaterial({ color: 0xf2f2f2 })
+		);
+		scene.add(ring);
 
-		// ── query slab and slice planes ──────────────────────────────────────────
-		const slab = (sx: number, sy: number, sz: number) => {
-			const g = new THREE.Group();
-			g.add(
-				new THREE.Mesh(
-					new THREE.BoxGeometry(sx, sy, sz),
-					new THREE.MeshBasicMaterial({
-						color: 0xffffff,
-						transparent: true,
-						opacity: 0.06,
-						depthWrite: false,
-						blending: THREE.AdditiveBlending
-					})
-				),
-				new THREE.LineSegments(
-					new THREE.EdgesGeometry(new THREE.BoxGeometry(sx, sy, sz)),
-					new THREE.LineBasicMaterial({ color: 0xd8d8d8, transparent: true, opacity: 0.75 })
-				)
+		// ── slice planes: an outline and a whisper of fill ──────────────────────
+		const sheet = (axis: 'x' | 'y' | 'z') => {
+			const h = (S * 1.04) / 2;
+			const corners =
+				axis === 'z'
+					? [-h, -h, 0, h, -h, 0, h, h, 0, -h, h, 0]
+					: axis === 'x'
+						? [0, -h, -h, 0, -h, h, 0, h, h, 0, h, -h]
+						: [-h, 0, -h, h, 0, -h, h, 0, h, -h, 0, h];
+			const pts: number[] = [];
+			for (let c = 0; c < 4; c++) {
+				const d = (c + 1) % 4;
+				pts.push(...corners.slice(c * 3, c * 3 + 3), ...corners.slice(d * 3, d * 3 + 3));
+			}
+			const fill = new THREE.Mesh(
+				new THREE.PlaneGeometry(S * 1.04, S * 1.04),
+				new THREE.MeshBasicMaterial({
+					color: 0xffffff,
+					transparent: true,
+					opacity: 0.025,
+					depthWrite: false,
+					side: THREE.DoubleSide,
+					blending: THREE.AdditiveBlending
+				})
 			);
-			g.renderOrder = 1;
+			if (axis === 'x') fill.rotation.y = Math.PI / 2;
+			if (axis === 'y') fill.rotation.x = -Math.PI / 2;
+			const g = new THREE.Group();
+			g.add(fill, line(pts, 0xbdbdbd, 0.7));
 			scene.add(g);
 			return g;
 		};
-		const slabI = slab(S * 1.02, S * 1.02, cell);
-		const slabJ = slab(cell, S * 1.02, S * 1.02);
-		const slabK = slab(S * 1.02, cell, S * 1.02);
+		const slabI = sheet('z');
+		const slabJ = sheet('x');
+		const slabK = sheet('y');
 
 		// ── axis arrows ──────────────────────────────────────────────────────────
 		const arrowMat = new THREE.MeshBasicMaterial({ color: 0xe8e8e8 });
@@ -291,22 +274,46 @@
 		let sel: { j: number; k: number } | null = null;
 		let shown = { i: true, j: false, k: false } as { i?: boolean; j?: boolean; k?: boolean };
 
+		const m4 = new THREE.Matrix4();
 		function refresh() {
-			const I = cellI;
-			const F = cellF;
+			let ns = 0;
+			let ng = 0;
 			for (let i = 0; i < n; i++)
 				for (let j = 0; j < n; j++)
 					for (let k = 0; k < n; k++) {
 						const idx = (i * n + j) * n + k;
 						const v = current ? Math.max(0, Math.min(1, current[idx])) : 0;
-						const inPlane = i === q;
-						I[idx] = Math.pow(v, 0.8) * (inPlane ? 1 : 0.32);
-						let f = inPlane ? 1 : 0;
-						if (sel && inPlane && (j === sel.j || k === sel.k)) f = 2;
-						if (sel && inPlane && j === sel.j && k === sel.k) f = 3;
-						F[idx] = f;
+						const r = Math.sqrt(v);
+						if (i === q) {
+							let f = 1;
+							if (sel && (j === sel.j || k === sel.k)) f = 2;
+							if (sel && j === sel.j && k === sel.k) f = 3;
+							const side = cell * (0.1 + 0.8 * r);
+							m4.makeScale(side, side, side).setPosition(...at(i, j, k));
+							solid.mesh.setMatrixAt(ns, m4);
+							solid.v.array[ns] = v;
+							solid.f.array[ns] = f;
+							solid.cellOf[ns++] = idx;
+						} else if (v > GHOST_FLOOR) {
+							const side = cell * (0.2 + 0.62 * r);
+							m4.makeScale(side, side, side).setPosition(...at(i, j, k));
+							ghost.mesh.setMatrixAt(ng, m4);
+							ghost.v.array[ng] = v;
+							ghost.cellOf[ng++] = idx;
+						}
 					}
-			unsorted = true;
+			for (const [layer, count] of [
+				[solid, ns],
+				[ghost, ng]
+			] as const) {
+				layer.mesh.count = count;
+				layer.mesh.instanceMatrix.needsUpdate = true;
+				layer.v.needsUpdate = true;
+				layer.f.needsUpdate = true;
+				layer.mesh.computeBoundingSphere();
+			}
+			ring.visible = !!sel;
+			if (sel) ring.position.set(...at(q, sel.j, sel.k));
 			slabI.position.set(0, 0, centre(q));
 			slabI.visible = !!shown.i;
 			slabJ.visible = !!shown.j && !!sel;
@@ -334,8 +341,9 @@
 			ray.setFromCamera(ndc, stage.camera);
 			let best = -1;
 			let bestV = 0.02;
-			for (const h of ray.intersectObject(voxels)) {
-				const id = h.instanceId === undefined ? -1 : order[h.instanceId];
+			for (const h of ray.intersectObjects([solid.mesh, ghost.mesh], false)) {
+				const layer = h.object === solid.mesh ? solid : ghost;
+				const id = h.instanceId === undefined ? -1 : layer.cellOf[h.instanceId];
 				if (id >= 0 && current[id] > bestV) {
 					bestV = current[id];
 					best = id;

@@ -46,7 +46,12 @@
 	const N = $derived(layout.length);
 
 	interface GraphApi {
-		update(q: number, e: WeightedEdge[], sel: { j: number; k: number } | null, s: [number, number, number][]): void;
+		update(
+			q: number,
+			e: WeightedEdge[],
+			sel: { j: number; k: number } | null,
+			s: [number, number, number][]
+		): void;
 	}
 	let api = $state.raw<GraphApi | null>(null);
 	let nodes = $state<{ x: number; y: number; z: number; s: number }[]>([]);
@@ -84,7 +89,7 @@
 				fit: [1.42, 1.12],
 				distance: [2.8, 7],
 				bloom: { strength: 0.35, radius: 0.3, threshold: 0.97 },
-				sway: true,
+				sway: false,
 				environment: true
 			});
 			api = build(stage);
@@ -161,7 +166,12 @@
 		scene.add(
 			new THREE.LineSegments(
 				lineGeo,
-				new THREE.LineBasicMaterial({ color: 0x5a5a5a, transparent: true, opacity: 0.35, depthWrite: false })
+				new THREE.LineBasicMaterial({
+					color: 0x5a5a5a,
+					transparent: true,
+					opacity: 0.35,
+					depthWrite: false
+				})
 			)
 		);
 
@@ -235,7 +245,12 @@
 		stage.onRender(() => {
 			const raw = P.map((p) => {
 				const s = project(stage, p);
-				return { x: s.x, y: s.y, z: p.clone().applyMatrix4(stage.camera.matrixWorldInverse).z, s: 1 };
+				return {
+					x: s.x,
+					y: s.y,
+					z: p.clone().applyMatrix4(stage.camera.matrixWorldInverse).z,
+					s: 1
+				};
 			});
 			// nearer cards draw a little larger, so the disc layer keeps the scene's depth
 			const zs = raw.map((n) => n.z);
@@ -273,11 +288,20 @@
 	}
 
 	const roleOf = (t: number) =>
-		t === query ? 'query' : selected && t === selected.j ? 'role1' : selected && t === selected.k ? 'role2' : null;
+		t === query
+			? 'query'
+			: selected && t === selected.j
+				? 'role1'
+				: selected && t === selected.k
+					? 'role2'
+					: null;
 </script>
 
 <div class="graph">
-	<canvas {@attach graph} aria-label="Hypergraph of the layout: cards as nodes, SETs and attention as membranes"></canvas>
+	<canvas
+		{@attach graph}
+		aria-label="Hypergraph of the layout: cards as nodes, SETs and attention as membranes"
+	></canvas>
 	{#each nodes as p, t (t)}
 		{@const role = roleOf(t)}
 		<button
@@ -286,7 +310,9 @@
 			style:top="{p.y}px"
 			style:--s={p.s}
 			style:z-index={role ? 1000 : Math.round(100 + p.z * 10)}
-			aria-label="Card {t + 1}{role ? `, ${role === 'query' ? 'query' : role === 'role1' ? 'role 1' : 'role 2'}` : ''}"
+			aria-label="Card {t + 1}{role
+				? `, ${role === 'query' ? 'query' : role === 'role1' ? 'role 1' : 'role 2'}`
+				: ''}"
 			onclick={() => onquery?.(t)}
 		>
 			{#if showCards && layout[t]}<SetCard card={layout[t]} width={24} />{/if}
