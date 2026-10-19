@@ -69,6 +69,12 @@ cubic value aggregation is O(n^3 d), not O(n^2 d).
 - Transfer (newton_d, newton_f): one layer on Match-3/4/5 together (first token announces k),
   each arity a third of the data. Own read-outs: 89.5 / 84.2 / 82.7 vs alone 100 / 70.6 / 56.8.
   Shared + normalised, rank 256: 100 / 100 / 100 on every seed (Match-5 alone: 84.8).
+- Match3 on HOMA's protocol (homa_m3, details under Phase B): accuracy, three seeds, N = 6 / N = 8.
+  Newton at HOMA's parameter count (rank 24 / 84, 28k / 91k): 100.0 / 99.8 (HOMA 99.3 / 92.5).
+  Standard 1L: 84.4 / 74.6 (their pairwise at the same widths 83.0 / 73.1), so the protocol reproduces.
+  But cubic (27k / 107k): 99.9 / 99.7, so the margin over HOMA is our third-order block, not Newton.
+  Standard 2L 98.3 / 81.1, 3L 99.4 / 76.4. Newton rank 256: 99.9 / 99.8. Knockouts: arities 1-3 used
+  (repeats make 2x_i + x_j and 3x_i relations of fewer tokens), 4-6 unused.
 - Language model (lm.py, lm_a): enwik8 bytes, 4 layers, d 256, ctx 256, 8k steps, 3.3M params,
   three seeds. Softmax 1.651 bpc; softmax + causal Newton branch 1.657; Newton only 2.497.
   No gain on text: Newton attention has no keys/values, so no retrieval.
@@ -86,11 +92,44 @@ Phase A, mechanism (Match-k ladder in Z_3^m, k = 2..6, m = 2..4; mixtures of k):
 
 Phase B, established benchmarks (numbers to beat):
 
-- Match3 on HOMA's protocol (N = 6, 8; M = 30, 56): HOMA 0.993 / 0.925; pairwise 0.835 / 0.761. SET-in-5: RelConvNet 0.979 vs Transformer 0.563.
+- Match3 on HOMA's protocol (N = 6, 8; M = 30, 56): HOMA 0.993 / 0.925; pairwise 0.835 / 0.761 (done, see below and Results). SET-in-5: RelConvNet 0.979 vs Transformer 0.563.
 - CLUTRR graph, train k <= 3 test to 10: Edge Transformer 58.1 +- 2.8, EpiGNN 0.85, R5 0.97; Graphlog World 6: NCRL 0.702.
 - CLRS-30 subset, strict protocol (train n = 16, test n = 64, 10k steps, batch 32, >= 5 seeds): Floyd–Warshall, SCC, LCS, Optimal BST; controls BFS, insertion sort, DFS. To beat: Edge Transformer 61.5 (FW), G-ForgetNet / Open-Book about 82.9 average; FloydNet 81.4 FW / 90.1 average on fixed data. Same encoder/decoder for every model (Pozgaj et al. interface confound).
 - GraphQA triangle counting (Sanford et al. 2024): 60M transformer 40.5 on 100K examples.
 - p-hop (Saunshi et al. 2025): 1 / 2 / 3 / 6 layers at p = 16: 48.9 / 68.8 / 97.2 / 99.9.
+
+Match3 on HOMA's protocol (grid `homa_m3`, tasks `match3_n6` / `match3_n8`). Every detail we rely
+on and where it is stated in Amiraslani & Gao, arXiv 2603.11133 v2 (24 Sep 2026). No code is public
+(App. H describes an anonymised package; none is linked), so the generator follows the text.
+
+- Label (Sec. 3.1, after Sanford et al.; App. D.1): y_i = 1[exists j, z: x_i + x_j + x_z = 0 mod M], j and z
+  over the whole sequence, "may equal each other or i". Our `task_match3_homa` uses exactly this.
+- Tokens: uniform on Z_M. Implied, not stated: D.1 calibrates M "for approximately uniform tokens",
+  Pr(y = 0) ~ exp(-L_N / M) with L_N = N(N+1)/2. Check: our positive rates are 0.534 (N = 6) and 0.475
+  (N = 8), inside their stated majority-class range 0.500-0.540 (App. A) and "within 0.04 of 0.50" (D.1).
+- Sizes (Table 2, D.1): N = 6 with M = 30, N = 8 with M = 56. No BOS token; every position labelled
+  (Table A.1, "per position").
+- Data (Table A.1): 30,000 train, no validation, 2,000 test sequences; "independent train and test streams
+  for each seed" (App. A). We draw a fixed train set per seed and a test set from a separate generator.
+- Optimisation (Table A.3): Adam, lr 3e-3, weight decay 0, no schedule, no clipping, batch 256, 40 epochs,
+  CE loss, seeds 0, 1, 2. Steps: 40 x ceil(30000 / 256) = 4,720 (we keep the short last batch; whether
+  they drop it is not stated).
+- Metric (Table A.3, App. B): plain accuracy over labelled test positions at the last epoch, no checkpoint
+  selection; chance 0.50. Mean +- sample sd over three seeds (App. H). We report `tok_acc`.
+- Model (Sec. 3.1, Table A.2, App. A): one attention layer, 4 heads, no FFN, linear 2-way head, a frozen
+  sine-cosine Fourier feature then a learned projection, no positional embeddings. The Fourier size is
+  not given; D.1 says a complete basis needs about M - 1 coordinates and that their widths include one,
+  so we use the complete real basis (M - 1 coordinates) at every width. Residual connection and LayerNorm
+  are not stated for Match3; ours keep the harness's pre-LN residual block and final LN for every model.
+- Their numbers (Table 2 / D.2, mean +- sd): HOMA best 0.993 +- 0.002 (N = 6, d = 64) and 0.925 +- 0.008
+  (N = 8, d = 128); HOMA-add 0.990 / 0.921; Blockwise-3D (pure triadic) 0.958 +- 0.008 (d = 64) /
+  0.912 +- 0.004 (d = 128); pairwise best 0.835 +- 0.001 (d = 32) / 0.761 +- 0.009 (d = 64), and at HOMA's
+  widths 0.830 +- 0.003 (d = 64) / 0.731 +- 0.012 (d = 128).
+- Parameter budget (our estimate; Match3 counts are given only as ratios to pairwise): from Table C.2,
+  HOMA minus pairwise is exactly 16d + 385d/4 + 128 at d = 8, 16, 32, 64 (low-rank U of rank 8 plus a
+  fusion MLP 2d_h -> 128 -> d_h shared by heads). With Table 2's ratios (1.60x at d = 32, 1.19x at d = 128)
+  and the pairwise layer at d = 64, HOMA's best runs have about 28k (N = 6) and 91k (N = 8) parameters.
+  Newton attention at width 64 with rank 24 has 27.5k and with rank 84 has 91.1k.
 
 Phase C, browser: reduced versions of each suite in the app's jax-js engine.
 
