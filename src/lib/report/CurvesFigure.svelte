@@ -43,14 +43,9 @@
 		}
 		return out;
 	}
+	/** The axis ends where the plotted curves end, not at the longest run of the task. */
 	const xMax = (task: string) =>
-		Math.max(
-			1,
-			...rows
-				.filter((r) => r.task === task)
-				.flatMap((r) => r.curves ?? [])
-				.map((c) => c.at(-1)?.[0] ?? 0)
-		);
+		Math.max(1, ...series(task).map((s) => s.xs[s.xs.length - 1] ?? 0));
 </script>
 
 <div class="curves" style:--n={panels.length}>
@@ -71,6 +66,25 @@
 		</div>
 	{/each}
 </div>
+<p class="legend">
+	{#each models.filter( (m) => panels.some( (p) => series(p.task).some((s) => s.id === m.id) ) ) as m (m.id)}
+		<span
+			><svg width="26" height="8" viewBox="0 0 26 8" aria-hidden="true"
+				><line
+					x1="1"
+					x2="25"
+					y1="4"
+					y2="4"
+					style:stroke="rgb({Math.round(m.tone * 242)}
+					{Math.round(m.tone * 242)}
+					{Math.round(m.tone * 242)})"
+					stroke-width={m.emphasis ? 2.2 : 1.3}
+					stroke-dasharray={m.dash || undefined}
+				/></svg
+			>{m.label}</span
+		>
+	{/each}
+</p>
 
 <style>
 	.curves {
@@ -85,6 +99,19 @@
 		margin: 0 0 6px;
 		font-size: var(--text-xs);
 		color: var(--color-ink-2);
+	}
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 18px;
+		margin: 8px 0 0;
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+	}
+	.legend span {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
 	}
 	@media (max-width: 760px) {
 		.curves {

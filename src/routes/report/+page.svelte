@@ -5,12 +5,17 @@
 	import ArityFigure from '#lib/report/ArityFigure.svelte';
 	import { BIB } from '#lib/report/bib.ts';
 	import CurvesFigure from '#lib/report/CurvesFigure.svelte';
+	import ArityUseFigure from '#lib/report/ArityUseFigure.svelte';
+	import CharactersFigure from '#lib/report/CharactersFigure.svelte';
+	import newtonDiag from '#lib/report/results/newton_diag.json';
 	import EvidenceMatrix from '#lib/report/EvidenceMatrix.svelte';
 	import FeynmanFigure from '#lib/report/FeynmanFigure.svelte';
 	import MarginalDemo from '#lib/report/MarginalDemo.svelte';
 	import NewtonDemo from '#lib/report/NewtonDemo.svelte';
 	import ReplicationTable from '#lib/report/ReplicationTable.svelte';
 	import TensorGraphFigure from '#lib/report/TensorGraphFigure.svelte';
+	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
+	import { CUBIC, FEYNMAN, NEWTON } from '#lib/viz/computeGraphs.ts';
 	import Theorem from '#lib/report/Theorem.svelte';
 	import type { Card } from '#lib/set/cards.ts';
 	import MathTex from '#lib/ui/Math.svelte';
@@ -228,7 +233,9 @@
 				reaches 95% where the label is the smallest arity at which a token completes a relation (the
 				best fixed-order operator reaches 54%), and is the only operator above chance on five-way
 				relations. Capping its order below a task's arity returns it to exactly chance, and widening
-				fixed-order baselines to its size does not move them.
+				fixed-order baselines to its size does not move them. Switching off one arity at a time
+				shows that the trained layer depends on exactly the arities each task contains, and its
+				channels converge to the characters of the group: on Match-3 it recovers all of them.
 			</p>
 		</section>
 
@@ -285,9 +292,10 @@
 				softmax, its exact expansion as a sum over trees, and a rank obstruction that explains why
 				composing arity through shared intermediates fails. (iii) Newton's identities in the group
 				algebra, which count every arity at linear cost, and Newton attention, the layer built on
-				them. (iv) A measured Match-<MathTex tex="k" /> ladder across ten operators, three seeds each,
-				with order ablations and width-matched baselines. (v) Every result reproducible in this page or
-				in the published harness.
+				them, with knockouts showing the arity a trained layer uses and probes showing it learns the
+				group's characters. (iv) A measured Match-<MathTex tex="k" /> ladder across ten operators, three
+				seeds each, with order ablations and width-matched baselines. (v) Every result reproducible in
+				this page or in the published harness.
 			</p>
 		</section>
 
@@ -346,7 +354,7 @@
 				first-moment signal for a three-way relation; and the relation has leap <MathTex tex="k" /> in
 				the sense of Abbe et al.
 				<Cite refs={BIB} id="abbe" />, which predicts the long plateau and sudden snap seen when a
-				model of the right order trains (Figure 5). The theorem is about means of scores. A softmax
+				model of the right order trains (Figure 7). The theorem is about means of scores. A softmax
 				is not linear, so it is not by itself a lower bound on classifiers; representational lower
 				bounds for pairwise attention on Match3 need communication complexity <Cite
 					refs={BIB}
@@ -387,14 +395,19 @@
 			</p>
 			<MathTex display tex={T.cubicHead} />
 			<p>
-				Figure 2 shows one built by hand for SET. Its score tensor peaks exactly on the SETs, and
-				the same numbers, read as attention on hyperedges, put the query's weight on a triangle
-				rather than an edge.
+				Figure 2 shows its computation graph, and one head built by hand for SET. Its score tensor
+				peaks exactly on the SETs, and the same numbers, read as attention on hyperedges, put the
+				query's weight on a triangle rather than an edge.
 			</p>
 			<figure class="wide fig">
+				<p class="sub"><span class="tag">(a)</span> The computation</p>
+				<ComputeGraph graph={CUBIC} label="Computation graph of cubic attention" />
+				<p class="sub"><span class="tag">(b)</span> The scores, as a tensor and as hyperedges</p>
 				<TensorGraphFigure />
 				<figcaption>
-					<b>Figure 2.</b> One cubic head on twelve SET cards. Left: the score tensor
+					<b>Figure 2.</b> Cubic attention. (a) Its computation graph, after the original Polyformer
+					notebook: role-specific keys and values meet in Hadamard products, and one softmax runs
+					over ordered pairs. (b) One head on twelve SET cards. Left: the score tensor
 					<MathTex tex={String.raw`A_{ijk}`} />, one block per triple sized by its score, with the
 					query's slice as a solid plane. Right: the same scores as attention on hyperedges; every
 					SET on the table is a membrane, and the lit triangle is where the query's weight goes. The
@@ -414,7 +427,7 @@
 			<MathTex display tex={T.dspa} />
 			<aside class="side">
 				The name records the analogy that guided the design: the recursion is a Dyson–Schwinger
-				equation, and unrolled, its output is a sum over Feynman diagrams (Theorem 3 and Figure 4).
+				equation, and unrolled, its output is a sum over Feynman diagrams (Theorem 3 and Figure 5).
 			</aside>
 			<p>
 				One softmax <MathTex tex="\pi" /> runs over every option of every sector, scored by a single trilinear
@@ -427,6 +440,15 @@
 				gives every sector equal prior mass at initialisation. A carry keeps finished results fixed,
 				and the read-out is RMS-normalised.
 			</p>
+			<figure class="wide fig">
+				<ComputeGraph graph={FEYNMAN} label="Computation graph of Feynman attention" />
+				<figcaption>
+					<b>Figure 3.</b> The computation graph of Feynman attention. One score, the trilinear
+					vertex <MathTex tex={String.raw`\langle q_t, u \odot w\rangle`} /> plus a fixed bias per sector,
+					feeds one softmax over every option of every sector; the weighted sum rebuilds each token's
+					state, and the loop runs <MathTex tex="R" /> rounds.
+				</figcaption>
+			</figure>
 			<Theorem n={3} name="Tree expansion" evidence="proved" id="thm3">
 				<p>For every input and every setting of the weights, before normalisation,</p>
 				<MathTex display tex={T.tree} />
@@ -459,8 +481,8 @@
 			<p class="caveat">
 				Two qualifications matter. The weights depend on the input, so the output is a polynomial in
 				the values only when the routing is frozen; and a finite softmax never selects one arity
-				exactly: what adapts is how the weight is spread over trees of different sizes. Figures 3
-				and 4 show that spread for trained models.
+				exactly: what adapts is how the weight is spread over trees of different sizes. Figures 4
+				and 5 show that spread for trained models.
 			</p>
 
 			{#if setModel}
@@ -482,7 +504,7 @@
 						</DiagramFlow>
 					</div>
 					<figcaption>
-						<b>Figure 3.</b> Theorem 3 for a Feynman attention model trained in a browser on SET
+						<b>Figure 4.</b> Theorem 3 for a Feynman attention model trained in a browser on SET
 						(two rounds, step 1,500, 99.98% held out). Every token's state at every round, marked
 						with the vertex of the sector it mostly uses. Lines show what one card reads, weighted
 						by the share of its output they carry: each card in a SET reads its two partners at one
@@ -494,7 +516,7 @@
 			<figure class="wide fig">
 				<FeynmanFigure />
 				<figcaption>
-					<b>Figure 4.</b> The same expansion as Feynman diagrams, one tree per output, rounds running
+					<b>Figure 5.</b> The same expansion as Feynman diagrams, one tree per output, rounds running
 					left to right from the values to the read-out. Line weight is the tree's share of the output.
 					(a) On SET a card's state is one cubic vertex joining its two SET partners. (b) On pointer chasing
 					the query's state is a chain of hops along its list, one per round.
@@ -644,6 +666,15 @@
 			<MathTex display tex={T.nPow} />
 			<p>and the layer reads out every arity up to <MathTex tex="K" /> at once:</p>
 			<MathTex display tex={T.nOut} />
+			<figure class="wide fig">
+				<ComputeGraph graph={NEWTON} label="Computation graph of Newton attention" />
+				<figcaption>
+					<b>Figure 6.</b> The computation graph of Newton attention. Each token becomes complex phases;
+					pooled powers give the power sums; Newton's identities give the elementary symmetric polynomials
+					of the other tokens; and the query's own phases times each of them is that arity's term. Nothing
+					is enumerated, and no softmax is needed.
+				</figcaption>
+			</figure>
 			<Theorem kind="Remark" n={1} name="What the layer computes">
 				<p>Each read-out term is an exact sum over distinct subsets that contain the query,</p>
 				<MathTex display tex={T.nSubset} />
@@ -757,7 +788,7 @@
 				The ladder separates the operators by arity. Standard attention, at any depth we tried, gets
 				no further than 66% on Match-3 and stays at chance from Match-4 up. Cubic attention and
 				Feynman attention solve Match-3 and stop there. Dense quartic attention learns Match-4 on
-				two of three seeds, after a long plateau and a sudden snap (Figure 5), as the leap of a
+				two of three seeds, after a long plateau and a sudden snap (Figure 7), as the leap of a
 				four-way relation predicts. The Feynman attention variant that has every primitive of the
 				Newton construction (pooled modes, self-products, products of modes) stays at exactly chance
 				on Match-4 at width 64, 128 and 192, above the <MathTex tex="|G| = 81" /> that Proposition 6 asks
@@ -774,7 +805,7 @@
 					models={CURVE_MODELS}
 				/>
 				<figcaption>
-					<b>Figure 5.</b> Held-out balanced accuracy through training, mean of three seeds. Models of
+					<b>Figure 7.</b> Held-out balanced accuracy through training, mean of three seeds. Models of
 					the task's order sit at chance and then snap; models below it never leave. Newton attention
 					climbs without the long plateau; at rank 32 it stops short of exact.
 				</figcaption>
@@ -836,7 +867,52 @@
 				<p class="pending">Running now: rank 128 and 256, with width-matched baselines.</p>
 			{/if}
 
-			<h3>6.5 Next</h3>
+			<h3>6.5 What the trained layer computes</h3>
+			<p>
+				Two probes look inside a trained layer (rank 256, four heads, order 6). The first switches
+				off one arity's read-out at a time and scores the model again (Figure 8). On Match-3 only
+				arity 3 matters: without it accuracy falls to chance, and without any other arity it does
+				not move. Match-4 rests on arity 4 and Match-5 on arity 5. On the smallest-arity task, whose
+				labels involve relations of three, four and five cards, the layer depends on exactly arities
+				3, 4 and 5 and ignores 1, 2 and 6. Nothing told it which arities a task has.
+			</p>
+			<figure class="wide fig">
+				<ArityUseFigure rows={newtonDiag.knock} />
+				<figcaption>
+					<b>Figure 8.</b> The arity a trained Newton attention layer uses. For each task, the share
+					of its accuracy above chance that is lost when the read-out of arity <MathTex tex="k" /> is
+					switched off; the number left of each row is the full model's balanced accuracy. Mean over the
+					runs with this configuration.
+				</figcaption>
+			</figure>
+			<p>
+				The second compares every learned channel with the 81 characters of <MathTex
+					tex={String.raw`\mathbb Z_3^4`}
+				/>. A channel is a character when its phase on every card, at every position, is <MathTex
+					tex={String.raw`\tfrac{2\pi}{3}\langle c, x\rangle`}
+				/> up to one constant rotation; the resultant <MathTex tex="R" /> of the leftover phases is 1
+				exactly then. After training on Match-3, about one channel in eleven is a character to three decimals,
+				and between them they cover all 40 characters up to conjugation (Figure 9a): the layer rediscovers
+				the Fourier basis of the group, without being told there is one. On Match-4 the same layer finds
+				11 to 17 of the 40 and on Match-5 about 7, and accuracy rises with the number found (Figure 9b).
+				That locates the remaining gap. The layer picks the right arity; it has not found enough characters
+				to count exactly.
+			</p>
+			<figure class="wide fig">
+				<CharactersFigure examples={newtonDiag.examples} points={newtonDiag.scatter} />
+				<figcaption>
+					<b>Figure 9.</b> Newton attention learns characters. (a) Every card's learned phase on the four
+					most character-like channels of a layer trained on Match-3, shaded by the character's value
+					on that card: the 81 cards fall into three tight clusters a third of a turn apart. (b) Every
+					run's balanced accuracy against the number of distinct characters its channels contain.
+				</figcaption>
+			</figure>
+			<p class="pending">
+				Running now: one layer trained on Match-3, 4 and 5 together and scored on each, to test
+				whether characters found on triples carry over to larger arities.
+			</p>
+
+			<h3>6.6 Next</h3>
 			<p>Established benchmarks, each on its own published protocol:</p>
 			<table class="nums plan">
 				<caption>Table 7. Planned benchmarks and the published numbers to beat.</caption>
@@ -926,7 +1002,8 @@
 				<li>Theorem 1 is about means of scores, not a lower bound for every classifier.</li>
 				<li>
 					Theorem 5 is a construction. Newton attention learns it exactly for three-way relations
-					and only in part beyond: 71% on Match-4 and 57% on Match-5 at rank 256.
+					and only in part beyond (71% on Match-4, 60% on Match-5 at rank 256), because it finds
+					only some of the characters those arities need.
 				</li>
 				<li>
 					The width <MathTex tex="|G|" /> grows exponentially with the number of attributes, and the tasks
@@ -1097,6 +1174,16 @@
 		grid-template-columns: minmax(0, 1fr) var(--side);
 		gap: var(--gap);
 		align-items: end;
+	}
+	.sub {
+		margin: 0 0 4px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-2);
+	}
+	.sub .tag {
+		margin-right: 4px;
+		font-family: 'KaTeX_Main', serif;
+		color: var(--color-ink-3);
 	}
 	.fig-key {
 		display: block;

@@ -166,6 +166,21 @@ def task_matchk(rng, B, n=10, k=4, m=4):
     msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
     return tok, tgt, msk
 
+def task_mix(rng, B, n=9, m=4, ks=(3, 4, 5), fixed=None):
+    # Match-k with k drawn per table from ks and announced by the first token ([k - 3, 3, 3, 3]):
+    # one model, several arities, so features found on small k can serve large k.
+    f = _deal(rng, B, n, m)
+    k = np.full(B, fixed) if fixed else rng.choice(np.array(ks), B)
+    y = np.zeros((B, n), np.int32)
+    for kk in set(k.tolist()):
+        y = np.where((k == kk)[:, None], _zero_sum_members(f, kk).astype(np.int32), y)
+    bos = np.full((B, 1, m), 3)
+    bos[:, 0, 0] = k - 3
+    tok = np.concatenate([bos, f], 1)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return tok, tgt, msk
+
 def task_arity(rng, B, n=9, m=4, ks=(3, 4, 5)):
     # The smallest k in ks for which card i completes a zero-sum k-subset (class 1..len(ks)), or 0 for none.
     f = _deal(rng, B, n, m)
@@ -275,6 +290,8 @@ TASKS = {
     "zs4": (lambda r, B: task_matchk(r, B, 9, 4, 4), [4, 4, 4, 4], 2, False),
     "zs5": (lambda r, B: task_matchk(r, B, 9, 5, 4), [4, 4, 4, 4], 2, False),
     "arity": (lambda r, B: task_arity(r, B, 9, 4), [4, 4, 4, 4], 4, False),
+    "mix345": (lambda r, B: task_mix(r, B, 9, 4, (3, 4, 5)), [4, 4, 4, 4], 2, False),
+    "mix34": (lambda r, B: task_mix(r, B, 9, 4, (3, 4)), [4, 4, 4, 4], 2, False),
     "andortree": (task_andortree, [26, 6, 26, 26, 4], 2, False),
     "xortree": (task_xortree, [26, 5, 26, 26, 4], 2, False),
     "set4": (task_set4, [4, 4, 4, 4], 2, False),
@@ -348,8 +365,13 @@ def init(key, cfg, vocabs, C, T):
         if cfg.model == "newton":
             # Newton attention: r complex phase channels per head, every arity 1..K read out at once
             r, K = cfg.rank, cfg.order
-            a = {"th": dense(next(ks), D, H * r), "g": dense(next(ks), D, H * r),
-                 "o": dense(next(ks), H * K * r * 2, D)}
+            a = {"th": dense(next(ks), D, H * r), "g": dense(next(ks), D, H * r)}
+            if cfg.readout == "shared":
+                # one projection for every arity, and a learned per-arity scale on its output
+                a["o"] = dense(next(ks), H * r * 2, D)
+                a["alpha"] = jnp.ones((K, D))
+            else:
+                a["o"] = dense(next(ks), H * K * r * 2, D)
         if cfg.model == "path":
             a["len"] = dense(next(ks), D, H * cfg.plen)
         if cfg.model == "branch":
@@ -441,6 +463,14 @@ def path_attention(cfg, a, x, heads, dh):
     ve = heads(lin(a["ve"], x))
     return jnp.einsum("bhitk,bhitkc,bhkc->bhic", P, jnp.stack(betas, 3), ve)
 
+def newton_parts(cfg, a, feats, H, K, r, D):
+    """Each arity's contribution to the layer output, [B, T, K, D], before the bias."""
+    if cfg.readout == "shared":
+        W = a["o"]["w"].reshape(H, 2 * r, D)
+        return jnp.einsum("bthkc,hcd->btkd", feats, W) * a["alpha"][None, None]
+    W = a["o"]["w"].reshape(H, K, 2 * r, D)
+    return jnp.einsum("bthkc,hkcd->btkd", feats, W)
+
 def attention(cfg, a, x):
     B, T, D = x.shape
     H = cfg.heads; dh = getattr(cfg, "dh", 0) or D // H
@@ -465,8 +495,16 @@ def attention(cfg, a, x):
         for m in range(1, K):
             e.append(sum((-1) ** (j - 1) * e[m - j] * pl[j - 1] for j in range(1, m + 1)) / m)
         out = jnp.stack([phi * e[m] / math.comb(max(T - 2, m), m) for m in range(K)], 3)
-        out = jnp.concatenate([out.real, out.imag], -1)
-        return lin(a["o"], out.transpose(0, 2, 1, 3, 4).reshape(B, T, -1))
+        feats = jnp.concatenate([out.real, out.imag], -1).transpose(0, 2, 1, 3, 4)  # [B, T, H, K, 2r]
+        if cfg.fnorm:
+            # every arity's features on one scale, so no arity dominates the read-out by magnitude
+            feats = feats / jnp.sqrt((feats ** 2).mean((2, 4), keepdims=True) + 1e-6)
+        parts = newton_parts(cfg, a, feats, H, K, r, D)
+        if getattr(cfg, "knock", -1) >= 0:
+            parts = parts * (jnp.arange(K) != cfg.knock)[None, None, :, None]
+        if getattr(cfg, "want_parts", False):
+            return parts
+        return parts.sum(2) + a["o"]["b"]
     if cfg.model in ("dspa", "dspa2", "dspa3", "dspa4"):
         # Dyson-Schwinger polyattention: ONE trilinear vertex <q_p * clock_r, u_a * w_b> over
         # tokens + vacuum (value = 1, the Hadamard identity) + M virtual modes. A single softmax per parent
@@ -694,7 +732,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default="match3"); ap.add_argument("--model", default="cubic")
     ap.add_argument("--layers", type=int, default=1); ap.add_argument("--d", type=int, default=64)
-    ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0)
+    ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0); ap.add_argument("--readout", default="full"); ap.add_argument("--fnorm", type=int, default=0); ap.add_argument("--diag", type=int, default=1)
     ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--batch", type=int, default=128)
     ap.add_argument("--lr", type=float, default=2e-3); ap.add_argument("--seed", type=int, default=0)
     cfg = ap.parse_args()
@@ -722,9 +760,11 @@ def main():
         up, st = opt.update(g, st, p)
         return optax.apply_updates(p, up), st, l
 
-    @jax.jit
-    def evaluate(p, tok, tgt, msk):
-        lg = forward(cfg, p, tok)
+    def eval_with(c):
+        return jax.jit(lambda p, tok, tgt, msk: eval_impl(c, p, tok, tgt, msk))
+
+    def eval_impl(c, p, tok, tgt, msk):
+        lg = forward(c, p, tok)
         if multilabel:
             hit = ((lg > 0) == (tgt > 0.5)).all(-1)
         else:
@@ -743,6 +783,8 @@ def main():
         bal = (jnp.stack(recalls) * jnp.stack(present)).sum() / jnp.maximum(jnp.stack(present).sum(), 1)
         return tokacc, ok.all(-1).mean(), bal
 
+    evaluate = eval_with(cfg)
+
     erng = np.random.default_rng(10_000 + cfg.seed)
     etok, etgt, emsk = gen(erng, 2048)
     base = float((etgt.reshape(etgt.shape[0], etgt.shape[1], -1).max(-1) * emsk).sum() / emsk.sum())
@@ -754,11 +796,80 @@ def main():
             ta, sa, ba = evaluate(params, etok, etgt, emsk)
             curve.append((it + 1, round(float(l), 4), round(float(ta), 4), round(float(sa), 4), round(float(ba), 4)))
     ta, sa, ba = evaluate(params, etok, etgt, emsk)
-    tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") if cfg.model == "newton" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
-    print(json.dumps({"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed,
-                      "params": int(nparams), "tok_acc": round(float(ta), 4), "seq_acc": round(float(sa), 4),
-                      "bal_acc": round(float(ba), 4), "backend": jax.default_backend(),
-                      "pos_rate": round(base, 3), "secs": round(time.time() - t0, 1), "curve": curve}))
+    tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") + ("_shared" if cfg.readout == "shared" else "") + ("_fnorm" if cfg.fnorm else "") if cfg.model == "newton" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
+    out = {"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed,
+           "params": int(nparams), "tok_acc": round(float(ta), 4), "seq_acc": round(float(sa), 4),
+           "bal_acc": round(float(ba), 4), "backend": jax.default_backend(),
+           "pos_rate": round(base, 3), "secs": round(time.time() - t0, 1), "curve": curve}
+    if cfg.task.startswith("mix"):
+        # score each arity on its own held-out tables
+        out["per_k"] = {}
+        for k in [int(c) for c in cfg.task[3:]]:
+            ktok, ktgt, kmsk = task_mix(np.random.default_rng(20_000 + cfg.seed + k), 2048, 9, 4, fixed=k)
+            out["per_k"][str(k)] = round(float(evaluate(params, ktok, ktgt, kmsk)[2]), 4)
+    if cfg.model == "newton" and cfg.diag and cfg.layers == 1 and not multilabel:
+        out["diag"] = newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with)
+    print(json.dumps(out))
+
+def newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with):
+    """
+    What a trained one-layer Newton attention uses:
+      contrib  - each arity's share of the layer's output norm on scored tokens;
+      knockout - balanced accuracy with each arity's read-out switched off (the causal test);
+      chars    - how close each learned channel is to a character of Z_3^F: for every channel the
+                 best resultant |sum_t g_t exp(i(theta_t - 2pi/3 <c, x_t>))| / sum_t g_t over all c,
+                 so 1 means an exact character up to a constant phase, across every position.
+    """
+    import copy
+    K, r, H = cfg.order, cfg.rank, cfg.heads
+    L0 = params["layers"][0]
+    sub = slice(0, 512)
+    tok, msk = etok[sub], emsk[sub]
+    x = sum(params["emb"][f][tok[..., f]] for f in range(tok.shape[-1])) + params["pos"][None, : tok.shape[1]]
+    h = x if cfg.rawphase else ln(L0["ln1"], x)
+    c2 = copy.copy(cfg); c2.want_parts = True
+    parts = attention(c2, L0["attn"], h)
+    norms = jnp.sqrt((parts ** 2).sum(-1))
+    m = jnp.asarray(msk)[..., None]
+    contrib = (norms * m).sum((0, 1)) / m.sum()
+    contrib = contrib / contrib.sum()
+    knock = []
+    for k in range(K):
+        ck = copy.copy(cfg); ck.knock = k
+        knock.append(round(float(eval_with(ck)(params, etok, etgt, emsk)[2]), 4))
+    res = {"contrib": [round(float(v), 4) for v in contrib], "knockout": knock}
+    cards = np.asarray(tok)[np.asarray(msk) > 0]
+    if cards.size and cards.max() < 3:
+        th = np.asarray(cfg.phase * lin(L0["attn"]["th"], h))[np.asarray(msk) > 0]
+        g = np.asarray(jax.nn.sigmoid(lin(L0["attn"]["g"], h)))[np.asarray(msk) > 0]
+        F = cards.shape[-1]
+        cs = np.array([[(v // 3 ** a) % 3 for a in range(F)] for v in range(3 ** F)])
+        psi = 2 * np.pi / 3 * ((cards @ cs.T) % 3)
+        num = (g * np.exp(1j * th)).T @ np.exp(-1j * psi)
+        R = np.abs(num) / g.sum(0)[:, None]
+        best, Rb = R.argmax(1), R.max(1)
+        negate = lambda v: int(sum(((3 - cs[v][a]) % 3) * 3 ** a for a in range(F)))
+        good = [int(v) for v, rb in zip(best, Rb) if rb > 0.9 and v != 0]
+        res["chars"] = {
+            "channels": int(len(Rb)),
+            "frac_exact": round(float((Rb > 0.9).mean()), 4),
+            "distinct": len({min(v, negate(v)) for v in good}),
+            "of": (3 ** F - 1) // 2,
+            "quantiles": [round(float(q), 3) for q in np.quantile(Rb, [0.1, 0.25, 0.5, 0.75, 0.9])],
+            "hist": np.histogram(Rb, bins=10, range=(0, 1))[0].tolist(),
+        }
+        # the four most character-like channels: every card's mean phase on each, for phase wheels
+        top = np.argsort(-Rb)[:4]
+        ids = (cards * (3 ** np.arange(F))).sum(-1)
+        ex = []
+        for ch in top:
+            z = np.zeros(3 ** F, complex)
+            np.add.at(z, ids, g[:, ch] * np.exp(1j * th[:, ch]))
+            seen = np.bincount(ids, minlength=3 ** F) > 0
+            ex.append({"char": [int(v) for v in cs[best[ch]]], "R": round(float(Rb[ch]), 4),
+                       "phase": [round(float(np.angle(z[v])), 3) if seen[v] else None for v in range(3 ** F)]})
+        res["chars"]["examples"] = ex
+    return res
 
 if __name__ == "__main__":
     main()

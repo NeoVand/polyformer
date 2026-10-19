@@ -133,12 +133,47 @@ def newton_b() -> list[list[str]]:
     return runs
 
 
+def newton_c() -> list[list[str]]:
+    """Newton v2: diagnostics for the figures, and one change at a time against the caveats."""
+    runs = []
+    hard = ["zs4", "zs5"]
+    # A. rank 256 with diagnostics (arity contribution, knockouts, character fidelity)
+    runs += grid(["zs3", "zs4", "zs5", "arity", "set"], ["newton"], [0, 1, 2], steps=6000, rank=256)
+    # B. one read-out shared across arities: a sixth of the parameters at rank 256
+    runs += grid(["zs3", "zs4", "zs5", "arity"], ["newton"], [0, 1, 2], steps=6000, rank=256, readout="shared")
+    runs += grid(["zs4", "zs5", "arity"], ["newton"], [0, 1, 2], steps=6000, rank=512, readout="shared")
+    # C-G. normalised features, phases from the raw stream, two layers, longer, wider
+    runs += grid(hard, ["newton"], [0, 1, 2], steps=6000, rank=256, fnorm=1)
+    runs += grid(hard, ["newton"], [0, 1, 2], steps=6000, rank=256, rawphase=1)
+    runs += grid(hard, ["newton"], [0, 1, 2], steps=6000, rank=256, layers=2)
+    runs += grid(hard, ["newton"], [0, 1, 2], steps=20000, rank=256)
+    runs += grid(hard, ["newton"], [0, 1, 2], steps=6000, rank=512)
+    return runs
+
+
+def newton_fig() -> list[list[str]]:
+    """One run per task with every diagnostic, including per-card phases, for the paper's figures."""
+    return grid(["zs3", "zs4", "arity"], ["newton"], [0], steps=6000, rank=256)
+
+
+def newton_d() -> list[list[str]]:
+    """Do characters found on triples unlock quadruples? One model trained on mixed arities,
+    scored on each arity separately; controls are the single-arity runs in newton_c."""
+    runs = grid(["mix345"], ["newton"], [0, 1, 2], steps=6000, rank=256)
+    runs += grid(["mix345"], ["newton"], [0, 1, 2], steps=18000, rank=256)
+    runs += grid(["mix34"], ["newton"], [0, 1, 2], steps=12000, rank=256)
+    return runs
+
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
     "baseline": baseline(),
     "phase_a": phase_a(),
     "newton_a": newton_a(),
     "newton_b": newton_b(),
+    "newton_c": newton_c(),
+    "newton_fig": newton_fig(),
+    "newton_d": newton_d(),
 }
 
 
