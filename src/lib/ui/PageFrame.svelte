@@ -35,15 +35,26 @@
 	<aside class="rail" aria-label="Sections">
 		<!-- eslint-disable svelte/no-navigation-without-resolve -- screen links arrive resolved; the rest are in-page anchors -->
 		{#each rail as item (item.id)}
-			<a
-				href={item.href ?? `#${item.id}`}
-				class={{ on: active === item.id }}
-				aria-current={active === item.id ? 'page' : undefined}
-				onclick={() => onselect?.(item.id)}
-			>
-				<Icon icon={item.icon} size={20} />
-				<span>{item.label}</span>
-			</a>
+			{#if onselect && !item.href}
+				<!-- a view switcher, not a place on the page -->
+				<button
+					class={{ item: true, on: active === item.id }}
+					aria-pressed={active === item.id}
+					onclick={() => onselect(item.id)}
+				>
+					<Icon icon={item.icon} size={20} />
+					<span>{item.label}</span>
+				</button>
+			{:else}
+				<a
+					href={item.href ?? `#${item.id}`}
+					class={{ item: true, on: active === item.id }}
+					aria-current={active === item.id ? 'page' : undefined}
+				>
+					<Icon icon={item.icon} size={20} />
+					<span>{item.label}</span>
+				</a>
+			{/if}
 		{/each}
 		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	</aside>
@@ -70,7 +81,7 @@
 		border-right: 1px solid #1a1a1a;
 		background: var(--color-void);
 	}
-	.rail a {
+	.item {
 		display: grid;
 		place-items: center;
 		gap: 6px;
@@ -79,17 +90,20 @@
 		font-size: var(--text-2xs);
 		text-align: center;
 		line-height: 1;
+		border: 0;
 		border-radius: var(--radius-ui);
+		background: transparent;
 		color: var(--color-ink-3);
+		cursor: pointer;
 		transition:
 			color 120ms ease,
 			background 120ms ease;
 	}
-	.rail a:hover {
+	.item:hover {
 		color: var(--color-ink);
 		background: var(--color-panel);
 	}
-	.rail a.on {
+	.item.on {
 		color: var(--color-ink);
 		background: var(--color-control);
 	}
