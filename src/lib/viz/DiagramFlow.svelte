@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * A DS-PA probe as a spacetime diagram, every token at once. Time runs left to
+	 * A Feynman attention probe as a spacetime diagram, every token at once. Time runs left to
 	 * right through the rounds; each token is a faint world line. Every state gets
 	 * the Feynman vertex of what it mostly does (a dot for a hop, a triangle for a
 	 * cubic vertex, a ring for an exchange, a square for its own value, nothing for a
@@ -31,7 +31,7 @@
 		column = 92,
 		fit = false,
 		animate = true,
-		description = 'Every token and round of a DS-PA model; the lit lines are what one token reads'
+		description = 'Every token and round of a Feynman attention model; the lit lines are what one token reads'
 	}: {
 		head: DiagramHead;
 		n: number;
@@ -179,7 +179,7 @@
 				<g class="currents">
 					{#each edges as e, i (i)}
 						{#if e.lit && e.flow >= 0.18 && visible(e) && e.kind !== 'carry' && e.kind !== 'leaf'}
-							<path d={pathOf(e)} class="current" transition:fade={{ duration: 600 }} />
+							<path d={pathOf(e)} class="current" transition:fade={{ duration: 800 }} />
 						{/if}
 					{/each}
 				</g>
@@ -271,7 +271,7 @@
 		stroke: rgb(255 255 255 / 0.06);
 	}
 	.world {
-		transition: stroke 850ms cubic-bezier(0.65, 0, 0.35, 1);
+		transition: stroke 1100ms cubic-bezier(0.37, 0, 0.63, 1);
 	}
 	.world.on {
 		stroke: rgb(255 255 255 / 0.16);
@@ -284,9 +284,9 @@
 		opacity: calc(0.12 + 0.4 * var(--w));
 		/* a new focus fades in rather than switching: weight, tone and width all ease */
 		transition:
-			opacity 850ms cubic-bezier(0.65, 0, 0.35, 1),
-			stroke 850ms cubic-bezier(0.65, 0, 0.35, 1),
-			stroke-width 850ms cubic-bezier(0.65, 0, 0.35, 1);
+			opacity 1100ms cubic-bezier(0.37, 0, 0.63, 1),
+			stroke 1100ms cubic-bezier(0.37, 0, 0.63, 1),
+			stroke-width 1100ms cubic-bezier(0.37, 0, 0.63, 1);
 	}
 	.edge.lit {
 		stroke: #f2f2f2;
@@ -313,7 +313,7 @@
 		}
 	}
 	.readout {
-		transition: transform 850ms cubic-bezier(0.65, 0, 0.35, 1);
+		transition: transform 1100ms cubic-bezier(0.37, 0, 0.63, 1);
 	}
 	.leg {
 		stroke: #f2f2f2;
@@ -327,8 +327,8 @@
 	}
 	.v {
 		transition:
-			fill 850ms cubic-bezier(0.65, 0, 0.35, 1),
-			opacity 850ms cubic-bezier(0.65, 0, 0.35, 1);
+			fill 1100ms cubic-bezier(0.37, 0, 0.63, 1),
+			opacity 1100ms cubic-bezier(0.37, 0, 0.63, 1);
 		fill: #5c5c5c;
 		opacity: calc(0.45 + 0.55 * var(--m));
 	}
@@ -401,7 +401,7 @@
 		align-items: baseline;
 		gap: 6px;
 		transform: translateY(-50%);
-		transition: top 850ms cubic-bezier(0.65, 0, 0.35, 1);
+		transition: top 1100ms cubic-bezier(0.37, 0, 0.63, 1);
 		font-size: 13px;
 		white-space: nowrap;
 		pointer-events: none;

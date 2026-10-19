@@ -1,6 +1,6 @@
 <script lang="ts">
 	/**
-	 * One token's DS-PA computation tree drawn as a textbook Feynman diagram:
+	 * One token's Feynman attention computation tree drawn as a textbook Feynman diagram:
 	 * straight propagators with mid-line arrows, dot vertices, photon lines to
 	 * hatched mode blobs, dashed carries. Rounds run left to right from the
 	 * tokens' values to the probed state. A path's flow (the product of its
@@ -101,7 +101,13 @@
 		aria-label="Computation tree of one token as a Feynman diagram"
 	>
 		<defs>
-			<pattern id="fy-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+			<pattern
+				id="fy-hatch"
+				width="3"
+				height="3"
+				patternUnits="userSpaceOnUse"
+				patternTransform="rotate(45)"
+			>
 				<line x1="0" y1="0" x2="0" y2="3" stroke="#f2f2f2" stroke-width="0.9" />
 			</pattern>
 		</defs>
@@ -139,9 +145,21 @@
 		{#each L.vertices as v (v.id)}
 			{@const on = lit(v.round)}
 			{#if v.kind === 'mode'}
-				<circle class="blob" cx={v.x} cy={v.y} r={6.5 + 2 * Math.sqrt(v.flow)} opacity={on ? 1 : 0.1} />
+				<circle
+					class="blob"
+					cx={v.x}
+					cy={v.y}
+					r={6.5 + 2 * Math.sqrt(v.flow)}
+					opacity={on ? 1 : 0.1}
+				/>
 			{:else}
-				<circle class="dot" cx={v.x} cy={v.y} r={2.6 + 1.6 * Math.sqrt(v.flow)} opacity={on ? 1 : 0.1} />
+				<circle
+					class="dot"
+					cx={v.x}
+					cy={v.y}
+					r={2.6 + 1.6 * Math.sqrt(v.flow)}
+					opacity={on ? 1 : 0.1}
+				/>
 			{/if}
 		{/each}
 
@@ -160,7 +178,9 @@
 			>
 		{/if}
 	{/each}
-	<span class="out" style:left="{L.root.x + 72}px" style:top="{L.root.y}px"><MathTex tex={output} /></span>
+	<span class="out" style:left="{L.root.x + 72}px" style:top="{L.root.y}px"
+		><MathTex tex={output} /></span
+	>
 	{#if row}
 		{#each L.rows as r (r.token)}
 			<span

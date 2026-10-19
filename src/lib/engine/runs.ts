@@ -9,7 +9,7 @@ export interface RunSpec {
 	label: string;
 	/** Task this run trains on; defaults to SET. */
 	task?: TaskId;
-	/** Operator options (DS-PA rounds and modes). */
+	/** Operator options (Feynman attention rounds and modes). */
 	options?: OperatorOptions;
 	/** Trains when Start is pressed unless switched off; defaults to true. */
 	defaultEnabled?: boolean;
@@ -19,7 +19,7 @@ export interface RunSpec {
 	dash: string;
 }
 
-/** The SET bench. DS-PA is available but off by default, so Start trains the original five. */
+/** The SET bench. Feynman attention is available but off by default, so Start trains the original five. */
 export const BENCH_RUNS: RunSpec[] = [
 	{ id: 'cubic', operator: 'cubic', layers: 1, label: 'Cubic', tone: 1, dash: '' },
 	{ id: 'strassen', operator: 'strassen', layers: 1, label: 'Strassen', tone: 0.72, dash: '6 3' },
@@ -44,7 +44,7 @@ export const BENCH_RUNS: RunSpec[] = [
 		id: 'dspa',
 		operator: 'dspa',
 		layers: 1,
-		label: 'DS-PA · 2 rounds',
+		label: 'Feynman · 2 rounds',
 		options: { rounds: 2, modes: 16 },
 		defaultEnabled: false,
 		tone: 0.86,
@@ -52,13 +52,13 @@ export const BENCH_RUNS: RunSpec[] = [
 	}
 ];
 
-/** The pointer-chase bench: DS-PA against cubic and standard attention at 1–3 layers. */
+/** The pointer-chase bench: Feynman attention against cubic and standard attention at 1–3 layers. */
 export const CHASE_RUNS: RunSpec[] = [
 	{
 		id: 'dspa',
 		operator: 'dspa',
 		layers: 1,
-		label: 'DS-PA · 4 rounds',
+		label: 'Feynman · 4 rounds',
 		task: 'chase',
 		options: { rounds: 4, modes: 16 },
 		tone: 1,

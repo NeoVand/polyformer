@@ -96,7 +96,7 @@ export class Engine {
 	}
 
 	/**
-	 * DS-PA computation tree for one example and one token (a sequence position,
+	 * Feynman attention computation tree for one example and one token (a sequence position,
 	 * e.g. the chase query at CHASE_QUERY_POS or a SET card at 1…12). `example`
 	 * is the task's plain data: a Card[] layout for SET, a ChaseInstance for chase.
 	 */

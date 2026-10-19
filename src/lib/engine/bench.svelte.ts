@@ -107,7 +107,7 @@ export class Bench {
 		return dealExample(this.task.id, seed);
 	}
 
-	/** DS-PA computation tree for `example` at sequence position `token` (see DiagramResult). */
+	/** Feynman attention computation tree for `example` at sequence position `token` (see DiagramResult). */
 	async diagram(run: string, example: unknown, token: number, topK = 4): Promise<DiagramResult> {
 		await this.ensure();
 		if (!this.engine) throw new Error('engine unavailable');

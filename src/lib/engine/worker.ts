@@ -269,7 +269,7 @@ function handleProbe(req: Request): ProbeResult & { __transfer: Transferable[] }
 
 function handleDiagram(req: Request): DiagramResult {
 	const run = findRun(req.run);
-	if (run.cfg.operator !== 'dspa') throw new Error('diagram needs a DS-PA run');
+	if (run.cfg.operator !== 'dspa') throw new Error('diagram needs a Feynman attention run');
 	if (!run.task.isExample(req.example)) throw new Error(`bad ${run.task.id} example`);
 	const n = run.cfg.seqLen;
 	const token = Number(req.token);

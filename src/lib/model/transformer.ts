@@ -154,9 +154,9 @@ export interface LayerCapture {
 	weights?: Tensor;
 	/** Value projections, each [B, H, n, dh]. */
 	values?: Tensor[];
-	/** DS-PA per-round option weights, each [B, H, n, K]. */
+	/** Feynman attention per-round option weights, each [B, H, n, K]. */
 	rounds?: Tensor[];
-	/** DS-PA per-round mode pair weights, each [B, H, M, n·n]. */
+	/** Feynman attention per-round mode pair weights, each [B, H, M, n·n]. */
 	modes?: Tensor[];
 }
 

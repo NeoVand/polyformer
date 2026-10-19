@@ -1,5 +1,5 @@
 /**
- * Feynman-style diagrams of DS-PA: expand one token's computation tree from a
+ * Feynman-style diagrams of Feynman attention: expand one token's computation tree from a
  * diagram probe, weight every path by the product of its option weights (its
  * "flow"), and lay it out with rounds as columns and tokens as rows.
  *
@@ -188,13 +188,21 @@ function rowOrder(levels: Map<number, number>[], root: number): number[] {
 const f1 = (v: number) => v.toFixed(1);
 
 /** A propagator: a straight segment, as in a textbook diagram. */
-export const line = (x1: number, y1: number, x2: number, y2: number) => `M${f1(x1)},${f1(y1)} L${f1(x2)},${f1(y2)}`;
+export const line = (x1: number, y1: number, x2: number, y2: number) =>
+	`M${f1(x1)},${f1(y1)} L${f1(x2)},${f1(y2)}`;
 
 /**
  * A photon: a smooth sine along the segment, built from cubic Bézier half-waves
  * (the control points of a sine arch sit at 0.3642 of its width and 4/3 its height).
  */
-export function photon(x1: number, y1: number, x2: number, y2: number, amp = 3.2, wave = 10): string {
+export function photon(
+	x1: number,
+	y1: number,
+	x2: number,
+	y2: number,
+	amp = 3.2,
+	wave = 10
+): string {
 	const len = Math.hypot(x2 - x1, y2 - y1) || 1;
 	const ux = (x2 - x1) / len;
 	const uy = (y2 - y1) / len;
@@ -301,7 +309,15 @@ export function layoutDiagram(
 			const a = node(term.j!, term.round - 1);
 			if (!a) return;
 			const v1 = { x: to.x - cw * 0.32, y: (a.y + to.y) / 2 };
-			vertices.push({ id, term: idx, kind: 'exchange', round: term.round, flow: term.flow, ...v1, m: term.m });
+			vertices.push({
+				id,
+				term: idx,
+				kind: 'exchange',
+				round: term.round,
+				flow: term.flow,
+				...v1,
+				m: term.m
+			});
 			push(idx, `${id}-j`, 'exchange', 'line', term, a, v1);
 			push(idx, `${id}-o`, 'exchange', 'line', term, v1, to);
 			const k = term.pair && node(term.pair[0], term.round - 1);
@@ -309,7 +325,15 @@ export function layoutDiagram(
 			if (k && l) {
 				const v2 = { x: to.x - cw * 0.62, y: (k.y + l.y) / 2 };
 				if (Math.abs(v2.y - v1.y) < rowH * 0.6) v2.y += v2.y >= v1.y ? rowH * 0.7 : -rowH * 0.7;
-				vertices.push({ term: idx, id: `${id}-mode`, kind: 'mode', round: term.round, flow: term.flow, ...v2, m: term.m });
+				vertices.push({
+					term: idx,
+					id: `${id}-mode`,
+					kind: 'mode',
+					round: term.round,
+					flow: term.flow,
+					...v2,
+					m: term.m
+				});
 				push(idx, `${id}-w`, 'exchange', 'wavy', term, v2, v1);
 				push(idx, `${id}-k`, 'mode', 'line', term, k, v2);
 				push(idx, `${id}-l`, 'mode', 'line', term, l, v2);
@@ -366,7 +390,7 @@ const blank = (token: number, round: number): DiagramState => ({
 });
 
 /**
- * The computation a perfect DS-PA performs on pointer chasing: every node's state
+ * The computation a perfect Feynman attention performs on pointer chasing: every node's state
  * at round r is the payload r steps down its list (a hop to its successor, or a
  * carry once it is the terminal); the query hops to its start node each round.
  * Positions: 0 is BOS, 1…12 the nodes, 13 the query.
@@ -396,7 +420,7 @@ export function idealChase(inst: ChaseInstance, rounds = 4): DiagramHead {
 }
 
 /**
- * The computation a perfect DS-PA performs on SET membership: at round 1 each
+ * The computation a perfect Feynman attention performs on SET membership: at round 1 each
  * card reads the product of its two SET partners through a cubic vertex (split
  * evenly over the SETs it is in), or its own value if it is in none; later
  * rounds carry. Positions: 0 is BOS, 1…12 the cards.

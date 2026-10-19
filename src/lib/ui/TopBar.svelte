@@ -19,7 +19,7 @@
 	const titles: Record<string, string> = {
 		'/learn': 'From pairs to diagrams',
 		'/explore': 'Cubic attention',
-		'/explore/diagrams': 'DS-PA, a sum over diagrams',
+		'/explore/diagrams': 'Feynman attention, a sum over diagrams',
 		'/compare': 'Bench',
 		'/report': 'Working paper'
 	};

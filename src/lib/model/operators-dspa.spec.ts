@@ -24,7 +24,7 @@ beforeAll(async () => {
 	defaultDevice('cpu');
 });
 
-describe('DS-PA matches a brute-force loop over every diagram', () => {
+describe('Feynman attention matches a brute-force loop over every diagram', () => {
 	it('outputs and per-round option weights', () => {
 		const heads = {
 			q: rand(B * H * n * dh),

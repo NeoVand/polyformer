@@ -41,7 +41,7 @@ export const MODELS: EvidenceModel[] = [
 	{ id: 'cubic', label: 'Cubic' },
 	{ id: 'quartic', label: 'Quartic' },
 	{ id: 'hyperchain', label: 'Hyperchain' },
-	{ id: 'dspa', label: 'DS-PA' }
+	{ id: 'dspa', label: 'Feynman' }
 ];
 
 const b = (acc: number): Cell => ({ acc, source: 'browser' });

@@ -293,8 +293,8 @@
 		let primed = false;
 		let raf = 0;
 		let t0 = 0;
-		const DURATION = 850;
-		const inOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+		const DURATION = 1100;
+		const inOut = (x: number) => 0.5 - 0.5 * Math.cos(Math.PI * x);
 		const paint = (L: Live) => {
 			const mat = L.mesh.material as THREE_NS.ShaderMaterial;
 			mat.uniforms.uW.value = L.w;
@@ -487,7 +487,7 @@
 		border: 1.25px solid var(--color-ink-2);
 	}
 	.role {
-		animation: role-in 700ms cubic-bezier(0.65, 0, 0.35, 1) both;
+		animation: role-in 1100ms cubic-bezier(0.37, 0, 0.63, 1) both;
 		position: absolute;
 		left: calc(100% + 6px);
 		top: 50%;

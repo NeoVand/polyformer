@@ -1,5 +1,5 @@
 /**
- * Dyson–Schwinger polyattention (DS-PA).
+ * Dyson–Schwinger polyattention (Feynman attention).
  *
  * Each token's state is rebuilt for R rounds from a sum over "diagrams" of
  * the previous round's states Φ^{r−1} (Φ⁰ = v = tanh(W_v x)). One softmax per
@@ -88,8 +88,8 @@ function resolve(options: OperatorOptions) {
 
 export const dspa: AttentionOperator = {
 	id: 'dspa',
-	name: 'Dyson–Schwinger polyattention',
-	short: 'DS-PA',
+	name: 'Feynman attention',
+	short: 'Feynman',
 	arity: 3,
 	projections: ['q', 'u', 'w', 'v'],
 	logitTex:

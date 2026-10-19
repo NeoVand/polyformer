@@ -60,7 +60,7 @@ export interface ProbeResult {
 	probs: Float32Array;
 }
 
-// ── DS-PA diagram probe ─────────────────────────────────────────────────────
+// ── Feynman attention diagram probe ─────────────────────────────────────────────────────
 
 export type DiagramSector = 'leaf' | 'hop' | 'cubic' | 'exchange' | 'carry';
 
@@ -124,7 +124,7 @@ export interface DiagramResult {
 	probs: number[];
 	/** True class at the probed token, or null where the task has no label. */
 	target: number | null;
-	/** One entry per head, first DS-PA layer. */
+	/** One entry per head, first Feynman attention layer. */
 	perHead: DiagramHead[];
 }
 

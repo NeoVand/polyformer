@@ -66,7 +66,8 @@
 		void bench.version;
 		return bench.runs.some((r) => bench.history[r.id].evalSteps.length > 0);
 	});
-	const flopsOf = (id: string) => bench.runInfo(id)?.trainFlopsPerStep ?? recorded?.runs[id]?.flops ?? 0;
+	const flopsOf = (id: string) =>
+		bench.runInfo(id)?.trainFlopsPerStep ?? recorded?.runs[id]?.flops ?? 0;
 	const maxFlops = $derived(Math.max(1, ...bench.runs.map((r) => flopsOf(r.id))));
 	const xs = (id: string, steps: number[]) =>
 		axis === 'steps' ? steps : steps.map((s) => (s * flopsOf(id)) / 1e12);
@@ -82,7 +83,10 @@
 	}
 
 	/** Live series plus a recorded ghost for every run that has one. */
-	function seriesOf(pick: (h: { steps: number[]; ys: number[] }) => number[], which: 'acc' | 'layout' | 'loss') {
+	function seriesOf(
+		pick: (h: { steps: number[]; ys: number[] }) => number[],
+		which: 'acc' | 'layout' | 'loss'
+	) {
 		void bench.version;
 		const out: Series[] = [];
 		for (const r of bench.runs) {
@@ -212,7 +216,7 @@
 			question: 'For each card: is it part of any SET on the table?'
 		},
 		chase: {
-			lede: 'Twelve nodes form linked lists. The query names a start node and must return the payload at the end of its list, one to three hops away. One DS-PA layer against cubic and standard attention at one to three layers.',
+			lede: 'Twelve nodes form linked lists. The query names a start node and must return the payload at the end of its list, one to three hops away. One Feynman attention layer against cubic and standard attention at one to three layers.',
 			question: 'Follow the list from the ringed start node. What payload is at its end?'
 		}
 	};
@@ -236,7 +240,9 @@
 				<h1>One task, many mechanisms</h1>
 				<div class="seg" role="group" aria-label="Task">
 					<button aria-pressed={suite === 'set'} onclick={() => (suite = 'set')}>SET</button>
-					<button aria-pressed={suite === 'chase'} onclick={() => (suite = 'chase')}>Pointer chase</button>
+					<button aria-pressed={suite === 'chase'} onclick={() => (suite = 'chase')}
+						>Pointer chase</button
+					>
 				</div>
 			</div>
 			<p class="sub">{COPY[suite].lede}</p>
@@ -254,7 +260,9 @@
 				</span>
 				<div class="seg" role="group" aria-label="Horizontal axis">
 					<button aria-pressed={axis === 'steps'} onclick={() => (axis = 'steps')}>Steps</button>
-					<button aria-pressed={axis === 'compute'} onclick={() => (axis = 'compute')}>Compute</button>
+					<button aria-pressed={axis === 'compute'} onclick={() => (axis = 'compute')}
+						>Compute</button
+					>
 				</div>
 			</div>
 			<div class="chart-fill" bind:clientHeight={heroHeight}>
@@ -343,13 +351,16 @@
 									y1="5"
 									x2="22"
 									y2="5"
-									stroke="rgb({70 + row.spec.tone * 175} {70 + row.spec.tone * 175} {70 + row.spec.tone * 175})"
+									stroke="rgb({70 + row.spec.tone * 175} {70 + row.spec.tone * 175} {70 +
+										row.spec.tone * 175})"
 									stroke-width={row.spec.tone === 1 ? 2.25 : 1.5}
 									stroke-dasharray={row.spec.dash}
 								/>
 							</svg>
 							<span class="name">{row.spec.label}</span>
-							<span class="acc num" class:rec={row.recordedOnly}>{row.acc === undefined ? '—' : pct(row.acc, 0)}</span>
+							<span class="acc num" class:rec={row.recordedOnly}
+								>{row.acc === undefined ? '—' : pct(row.acc, 0)}</span
+							>
 						</div>
 						<div class="formula"><MathTex tex={row.op.logitTex} /></div>
 						<div class="meta num">
@@ -366,7 +377,11 @@
 										: 'Not trained'}{row.recordedOnly ? ' · recorded' : ''}</span
 							>
 							<label class="switch">
-								<input type="checkbox" bind:checked={bench.enabled[row.spec.id]} disabled={running} />
+								<input
+									type="checkbox"
+									bind:checked={bench.enabled[row.spec.id]}
+									disabled={running}
+								/>
 								<span>Train</span>
 							</label>
 						</div>
@@ -374,10 +389,22 @@
 				{/each}
 			</ol>
 			<dl class="spec">
-				<div><dt>Batch</dt><dd class="num">{BATCH}</dd></div>
-				<div><dt>Steps</dt><dd class="num">{TOTAL_STEPS.toLocaleString('en-US')}</dd></div>
-				<div><dt>Optimizer</dt><dd>AdamW, cosine</dd></div>
-				<div><dt>Held out</dt><dd class="num">{EVAL_LAYOUTS.toLocaleString('en-US')}</dd></div>
+				<div>
+					<dt>Batch</dt>
+					<dd class="num">{BATCH}</dd>
+				</div>
+				<div>
+					<dt>Steps</dt>
+					<dd class="num">{TOTAL_STEPS.toLocaleString('en-US')}</dd>
+				</div>
+				<div>
+					<dt>Optimizer</dt>
+					<dd>AdamW, cosine</dd>
+				</div>
+				<div>
+					<dt>Held out</dt>
+					<dd class="num">{EVAL_LAYOUTS.toLocaleString('en-US')}</dd>
+				</div>
 			</dl>
 		</aside>
 
@@ -392,22 +419,36 @@
 				<button
 					class="key play"
 					onclick={toggle}
-					disabled={bench.status === 'booting' || bench.status === 'pausing' || (finished && !running)}
+					disabled={bench.status === 'booting' ||
+						bench.status === 'pausing' ||
+						(finished && !running)}
 					><Icon icon={running ? Pause : Play} size={17} /><span>{primaryLabel}</span></button
 				>
 			</div>
 			<div class="group grow">
 				<div class="progress" aria-label="Training progress">
-					<div class="bar"><div class="fill" style:width="{(bench.step / TOTAL_STEPS) * 100}%"></div></div>
-					<span class="num">{bench.step.toLocaleString('en-US')} / {TOTAL_STEPS.toLocaleString('en-US')}</span>
+					<div class="bar">
+						<div class="fill" style:width="{(bench.step / TOTAL_STEPS) * 100}%"></div>
+					</div>
+					<span class="num"
+						>{bench.step.toLocaleString('en-US')} / {TOTAL_STEPS.toLocaleString('en-US')}</span
+					>
 				</div>
 			</div>
 			<div class="group">
 				<span class="t-label">Seed</span>
 				<div class="stepper">
-					<button onclick={() => bench.reset(Math.max(0, bench.seed - 1))} disabled={running || bench.seed === 0} aria-label="Previous seed">−</button>
+					<button
+						onclick={() => bench.reset(Math.max(0, bench.seed - 1))}
+						disabled={running || bench.seed === 0}
+						aria-label="Previous seed">−</button
+					>
 					<span class="num">{bench.seed}</span>
-					<button onclick={() => bench.reset(bench.seed + 1)} disabled={running} aria-label="Next seed">+</button>
+					<button
+						onclick={() => bench.reset(bench.seed + 1)}
+						disabled={running}
+						aria-label="Next seed">+</button
+					>
 				</div>
 			</div>
 			<div class="group">

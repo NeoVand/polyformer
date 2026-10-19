@@ -1,5 +1,5 @@
 /**
- * Pointer chasing seen through a DS-PA diagram probe: the row order that follows
+ * Pointer chasing seen through a Feynman attention diagram probe: the row order that follows
  * the linked lists, and the payload each state holds after each round.
  */
 import { CHASE_QUERY_POS, type ChaseInstance } from '#lib/chase/chase.ts';

@@ -93,7 +93,7 @@
 		{ id: 'strassen', label: 'Strassen' },
 		{ id: 'cubic', label: 'Cubic' },
 		{ id: 'quartic', label: 'Dense quartic' },
-		{ id: 'dspa4', label: 'DS-PA' },
+		{ id: 'dspa4', label: 'Feynman' },
 		{ id: 'newton', label: 'Newton attention, rank 32' },
 		{ id: 'newton-K6-r256-h4', label: 'Newton attention, rank 256' }
 	];
@@ -109,8 +109,8 @@
 		{ id: 'standard-3L', label: 'Standard, 3 layers' },
 		{ id: 'cubic', label: 'Cubic' },
 		{ id: 'quartic', label: 'Dense quartic' },
-		{ id: 'dspa4', label: 'DS-PA' },
-		{ id: 'dspa5', label: 'DS-PA with Newton primitives' },
+		{ id: 'dspa4', label: 'Feynman' },
+		{ id: 'dspa5', label: 'Feynman with Newton primitives' },
 		{ id: 'dspa5-d128', label: 'the same, width 128' },
 		{ id: 'dspa5-d192', label: 'the same, width 192' },
 		{ id: 'dspa5-lin', label: 'the same, no cubic sector' },
@@ -135,7 +135,7 @@
 	];
 	const CURVE_MODELS = [
 		{ id: 'standard-3L', label: 'Standard, 3 layers', tone: 0.45, dash: '2 3' },
-		{ id: 'dspa5', label: 'DS-PA, Newton primitives', tone: 0.6, dash: '6 3' },
+		{ id: 'dspa5', label: 'Feynman, Newton primitives', tone: 0.6, dash: '6 3' },
 		{ id: 'cubic', label: 'Cubic', tone: 0.8, dash: '' },
 		{ id: 'quartic', label: 'Dense quartic', tone: 0.8, dash: '8 3 2 3' },
 		{ id: 'newton', label: 'Newton, rank 32', tone: 0.7, dash: '1 3' },
@@ -186,7 +186,7 @@
 	rail={[
 		{ id: 'abstract', label: 'Paper', icon: Note },
 		{ id: 'hierarchy', label: 'Arity', icon: FunctionIcon },
-		{ id: 'dspa', label: 'DS-PA', icon: Feynman },
+		{ id: 'dspa', label: 'Feynman', icon: Feynman },
 		{ id: 'algebra', label: 'Algebra', icon: Matrix },
 		{ id: 'experiments', label: 'Results', icon: Compare },
 		{ id: 'related', label: 'Related', icon: Book },
@@ -269,26 +269,25 @@
 			<figure class="wide fig">
 				<ArityFigure />
 				<figcaption>
-					<b>Figure 1.</b> (a) A query card and three relations it takes part in. Each is a set of
-					cards whose attributes sum to zero modulo 3; the pair is the card's complement, the
-					triangle a SET, the quadrilateral a four-card zero sum. (b) Under a character <MathTex
-						tex="\chi"
-					/> each card is a phase, and a product of phases is the phase of the sum. On a SET every one
-					of the 81 characters of <MathTex tex={String.raw`\mathbb Z_3^4`} /> gives phase zero; on any
-					other triple they split 27, 27, 27 and cancel. (c) Power sums pooled once and combined by Newton's
-					identities give the counts for every arity; the cost is linear in <MathTex tex="n" />,
-					where dense order-<MathTex tex="k" /> attention grows as <MathTex tex="n^k" />.
+					<b>Figure 1.</b> (a) A query card and three relations it takes part in, written as sums:
+					every attribute adds to zero modulo 3. (b) Under a character <MathTex tex="\chi" />
+					each card is a phase, and a product of phases is the phase of the sum. A SET gives phase zero
+					under all 81 characters of <MathTex tex={String.raw`\mathbb Z_3^4`} />, so they add to 81;
+					any other triple splits them 27, 27, 27 and they cancel. (c) Phases pooled once into power
+					sums and combined by Newton's identities give every token its count of relations of every
+					arity, at a cost linear in <MathTex tex="n" />, where dense order-<MathTex tex="k" /> attention
+					grows as <MathTex tex="n^k" />.
 				</figcaption>
 			</figure>
 			<p class="contrib">
 				<b>Contributions.</b> (i) Arity as Fourier degree, with an indistinguishability theorem for
-				proper-subset scores. (ii) DS-PA, an operator that mixes arities inside one softmax, its
-				exact expansion as a sum over trees, and a rank obstruction that explains why composing
-				arity through shared intermediates fails. (iii) Newton's identities in the group algebra,
-				which count every arity at linear cost, and Newton attention, the layer built on them. (iv)
-				A measured Match-<MathTex tex="k" /> ladder across ten operators, three seeds each, with order
-				ablations and width-matched baselines. (v) Every result reproducible in this page or in the published
-				harness.
+				proper-subset scores. (ii) Feynman attention, an operator that mixes arities inside one
+				softmax, its exact expansion as a sum over trees, and a rank obstruction that explains why
+				composing arity through shared intermediates fails. (iii) Newton's identities in the group
+				algebra, which count every arity at linear cost, and Newton attention, the layer built on
+				them. (iv) A measured Match-<MathTex tex="k" /> ladder across ten operators, three seeds each,
+				with order ablations and width-matched baselines. (v) Every result reproducible in this page or
+				in the published harness.
 			</p>
 		</section>
 
@@ -406,17 +405,16 @@
 		</section>
 
 		<section id="dspa">
-			<h2><span class="n">3</span>DS-PA: arity as a choice inside one softmax</h2>
+			<h2><span class="n">3</span>Feynman attention: arity as a choice inside one softmax</h2>
 			<p>
-				DS-PA (Dyson–Schwinger poly-attention) lets every token choose, at every round, how many
-				tokens it reads. Each token keeps a state <MathTex tex="\Phi^r_t" />, starting from its
-				value
+				Feynman attention lets every token choose, at every round, how many tokens it reads. Each
+				token keeps a state <MathTex tex="\Phi^r_t" />, starting from its value
 				<MathTex tex="\Phi^0_t = v_t" /> and rebuilt for <MathTex tex="R" /> rounds:
 			</p>
 			<MathTex display tex={T.dspa} />
 			<aside class="side">
-				The name records the analogy that guided the design: unrolled, the recursion is a
-				Dyson–Schwinger equation resummed into diagrams. It will change before submission.
+				The name records the analogy that guided the design: the recursion is a Dyson–Schwinger
+				equation, and unrolled, its output is a sum over Feynman diagrams (Theorem 3 and Figure 4).
 			</aside>
 			<p>
 				One softmax <MathTex tex="\pi" /> runs over every option of every sector, scored by a single trilinear
@@ -484,11 +482,11 @@
 						</DiagramFlow>
 					</div>
 					<figcaption>
-						<b>Figure 3.</b> Theorem 3 for a DS-PA model trained in a browser on SET (two rounds,
-						step 1,500, 99.98% held out). Every token's state at every round, marked with the vertex
-						of the sector it mostly uses. Lines show what one card reads, weighted by the share of
-						its output they carry: each card in a SET reads its two partners at one cubic vertex.
-						Hover or click a card to expand another.
+						<b>Figure 3.</b> Theorem 3 for a Feynman attention model trained in a browser on SET
+						(two rounds, step 1,500, 99.98% held out). Every token's state at every round, marked
+						with the vertex of the sector it mostly uses. Lines show what one card reads, weighted
+						by the share of its output they carry: each card in a SET reads its two partners at one
+						cubic vertex. Hover or click a card to expand another.
 						<span class="fig-key"><FlowLegend compact /></span>
 					</figcaption>
 				</figure>
@@ -507,10 +505,10 @@
 		<section id="composition">
 			<h2><span class="n">4</span>Why composing arity fails</h2>
 			<p>
-				Two rounds of cubic vertices reach degree four, yet DS-PA does not learn four-card SET
-				(Match-4 on <MathTex tex={String.raw`\mathbb Z_3^4`} />): it stays at chance on every seed,
-				where dense quartic attention succeeds on two of three (Table 2). Degree is not the problem.
-				A round-two contribution has the form
+				Two rounds of cubic vertices reach degree four, yet Feynman attention does not learn
+				four-card SET (Match-4 on <MathTex tex={String.raw`\mathbb Z_3^4`} />): it stays at chance
+				on every seed, where dense quartic attention succeeds on two of three (Table 2). Degree is
+				not the problem. A round-two contribution has the form
 				<MathTex
 					tex={String.raw`\pi^2_{i,jk}\,\pi^1_{j,ab}\,\pi^1_{k,cd}\,(v_a\odot v_b\odot v_c\odot v_d)`}
 				/>: the root picks <MathTex tex="(j,k)" />, but what <MathTex tex="j" /> read in round one was
@@ -556,9 +554,9 @@
 					refs={BIB}
 					id="alon"
 				/>, Match-<MathTex tex="k" /> in <MathTex tex={String.raw`O(n^{\lceil k/2\rceil})`} />. The
-				other, in the next section, needs no indexing. Section 6 shows that giving DS-PA the
-				primitives of that construction, and width above <MathTex tex="|G|" />, is still not enough
-				for gradient descent to find it.
+				other, in the next section, needs no indexing. Section 6 shows that giving Feynman attention
+				the primitives of that construction, and width above <MathTex tex="|G|" />, is still not
+				enough for gradient descent to find it.
 			</p>
 		</section>
 
@@ -683,7 +681,7 @@
 						><td class="r">63k</td></tr
 					>
 					<tr class="hi"
-						><td>DS-PA (2 rounds on SET, 4 on chase)</td><td class="r">100%</td><td class="r"
+						><td>Feynman (2 rounds on SET, 4 on chase)</td><td class="r">100%</td><td class="r"
 							>59k</td
 						><td class="r">100%</td><td class="r">61k</td></tr
 					>
@@ -732,12 +730,13 @@
 				caption="Table 2. Mean of three seeds; each dot is one seed on a strip from chance to 100%. SET tasks: balanced accuracy, chance 50%. Pointer chase and three-hop: accuracy over eight answers, chance 12.5%."
 			/>
 			<p>
-				SET is solved by cubic attention, DS-PA and Newton attention at rank 256 on every seed; no
-				depth of standard attention gets past 62%. On four-card SET dense quartic attention learns
-				on two of three seeds, Newton attention at rank 256 reaches 76% on all three, and everything
-				else stays at exactly chance. On three-hop composition DS-PA succeeds on two of three seeds.
-				On pointer chasing three standard layers match DS-PA, with 2.5 times the parameters. Newton
-				attention has no routing, and at rank 32 it is weak on both chain tasks.
+				SET is solved by cubic attention, Feynman attention and Newton attention at rank 256 on
+				every seed; no depth of standard attention gets past 62%. On four-card SET dense quartic
+				attention learns on two of three seeds, Newton attention at rank 256 reaches 76% on all
+				three, and everything else stays at exactly chance. On three-hop composition Feynman
+				attention succeeds on two of three seeds. On pointer chasing three standard layers match
+				Feynman attention, with 2.5 times the parameters. Newton attention has no routing, and at
+				rank 32 it is weak on both chain tasks.
 			</p>
 
 			<h3>6.3 The Match-<MathTex tex="k" /> ladder</h3>
@@ -757,12 +756,13 @@
 			<p>
 				The ladder separates the operators by arity. Standard attention, at any depth we tried, gets
 				no further than 66% on Match-3 and stays at chance from Match-4 up. Cubic attention and
-				DS-PA solve Match-3 and stop there. Dense quartic attention learns Match-4 on two of three
-				seeds, after a long plateau and a sudden snap (Figure 5), as the leap of a four-way relation
-				predicts. The DS-PA variant that has every primitive of the Newton construction (pooled
-				modes, self-products, products of modes) stays at exactly chance on Match-4 at width 64, 128
-				and 192, above the <MathTex tex="|G| = 81" /> that Proposition 6 asks for: the composition is
-				representable, and it is not found. Removing its cubic sector loses Match-3 as well.
+				Feynman attention solve Match-3 and stop there. Dense quartic attention learns Match-4 on
+				two of three seeds, after a long plateau and a sudden snap (Figure 5), as the leap of a
+				four-way relation predicts. The Feynman attention variant that has every primitive of the
+				Newton construction (pooled modes, self-products, products of modes) stays at exactly chance
+				on Match-4 at width 64, 128 and 192, above the <MathTex tex="|G| = 81" /> that Proposition 6 asks
+				for: the composition is representable, and it is not found. Removing its cubic sector loses Match-3
+				as well.
 			</p>
 			<figure class="wide fig">
 				<CurvesFigure
@@ -933,10 +933,9 @@
 					so far are synthetic and small.
 				</li>
 				<li>
-					Newton attention has no routing, so on chain tasks it is weaker than DS-PA, and its
-					read-out is large: 0.79M of its 0.96M parameters at rank 256.
+					Newton attention has no routing, so on chain tasks it is weaker than Feynman attention,
+					and its read-out is large: 0.79M of its 0.96M parameters at rank 256.
 				</li>
-				<li>The name DS-PA will change before submission: “poly-attention” is taken.</li>
 			</ul>
 		</section>
 

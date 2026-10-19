@@ -12,9 +12,9 @@ export type OperatorId = 'standard' | 'tree' | 'strassen' | 'cubic' | 'dspa';
 
 /** Per-run knobs for operators that have them (ignored by the rest). */
 export interface OperatorOptions {
-	/** Message-passing rounds (DS-PA). */
+	/** Message-passing rounds (Feynman attention). */
 	rounds?: number;
-	/** Virtual exchange modes (DS-PA). */
+	/** Virtual exchange modes (Feynman attention). */
 	modes?: number;
 }
 
@@ -38,9 +38,9 @@ export interface AttendResult {
 	weights?: Tensor;
 	/** Value projections used by the aggregation, only when captured. Each [B, H, n, dh]. */
 	values?: Tensor[];
-	/** Per-round token option weights, only when captured (DS-PA): each [B, H, n, K]. */
+	/** Per-round token option weights, only when captured (Feynman attention): each [B, H, n, K]. */
 	rounds?: Tensor[];
-	/** Per-round virtual-mode pair weights, only when captured (DS-PA): each [B, H, M, n·n]. */
+	/** Per-round virtual-mode pair weights, only when captured (Feynman attention): each [B, H, M, n·n]. */
 	modes?: Tensor[];
 }
 

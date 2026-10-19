@@ -3,7 +3,11 @@
 	import type { DiagramSector } from '#lib/engine/protocol.ts';
 	import { line, photon } from './feynman.ts';
 
-	let { kind, width = 72, height = 30 }: { kind: DiagramSector; width?: number; height?: number } = $props();
+	let {
+		kind,
+		width = 72,
+		height = 30
+	}: { kind: DiagramSector; width?: number; height?: number } = $props();
 
 	const m = $derived(height / 2);
 	const w = $derived(width);
@@ -24,7 +28,13 @@
 
 <svg {width} {height} viewBox="0 0 {width} {height}" aria-hidden="true">
 	<defs>
-		<pattern id="rule-hatch" width="3" height="3" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+		<pattern
+			id="rule-hatch"
+			width="3"
+			height="3"
+			patternUnits="userSpaceOnUse"
+			patternTransform="rotate(45)"
+		>
 			<line x1="0" y1="0" x2="0" y2="3" stroke="#f2f2f2" stroke-width="0.9" />
 		</pattern>
 	</defs>

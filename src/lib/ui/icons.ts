@@ -48,7 +48,7 @@ export { default as Github } from '@hugeicons/core-free-icons/GithubIcon';
 /*
  * Two marks drawn for this project on the same 24px grid and 1.5px stroke, so they
  * sit beside the Hugeicons set: a 2-simplex for cubic attention (one query, a pair
- * of keys) and a textbook Feynman diagram for DS-PA (two lines meet, exchange a
+ * of keys) and a textbook Feynman diagram for Feynman attention (two lines meet, exchange a
  * photon, and part).
  */
 const stroke = {

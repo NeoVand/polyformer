@@ -1,5 +1,5 @@
 /**
- * Turns raw DS-PA weights into the compact diagram the UI draws. Pure
+ * Turns raw Feynman attention weights into the compact diagram the UI draws. Pure
  * functions on Float32Arrays so they run in the worker and in tests.
  */
 import { DSPA_SECTORS, optionLayout } from '../model/operators/dspa.ts';

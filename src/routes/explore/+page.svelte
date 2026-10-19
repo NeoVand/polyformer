@@ -235,7 +235,7 @@
 <PageFrame
 	rail={[
 		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'DS-PA', icon: Feynman, href: resolve('/explore/diagrams') }
+		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') }
 	]}
 	active="tensor"
 >

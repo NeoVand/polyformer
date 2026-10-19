@@ -10,7 +10,7 @@ describe('learn figures', () => {
 		expect(d[1].score).toBe(2.5);
 	});
 
-	it('counts DS-PA options per sector for the pointer-chase sequence', () => {
+	it('counts Feynman attention options per sector for the pointer-chase sequence', () => {
 		const s = sectorSizes(14, 16);
 		expect(s.map((x) => x.size)).toEqual([1, 13, 157, 208, 1]);
 	});

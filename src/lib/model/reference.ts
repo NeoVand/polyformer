@@ -94,7 +94,7 @@ export interface DspaHeadParams {
 }
 
 /**
- * DS-PA for one head by definition, with explicit loops over every diagram.
+ * Feynman attention for one head by definition, with explicit loops over every diagram.
  * Returns the RMS-normalised output [n][dh] and, per round, each token's
  * option weights in the operator's layout [leaf | hop j | cubic (j,k) | exchange (j,m) | carry].
  */

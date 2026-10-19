@@ -1,5 +1,5 @@
 /**
- * A DS-PA diagram probe read as a whole, every token at once: each state's
+ * A Feynman attention diagram probe read as a whole, every token at once: each state's
  * dominant sector, the states a root's readout depends on (its backward cone),
  * and every read between rounds. Pure functions behind the spacetime view.
  */

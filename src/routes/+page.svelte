@@ -71,7 +71,7 @@
 		return () => clearInterval(id);
 	});
 
-	// ── recordings: bench curves and two trained DS-PA diagrams ──────────────
+	// ── recordings: bench curves and two trained Feynman attention diagrams ──────────────
 	interface RecordedRun {
 		evalSteps: number[];
 		evalAccuracy: number[];
@@ -168,7 +168,7 @@
 	<title>Polyformer | Higher-order attention</title>
 	<meta
 		name="description"
-		content="Higher-order attention: cubic heads that read triples and DS-PA, which learns how many tokens to combine. See the tensor, the hypergraph, a trained model and the bench, all computed in your browser."
+		content="Higher-order attention: cubic heads that read triples and Feynman attention, which learns how many tokens to combine. See the tensor, the hypergraph, a trained model and the bench, all computed in your browser."
 	/>
 </svelte:head>
 
@@ -189,8 +189,9 @@
 		</p>
 		<p>
 			Hints of this run from the 2-simplicial transformer to proofs that attention over triples
-			beats pairs and kernels that train it at scale. Our two ideas, cubic attention and DS-PA,
-			solve SET in one layer and pointer chasing with 40% of the parameters of the deepest baseline.
+			beats pairs and kernels that train it at scale. Our two ideas, cubic attention and Feynman
+			attention, solve SET in one layer and pointer chasing with 40% of the parameters of the
+			deepest baseline.
 		</p>
 		<p class="small">
 			Every model on this page was trained in a browser with jax-js. There is no server.
@@ -206,9 +207,9 @@
 		<header>
 			<h2>Scores for whole triples</h2>
 			<p>
-				A standard head fills a matrix: one score for each query and key. A higher-order head fills
-				a tensor, scoring every query against every pair of keys, so one step can judge how two
-				tokens bear on a third. The bright blocks are the triples this head was built to find.
+				A standard head fills a matrix, one score per query and key. A higher-order head fills a
+				tensor: every query against every pair of keys, so one step can weigh how two tokens bear on
+				a third.
 			</p>
 			<div class="t-math">
 				<MathTex
@@ -239,9 +240,8 @@
 		<header>
 			<h2>Attention on hyperedges</h2>
 			<p>
-				The same scores as a graph. The weight lands on triangles, not edges: the query reads what a
-				group of tokens holds together, the product of their values, rather than what any pair says
-				alone. A relation that exists only in the group becomes a single step.
+				The same scores as a graph. Weight lands on triangles, not edges: the query reads what a
+				group of tokens holds together, so a relation that exists only in the group takes one step.
 			</p>
 			<div class="t-math">
 				<MathTex
@@ -267,7 +267,7 @@
 		</div>
 	</section>
 
-	<!-- ── what a trained DS-PA model does ──────────────────────────────── -->
+	<!-- ── what a trained Feynman attention model does ──────────────────────────────── -->
 	<section class="tile flow">
 		<header class="row">
 			<div class="head-line">
@@ -286,9 +286,9 @@
 				</div>
 			</div>
 			<p>
-				How many tokens should one step relate? DS-PA leaves it to learning: each round, every token
-				reads its own value, one token, two at once or a learned summary. Unrolled, that is a sum
-				over diagrams, and this is the one a trained model drew.
+				How many tokens should one step relate? Feynman attention leaves it to learning: each round,
+				every token reads its own value, one token, two at once or a learned summary. Unrolled, that
+				is a sum over diagrams, and this is the one a trained model drew.
 				{#if flowTask === 'set'}
 					Asked to find matching triples, it chose triples.
 				{:else}

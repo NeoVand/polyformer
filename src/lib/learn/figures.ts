@@ -119,7 +119,7 @@ export function costCurves(ns: number[], d = 64, w = 128) {
 }
 
 /**
- * How many options each DS-PA sector offers token p, for a sequence of n tokens
+ * How many options each Feynman attention sector offers token p, for a sequence of n tokens
  * and M virtual modes: one leaf, a hop to every other token, a cubic pair of two
  * distinct other tokens (plus the BOS sink pair), an exchange of every other token
  * with every mode, one carry. With equal logits a softmax gives each sector mass in

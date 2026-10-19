@@ -32,7 +32,7 @@
 		{ id: 'dyson', title: 'Summing them all at once', part: 'part-beyond' },
 		{ id: 'diagrams', title: 'Sum over diagrams', part: 'part-beyond' },
 		{ id: 'sectors', title: 'Making it train', part: 'part-beyond' },
-		{ id: 'chase', title: 'What DS-PA learns', part: 'part-beyond' }
+		{ id: 'chase', title: 'What Feynman attention learns', part: 'part-beyond' }
 	];
 	const number = (id: string) => CHAPTERS.findIndex((c) => c.id === id) + 1;
 
@@ -96,8 +96,9 @@
 			<header class="intro">
 				<h1>From pairs to diagrams</h1>
 				<p class="lede">
-					How attention generalizes from pairs of tokens to triples, why that matters, and how a Feynman-diagram view lets
-					the data decide how many tokens each interaction joins. Every chapter says where its content comes from:
+					How attention generalizes from pairs of tokens to triples, why that matters, and how a
+					Feynman-diagram view lets the data decide how many tokens each interaction joins. Every
+					chapter says where its content comes from:
 				</p>
 				<ul class="legend">
 					<li><span class="mark prior"></span>Prior work, with references</li>
@@ -126,18 +127,22 @@
 				<h3><span class="n">1</span>Pairwise attention</h3>
 				<p class="src"><span class="mark prior"></span>Prior work <Cite id="vaswani" /></p>
 				<p>
-					A transformer layer lets every token look at every other one. Each token emits a query <MathTex tex="Q_i" />, a
-					key <MathTex tex="K_i" /> and a value <MathTex tex="V_i" />; a query scores each key with a dot product, the scores
-					are normalized over keys, and the output is the weighted sum of values:
+					A transformer layer lets every token look at every other one. Each token emits a query <MathTex
+						tex="Q_i"
+					/>, a key <MathTex tex="K_i" /> and a value <MathTex tex="V_i" />; a query scores each key
+					with a dot product, the scores are normalized over keys, and the output is the weighted
+					sum of values:
 				</p>
 				<MathTex
 					display
 					tex={"P_{ij} = \\frac{\\exp\\left(\\langle Q_i, K_j \\rangle/\\sqrt{d}\\right)}{\\sum_{j'} \\exp\\left(\\langle Q_i, K_{j'} \\rangle/\\sqrt{d}\\right)}, \\qquad Y_i = \\sum_j P_{ij}\\, V_j"}
 				/>
 				<p>
-					Every score involves exactly two tokens. A relation among three tokens must be assembled indirectly, across heads
-					and layers, and there are simple tasks where small transformers provably cannot do that
-					<Cite id={['hahn', 'sanford']} />. The cost is <MathTex tex="O(n^2 d)" /> per head for a sequence of
+					Every score involves exactly two tokens. A relation among three tokens must be assembled
+					indirectly, across heads and layers, and there are simple tasks where small transformers
+					provably cannot do that
+					<Cite id={['hahn', 'sanford']} />. The cost is <MathTex tex="O(n^2 d)" /> per head for a sequence
+					of
 					<MathTex tex="n" /> tokens.
 				</p>
 			</section>
@@ -146,45 +151,49 @@
 				<h3><span class="n">2</span>A generalized dot product</h3>
 				<p class="src"><span class="mark prior"></span>Standard multilinear algebra</p>
 				<p>
-					The dot product sums the products of matching coordinates. Nothing stops at two factors: the trilinear form
-					multiplies three, and it can be written as one dot product against an elementwise (Hadamard) product:
+					The dot product sums the products of matching coordinates. Nothing stops at two factors:
+					the trilinear form multiplies three, and it can be written as one dot product against an
+					elementwise (Hadamard) product:
 				</p>
 				<MathTex
 					display
 					tex="\langle a, b \rangle = \sum_c a_c b_c \qquad\longrightarrow\qquad \langle a, b, e \rangle = \sum_c a_c\, b_c\, e_c = \langle a,\, b \odot e \rangle"
 				/>
 				<p>
-					It is large only when all three vectors are large on the same coordinates. Read the other way, a width-<MathTex
-						tex="d"
-					/> trilinear form is a sum of <MathTex tex="d" /> rank-one three-way tensors, one per coordinate. That count comes
-					back in chapter 6: it is how many different ways of pairing tokens a single query can ask for.
+					It is large only when all three vectors are large on the same coordinates. Read the other
+					way, a width-<MathTex tex="d" /> trilinear form is a sum of <MathTex tex="d" /> rank-one three-way
+					tensors, one per coordinate. That count comes back in chapter 6: it is how many different ways
+					of pairing tokens a single query can ask for.
 				</p>
 			</section>
 
 			<section id="cubic">
 				<h3><span class="n">3</span>Cubic polyattention</h3>
 				<p class="src">
-					<span class="mark prior"></span>Prior work <Cite id={['clift', 'sanford', 'roy']} />, derived independently in this
-					project's notebook <Cite id="neo" />
+					<span class="mark prior"></span>Prior work <Cite id={['clift', 'sanford', 'roy']} />,
+					derived independently in this project's notebook <Cite id="neo" />
 				</p>
 				<p>
-					Give each token one query and two role-specific keys and values. Query <MathTex tex="i" /> scores the ordered pair
-					<MathTex tex="(j, k)" />, with <MathTex tex="j" /> in role 1 and <MathTex tex="k" /> in role 2, and the softmax runs
-					jointly over all pairs:
+					Give each token one query and two role-specific keys and values. Query <MathTex tex="i" /> scores
+					the ordered pair
+					<MathTex tex="(j, k)" />, with <MathTex tex="j" /> in role 1 and <MathTex tex="k" /> in role
+					2, and the softmax runs jointly over all pairs:
 				</p>
 				<MathTex
 					display
 					tex={"A_{ijk} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\rangle, \\qquad P_{ijk} = \\frac{\\exp(A_{ijk}/\\sqrt{d})}{\\sum_{j'k'} \\exp(A_{ij'k'}/\\sqrt{d})}, \\qquad Y_i = \\sum_{j,k} P_{ijk}\\,\\bigl(V^1_j \\odot V^2_k\\bigr)"}
 				/>
 				<p>
-					Clift et al. introduced this operator as 2-simplicial attention, and Sanford et al. studied it as tensor attention
-					and showed that one head solves Match3, a task that defeats pairwise attention. Roy et al. made it fast enough to
-					train at scale. The Polyformer notebook arrived at the same operator independently in April 2023 under the name
-					cubic polyattention, which this app keeps.
+					Clift et al. introduced this operator as 2-simplicial attention, and Sanford et al.
+					studied it as tensor attention and showed that one head solves Match3, a task that defeats
+					pairwise attention. Roy et al. made it fast enough to train at scale. The Polyformer
+					notebook arrived at the same operator independently in April 2023 under the name cubic
+					polyattention, which this app keeps.
 				</p>
 				<p>
-					The scores fill an <MathTex tex="n \times n \times n" /> tensor. Pairs that reuse the query or repeat a key are
-					masked, and a sink token at position 0 gives every query somewhere to put weight it does not need.
+					The scores fill an <MathTex tex="n \times n \times n" /> tensor. Pairs that reuse the query
+					or repeat a key are masked, and a sink token at position 0 gives every query somewhere to put
+					weight it does not need.
 				</p>
 			</section>
 
@@ -192,8 +201,8 @@
 				<h3><span class="n">4</span>What it costs</h3>
 				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['roy', 'alman']} /></p>
 				<p>
-					For one query, all <MathTex tex="n^2" /> pair scores come from a single matrix product, and the values factor the
-					same way, so no <MathTex tex="n \times n \times d" /> tensor is ever built:
+					For one query, all <MathTex tex="n^2" /> pair scores come from a single matrix product, and
+					the values factor the same way, so no <MathTex tex="n \times n \times d" /> tensor is ever built:
 				</p>
 				<MathTex
 					display
@@ -201,29 +210,35 @@
 				/>
 				<p>
 					That is <MathTex tex="O(n^2 d)" /> per query and <MathTex tex="O(n^3 d)" /> per head, against
-					<MathTex tex="O(n^2 d)" /> for pairwise attention. Roy et al. restrict each role to a local window of
-					<MathTex tex="w" /> keys, which costs <MathTex tex="O(n\,w^2 d)" /> and makes long sequences practical. Alman and
-					Song study when such higher-order attention can be computed faster than the naive bound at all, and find it depends
-					on how large the entries are allowed to be.
+					<MathTex tex="O(n^2 d)" /> for pairwise attention. Roy et al. restrict each role to a local
+					window of
+					<MathTex tex="w" /> keys, which costs <MathTex tex="O(n\,w^2 d)" /> and makes long sequences
+					practical. Alman and Song study when such higher-order attention can be computed faster than
+					the naive bound at all, and find it depends on how large the entries are allowed to be.
 				</p>
 			</section>
 
 			<section id="degree2">
 				<h3><span class="n">5</span>Cheaper, degree-2 relatives</h3>
-				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['kozachinskiy', 'chakrabarti']} /></p>
+				<p class="src">
+					<span class="mark prior"></span>Prior work <Cite id={['kozachinskiy', 'chakrabarti']} />
+				</p>
 				<p>
-					A cheaper way to involve three tokens is to sum pairwise dot products along the edges of the triangle
-					<MathTex tex="(i, j, k)" />. Each term is bilinear, so the whole score has degree 2 in the token features:
+					A cheaper way to involve three tokens is to sum pairwise dot products along the edges of
+					the triangle
+					<MathTex tex="(i, j, k)" />. Each term is bilinear, so the whole score has degree 2 in the
+					token features:
 				</p>
 				<MathTex
 					display
 					tex={'\\begin{aligned}A^{\\text{tree}}_{ijk} &= \\langle Q_i, K^1_j \\rangle + \\langle K^1_j, K^2_k \\rangle \\\\ A^{\\text{Strassen}}_{ijk} &= \\langle Q_i, K^1_j \\rangle + \\langle K^1_j, K^2_k \\rangle + \\langle Q_i, K^2_k \\rangle\\end{aligned}'}
 				/>
 				<p>
-					Strassen attention, named for its fast matrix-multiplication algorithm, scores all three edges and runs in
-					<MathTex tex={'O(n^{\\omega})'} /> time. Chakrabarti, Pitassi and Alman unify all of these as poly-attention:
-					polynomials over a graph of token roles, classified by cost and by what they can compute. Their tree mechanism is
-					the path <MathTex tex="i - j - k" />.
+					Strassen attention, named for its fast matrix-multiplication algorithm, scores all three
+					edges and runs in
+					<MathTex tex={'O(n^{\\omega})'} /> time. Chakrabarti, Pitassi and Alman unify all of these as
+					poly-attention: polynomials over a graph of token roles, classified by cost and by what they
+					can compute. Their tree mechanism is the path <MathTex tex="i - j - k" />.
 				</p>
 			</section>
 
@@ -234,7 +249,8 @@
 				<h3><span class="n">6</span>The coupling barrier</h3>
 				<p class="src"><span class="mark new"></span>New in this project</p>
 				<p>
-					Fix a query and look at its <MathTex tex="n \times n" /> score matrix over pairs. For any degree-2 score
+					Fix a query and look at its <MathTex tex="n \times n" /> score matrix over pairs. For any degree-2
+					score
 					<MathTex tex={'A_{ijk} = f(i,j) + g(j,k) + h(i,k)'} />, the softmax factorizes:
 				</p>
 				<MathTex
@@ -242,39 +258,56 @@
 					tex={'P_{ijk} = \\frac{1}{Z_i}\\; \\underbrace{e^{f(i,j)}}_{\\text{row weight}}\\; \\underbrace{e^{g(j,k)}}_{\\text{shared kernel}}\\; \\underbrace{e^{h(i,k)}}_{\\text{column weight}}'}
 				/>
 				<p>
-					<strong>Claim.</strong> Every query sees the same coupling kernel <MathTex tex={'G_{jk} = e^{g(j,k)}'} />; it can
-					only rescale its rows and columns. <strong>Proof.</strong> Once <MathTex tex="i" /> is fixed,
-					<MathTex tex="f(i,j)" /> depends on <MathTex tex="j" /> alone and <MathTex tex="h(i,k)" /> on <MathTex tex="k" />
-					alone. Double centering, <MathTex tex={'\\tilde M = M - \\bar M_{j\\cdot} - \\bar M_{\\cdot k} + \\bar M'} />,
-					removes exactly such terms, so <MathTex tex={'\\tilde A_{i,jk} = \\tilde g(j,k)'} /> for every
+					<strong>Claim.</strong> Every query sees the same coupling kernel <MathTex
+						tex={'G_{jk} = e^{g(j,k)}'}
+					/>; it can only rescale its rows and columns. <strong>Proof.</strong> Once <MathTex
+						tex="i"
+					/> is fixed,
+					<MathTex tex="f(i,j)" /> depends on <MathTex tex="j" /> alone and <MathTex tex="h(i,k)" /> on
+					<MathTex tex="k" />
+					alone. Double centering, <MathTex
+						tex={'\\tilde M = M - \\bar M_{j\\cdot} - \\bar M_{\\cdot k} + \\bar M'}
+					/>, removes exactly such terms, so <MathTex tex={'\\tilde A_{i,jk} = \\tilde g(j,k)'} /> for
+					every
 					<MathTex tex="i" />. ∎
 				</p>
-				<p>Which pairs belong together is therefore decided before the query arrives. The cubic score has no such limit:</p>
+				<p>
+					Which pairs belong together is therefore decided before the query arrives. The cubic score
+					has no such limit:
+				</p>
 				<MathTex
 					display
 					tex={'\\tilde A^{\\text{cubic}}_{i,jk} = \\sum_{c=1}^{d} Q_{ic}\\; \\bigl(K^1_{\\cdot c} \\otimes K^2_{\\cdot c}\\bigr)^{\\sim}_{jk}'}
 				/>
 				<p>
-					a query-dependent mix of up to <MathTex tex="d" /> coupling patterns. The figure shows it on real heads: three
-					identical slices from a degree-2 head, three different ones from a cubic head.
+					a query-dependent mix of up to <MathTex tex="d" /> coupling patterns. The figure shows it on
+					real heads: three identical slices from a degree-2 head, three different ones from a cubic head.
 				</p>
 			</section>
 
 			<section id="set">
 				<h3><span class="n">7</span>SET is Match3</h3>
 				<p class="src">
-					<span class="mark prior"></span>Match3 <Cite id="sanford" />, SET geometry <Cite id="davis" />;
+					<span class="mark prior"></span>Match3 <Cite id="sanford" />, SET geometry <Cite
+						id="davis"
+					/>;
 					<span class="mark new inline"></span>the reduction and averaging argument are new here
 				</p>
 				<p>
 					A SET card has four attributes with three values each, so a card is a vector in <MathTex
 						tex={'\\mathbb{Z}_3^4'}
-					/>. Three cards form a SET when every attribute is all the same or all different, which is exactly
-					<MathTex tex="a + b + c \equiv 0 \pmod 3" /> in every coordinate. SETs are the lines of the affine space
-					<MathTex tex={'\\mathrm{AG}(4, 3)'} />: any two cards determine the third, so the deck holds exactly 1,080 SETs
-					among its 85,320 triples. Per attribute, the rule splits into pairwise agreement and one three-way term:
+					/>. Three cards form a SET when every attribute is all the same or all different, which is
+					exactly
+					<MathTex tex="a + b + c \equiv 0 \pmod 3" /> in every coordinate. SETs are the lines of the
+					affine space
+					<MathTex tex={'\\mathrm{AG}(4, 3)'} />: any two cards determine the third, so the deck
+					holds exactly 1,080 SETs among its 85,320 triples. Per attribute, the rule splits into
+					pairwise agreement and one three-way term:
 				</p>
-				<MathTex display tex={'\\mathbb{1}[\\text{SET}] = 1 - (e_{ab} + e_{bc} + e_{ac}) + 3\\,\\mathbb{1}[a = b = c]'} />
+				<MathTex
+					display
+					tex={'\\mathbb{1}[\\text{SET}] = 1 - (e_{ab} + e_{bc} + e_{ac}) + 3\\,\\mathbb{1}[a = b = c]'}
+				/>
 				<div class="cases">
 					{#each cases as c (c.name)}
 						<div class="case">
@@ -288,14 +321,15 @@
 				</div>
 				<p>
 					<strong>Pairwise scores are blind on average.</strong> Let
-					<MathTex tex={'\\Phi(T) = \\sum_{\\{a,b\\} \\subset T} \\varphi(a,b)'} /> be any score built from pairs. Every pair of
-					cards lies in exactly one SET and in exactly 79 triples, so pairs are covered evenly by both, and the mean of
+					<MathTex tex={'\\Phi(T) = \\sum_{\\{a,b\\} \\subset T} \\varphi(a,b)'} /> be any score built
+					from pairs. Every pair of cards lies in exactly one SET and in exactly 79 triples, so pairs
+					are covered evenly by both, and the mean of
 					<MathTex tex="\Phi" /> over SETs equals its mean over all triples: three times the mean of
 					<MathTex tex="\varphi" /> over pairs. Only the three-way term separates them. ∎
 				</p>
 				<p>
-					The task on the <a href={resolve('/compare')}>bench</a> deals twelve cards and asks, for each card, whether it
-					belongs to some SET on the table.
+					The task on the <a href={resolve('/compare')}>bench</a> deals twelve cards and asks, for each
+					card, whether it belongs to some SET on the table.
 				</p>
 			</section>
 
@@ -303,21 +337,27 @@
 				<h3><span class="n">8</span>A head built by hand</h3>
 				<p class="src"><span class="mark new"></span>New in this project</p>
 				<p>
-					One cubic head can compute the whole rule. Put each attribute value <MathTex tex="v" /> on the unit circle at
-					<MathTex tex="\omega^v" /> with <MathTex tex={'\\omega = e^{2\\pi i/3}'} />. Summing the three cube roots of unity
-					picks out multiples of 3:
+					One cubic head can compute the whole rule. Put each attribute value <MathTex tex="v" /> on the
+					unit circle at
+					<MathTex tex="\omega^v" /> with <MathTex tex={'\\omega = e^{2\\pi i/3}'} />. Summing the
+					three cube roots of unity picks out multiples of 3:
 				</p>
 				<MathTex
 					display
 					tex={'\\mathbb{1}[a + b + c \\equiv 0] = \\tfrac{1}{3}\\left(1 + 2\\cos\\tfrac{2\\pi}{3}(a + b + c)\\right)'}
 				/>
-				<p>and the cosine of a sum of three angles is four trilinear products of their cosines and sines:</p>
+				<p>
+					and the cosine of a sum of three angles is four trilinear products of their cosines and
+					sines:
+				</p>
 				<MathTex
 					display
 					tex="\cos(\alpha + \beta + \gamma) = c_\alpha c_\beta c_\gamma - c_\alpha s_\beta s_\gamma - s_\alpha c_\beta s_\gamma - s_\alpha s_\beta c_\gamma"
 				/>
 				<p>
-					So with four channels per attribute, <MathTex tex="Q = (c, -c, -s, -s)" />, <MathTex tex="K^1 = (c, s, c, s)" />
+					So with four channels per attribute, <MathTex tex="Q = (c, -c, -s, -s)" />, <MathTex
+						tex="K^1 = (c, s, c, s)"
+					/>
 					and <MathTex tex="K^2 = (c, s, s, c)" />, sixteen channels give
 				</p>
 				<MathTex
@@ -325,46 +365,56 @@
 					tex={'A_{ijk} = \\sum_{t=1}^{4} \\cos\\tfrac{2\\pi}{3}\\bigl(a_t + b_t + c_t\\bigr) = 4 - \\tfrac{3}{2}\\,m'}
 				/>
 				<p>
-					where <MathTex tex="m" /> counts the attributes that break the rule. Every SET scores 4 and everything else at most
-					2.5. This head is the default in the <a href={resolve('/explore')}>tensor lab</a>, so its pictures are exact
-					before anything has trained.
+					where <MathTex tex="m" /> counts the attributes that break the rule. Every SET scores 4 and
+					everything else at most 2.5. This head is the default in the
+					<a href={resolve('/explore')}>tensor lab</a>, so its pictures are exact before anything
+					has trained.
 				</p>
 			</section>
 
 			<section id="binding">
 				<h3><span class="n">9</span>Values as binding</h3>
 				<p class="src">
-					<span class="mark prior"></span>Bilinear values <Cite id="clift" />, Hadamard values <Cite id="chakrabarti" />;
+					<span class="mark prior"></span>Bilinear values <Cite id="clift" />, Hadamard values <Cite
+						id="chakrabarti"
+					/>;
 					<span class="mark new inline"></span>the indexing check is new here
 				</p>
 				<p>
-					Scores choose pairs; values decide what a pair says. Clift et al. combine a pair's values with a full bilinear map;
-					the Hadamard value keeps only its diagonal, which costs the same as the scores. Both are views of one object, the
-					pair moment:
+					Scores choose pairs; values decide what a pair says. Clift et al. combine a pair's values
+					with a full bilinear map; the Hadamard value keeps only its diagonal, which costs the same
+					as the scores. Both are views of one object, the pair moment:
 				</p>
 				<MathTex
 					display
 					tex={'M_i = V^{1\\top} P_i\\, V^2 = \\sum_{j,k} P_{ijk}\\, V^1_j V^{2\\top}_k, \\qquad \\operatorname{diag}(M_i) = Y_i'}
 				/>
 				<p>
-					The value must be read at the keys. Poly-attention's definition does this, but its released implementation of the
-					tree mechanism reads one value at the query position instead. With the same scores, that indexing drops SET to
-					chance (54%), while Hadamard and full-moment values reach 100% in about 800 steps.
+					The value must be read at the keys. Poly-attention's definition does this, but its
+					released implementation of the tree mechanism reads one value at the query position
+					instead. With the same scores, that indexing drops SET to chance (54%), while Hadamard and
+					full-moment values reach 100% in about 800 steps.
 				</p>
 			</section>
 
 			<section id="training">
 				<h3><span class="n">10</span>What training shows</h3>
-				<p class="src"><span class="mark measured"></span>Measured with this app's engine <Cite id="jaxjs" /></p>
+				<p class="src">
+					<span class="mark measured"></span>Measured with this app's engine <Cite id="jaxjs" />
+				</p>
 				<p>
-					Every model on the bench sees identical batches; only the attention operator differs. One layer, width 64, four
-					heads, 4,000 steps of AdamW, seed 0, scored on 1,024 held-out tables:
+					Every model on the bench sees identical batches; only the attention operator differs. One
+					layer, width 64, four heads, 4,000 steps of AdamW, seed 0, scored on 1,024 held-out
+					tables:
 				</p>
 				<table class="nums">
-					<thead><tr><th>Model</th><th>Held-out accuracy</th><th>Reaches 95%</th><th>ms / step</th></tr></thead>
+					<thead
+						><tr><th>Model</th><th>Held-out accuracy</th><th>Reaches 95%</th><th>ms / step</th></tr
+						></thead
+					>
 					<tbody>
 						<tr class="hi"><td>Cubic</td><td>100%</td><td>step 500</td><td>12.2</td></tr>
-						<tr><td>DS-PA, 2 rounds</td><td>100%</td><td>step 700</td><td>35.7</td></tr>
+						<tr><td>Feynman, 2 rounds</td><td>100%</td><td>step 700</td><td>35.7</td></tr>
 						<tr><td>Strassen</td><td>95.8%</td><td>step 2,350</td><td>11.3</td></tr>
 						<tr><td>Tree (Columbia)</td><td>76.4%</td><td>never</td><td>11.0</td></tr>
 						<tr><td>Standard, 2 layers</td><td>64.4%</td><td>never</td><td>15.5</td></tr>
@@ -372,55 +422,73 @@
 					</tbody>
 				</table>
 				<p>
-					Always guessing the more common answer scores 53.5%. The cubic head sits at chance until step 400 and is at 99% by
-					step 500: the three-way rule is learned all at once rather than gradually. At this length the cubic head costs
-					about the same time per step as the degree-2 ones. The ordering held on a second seed in offline runs.
+					Always guessing the more common answer scores 53.5%. The cubic head sits at chance until
+					step 400 and is at 99% by step 500: the three-way rule is learned all at once rather than
+					gradually. At this length the cubic head costs about the same time per step as the
+					degree-2 ones. The ordering held on a second seed in offline runs.
 				</p>
 			</section>
 
 			<section id="arity">
-				<h3><span class="n">11</span><span>Order <MathTex tex="k" /> needs a <MathTex tex="k" />-way term</span></h3>
+				<h3>
+					<span class="n">11</span><span
+						>Order <MathTex tex="k" /> needs a <MathTex tex="k" />-way term</span
+					>
+				</h3>
 				<p class="src">
-					<span class="mark prior"></span>Match-<MathTex tex="t" /> and <MathTex tex="t" />-tensor attention
+					<span class="mark prior"></span>Match-<MathTex tex="t" /> and <MathTex tex="t" />-tensor
+					attention
 					<Cite id="sanford" />; <span class="mark new inline"></span>the four-card test is new here
 				</p>
 				<p>
-					Ask instead whether four cards sum to zero, and cubic attention stalls at the majority rate, just as pairwise
-					attention did on SET. The counting argument of chapter 7 moves up one order: three cards almost always determine
-					the fourth, so every score built from triples is close to blind on average. A quartic head learns it:
+					Ask instead whether four cards sum to zero, and cubic attention stalls at the majority
+					rate, just as pairwise attention did on SET. The counting argument of chapter 7 moves up
+					one order: three cards almost always determine the fourth, so every score built from
+					triples is close to blind on average. A quartic head learns it:
 				</p>
-				<MathTex display tex={'A_{ijkl} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\odot K^3_l \\rangle'} />
+				<MathTex
+					display
+					tex={'A_{ijkl} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\odot K^3_l \\rangle'}
+				/>
 				<p>
-					A fixed arity is a fixed bet. The head pays <MathTex tex="n^k" /> whether the data needs pairs, triples or long
-					chains, and some problems need a different depth for every example.
+					A fixed arity is a fixed bet. The head pays <MathTex tex="n^k" /> whether the data needs pairs,
+					triples or long chains, and some problems need a different depth for every example.
 				</p>
 			</section>
 
 			<!-- ── Part III ───────────────────────────────────────────────── -->
 			<h2 class="part" id="part-beyond">Letting the data choose the arity</h2>
 			<p class="part-lede">
-				Chapter 11 ended on a fixed bet: a head of order <MathTex tex="k" /> pays for <MathTex tex="k" />-way terms whether
-				the data needs them or not. Physics met the same problem in the 1940s, how to add up interactions among any number
-				of particles, and answered it with a picture language. This part tells that story first, then borrows it.
+				Chapter 11 ended on a fixed bet: a head of order <MathTex tex="k" /> pays for <MathTex
+					tex="k"
+				/>-way terms whether the data needs them or not. Physics met the same problem in the 1940s,
+				how to add up interactions among any number of particles, and answered it with a picture
+				language. This part tells that story first, then borrows it.
 			</p>
 
 			<section id="feynman">
 				<h3><span class="n">12</span>Where Feynman diagrams come from</h3>
-				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['feynman', 'dyson']} /></p>
-				<p>
-					In quantum electrodynamics, the theory of electrons and light, the quantity you want is an
-					<em>amplitude</em>: a number whose square gives the probability of a process, say two electrons flying at each
-					other and leaving with given momenta. The theory cannot be solved exactly. What it offers instead is a small
-					number, the electron's charge <MathTex tex="e" />, with <MathTex tex="\alpha = e^2/4\pi \approx 1/137" />.
-					So the amplitude is computed as a power series in <MathTex tex="e" />: perturbation theory.
+				<p class="src">
+					<span class="mark prior"></span>Prior work <Cite id={['feynman', 'dyson']} />
 				</p>
 				<p>
-					In 1949 Feynman showed that every term of that series can be drawn. A straight line is a particle moving freely
-					(a <em>propagator</em>), a wavy line is a photon, and a dot where three lines meet is an <em>interaction</em>, the
-					place where an electron emits or absorbs a photon. Each dot contributes one factor of <MathTex tex="e" />, so a
-					diagram with <MathTex tex="V" /> dots is a term of order <MathTex tex="e^V" />. The same year Dyson showed that the
-					pictures follow exactly from the formal calculations of Schwinger and Tomonaga, which turned them from a heuristic
-					into a method. For two electrons scattering:
+					In quantum electrodynamics, the theory of electrons and light, the quantity you want is an
+					<em>amplitude</em>: a number whose square gives the probability of a process, say two
+					electrons flying at each other and leaving with given momenta. The theory cannot be solved
+					exactly. What it offers instead is a small number, the electron's charge <MathTex
+						tex="e"
+					/>, with <MathTex tex="\alpha = e^2/4\pi \approx 1/137" />. So the amplitude is computed
+					as a power series in <MathTex tex="e" />: perturbation theory.
+				</p>
+				<p>
+					In 1949 Feynman showed that every term of that series can be drawn. A straight line is a
+					particle moving freely (a <em>propagator</em>), a wavy line is a photon, and a dot where
+					three lines meet is an <em>interaction</em>, the place where an electron emits or absorbs
+					a photon. Each dot contributes one factor of <MathTex tex="e" />, so a diagram with <MathTex
+						tex="V"
+					/> dots is a term of order <MathTex tex="e^V" />. The same year Dyson showed that the
+					pictures follow exactly from the formal calculations of Schwinger and Tomonaga, which
+					turned them from a heuristic into a method. For two electrons scattering:
 				</p>
 				<DiagramSum
 					lhs="blob"
@@ -434,27 +502,34 @@
 					]}
 				/>
 				<p>
-					The hatched blob is everything that can happen; the right side lists the ways it can happen. At lowest order the
-					electrons exchange one photon, either way round. At the next order the photon briefly becomes an
-					electron–positron pair (the loop), or one electron emits and reabsorbs a photon of its own, or the electrons trade
-					two photons. Every picture is one term, with exact rules for turning it into a number: a factor for each line, a
+					The hatched blob is everything that can happen; the right side lists the ways it can
+					happen. At lowest order the electrons exchange one photon, either way round. At the next
+					order the photon briefly becomes an electron–positron pair (the loop), or one electron
+					emits and reabsorbs a photon of its own, or the electrons trade two photons. Every picture
+					is one term, with exact rules for turning it into a number: a factor for each line, a
 					coupling for each vertex, an integral for each loop.
 				</p>
 				<p>
-					Two ideas carry over to attention. A complicated interaction among many particles is built from one small vertex,
-					used over and over. And nobody decides in advance how many particles take part: the theory sums over all the
-					diagrams, and the couplings decide how much each one contributes.
+					Two ideas carry over to attention. A complicated interaction among many particles is built
+					from one small vertex, used over and over. And nobody decides in advance how many
+					particles take part: the theory sums over all the diagrams, and the couplings decide how
+					much each one contributes.
 				</p>
 			</section>
 
 			<section id="dyson">
 				<h3><span class="n">13</span>Summing them all at once</h3>
-				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['dyson', 'schwinger']} /></p>
+				<p class="src">
+					<span class="mark prior"></span>Prior work <Cite id={['dyson', 'schwinger']} />
+				</p>
 				<p>
-					Listing diagrams one at a time never ends. Dyson and Schwinger found equations that sum whole families of them at
-					once. The simplest is for a single particle. Draw the <em>dressed</em> propagator, everything that can happen to
-					an electron on its way from one point to another, as a double line, and let the blob <MathTex tex="\Sigma" />,
-					the self-energy, stand for every diagram that cannot be split in two by cutting one line. Then
+					Listing diagrams one at a time never ends. Dyson and Schwinger found equations that sum
+					whole families of them at once. The simplest is for a single particle. Draw the <em
+						>dressed</em
+					>
+					propagator, everything that can happen to an electron on its way from one point to
+					another, as a double line, and let the blob <MathTex tex="\Sigma" />, the self-energy,
+					stand for every diagram that cannot be split in two by cutting one line. Then
 				</p>
 				<DiagramSum
 					lhs="dressed"
@@ -464,55 +539,75 @@
 				/>
 				<MathTex display tex="G = G_0 + G_0\, \Sigma\, G" />
 				<p>
-					The dressed line appears on both sides, so the equation is self-consistent. Substituting it into itself unrolls
-					it into an infinite series:
+					The dressed line appears on both sides, so the equation is self-consistent. Substituting
+					it into itself unrolls it into an infinite series:
 				</p>
 				<DiagramSum
 					lhs="dressed"
 					width={92}
-					terms={[{ kind: 'bare' }, { kind: 'bare-sigma-bare' }, { kind: 'bare-sigma-bare-sigma-bare' }]}
+					terms={[
+						{ kind: 'bare' },
+						{ kind: 'bare-sigma-bare' },
+						{ kind: 'bare-sigma-bare-sigma-bare' }
+					]}
 				/>
 				<MathTex
 					display
 					tex={'G = G_0 + G_0 \\Sigma G_0 + G_0 \\Sigma G_0 \\Sigma G_0 + \\cdots = G_0\\,\\bigl(1 - \\Sigma\\, G_0\\bigr)^{-1}'}
 				/>
 				<p>
-					Solving the equation sums every term of that series in one go. In the full theory <MathTex tex="\Sigma" /> itself
-					depends on dressed propagators and vertices, so the equations form a tower that is cut off in practice; stopping
-					after <MathTex tex="R" /> substitutions keeps exactly the diagrams up to depth <MathTex tex="R" />.
+					Solving the equation sums every term of that series in one go. In the full theory <MathTex
+						tex="\Sigma"
+					/> itself depends on dressed propagators and vertices, so the equations form a tower that is
+					cut off in practice; stopping after <MathTex tex="R" /> substitutions keeps exactly the diagrams
+					up to depth <MathTex tex="R" />.
 				</p>
 				<p>
-					That is the shape DS-PA borrows. Read "a particle's dressed line" as "a token's state", "one more application of
-					the interaction" as "one more round of attention", and "the couplings" as "softmax weights". A token's final state
-					is then a sum over diagrams up to depth <MathTex tex="R" />, built from one vertex, with the weights learned from
-					data.
+					That is the shape Feynman attention borrows. Read "a particle's dressed line" as "a
+					token's state", "one more application of the interaction" as "one more round of
+					attention", and "the couplings" as "softmax weights". A token's final state is then a sum
+					over diagrams up to depth <MathTex tex="R" />, built from one vertex, with the weights
+					learned from data.
 				</p>
 			</section>
 
 			<section id="diagrams">
 				<h3><span class="n">14</span>Sum over diagrams</h3>
-				<p class="src"><span class="mark new"></span>New in this project: Dyson–Schwinger polyattention (DS-PA)</p>
+				<p class="src"><span class="mark new"></span>New in this project: Feynman attention</p>
 				<p>
-					Each token's state <MathTex tex="\Phi_t" /> is rebuilt for <MathTex tex="R" /> rounds from the previous
-					round's states. Round 0 is the token's own value, <MathTex tex="\Phi^0_t = v_t" />. Each later round chooses,
-					with one softmax, among five kinds of term:
+					Each token's state <MathTex tex="\Phi_t" /> is rebuilt for <MathTex tex="R" /> rounds from the
+					previous round's states. Round 0 is the token's own value, <MathTex
+						tex="\Phi^0_t = v_t"
+					/>. Each later round chooses, with one softmax, among five kinds of term:
 				</p>
 				<MathTex
 					display
 					tex={'\\begin{aligned}\\Phi^{r}_t = \\;& \\pi_{\\text{leaf}}\\, v_t + \\sum_j \\pi_j\\, \\Phi^{r-1}_j \\\\ &+ \\sum_{jk} \\pi_{jk}\\, \\Phi^{r-1}_j \\odot \\Phi^{r-1}_k \\\\ &+ \\sum_{jm} \\pi_{jm}\\, \\Phi^{r-1}_j \\odot \\Psi^{r}_m + \\pi_{\\text{carry}}\\, \\Phi^{r-1}_t\\end{aligned}'}
 				/>
 				<p>
-					Read term by term: keep your own value (a leaf), copy another token's state (a hop, a propagator), multiply two
-					tokens' states (a cubic vertex), multiply one token's state by a virtual mode (an exchange), or keep what you had
-					(a carry). The dictionary between the two pictures:
+					Read term by term: keep your own value (a leaf), copy another token's state (a hop, a
+					propagator), multiply two tokens' states (a cubic vertex), multiply one token's state by a
+					virtual mode (an exchange), or keep what you had (a carry). The dictionary between the two
+					pictures:
 				</p>
 				<table class="dict">
-					<thead><tr><th>Field theory</th><th>DS-PA</th></tr></thead>
+					<thead><tr><th>Field theory</th><th>Feynman attention</th></tr></thead>
 					<tbody>
-						<tr><td>a particle's dressed line</td><td>a token's state <MathTex tex="\Phi_t" /></td></tr>
-						<tr><td>the bare propagator <MathTex tex="G_0" /></td><td>the token's own value <MathTex tex="v_t" /></td></tr>
+						<tr
+							><td>a particle's dressed line</td><td>a token's state <MathTex tex="\Phi_t" /></td
+							></tr
+						>
+						<tr
+							><td>the bare propagator <MathTex tex="G_0" /></td><td
+								>the token's own value <MathTex tex="v_t" /></td
+							></tr
+						>
 						<tr><td>the interaction vertex</td><td>one trilinear score</td></tr>
-						<tr><td>the coupling <MathTex tex="e" /></td><td>a softmax weight <MathTex tex="\pi" /></td></tr>
+						<tr
+							><td>the coupling <MathTex tex="e" /></td><td
+								>a softmax weight <MathTex tex="\pi" /></td
+							></tr
+						>
 						<tr><td>order in perturbation theory</td><td>the round <MathTex tex="r" /></td></tr>
 						<tr><td>a virtual photon</td><td>a virtual mode <MathTex tex="\Psi_m" /></td></tr>
 						<tr><td>the vacuum</td><td>a vacuum token of value 1</td></tr>
@@ -522,30 +617,41 @@
 					All five terms are scored by a single vertex,
 					<MathTex tex="\langle q_t \odot \omega_r,\; u_\alpha \odot w_\beta \rangle" />, where
 					<MathTex tex="\omega_r" /> is a learned clock for round <MathTex tex="r" /> and
-					<MathTex tex="\alpha, \beta" /> range over tokens, the vacuum and <MathTex tex="M" /> virtual modes: a leaf
-					pairs the vacuum with itself, a hop pairs a token with the vacuum, a cubic term pairs two tokens. A mode
-					<MathTex tex={'\\Psi^r_m = \\sum_{kl} \\rho_{m,kl}\\, \\Phi^{r-1}_k \\odot \\Phi^{r-1}_l'} /> is a learned query that
-					binds a pair of tokens by itself, so an exchange reaches three other tokens at once.
+					<MathTex tex="\alpha, \beta" /> range over tokens, the vacuum and <MathTex tex="M" /> virtual
+					modes: a leaf pairs the vacuum with itself, a hop pairs a token with the vacuum, a cubic term
+					pairs two tokens. A mode
+					<MathTex
+						tex={'\\Psi^r_m = \\sum_{kl} \\rho_{m,kl}\\, \\Phi^{r-1}_k \\odot \\Phi^{r-1}_l'}
+					/> is a learned query that binds a pair of tokens by itself, so an exchange reaches three other
+					tokens at once.
 				</p>
 				<p>
-					<strong>Two worked expansions.</strong> On SET, a card needs one cubic vertex: its round-1 state reads the product
-					of the two cards that complete a SET with it,
+					<strong>Two worked expansions.</strong> On SET, a card needs one cubic vertex: its round-1 state
+					reads the product of the two cards that complete a SET with it,
 				</p>
-				<MathTex display tex={'\\Phi^1_i \\approx \\sum_{(j,k)\\,\\in\\,\\text{SETs}(i)} \\pi_{jk}\\; v_j \\odot v_k'} />
+				<MathTex
+					display
+					tex={'\\Phi^1_i \\approx \\sum_{(j,k)\\,\\in\\,\\text{SETs}(i)} \\pi_{jk}\\; v_j \\odot v_k'}
+				/>
 				<p>
-					On pointer chasing, the query needs a chain of hops as long as its list. If the query starts at node
-					<MathTex tex="a" />, which points to <MathTex tex="b" />, which points to the last node <MathTex tex="c" />, then
+					On pointer chasing, the query needs a chain of hops as long as its list. If the query
+					starts at node
+					<MathTex tex="a" />, which points to <MathTex tex="b" />, which points to the last node <MathTex
+						tex="c"
+					/>, then
 				</p>
 				<MathTex
 					display
 					tex="\Phi^4_q \approx \Phi^3_a \approx \Phi^2_b \approx \Phi^1_c \approx \cdots \approx v_c"
 				/>
 				<p>
-					one hop per round, carried once the end is reached. In the language of chapter 12 the first is a single vertex,
-					the second a long propagator; the same layer can be either, and which one is decided by the weights. Unrolled, a
-					state is a weighted sum of trees: after <MathTex tex="R" /> rounds one token can draw on anything from one token
-					to <MathTex tex="3^R" /> of them. Each round costs <MathTex tex="O(n^3 d + n^2 M d)" />, like one cubic layer.
-					The figure draws those trees in the style of TikZ-Feynman <Cite id="ellis" />; the
+					one hop per round, carried once the end is reached. In the language of chapter 12 the
+					first is a single vertex, the second a long propagator; the same layer can be either, and
+					which one is decided by the weights. Unrolled, a state is a weighted sum of trees: after <MathTex
+						tex="R"
+					/> rounds one token can draw on anything from one token to <MathTex tex="3^R" /> of them. Each
+					round costs <MathTex tex="O(n^3 d + n^2 M d)" />, like one cubic layer. The figure draws
+					those trees in the style of TikZ-Feynman <Cite id="ellis" />; the
 					<a href={resolve('/explore/diagrams')}>Diagrams</a> screen draws them for a model training live.
 				</p>
 			</section>
@@ -553,12 +659,16 @@
 			<section id="sectors">
 				<h3><span class="n">15</span>Making it train</h3>
 				<p class="src"><span class="mark new"></span>New in this project</p>
-				<p>The first versions did not learn. Three changes fixed that, each for a reason that can be stated:</p>
 				<p>
-					<strong>Chemical potentials.</strong> The sectors offer very different numbers of options: one leaf, about
-					<MathTex tex="n" /> hops, about <MathTex tex="n^2" /> cubic pairs, <MathTex tex="nM" /> exchanges. With equal logits
-					a softmax gives each sector mass in proportion to its size, so at initialization almost everything goes to cubic
-					and exchange terms. A fixed bias per sector removes that:
+					The first versions did not learn. Three changes fixed that, each for a reason that can be
+					stated:
+				</p>
+				<p>
+					<strong>Chemical potentials.</strong> The sectors offer very different numbers of options:
+					one leaf, about
+					<MathTex tex="n" /> hops, about <MathTex tex="n^2" /> cubic pairs, <MathTex tex="nM" /> exchanges.
+					With equal logits a softmax gives each sector mass in proportion to its size, so at initialization
+					almost everything goes to cubic and exchange terms. A fixed bias per sector removes that:
 				</p>
 				<MathTex
 					display
@@ -566,24 +676,31 @@
 				/>
 				<p>
 					like a chemical potential fixing how many particles of each kind a system holds.
-					<strong>An RMS readout.</strong> Hadamard products of values below 1 shrink geometrically with depth, so the final
-					state is divided by its root mean square. <strong>An absorbing carry.</strong> Without a way to keep its state, a
-					token must rebuild everything every round, and an answer found in round 1 is overwritten in round 2. The carry term
-					makes finished results fixed points.
+					<strong>An RMS readout.</strong> Hadamard products of values below 1 shrink geometrically
+					with depth, so the final state is divided by its root mean square.
+					<strong>An absorbing carry.</strong> Without a way to keep its state, a token must rebuild everything
+					every round, and an answer found in round 1 is overwritten in round 2. The carry term makes
+					finished results fixed points.
 				</p>
 			</section>
 
 			<section id="chase">
-				<h3><span class="n">16</span>What DS-PA learns</h3>
+				<h3><span class="n">16</span>What Feynman attention learns</h3>
 				<p class="src"><span class="mark measured"></span>Measured with this app's engine</p>
 				<p>
-					Pointer chasing asks for a depth that varies by example <Cite id="chakrabarti07" />: twelve nodes form linked lists,
-					and the query must return the payload at the end of its start node's list, one to three hops away.
+					Pointer chasing asks for a depth that varies by example <Cite id="chakrabarti07" />:
+					twelve nodes form linked lists, and the query must return the payload at the end of its
+					start node's list, one to three hops away.
 				</p>
 				<table class="nums">
-					<thead><tr><th>Model</th><th>Held-out accuracy</th><th>Parameters</th><th>ms / step</th></tr></thead>
+					<thead
+						><tr><th>Model</th><th>Held-out accuracy</th><th>Parameters</th><th>ms / step</th></tr
+						></thead
+					>
 					<tbody>
-						<tr class="hi"><td>DS-PA, 4 rounds, 1 layer</td><td>100%</td><td>61k</td><td>103</td></tr>
+						<tr class="hi"
+							><td>Feynman, 4 rounds, 1 layer</td><td>100%</td><td>61k</td><td>103</td></tr
+						>
 						<tr><td>Standard, 3 layers</td><td>94.2%</td><td>154k</td><td>43</td></tr>
 						<tr><td>Standard, 2 layers</td><td>88.9%</td><td>104k</td><td>28</td></tr>
 						<tr><td>Cubic, 1 layer</td><td>84.5%</td><td>63k</td><td>20</td></tr>
@@ -591,10 +708,11 @@
 					</tbody>
 				</table>
 				<p>
-					DS-PA passes 95% by step 250. Its trained computation tree, expanded with the diagram probe, follows the true
-					pointer path one hop per round, the same algorithm as the ideal construction. It is not a universal winner: on
-					four-card SET it stays at the majority rate, and on three-hop composition, where an untied chain of heads succeeds,
-					it stalls near 60%.
+					Feynman attention passes 95% by step 250. Its trained computation tree, expanded with the
+					diagram probe, follows the true pointer path one hop per round, the same algorithm as the
+					ideal construction. It is not a universal winner: on four-card SET it stays at the
+					majority rate, and on three-hop composition, where an untied chain of heads succeeds, it
+					stalls near 60%.
 				</p>
 			</section>
 

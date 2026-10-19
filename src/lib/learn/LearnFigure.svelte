@@ -1,7 +1,7 @@
 <script lang="ts">
 	/**
 	 * The live figure beside each Learn chapter. Everything is computed from the same
-	 * code the app runs: the hand-built head, the operators' cost formulas, the DS-PA
+	 * code the app runs: the hand-built head, the operators' cost formulas, the Feynman attention
 	 * sector sizes, and runs recorded with the in-browser engine.
 	 */
 	import { asset } from '$app/paths';
@@ -133,7 +133,7 @@
 		raw(asset('recorded/set-diagram.json')).then((j) => j?.diagram && (setModel = j));
 	});
 
-	// trained DS-PA models, recorded in a browser, read token by token
+	// trained Feynman attention models, recorded in a browser, read token by token
 	let chaseModel = $state.raw<{ instance: ChaseInstance; diagram: DiagramResult } | null>(null);
 	let setModel = $state.raw<{ layout: number[][]; diagram: DiagramResult } | null>(null);
 	let learnedTask = $state<'chase' | 'set'>('chase');
@@ -150,7 +150,7 @@
 	);
 	const LABELS: Record<string, [string, number, string]> = {
 		cubic: ['Cubic', 1, ''],
-		dspa: ['DS-PA', 0.86, '10 3'],
+		dspa: ['Feynman', 0.86, '10 3'],
 		strassen: ['Strassen', 0.72, '6 3'],
 		tree: ['Tree (Columbia)', 0.56, '2 3'],
 		std3: ['Standard, 3 layers', 0.6, '2 3'],
@@ -181,7 +181,7 @@
 		{ year: 2025, ref: 'kozachinskiy', what: 'Strassen attention: degree 2, faster' },
 		{ year: 2025, ref: 'roy', what: 'Fast 2-simplicial attention at scale' },
 		{ year: 2026, ref: 'chakrabarti', what: 'Poly-attention: a general scheme' },
-		{ year: 2026, ref: '', what: 'This project: coupling barrier, exact head, DS-PA' }
+		{ year: 2026, ref: '', what: 'This project: coupling barrier, exact head, Feynman attention' }
 	];
 	const refNo = (id: string) => REFERENCES.findIndex((r) => r.id === id) + 1;
 </script>
@@ -412,7 +412,7 @@
 		{/if}
 		<figcaption>
 			Held-out accuracy on SET, one layer each, recorded with this app's engine on WebGPU (seed 0).
-			Cubic reaches 95% by step 500 and 100% after; DS-PA by step 700.
+			Cubic reaches 95% by step 500 and 100% after; Feynman attention by step 700.
 		</figcaption>
 	</figure>
 {:else if section === 'arity'}
@@ -613,9 +613,9 @@
 		<div class="learned-key"><FlowLegend compact /></div>
 		<p class="learned-note">
 			{#if learnedTask === 'chase'}
-				A DS-PA model trained in a browser, every token and round. Each node learned to read the
-				node it points to, so each list's payload climbs one link per round, and the query reads its
-				start at the last round. Hover a row to see what that token reads.
+				A Feynman attention model trained in a browser, every token and round. Each node learned to
+				read the node it points to, so each list's payload climbs one link per round, and the query
+				reads its start at the last round. Hover a row to see what that token reads.
 			{:else}
 				The same model family trained on SET. Each card in a SET reads its two partners through one
 				cubic vertex, the triple a pairwise head cannot see. Cards in no SET keep their own value.
@@ -636,8 +636,9 @@
 			/>
 		{/if}
 		<figcaption>
-			Held-out accuracy on pointer chase, recorded with this app's engine. One DS-PA layer (61k
-			parameters) reaches 95% by step 250 and 100% after; three standard layers (154k) reach 94%.
+			Held-out accuracy on pointer chase, recorded with this app's engine. One Feynman attention
+			layer (61k parameters) reaches 95% by step 250 and 100% after; three standard layers (154k)
+			reach 94%.
 		</figcaption>
 	</figure>
 {:else}

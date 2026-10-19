@@ -288,7 +288,7 @@
 <PageFrame
 	rail={[
 		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'DS-PA', icon: Feynman, href: resolve('/explore/diagrams') }
+		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') }
 	]}
 	active="diagrams"
 >
@@ -304,9 +304,9 @@
 				</div>
 			</div>
 			<p class="sub">
-				DS-PA rebuilds every token for several rounds from a sum of terms. On the left, every token
-				at once; on the right, one token's sum expanded into its Feynman diagram. Click a row to
-				expand that token.
+				Feynman attention rebuilds every token for several rounds from a sum of terms. On the left,
+				every token at once; on the right, one token's sum expanded into its Feynman diagram. Click
+				a row to expand that token.
 			</p>
 		</header>
 
@@ -544,7 +544,7 @@
 						<button class="link-btn" onclick={train}>Train 1,000 more</button>
 					{:else}
 						<button class="btn primary" onclick={train}
-							><Icon icon={Play} size={13} />Train DS-PA</button
+							><Icon icon={Play} size={13} />Train Feynman</button
 						>
 					{/if}
 				</p>

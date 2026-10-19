@@ -74,7 +74,7 @@
 						[Math.hypot(0.56, 0.74), 0.56],
 						[Math.SQRT2 * 0.56, 0.68]
 					],
-					margin: 14
+					margin: 24
 				},
 				distance: [2.6, 7],
 				// only the selected block's lit top face crosses the threshold
@@ -137,17 +137,20 @@
 			attribute float aV;
 			attribute float aF;
 			attribute float aS;
+			attribute float aW;
 			varying vec3 vP;
 			varying vec3 vN;
 			varying float vV;
 			varying float vF;
 			varying float vS;
+			varying float vW;
 			void main() {
 				vP = position;
 				vN = normal;
 				vV = aV;
 				vF = aF;
 				vS = aS;
+				vW = aW;
 				gl_Position = projectionMatrix * modelViewMatrix * instanceMatrix * vec4(position, 1.0);
 			}`;
 		const solidMat = new THREE.ShaderMaterial({
@@ -158,6 +161,7 @@
 				varying float vV;
 				varying float vF;
 				varying float vS;
+				varying float vW;
 				${faces}
 				void main() {
 					vec3 a = 0.5 - abs(vP);
@@ -175,7 +179,8 @@
 					float tone = 0.05 + 0.85 * vV * vV + 0.08 * beam;
 					vec3 col = vec3(tone * shade * (1.0 - 0.35 * bevel));
 					col = mix(col, vec3(1.08 * shade * (1.0 - 0.2 * bevel)), sel);
-					gl_FragColor = vec4(col, 1.0);
+					// a block joining the query plane brightens from black as it grows
+					gl_FragColor = vec4(col * vW, 1.0);
 				}`
 		});
 		const ghostMat = new THREE.ShaderMaterial({
@@ -199,6 +204,8 @@
 			const v = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
 			const f = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
 			const sa = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
+			const wa = new THREE.InstancedBufferAttribute(new Float32Array(capacity), 1);
+			g.setAttribute('aW', wa);
 			g.setAttribute('aV', v);
 			g.setAttribute('aF', f);
 			g.setAttribute('aS', sa);
@@ -208,9 +215,10 @@
 			scene.add(mesh);
 			/** The tensor cell drawn in each instance slot, for picking. */
 			const cellOf = new Int32Array(capacity);
-			return { mesh, v, f, s: sa, cellOf };
+			return { mesh, v, f, s: sa, w: wa, cellOf };
 		};
-		const solid = voxelLayer(solidMat, n * n);
+		// room for every cell: mid-transition two or more query planes are drawn at once
+		const solid = voxelLayer(solidMat, n * n * n);
 		const ghost = voxelLayer(ghostMat, n * n * n);
 		/** Off-plane cells weaker than this are not drawn at all. */
 		const GHOST_FLOOR = 0.45;
@@ -286,7 +294,7 @@
 			labels = labelAt.map(({ id, tex, sub, p }) => ({ id, tex, sub, ...project(stage, p) }));
 			if (!onanchor) return;
 			if (!sel) return onanchor(null);
-			anchor.set(...at(q, sel.j, sel.k));
+			anchor.copy(ring.position);
 			const s = project(stage, anchor);
 			const r = stage.host.getBoundingClientRect();
 			onanchor(s.behind ? null : { x: r.left + s.x, y: r.top + s.y });
@@ -326,13 +334,14 @@
 		const ringFrom = new THREE.Vector3();
 		const slabGoal = new THREE.Vector3();
 		const ringGoal = new THREE.Vector3();
-		const DURATION = 850;
+		const DURATION = 1100;
 		const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		let primed = false;
 		let raf = 0;
 		let t0 = 0;
 		const m4 = new THREE.Matrix4();
-		const inOut = (x: number) => (x < 0.5 ? 4 * x * x * x : 1 - Math.pow(-2 * x + 2, 3) / 2);
+		/** A gentle ease-in-out (sine), shared with the hypergraph and the flow diagram. */
+		const inOut = (x: number) => 0.5 - 0.5 * Math.cos(Math.PI * x);
 
 		/** Fix the targets for the current query and pick, starting from where things are now. */
 		function aim() {
@@ -377,13 +386,15 @@
 						const idx = (i * n + j) * n + k;
 						const v = value[idx];
 						const w = onPlane[idx];
-						if (w > 0.002) {
-							const side = cell * (0.1 + 0.8 * Math.pow(v, 0.7)) * w;
+						if (w > 0.03) {
+							// it grows from a fifth of its size while it brightens, so nothing hops into view
+							const side = cell * (0.1 + 0.8 * Math.pow(v, 0.7)) * (0.2 + 0.8 * w);
 							m4.makeScale(side, side, side).setPosition(...at(i, j, k));
 							solid.mesh.setMatrixAt(ns, m4);
 							solid.v.array[ns] = v;
 							solid.f.array[ns] = inBeam[idx];
 							solid.s.array[ns] = picked[idx];
+							solid.w.array[ns] = w;
 							solid.cellOf[ns++] = idx;
 						}
 						if (v > GHOST_FLOOR && w < 0.998) {
@@ -404,6 +415,7 @@
 				layer.v.needsUpdate = true;
 				layer.f.needsUpdate = true;
 				layer.s.needsUpdate = true;
+				layer.w.needsUpdate = true;
 				layer.mesh.computeBoundingSphere();
 			}
 			ring.visible = !!sel;
