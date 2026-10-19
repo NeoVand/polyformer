@@ -173,6 +173,50 @@
 		{ id: 'alone-final', label: 'Shared and normalised, each task alone' },
 		{ id: 'mix345-r256-shared-fnorm-s6000', label: 'Shared and normalised, trained together' }
 	];
+	// Match3 on HOMA's protocol: our runs under one id per model across the two lengths, beside
+	// the published means and standard deviations (Amiraslani and Gao, Table 2, at d = 64 and 128)
+	const homaM3 = grid('homa_m3');
+	const HOMA_PUBLISHED: [string, number, number, number, number][] = [
+		['homa', 0.993, 0.002, 0.925, 0.008],
+		['blockwise3d', 0.958, 0.008, 0.912, 0.004],
+		['pairwise', 0.83, 0.003, 0.731, 0.012]
+	];
+	const M3_ROWS = [
+		...HOMA_PUBLISHED.flatMap(([model, m6, s6, m8, s8]) =>
+			[
+				['match3_n6', m6, s6],
+				['match3_n8', m8, s8]
+			].map(([task, mean, sd]) => ({
+				task: task as string,
+				model,
+				seeds: [],
+				bal: [],
+				bal_mean: mean as number,
+				sd: sd as number,
+				params: 0
+			}))
+		),
+		...homaM3.map((r) => ({
+			...r,
+			model: /^newton-K6-r(24|84)-/.test(r.model) ? 'newton-budget' : r.model.replace(/-d\d+$/, '')
+		}))
+	];
+	const M3_TASKS = [
+		{ id: 'match3_n6', label: 'N = 6, M = 30' },
+		{ id: 'match3_n8', label: 'N = 8, M = 56' }
+	];
+	/** Parameters at N = 6 and N = 8 in each label: the comparison is at a fixed budget. */
+	const M3_MODELS = [
+		{ id: 'homa', label: 'HOMA, published (28k, 91k)' },
+		{ id: 'blockwise3d', label: 'Triadic only, published' },
+		{ id: 'pairwise', label: 'Pairwise, published' },
+		{ id: 'standard-1L', label: 'Standard, 1 layer (19k, 74k)' },
+		{ id: 'standard-2L', label: 'Standard, 2 layers (36k, 140k)' },
+		{ id: 'standard-3L', label: 'Standard, 3 layers (52k, 207k)' },
+		{ id: 'cubic', label: 'Cubic (27k, 107k)' },
+		{ id: 'newton-budget', label: 'Newton attention (28k, 91k)' },
+		{ id: FINAL, label: 'Newton attention, rank 256 (267k, 269k)' }
+	];
 	const LM_LABEL: Record<string, string> = {
 		gpt: 'Softmax attention',
 		hybrid: 'Softmax attention with a Newton attention branch',
@@ -1055,17 +1099,68 @@
 				</tbody>
 			</table>
 
-			<h3>6.7 Next</h3>
-			<p>Established benchmarks, each on its own published protocol:</p>
+			<h3>6.7 Match3 on a published protocol</h3>
+			<p>
+				Every task so far comes from our own generator. The closest established benchmark with
+				published numbers is Match3 as HOMA runs it <Cite refs={BIB} id="homa" />, after Sanford et
+				al. <Cite refs={BIB} id="sanford23" />: <MathTex tex="N" /> integers drawn uniformly from <MathTex
+					tex={String.raw`\mathbb Z_M`}
+				/>, and a token is positive if it and two tokens of the sequence sum to zero, where the two
+				may be the same token or the token itself. We follow their protocol: <MathTex tex="N = 6" /> with
+				<MathTex tex="M = 30" /> and <MathTex tex="N = 8" /> with <MathTex tex="M = 56" />, 30,000
+				training and 2,000 test sequences per seed, 40 epochs of batch 256 with Adam at a learning
+				rate of 0.003 and no schedule, decay or clipping, one attention layer of four heads with no
+				MLP, a fixed Fourier basis of <MathTex tex={String.raw`\mathbb Z_M`} /> followed by a learned
+				projection, no positions, and plain accuracy on the test set after the last epoch, three seeds.
+				Their code is not public, so our generator follows the paper's text; its positive rates, 53% and
+				48%, fall in the range they report. HOMA's best runs are at width 64 and 128, with about 28k and
+				91k parameters by our count. The baselines use those widths, and Newton attention keeps width
+				64 and takes rank 24 and 84, which gives it 28k and 91k parameters.
+			</p>
+			<div class="wide">
+				<ReplicationTable
+					rows={M3_ROWS}
+					tasks={M3_TASKS}
+					models={M3_MODELS}
+					metric="tok"
+					caption="Table 10. Match3 on HOMA's protocol. Accuracy on 2,000 test sequences after 40 epochs, mean of three seeds with each seed as a dot; parameters at N = 6 and 8 in brackets. Published rows are HOMA's Table 2 at width 64 and 128, mean ± standard deviation; HOMA's parameter counts are our estimate. Always answering the majority class scores 52%."
+				/>
+			</div>
+			<p>
+				Newton attention at HOMA's size is exact on <MathTex tex="N = 6" /> and reaches 99.8% on <MathTex
+					tex="N = 8"
+				/>, every seed above 99.6%, where HOMA reports 99.3% and 92.5%. The protocol reproduces
+				their baseline: one layer of standard attention scores 84.4% and 74.6%, and they report
+				83.0% and 73.1% for pairwise attention at the same widths. But cubic attention in our
+				harness, at a similar size, reaches 99.9% and 99.7% as well, so the margin over the
+				published numbers belongs to our implementation of third-order attention, not to Newton
+				attention. Two differences we can name: HOMA's third projection has rank 8 and its pair
+				values reuse one value map, and the paper does not say whether its Match3 models keep the
+				residual connection and LayerNorm that ours do. On this benchmark Newton attention, at a
+				cost linear in the sequence, ties cubic attention, at a cost cubic in it, with the same
+				parameters; rank 256, with three to ten times the parameters, changes nothing. Depth helps
+				standard attention at <MathTex tex="N = 6" />, 98.3% with two layers and 99.4% with three,
+				but not at <MathTex tex="N = 8" />, where three layers reach 76.4% and one seed stays at
+				72.6%.
+			</p>
+			<p>
+				Repeats change which arities the label needs. A token can complete a zero sum with one other
+				token, <MathTex tex="2x_i + x_j = 0" /> or <MathTex tex="x_i + 2x_j = 0" />, or alone, <MathTex
+					tex="3x_i = 0"
+				/>, so relations of one and two tokens carry part of it. Switching off one arity at a time
+				(as in Figure 8) shows the trained layer uses arities 1, 2 and 3 and nothing above. Without
+				arity 3 balanced accuracy falls to 82% at <MathTex tex="N = 6" /> and 74% at <MathTex
+					tex="N = 8"
+				/>, without arity 2 to 83% and 84%, without arity 1 to 95% and 98%; switching off arity 4, 5
+				or 6 moves no seed by more than 0.03 points.
+			</p>
+
+			<h3>6.8 Next</h3>
+			<p>More established benchmarks, each on its own published protocol:</p>
 			<table class="nums plan">
-				<caption>Table 10. Planned benchmarks and the published numbers to beat.</caption>
+				<caption>Table 11. Planned benchmarks and the published numbers to beat.</caption>
 				<thead><tr><th>Benchmark</th><th>Why</th><th>To beat</th></tr></thead>
 				<tbody>
-					<tr>
-						<td>Match3, HOMA protocol (N = 6, 8)</td>
-						<td>Direct arity test</td>
-						<td>HOMA 99.3% and 92.5% <Cite refs={BIB} id="homa" /></td>
-					</tr>
 					<tr>
 						<td>CLUTRR, train on chains of 2 to 3, test to 10</td>
 						<td>Composing relations</td>

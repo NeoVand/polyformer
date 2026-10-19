@@ -203,6 +203,26 @@ def newton_f() -> list[list[str]]:
     return runs
 
 
+def homa_m3() -> list[list[str]]:
+    """Match3 on HOMA's protocol (Amiraslani & Gao, arXiv 2603.11133 v2, Tables 2 and A.1-A.3, App. B, D.1):
+    N = 6 (M = 30) and N = 8 (M = 56); 30,000 training and 2,000 test sequences per seed, 40 epochs of
+    batch 256, Adam at 3e-3 with no schedule, decay or clipping; one attention layer, four heads, no MLP,
+    a frozen Fourier basis then a learned projection, no positions; final-epoch accuracy, seeds 0-2.
+    Baselines at the width of HOMA's best run (64 and 128); Newton attention at width 64 with its rank
+    set so the layer has HOMA's parameter count there, about 28k and 91k (rank 24 and 84)."""
+    proto = dict(embed="fourier", pos=0, ffn=0, trainset=30000, epochs=40, batch=256, lr=3e-3, wd=0,
+                 clip=0, sched="const", evalset=2000)
+    runs = []
+    for task, d, rank in (("match3_n6", 64, 24), ("match3_n8", 128, 84)):
+        for layers in (1, 2, 3):
+            runs += grid([task], ["sa"], [0, 1, 2], layers=layers, d=d, **proto)
+        runs += grid([task], ["cubic"], [0, 1, 2], d=d, repeat=1, **proto)
+        runs += grid([task], ["newton"], [0, 1, 2], rank=rank, readout="shared", fnorm=1, **proto)
+        # over budget: the rank of Section 6.4, to separate capacity from the operator
+        runs += grid([task], ["newton"], [0, 1, 2], rank=256, readout="shared", fnorm=1, **proto)
+    return runs
+
+
 def lm_a() -> list[list[str]]:
     """Byte-level enwik8, matched parameters: GPT, GPT with a Newton branch, Newton alone."""
     runs = []
@@ -225,6 +245,7 @@ GRIDS = {
     "newton_d": newton_d(),
     "newton_e": newton_e(),
     "newton_f": newton_f(),
+    "homa_m3": homa_m3(),
     "lm_a": lm_a(),
 }
 

@@ -2,6 +2,8 @@
 	/**
 	 * Replicated results: mean balanced accuracy per task and model, with every seed
 	 * drawn as a dot on a 50–100% strip so the spread is visible, not just the mean.
+	 * With metric 'tok' the cells show plain accuracy instead. A row with no seeds is a
+	 * published number: its mean is shown with the published standard deviation, if any.
 	 */
 	interface Row {
 		task: string;
@@ -9,6 +11,9 @@
 		seeds: number[];
 		bal: number[];
 		bal_mean: number;
+		tok?: number[];
+		/** Published standard deviation, for rows without seeds. */
+		sd?: number;
 		params: number;
 	}
 	let {
@@ -16,6 +21,7 @@
 		tasks,
 		models,
 		floor = 0.5,
+		metric = 'bal',
 		caption
 	}: {
 		rows: Row[];
@@ -23,13 +29,19 @@
 		models: { id: string; label: string }[];
 		/** Chance level for the strip's left edge, unless a task sets its own. */
 		floor?: number;
+		/** Balanced accuracy, or plain accuracy over scored tokens. */
+		metric?: 'bal' | 'tok';
 		caption: string;
 	} = $props();
 
+	const values = (r: Row) => (metric === 'tok' ? (r.tok ?? []) : r.bal);
+	const mean = (r: Row) => {
+		const v = values(r);
+		return metric === 'bal' || !v.length ? r.bal_mean : v.reduce((a, b) => a + b, 0) / v.length;
+	};
 	const cell = (task: string, model: string) =>
 		rows.find((r) => r.task === task && r.model === model);
-	const best = (task: string) =>
-		Math.max(...rows.filter((r) => r.task === task).map((r) => r.bal_mean));
+	const best = (task: string) => Math.max(...rows.filter((r) => r.task === task).map(mean));
 	const x = (v: number, f: number) => 4 + Math.max(0, Math.min(1, (v - f) / (1 - f))) * 52;
 </script>
 
@@ -50,20 +62,27 @@
 						{@const c = cell(t.id, m.id)}
 						<td class="r">
 							{#if c}
-								<span class="v" class:top={c.bal_mean >= best(t.id) - 0.005}>
-									<span class="num">{(c.bal_mean * 100).toFixed(1)}</span>
-									<svg
-										width="60"
-										height="10"
-										aria-label="Seeds: {c.bal.map((b) => (b * 100).toFixed(0)).join(', ')}%"
-									>
-										<line x1="4" x2="56" y1="5" y2="5" class="axis" />
-										{#each c.bal as b, i (i)}<circle
-												cx={x(b, t.floor ?? floor)}
-												cy="5"
-												r="2.4"
-											/>{/each}
-									</svg>
+								{@const v = values(c)}
+								<span class="v" class:top={mean(c) >= best(t.id) - 0.005}>
+									<span class="num">{(mean(c) * 100).toFixed(1)}</span>
+									{#if v.length}
+										<svg
+											width="60"
+											height="10"
+											aria-label="Seeds: {v.map((b) => (b * 100).toFixed(0)).join(', ')}%"
+										>
+											<line x1="4" x2="56" y1="5" y2="5" class="axis" />
+											{#each v as b, i (i)}<circle
+													cx={x(b, t.floor ?? floor)}
+													cy="5"
+													r="2.4"
+												/>{/each}
+										</svg>
+									{:else}
+										<span class="pub"
+											>{c.sd === undefined ? '' : `± ${(c.sd * 100).toFixed(1)}`}</span
+										>
+									{/if}
 								</span>
 							{:else}
 								<span class="na">·</span>
@@ -129,6 +148,12 @@
 	}
 	svg {
 		display: block;
+	}
+	.pub {
+		width: 60px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+		text-align: left;
 	}
 	.axis {
 		stroke: #262626;

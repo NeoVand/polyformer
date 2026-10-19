@@ -19,6 +19,14 @@ def task_match3(rng, B, n=16, M=128):
     msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
     return tok, tgt, msk
 
+def task_match3_homa(rng, B, n=6, M=30):
+    # Match3 on HOMA's protocol (Amiraslani & Gao 2026, Sec. 3.1 and App. D.1, after Sanford et al.):
+    # x uniform on Z_M, y_i = 1[exists j, z: x_i + x_j + x_z = 0 mod M], where j and z range over the whole
+    # sequence and may equal each other or i. No BOS token; every position is scored.
+    x = rng.integers(0, M, size=(B, n))
+    y = ((x[:, :, None, None] + x[:, None, :, None] + x[:, None, None, :]) % M == 0).any(axis=(2, 3))
+    return x[..., None], y.astype(np.int32), np.ones((B, n))
+
 def task_set(rng, B, n=12):
     # SET cards = Z_3^4. Three distinct cards form a SET iff they sum to 0 coordinate-wise.
     ids = np.argsort(rng.random((B, 81)), axis=1)[:, :n]
@@ -303,6 +311,10 @@ TASKS = {
     "pairbind": (task_pairbind, [65, 5], 2, False),
     "pairjoint": (task_pairjoint, [97, 6], 25, "multilabel"),
     "match3": (task_match3, [129], 2, False),
+    # HOMA's Match3 benchmark: N = 6 with M = 30 and N = 8 with M = 56 (their Table 2); run with
+    # --embed fourier --pos 0 --ffn 0 and their data budget (see homa_m3 in modal_run.py)
+    "match3_n6": (lambda r, B: task_match3_homa(r, B, 6, 30), [30], 2, False),
+    "match3_n8": (lambda r, B: task_match3_homa(r, B, 8, 56), [56], 2, False),
     "set": (task_set, [4, 4, 4, 4], 2, True),   # True = all fields share one table per field index
     "compose2": (lambda r, B: task_compose(r, B, 8, 2), [18, 9], 8, False),
     "compose3": (lambda r, B: task_compose(r, B, 8, 3), [26, 9], 8, False),
@@ -329,6 +341,11 @@ def init(key, cfg, vocabs, C, T):
     ks = iter(jax.random.split(key, 256))
     p = {"emb": [jax.random.normal(next(ks), (v, D)) * 0.5 for v in vocabs],
          "pos": jax.random.normal(next(ks), (T, D)) * 0.5, "layers": []}
+    if cfg.embed == "fourier":
+        # HOMA's input: a frozen sine-cosine basis of Z_M (M - 1 coordinates), then a learned projection
+        p["emb"] = dense(next(ks), vocabs[0] - 1, D)
+    if not cfg.pos:
+        del p["pos"]
     if cfg.model == "mix":
         p["layers"] = []
         for _ in range(cfg.layers):
@@ -411,9 +428,11 @@ def init(key, cfg, vocabs, C, T):
             a["BL"] = jax.random.normal(next(ks), (H, cfg.modes, dh))
             a["BR"] = jax.random.normal(next(ks), (H, cfg.modes, dh))
             a["gam"] = jnp.ones((H,))
-        p["layers"].append({"ln1": {"g": jnp.ones(D), "b": jnp.zeros(D)}, "attn": a,
-                            "ln2": {"g": jnp.ones(D), "b": jnp.zeros(D)},
-                            "fc1": dense(next(ks), D, 4 * D), "fc2": dense(next(ks), 4 * D, D)})
+        layer = {"ln1": {"g": jnp.ones(D), "b": jnp.zeros(D)}, "attn": a}
+        if cfg.ffn:
+            layer.update({"ln2": {"g": jnp.ones(D), "b": jnp.zeros(D)},
+                          "fc1": dense(next(ks), D, 4 * D), "fc2": dense(next(ks), 4 * D, D)})
+        p["layers"].append(layer)
     p["lnf"] = {"g": jnp.ones(D), "b": jnp.zeros(D)}
     p["head"] = dense(next(ks), D, C)
     return p
@@ -701,7 +720,8 @@ def attention(cfg, a, x):
                  + jnp.einsum("bhic,bhkc->bhik", q, k2)[:, :, :, None, :]) * sc
         else:                          # h = x1x2x3  (trilinear polyattention)
             s = jnp.einsum("bhic,bhjc,bhkc->bhijk", q, k1, k2) * sc
-        s = jnp.where(triple_mask(T), s, -1e9)
+        if not cfg.repeat:   # --repeat 1: every pair (j, k), as HOMA's triadic pathway
+            s = jnp.where(triple_mask(T), s, -1e9)
         P = jax.nn.softmax(s.reshape(B, H, T, T * T), -1).reshape(B, H, T, T, T)
         if cfg.model == "cubic_add":     # additive pair value: no binding
             y = jnp.einsum("bhijk,bhjc->bhic", P, v1) + jnp.einsum("bhijk,bhkc->bhic", P, v2)
@@ -716,15 +736,28 @@ def attention(cfg, a, x):
     y = y.transpose(0, 2, 1, 3).reshape(B, T, -1)
     return lin(a["o"], y)
 
+def fourier(x, M):
+    """The real Fourier basis of Z_M without the constant: cos for k = 1..M//2, sin for k = 1..(M-1)//2."""
+    a = 2 * jnp.pi / M * x[..., None]
+    return jnp.concatenate([jnp.cos(a * jnp.arange(1, M // 2 + 1)), jnp.sin(a * jnp.arange(1, (M - 1) // 2 + 1))], -1)
+
+def embed(cfg, p, tok):
+    if cfg.embed == "fourier":
+        x = lin(p["emb"], fourier(tok[..., 0], p["emb"]["w"].shape[0] + 1))
+    else:
+        x = sum(p["emb"][f][tok[..., f]] for f in range(tok.shape[-1]))
+    return x + p["pos"][None, : tok.shape[1]] if "pos" in p else x
+
 def forward(cfg, p, tok):
-    x = sum(p["emb"][f][tok[..., f]] for f in range(tok.shape[-1])) + p["pos"][None, : tok.shape[1]]
+    x = embed(cfg, p, tok)
     for L in p["layers"]:
         for _ in range(cfg.recur):
             # Newton attention can read its phases from the raw residual stream: LayerNorm divides each
             # token by its own norm, which breaks the additivity a character needs (theta(a+b) = theta(a)+theta(b))
             h = x if (cfg.model == "newton" and cfg.rawphase) else ln(L["ln1"], x)
             x = x + attention(cfg, L["attn"], h)
-            x = x + lin(L["fc2"], jax.nn.gelu(lin(L["fc1"], ln(L["ln2"], x))))
+            if "fc1" in L:
+                x = x + lin(L["fc2"], jax.nn.gelu(lin(L["fc1"], ln(L["ln2"], x))))
     return lin(p["head"], ln(p["lnf"], x))
 
 # ----------------------------------------------------------------------------- train
@@ -735,15 +768,30 @@ def main():
     ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0); ap.add_argument("--readout", default="full"); ap.add_argument("--fnorm", type=int, default=0); ap.add_argument("--diag", type=int, default=1)
     ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--batch", type=int, default=128)
     ap.add_argument("--lr", type=float, default=2e-3); ap.add_argument("--seed", type=int, default=0)
+    # backbone: --embed fourier (frozen Fourier basis of Z_M, then a learned projection), --pos 0 (no
+    # positional embeddings), --ffn 0 (no MLP sublayer); --repeat 1 lets cubic attention pick j = k or i
+    ap.add_argument("--embed", default="table"); ap.add_argument("--pos", type=int, default=1)
+    ap.add_argument("--ffn", type=int, default=1); ap.add_argument("--repeat", type=int, default=0)
+    # data and optimiser: --trainset N trains --epochs passes over N fixed examples instead of a fresh
+    # batch every step; --evalset is the held-out size; --sched const --wd 0 --clip 0 is plain Adam
+    ap.add_argument("--trainset", type=int, default=0); ap.add_argument("--epochs", type=int, default=0)
+    ap.add_argument("--evalset", type=int, default=2048); ap.add_argument("--sched", default="cosine")
+    ap.add_argument("--wd", type=float, default=0.01); ap.add_argument("--clip", type=float, default=1.0)
     cfg = ap.parse_args()
     gen, vocabs, C, kind = TASKS[cfg.task]
     multilabel = kind == "multilabel"
     rng = np.random.default_rng(cfg.seed)
     tok0, _, _ = gen(rng, 2); T = tok0.shape[1]
+    if cfg.trainset:
+        # a fixed training set, reshuffled every epoch; the last batch of an epoch may be short
+        dtok, dtgt, dmsk = gen(rng, cfg.trainset)
+        per_epoch = -(-cfg.trainset // cfg.batch)
+        cfg.steps = cfg.epochs * per_epoch
     params = init(jax.random.PRNGKey(cfg.seed), cfg, vocabs, C, T)
     nparams = sum(x.size for x in jax.tree_util.tree_leaves(params))
-    sched = optax.warmup_cosine_decay_schedule(0.0, cfg.lr, min(200, cfg.steps // 10), cfg.steps, cfg.lr * 0.02)
-    opt = optax.chain(optax.clip_by_global_norm(1.0), optax.adamw(sched, weight_decay=0.01))
+    sched = cfg.lr if cfg.sched == "const" else optax.warmup_cosine_decay_schedule(0.0, cfg.lr, min(200, cfg.steps // 10), cfg.steps, cfg.lr * 0.02)
+    clip = [optax.clip_by_global_norm(cfg.clip)] if cfg.clip > 0 else []
+    opt = optax.chain(*clip, optax.adamw(sched, weight_decay=cfg.wd))
     st = opt.init(params)
 
     def loss_fn(p, tok, tgt, msk):
@@ -786,11 +834,18 @@ def main():
     evaluate = eval_with(cfg)
 
     erng = np.random.default_rng(10_000 + cfg.seed)
-    etok, etgt, emsk = gen(erng, 2048)
+    etok, etgt, emsk = gen(erng, cfg.evalset)
     base = float((etgt.reshape(etgt.shape[0], etgt.shape[1], -1).max(-1) * emsk).sum() / emsk.sum())
     t0 = time.time(); curve = []
     for it in range(cfg.steps):
-        tok, tgt, msk = gen(rng, cfg.batch)
+        if cfg.trainset:
+            b = it % per_epoch
+            if b == 0:
+                order = rng.permutation(cfg.trainset)
+            idx = order[b * cfg.batch:(b + 1) * cfg.batch]
+            tok, tgt, msk = dtok[idx], dtgt[idx], dmsk[idx]
+        else:
+            tok, tgt, msk = gen(rng, cfg.batch)
         params, st, l = step(params, st, tok, tgt, msk)
         if (it + 1) % max(1, cfg.steps // 10) == 0:
             ta, sa, ba = evaluate(params, etok, etgt, emsk)
@@ -800,7 +855,7 @@ def main():
     out = {"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed,
            "params": int(nparams), "tok_acc": round(float(ta), 4), "seq_acc": round(float(sa), 4),
            "bal_acc": round(float(ba), 4), "backend": jax.default_backend(),
-           "pos_rate": round(base, 3), "secs": round(time.time() - t0, 1), "curve": curve}
+           "pos_rate": round(base, 3), "secs": round(time.time() - t0, 1), "steps": cfg.steps, "curve": curve}
     if cfg.task.startswith("mix"):
         # score each arity on its own held-out tables
         out["per_k"] = {}
@@ -825,7 +880,7 @@ def newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with):
     L0 = params["layers"][0]
     sub = slice(0, 512)
     tok, msk = etok[sub], emsk[sub]
-    x = sum(params["emb"][f][tok[..., f]] for f in range(tok.shape[-1])) + params["pos"][None, : tok.shape[1]]
+    x = embed(cfg, params, tok)
     h = x if cfg.rawphase else ln(L0["ln1"], x)
     c2 = copy.copy(cfg); c2.want_parts = True
     parts = attention(c2, L0["attn"], h)
