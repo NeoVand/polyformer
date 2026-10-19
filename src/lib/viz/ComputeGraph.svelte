@@ -109,7 +109,7 @@
 	const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 </script>
 
-<figure class="cg" style:--gw={graph.w} style:max-width="{graph.w}px">
+<figure class="cg" style:--gw={graph.w} style:max-width="calc({graph.w / 15} * var(--read, 15px))">
 	<div class="canvas" style:aspect-ratio="{graph.w} / {graph.h}">
 		<svg viewBox="0 0 {graph.w} {graph.h}" role="img" aria-label={label}>
 			{#each edges as { e, g }, i (i)}

@@ -134,7 +134,8 @@
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1.45fr);
 		gap: 18px 44px;
 		align-items: start;
-		max-width: 780px;
+		/* grows with the page's reading size (15px on a laptop) */
+		max-width: calc(var(--read, 15px) * 52);
 	}
 	.sub {
 		margin: 0 0 6px;

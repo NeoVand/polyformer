@@ -105,7 +105,7 @@
 		display: flex;
 		flex-direction: column;
 		min-width: 0;
-		height: 316px;
+		height: calc(var(--read, 15px) * 21);
 	}
 	.diagram :global(.feyn) {
 		flex: 1;

@@ -191,7 +191,7 @@
 				</p>
 				<MathTex
 					display
-					tex={"A_{ijk} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\rangle, \\qquad P_{ijk} = \\frac{\\exp(A_{ijk}/\\sqrt{d})}{\\sum_{j'k'} \\exp(A_{ij'k'}/\\sqrt{d})}, \\qquad Y_i = \\sum_{j,k} P_{ijk}\\,\\bigl(V^1_j \\odot V^2_k\\bigr)"}
+					tex={"\\begin{gathered} A_{ijk} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\rangle, \\qquad P_{ijk} = \\frac{\\exp(A_{ijk}/\\sqrt{d})}{\\sum_{j'k'} \\exp(A_{ij'k'}/\\sqrt{d})}, \\\\[4pt] Y_i = \\sum_{j,k} P_{ijk}\\,\\bigl(V^1_j \\odot V^2_k\\bigr) \\end{gathered}"}
 				/>
 				<ComputeGraph graph={CUBIC} label="Computation graph of cubic polyattention" />
 				<p>
@@ -912,24 +912,39 @@
 </PageFrame>
 
 <style>
+	/* text first: a column of about 80 characters and a figure a little narrower, centred
+	   together and growing with the screen, so neither hugs an edge on a wide display */
 	.learn {
+		--read: clamp(15px, calc(9px + 0.42vw), 19.5px);
+		/* the app's type tokens, scaled with the reading size inside this page */
+		--text-2xs: calc(var(--read) * 0.733);
+		--text-xs: calc(var(--read) * 0.8);
+		--text-sm: calc(var(--read) * 0.867);
+		--text-ui: calc(var(--read) * 0.933);
+		--text-lg: calc(var(--read) * 1.067);
+		--measure: calc(var(--read) * 40);
+		--gap: clamp(40px, 3.5vw, 96px);
+		--pad: clamp(32px, 3vw, 72px);
 		display: grid;
-		grid-template-columns: minmax(0, 620px) minmax(0, 1fr);
-		gap: 48px;
-		padding: 0 32px 0 40px;
+		grid-template-columns: minmax(0, 1fr) minmax(0, 0.9fr);
+		gap: var(--gap);
+		max-width: calc(var(--measure) * 1.9 + var(--gap) + 2 * var(--pad));
+		margin: 0 auto;
+		padding: 0 var(--pad);
+		font-size: var(--read);
 	}
 	.text {
 		padding: 32px 0 30vh;
 	}
 	h1 {
 		font-family: 'KaTeX_Main', 'Times New Roman', serif;
-		font-size: 38px;
+		font-size: calc(var(--read) * 2.533);
 		font-weight: 400;
 		line-height: 1.1;
 	}
 	.lede {
 		margin-top: 12px;
-		font-size: 15px;
+		font-size: var(--read);
 		line-height: 1.65;
 		color: var(--color-ink-2);
 	}
@@ -1000,7 +1015,7 @@
 	h2.part {
 		margin: 56px 0 4px;
 		font-family: 'KaTeX_Main', 'Times New Roman', serif;
-		font-size: 26px;
+		font-size: calc(var(--read) * 1.733);
 		font-weight: 400;
 		scroll-margin-top: calc(var(--bar-h) + 16px);
 	}
@@ -1012,13 +1027,13 @@
 		display: flex;
 		align-items: baseline;
 		gap: 12px;
-		font-size: 18px;
+		font-size: calc(var(--read) * 1.2);
 		font-weight: 500;
 		letter-spacing: -0.01em;
 	}
 	.n {
 		font-family: 'KaTeX_Main', 'Times New Roman', serif;
-		font-size: 15px;
+		font-size: var(--read);
 		color: var(--color-ink-3);
 		min-width: 14px;
 	}
@@ -1030,7 +1045,7 @@
 	}
 	p {
 		color: var(--color-ink-2);
-		font-size: 15px;
+		font-size: var(--read);
 		line-height: 1.7;
 		margin: 0 0 12px;
 	}
@@ -1082,7 +1097,7 @@
 		margin: 4px 0 14px;
 		padding: 6px 0;
 		overflow-x: auto;
-		font-size: 15.5px;
+		font-size: calc(var(--read) * 1.033);
 	}
 	.cases {
 		display: grid;
@@ -1142,6 +1157,12 @@
 		color: var(--color-ink-2);
 	}
 
+	/* a display equation wider than the column scrolls instead of being clipped */
+	.text :global(.katex-display) {
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding: 2px 0;
+	}
 	/* the sticky figure */
 	.figure {
 		position: sticky;

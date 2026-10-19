@@ -1295,18 +1295,33 @@
 	/* A text column with a margin for notes; figures may span both. No boxes, no rules
 	   except the hairlines of tables: hierarchy comes from type and space. */
 	.paper {
-		--text: 660px;
-		--gap: 44px;
-		--side: 210px;
+		/* one reading size, growing with the screen; columns are set in the same unit, so the
+		   measure stays near 85 characters while the page fills a wide screen */
+		--read: clamp(15px, calc(9px + 0.42vw), 19.5px);
+		/* the app's type tokens, scaled with the reading size inside this page */
+		--text-2xs: calc(var(--read) * 0.733);
+		--text-xs: calc(var(--read) * 0.8);
+		--text-sm: calc(var(--read) * 0.867);
+		--text-ui: calc(var(--read) * 0.933);
+		--text-lg: calc(var(--read) * 1.067);
+		--text: calc(var(--read) * 44);
+		--gap: calc(var(--read) * 2.9);
+		--side: calc(var(--read) * 14);
 		max-width: calc(var(--text) + var(--gap) + var(--side) + 80px);
 		margin: 0 auto;
 		padding: 40px 40px 140px;
-		font-size: 15px;
+		font-size: var(--read);
 		line-height: 1.62;
 		color: var(--color-ink-2);
 	}
 	.paper :global(:where(section, header) > *:not(.wide, .side)) {
 		max-width: var(--text);
+	}
+	/* a display equation wider than the column scrolls instead of being clipped */
+	.paper :global(.katex-display) {
+		overflow-x: auto;
+		overflow-y: hidden;
+		padding: 2px 0;
 	}
 	.title-block {
 		padding-bottom: 6px;
@@ -1314,7 +1329,7 @@
 	h1 {
 		margin: 0;
 		font-family: 'KaTeX_Main', 'Times New Roman', serif;
-		font-size: 44px;
+		font-size: calc(var(--read) * 2.933);
 		font-weight: 400;
 		line-height: 1.08;
 		letter-spacing: -0.01em;
@@ -1322,7 +1337,7 @@
 	}
 	.subtitle {
 		margin: 8px 0 0;
-		font-size: 18px;
+		font-size: calc(var(--read) * 1.2);
 		color: var(--color-ink-2);
 	}
 	.authors {
@@ -1339,7 +1354,7 @@
 		clear: right;
 		width: var(--side);
 		margin: 4px 0 14px;
-		font-size: 12.5px;
+		font-size: calc(var(--read) * 0.833);
 		line-height: 1.5;
 		color: var(--color-ink-3);
 	}
@@ -1368,7 +1383,7 @@
 	}
 	.abstract {
 		margin: 26px 0 0;
-		font-size: 14.5px;
+		font-size: calc(var(--read) * 0.967);
 		line-height: 1.6;
 		color: var(--color-ink);
 	}
@@ -1381,7 +1396,7 @@
 	}
 	h2 {
 		margin: 44px 0 12px;
-		font-size: 22px;
+		font-size: calc(var(--read) * 1.467);
 		font-weight: 500;
 		color: var(--color-ink);
 	}
@@ -1392,7 +1407,7 @@
 	}
 	h3 {
 		margin: 28px 0 8px;
-		font-size: 15px;
+		font-size: var(--read);
 		font-weight: 600;
 		color: var(--color-ink);
 	}
@@ -1400,11 +1415,11 @@
 		margin: 0 0 14px;
 	}
 	.contrib {
-		font-size: 14px;
+		font-size: calc(var(--read) * 0.933);
 	}
 	.caveat,
 	.pending {
-		font-size: 14px;
+		font-size: calc(var(--read) * 0.933);
 		color: var(--color-ink-3);
 	}
 	.fig {
@@ -1496,7 +1511,7 @@
 		margin-bottom: 6px;
 	}
 	.app-b {
-		font-size: 18px;
+		font-size: calc(var(--read) * 1.2);
 	}
 	code {
 		font-family: var(--font-mono);
