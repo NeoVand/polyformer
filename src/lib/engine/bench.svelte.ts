@@ -1,11 +1,21 @@
 /**
- * Shared, page-independent state of the SET bench: one training worker, five
- * runs, their histories. Lives for the whole session so Explore can inspect
- * the model Compare trained.
+ * Shared, page-independent state of a bench: one training worker, a suite of
+ * runs on one task, their histories. Lives for the whole session so Explore
+ * can inspect the models Compare trained. `getBench()` is the SET bench;
+ * `getBench('chase')` is the pointer-chase bench, with its own worker.
  */
+import { getTask, type TaskSpec } from '../tasks/index.ts';
+import { dealExample, majorityBaseline } from './data.ts';
 import { Engine } from './engine.ts';
-import { BENCH_RUNS, type RunSpec } from './runs.ts';
-import type { Backend, EvalMetric, InitResult, RunInfo, StepMetric } from './protocol.ts';
+import { SUITES, type RunSpec, type Suite, type SuiteId } from './runs.ts';
+import type {
+	Backend,
+	DiagramResult,
+	EvalMetric,
+	InitResult,
+	RunInfo,
+	StepMetric
+} from './protocol.ts';
 
 export type BenchStatus = 'idle' | 'booting' | 'ready' | 'training' | 'pausing' | 'error';
 
@@ -66,18 +76,43 @@ export class Bench {
 	/** Bumped (at most once per frame) whenever histories change. */
 	version = $state(0);
 	/** Which runs train when Start is pressed. */
-	enabled = $state<Record<string, boolean>>(
-		Object.fromEntries(BENCH_RUNS.map((r) => [r.id, true]))
-	);
+	enabled = $state<Record<string, boolean>>({});
 	/** Latest step reached by any run. */
 	step = $state(0);
 	/** Wall-clock ms spent training in this session. */
 	elapsedMs = $state(0);
 
-	readonly runs: RunSpec[] = BENCH_RUNS;
-	readonly history: Record<string, RunHistory> = Object.fromEntries(
-		BENCH_RUNS.map((r) => [r.id, new RunHistory()])
-	);
+	readonly suite: Suite;
+	readonly task: TaskSpec;
+	readonly runs: RunSpec[];
+	readonly history: Record<string, RunHistory>;
+
+	constructor(suite: Suite = SUITES.set) {
+		this.suite = suite;
+		this.task = getTask(suite.task);
+		this.runs = suite.runs;
+		this.history = Object.fromEntries(suite.runs.map((r) => [r.id, new RunHistory()]));
+		for (const r of suite.runs) this.enabled[r.id] = r.defaultEnabled !== false;
+	}
+
+	private majorityCache: number | null = null;
+	/** Held-out accuracy of always predicting the most frequent class. */
+	get majority(): number {
+		this.majorityCache ??= majorityBaseline(this.task.id, EVAL_LAYOUTS);
+		return this.majorityCache;
+	}
+
+	/** A fresh example of this bench's task (Card[] for SET, ChaseInstance for chase). */
+	dealExample(seed: number): unknown {
+		return dealExample(this.task.id, seed);
+	}
+
+	/** DS-PA computation tree for `example` at sequence position `token` (see DiagramResult). */
+	async diagram(run: string, example: unknown, token: number, topK = 4): Promise<DiagramResult> {
+		await this.ensure();
+		if (!this.engine) throw new Error('engine unavailable');
+		return this.engine.diagram(run, example, token, topK);
+	}
 
 	private engine: Engine | null = null;
 	private booting: Promise<void> | null = null;
@@ -219,9 +254,8 @@ export class Bench {
 	}
 }
 
-/** The session-wide bench. Created lazily; only ever touched in the browser. */
-let instance: Bench | null = null;
-export function getBench(): Bench {
-	instance ??= new Bench();
-	return instance;
+/** Session-wide benches, one per suite. Created lazily; only ever touched in the browser. */
+const instances: Partial<Record<SuiteId, Bench>> = {};
+export function getBench(suite: SuiteId = 'set'): Bench {
+	return (instances[suite] ??= new Bench(SUITES[suite]));
 }

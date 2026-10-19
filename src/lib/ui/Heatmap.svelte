@@ -3,6 +3,7 @@
 
 	/** Grayscale level for a value: weights map 0 → black, max → white; signed maps 0 → mid-gray. */
 	export function shade(v: number, max: number, scale: Scale): number {
+		if (Number.isNaN(v)) return 10; // masked cell
 		if (scale === 'weight') {
 			const f = max > 0 ? Math.min(1, Math.max(0, v / max)) : 0;
 			return Math.round(14 + Math.pow(f, 0.6) * (245 - 14));

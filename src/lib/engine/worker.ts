@@ -3,8 +3,9 @@
  * Training worker. Owns jax-js, every model's parameters and optimizer state,
  * and the data. The page drives it over the RPC in engine.ts.
  *
- * All runs see identical batches: the batch for optimizer step s is a pure
- * function of (seed, s), so a run trained later still sees the same data.
+ * All runs on a task see identical batches: the batch for optimizer step s is
+ * a pure function of (task, seed, s), so a run trained later still sees the
+ * same data.
  */
 import {
 	blockUntilReady,
@@ -19,6 +20,7 @@ import {
 import { DEFAULT_ADAMW, fusedAdamW, type FusedStep, type OptState } from '../model/adamw.ts';
 import {
 	defaultConfig,
+	disposeCapture,
 	evalSums,
 	forward,
 	forwardFlops,
@@ -29,18 +31,14 @@ import {
 	type Params
 } from '../model/transformer.ts';
 import { getOperator } from '../model/operators/index.ts';
-import {
-	FEATURE_DIM,
-	LAYOUT_SIZE,
-	SEQ_LEN,
-	encodeLayouts,
-	type Card,
-	type SetBatch
-} from '../set/cards.ts';
+import { LAYOUT_SIZE } from '../set/cards.ts';
 import { deriveSeed } from '../set/rng.ts';
-import { evalBatch, trainBatch } from './data.ts';
+import { getTask, type TaskBatch, type TaskId, type TaskSpec } from '../tasks/index.ts';
+import { taskEvalExamples, taskTrainBatch } from './data.ts';
+import { summarizeDiagram } from './diagram.ts';
 import type {
 	Backend,
+	DiagramResult,
 	EvalMetric,
 	InitRequest,
 	InitResult,
@@ -57,14 +55,18 @@ interface Request {
 	[key: string]: unknown;
 }
 
+type Jitted<F> = F & { dispose(): void };
+
 interface Run {
 	spec: RunSpec;
 	cfg: ModelConfig;
+	task: TaskSpec;
 	params: Params;
 	state: OptState<Params>;
 	solver: FusedStep<Params>;
-	evalFn: (p: Params, f: Tensor, l: Tensor, w: Tensor) => Tensor;
-	probeFn: (p: Params, f: Tensor) => Tensor[];
+	evalFn: Jitted<(p: Params, f: Tensor, l: Tensor, w: Tensor) => Tensor>;
+	/** Forward with the first layer's captures: [logits, …captured tensors]. */
+	probeFn: Jitted<(p: Params, f: Tensor) => Tensor[]>;
 	step: number;
 }
 
@@ -76,7 +78,7 @@ let device: Backend = 'cpu';
 let available: string[] = [];
 let opts: InitRequest | null = null;
 let runs: Run[] = [];
-let evalSet: SetBatch | null = null;
+const evalSets = new Map<TaskId, unknown[]>();
 let stopRequested = false;
 let booted = false;
 
@@ -103,14 +105,14 @@ function disposeRuns() {
 		tree.dispose(r.state.m);
 		tree.dispose(r.state.v);
 		r.solver.dispose();
-		(r.evalFn as unknown as { dispose(): void }).dispose();
-		(r.probeFn as unknown as { dispose(): void }).dispose();
+		r.evalFn.dispose();
+		r.probeFn.dispose();
 	}
 	runs = [];
 }
 
 function buildRun(spec: RunSpec, index: number, seed: number): Run {
-	const cfg = defaultConfig(spec.operator, spec.layers);
+	const cfg = defaultConfig(spec.operator, spec.layers, spec.task ?? 'set', spec.options);
 	const params = initParams(cfg, deriveSeed(seed, index + 1));
 	const solver = fusedAdamW<Params>((p, f, l, w) => lossAndAccuracy(p, cfg, f, l, w), {
 		...DEFAULT_ADAMW,
@@ -121,27 +123,24 @@ function buildRun(spec: RunSpec, index: number, seed: number): Run {
 	const probeFn = jit((p: Params, f: Tensor) => {
 		const { logits, captures } = forward(p, cfg, f, true);
 		const out = [logits];
-		const cap = captures[0];
-		if (cap) out.push(cap.weights, ...cap.values);
-		for (const c of captures.slice(1)) {
-			c.weights.dispose();
-			c.values.forEach((v) => v.dispose());
-		}
+		const [first, ...rest] = captures;
+		if (first?.weights) out.push(first.weights, ...(first.values ?? []));
+		else first?.values?.forEach((v) => v.dispose());
+		out.push(...(first?.rounds ?? []), ...(first?.modes ?? []));
+		rest.forEach(disposeCapture);
 		return out;
 	});
-	return { spec, cfg, params, state, solver, evalFn, probeFn, step: 0 };
+	return { spec, cfg, task: getTask(cfg.task), params, state, solver, evalFn, probeFn, step: 0 };
 }
 
-function batchTensors(b: SetBatch): [Tensor, Tensor, Tensor] {
-	const rows = b.batch * SEQ_LEN;
+function batchTensors(b: TaskBatch, cfg: ModelConfig): [Tensor, Tensor, Tensor] {
+	const rows = b.batch * cfg.seqLen;
 	return [
-		np.array(b.features).reshape([rows, FEATURE_DIM]),
-		np.array(b.labels).reshape([rows, 2]),
+		np.array(b.features).reshape([rows, cfg.featureDim]),
+		np.array(b.labels).reshape([rows, cfg.classes]),
 		np.array(b.weights)
 	];
 }
-
-const batchForStep = (s: number): SetBatch => trainBatch(opts!.seed, s, opts!.batch);
 
 async function handleInit(req: Request): Promise<InitResult> {
 	const r = req.init as InitRequest;
@@ -150,7 +149,9 @@ async function handleInit(req: Request): Promise<InitResult> {
 	opts = r;
 	runs = r.runs.map((spec, i) => buildRun(spec, i, r.seed));
 	await blockUntilReady(runs.map((x) => x.params));
-	evalSet = evalBatch(r.evalLayouts);
+	evalSets.clear();
+	for (const t of new Set(runs.map((x) => x.cfg.task)))
+		evalSets.set(t, taskEvalExamples(t, r.evalLayouts));
 	return {
 		device,
 		available,
@@ -173,21 +174,21 @@ function trainOne(run: Run, b: [Tensor, Tensor, Tensor]): StepMetric {
 }
 
 function evaluate(run: Run): EvalMetric {
-	const ev = evalSet!;
+	const examples = evalSets.get(run.cfg.task)!;
 	const sums = [0, 0, 0];
-	for (let start = 0; start < ev.batch; start += EVAL_CHUNK) {
-		const chunk = encodeLayouts(ev.layouts.slice(start, start + EVAL_CHUNK));
-		const [f, l, w] = batchTensors(chunk);
+	for (let start = 0; start < examples.length; start += EVAL_CHUNK) {
+		const chunk = run.task.encode(examples.slice(start, start + EVAL_CHUNK));
+		const [f, l, w] = batchTensors(chunk, run.cfg);
 		const out = run.evalFn(tree.ref(run.params), f, l, w).dataSync() as Float32Array;
 		for (let i = 0; i < 3; i++) sums[i] += out[i];
 	}
-	const tokens = ev.batch * LAYOUT_SIZE;
+	const tokens = examples.length * run.task.lossPositions.length;
 	return {
 		id: run.spec.id,
 		step: run.step,
 		loss: sums[0] / tokens,
 		tokenAccuracy: sums[1] / tokens,
-		layoutAccuracy: sums[2] / ev.batch
+		layoutAccuracy: sums[2] / examples.length
 	};
 }
 
@@ -209,9 +210,17 @@ async function handleTrain(req: Request) {
 		if (!pending.length) break;
 		const minStep = Math.min(...pending.map((r) => r.step));
 		const cohort = pending.filter((r) => r.step === minStep);
-		const tensors = batchTensors(batchForStep(minStep));
-		const metrics = cohort.map((r) => trainOne(r, tensors));
-		tensors.forEach((t) => t.dispose());
+		const metrics: StepMetric[] = [];
+		// one batch per task at this step, shared by every run on that task
+		for (const task of new Set(cohort.map((r) => r.cfg.task))) {
+			const members = cohort.filter((r) => r.cfg.task === task);
+			const tensors = batchTensors(
+				taskTrainBatch(task, opts!.seed, minStep, opts!.batch),
+				members[0].cfg
+			);
+			for (const r of members) metrics.push(trainOne(r, tensors));
+			tensors.forEach((t) => t.dispose());
+		}
 		post({ id: req.id, event: 'step', metrics });
 		const due = cohort.filter((r) => r.step % evalEvery === 0 || r.step === until);
 		if (due.length) post({ id: req.id, event: 'eval', metrics: due.map(evaluate) });
@@ -220,13 +229,19 @@ async function handleTrain(req: Request) {
 	return { steps: Object.fromEntries(runs.map((r) => [r.spec.id, r.step])) };
 }
 
+function findRun(id: unknown): Run {
+	const run = runs.find((r) => r.spec.id === id);
+	if (!run) throw new Error(`no run ${String(id)}`);
+	return run;
+}
+
 function handleProbe(req: Request): ProbeResult & { __transfer: Transferable[] } {
-	const run = runs.find((r) => r.spec.id === req.run);
-	if (!run) throw new Error(`no run ${String(req.run)}`);
-	if (getOperator(run.cfg.operator).arity !== 3) throw new Error('probe needs a triple operator');
-	const layout = req.layout as Card[];
-	if (!Array.isArray(layout) || layout.length !== LAYOUT_SIZE) throw new Error('bad layout');
-	const [f, , w] = batchTensors(encodeLayouts([layout]));
+	const run = findRun(req.run);
+	const op = getOperator(run.cfg.operator);
+	if (op.arity !== 3 || op.id === 'dspa' || run.cfg.task !== 'set')
+		throw new Error('probe needs a triple-score operator on SET');
+	if (!run.task.isExample(req.layout)) throw new Error('bad layout');
+	const [f, , w] = batchTensors(run.task.encode([req.layout]), run.cfg);
 	w.dispose();
 	const [logits, weights, v1, v2] = run.probeFn(tree.ref(run.params), f);
 	const lg = logits.dataSync() as Float32Array;
@@ -252,9 +267,45 @@ function handleProbe(req: Request): ProbeResult & { __transfer: Transferable[] }
 	};
 }
 
+function handleDiagram(req: Request): DiagramResult {
+	const run = findRun(req.run);
+	if (run.cfg.operator !== 'dspa') throw new Error('diagram needs a DS-PA run');
+	if (!run.task.isExample(req.example)) throw new Error(`bad ${run.task.id} example`);
+	const n = run.cfg.seqLen;
+	const token = Number(req.token);
+	if (!Number.isInteger(token) || token < 0 || token >= n) throw new Error('bad token');
+	const topK = Math.min(16, Math.max(1, Math.floor(Number(req.topK ?? 4))));
+	const R = run.cfg.options.rounds ?? 2;
+	const M = run.cfg.options.modes ?? 16;
+	const H = run.cfg.heads;
+	const C = run.cfg.classes;
+
+	const [f, , w] = batchTensors(run.task.encode([req.example]), run.cfg);
+	w.dispose();
+	const [logits, ...captured] = run.probeFn(tree.ref(run.params), f);
+	const read = captured.map((t) => t.dataSync() as Float32Array);
+	const lg = (logits.dataSync() as Float32Array).subarray(token * C, (token + 1) * C);
+	const max = Math.max(...lg);
+	const ex = Array.from(lg, (x) => Math.exp(x - max));
+	const z = ex.reduce((a, b) => a + b, 0);
+	return {
+		id: run.spec.id,
+		step: run.step,
+		task: run.cfg.task,
+		token,
+		n,
+		heads: H,
+		rounds: R,
+		modes: M,
+		topK,
+		probs: ex.map((x) => x / z),
+		target: run.task.targetAt(req.example, token),
+		perHead: summarizeDiagram(read.slice(0, R), read.slice(R, 2 * R), H, n, M, token, topK)
+	};
+}
+
 function handleExport(req: Request) {
-	const run = runs.find((r) => r.spec.id === req.run);
-	if (!run) throw new Error(`no run ${String(req.run)}`);
+	const run = findRun(req.run);
 	const leaves = tree.leaves(tree.ref(run.params as never)) as Tensor[];
 	const parts = leaves.map((l) => l.dataSync() as Float32Array);
 	const flat = new Float32Array(parts.reduce((s, p) => s + p.length, 0));
@@ -267,8 +318,7 @@ function handleExport(req: Request) {
 }
 
 async function handleLoad(req: Request) {
-	const run = runs.find((r) => r.spec.id === req.run);
-	if (!run) throw new Error(`no run ${String(req.run)}`);
+	const run = findRun(req.run);
 	const flat = new Float32Array(req.weights as ArrayBuffer);
 	const [leaves, def] = tree.flatten(run.params as never) as [Tensor[], unknown];
 	let off = 0;
@@ -303,6 +353,7 @@ const handlers: Record<string, (req: Request) => unknown> = {
 	init: handleInit,
 	train: handleTrain,
 	probe: handleProbe,
+	diagram: handleDiagram,
 	export: handleExport,
 	load: handleLoad,
 	reset: handleReset,
@@ -342,7 +393,7 @@ ctx.onmessage = (e: MessageEvent<Request>) => {
 	}
 	// Probes only read weights and run synchronously, so they may interleave
 	// with a training loop between steps instead of waiting for it to finish.
-	if (req.op === 'probe' || req.op === 'export') {
+	if (req.op === 'probe' || req.op === 'diagram' || req.op === 'export') {
 		void dispatch(req);
 		return;
 	}

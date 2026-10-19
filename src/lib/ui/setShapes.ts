@@ -1,28 +1,19 @@
-/** Geometry for SET symbols, drawn upright in a 24 × 56 box centred on the origin. */
+/**
+ * Geometry for SET symbols: three 1:1 shapes centred on the origin in a 24 × 24
+ * box, sized to roughly equal area so no shape reads heavier than another.
+ */
 
-export const SHAPE_W = 24;
-export const SHAPE_H = 56;
+export const SHAPE_SIZE = 24;
 
-export const DIAMOND = 'M0,-27 L11.5,0 L0,27 L-11.5,0 Z';
-export const OVAL = 'M-11,-16 A11,11 0 0 1 11,-16 L11,16 A11,11 0 0 1 -11,16 Z';
+/** A rhombus (a square on its point): half-diagonal 12.5. */
+export const DIAMOND = 'M0,-12.5 L12.5,0 L0,12.5 L-12.5,0 Z';
+/** A circle of radius 10. */
+export const CIRCLE = 'M-10,0 A10,10 0 1 0 10,0 A10,10 0 1 0 -10,0 Z';
+/** A square of side 17.6 with barely rounded corners. */
+export const SQUARE =
+	'M-7.8,-8.8 L7.8,-8.8 Q8.8,-8.8 8.8,-7.8 L8.8,7.8 Q8.8,8.8 7.8,8.8 L-7.8,8.8 Q-8.8,8.8 -8.8,7.8 L-8.8,-7.8 Q-8.8,-8.8 -7.8,-8.8 Z';
 
-/** A squiggle: an S-shaped centreline with a tapered width. */
-export const SQUIGGLE = (() => {
-	const N = 28;
-	const right: string[] = [];
-	const left: string[] = [];
-	for (let s = 0; s <= N; s++) {
-		const y = -27 + (54 * s) / N;
-		const t = y / 27;
-		const cx = 4.2 * Math.sin(Math.PI * t) + 1.2 * t;
-		const w = 7.4 * Math.pow(Math.max(0, 1 - t ** 4), 0.55) + 0.6;
-		right.push(`${(cx + w).toFixed(2)},${y.toFixed(2)}`);
-		left.push(`${(cx - w).toFixed(2)},${y.toFixed(2)}`);
-	}
-	return `M${right.join(' L')} L${left.reverse().join(' L')} Z`;
-})();
-
-export const SHAPES = [DIAMOND, OVAL, SQUIGGLE] as const;
+export const SHAPES = [DIAMOND, CIRCLE, SQUARE] as const;
 
 export const SET_COLOURS = [
 	'var(--color-set-red)',

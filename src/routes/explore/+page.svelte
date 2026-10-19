@@ -1,9 +1,9 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import type { ProbeResult } from '#lib/engine/protocol.ts';
 	import {
 		cardTensor,
-		pairMoment,
 		querySlice,
 		setAlignment,
 		setPartners,
@@ -11,52 +11,55 @@
 		topHyperedges,
 		valueRow
 	} from '#lib/explore/analysis.ts';
-	import { OPERATORS } from '#lib/model/operators/index.ts';
+	import { exactProbe, scoreSlice, type ExactProbe } from '#lib/explore/exact.ts';
 	import { dealLayout, findSets, LAYOUT_SIZE, type Card } from '#lib/set/cards.ts';
 	import { mulberry32 } from '#lib/set/rng.ts';
 	import FeatureStrip from '#lib/ui/FeatureStrip.svelte';
 	import Heatmap from '#lib/ui/Heatmap.svelte';
-	import Hypergraph from '#lib/ui/Hypergraph.svelte';
 	import Icon from '#lib/ui/Icon.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
-	import VoxelCube from '#lib/ui/VoxelCube.svelte';
 	import { pct } from '#lib/ui/format.ts';
 	import {
-		ArrowLeft,
-		ArrowRight,
+		Atom,
 		Cube,
 		Dice,
-		FunctionIcon,
-		Grid,
-		Network,
-		Play
+		Next,
+		Pause,
+		Play,
+		Previous,
+		Reset,
+		Thermometer
 	} from '#lib/ui/icons.ts';
+	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
+	import TensorCube from '#lib/viz/TensorCube.svelte';
 
 	const bench = getBench();
 	const C = LAYOUT_SIZE;
 
 	type Mode = 'tensor' | 'relations' | 'linked';
+	type Source = 'exact' | 'trained';
+	type Quantity = 'scores' | 'weights';
 	let mode = $state<Mode>('linked');
-	let section = $state('tensor');
+	let source = $state<Source>('exact');
+	let quantity = $state<Quantity>('scores');
+	let tau = $state(0.33);
 
 	// ── the layout under inspection ──────────────────────────────────────────
-	let dealSeed = $state(1);
-	/** Deal a layout with at least two SETs so there is structure to look at. */
+	let dealSeed = $state(3);
+	/** Deal a layout with at least three SETs so there is structure to look at. */
 	function deal(seed: number): Card[] {
 		const rng = mulberry32(seed * 7717 + 3);
 		for (;;) {
 			const l = dealLayout(rng);
-			if (findSets(l).length >= 2) return l;
+			if (findSets(l).length >= 3) return l;
 		}
 	}
 	const layout = $derived(deal(dealSeed));
 	const sets = $derived(findSets(layout));
-
 	const firstMember = (l: Card[]) => findSets(l)[0]?.[0] ?? 0;
-	let query = $state(firstMember(deal(1)));
-	let headChoice = $state<number | 'auto'>('auto');
+	let query = $state(firstMember(deal(3)));
 	let pick = $state<{ j: number; k: number } | null>(null);
 
 	function newLayout() {
@@ -65,95 +68,126 @@
 		pick = null;
 	}
 
-	// ── probe the cubic model ────────────────────────────────────────────────
-	let probe = $state.raw<ProbeResult | null>(null);
-	let probeError = $state<string | null>(null);
-
-	const cubic = $derived.by(() => {
+	// ── heads: the exact construction, or the trained cubic model ────────────
+	const exact = $derived(exactProbe(layout, 1 / tau));
+	let trained = $state.raw<ProbeResult | null>(null);
+	const cubicStep = $derived.by(() => {
 		void bench.version;
-		const h = bench.history.cubic;
-		return { step: h.step, acc: h.evalAccuracy.at(-1) };
+		return bench.history.cubic.step;
 	});
 	const training = $derived(bench.status === 'training' || bench.status === 'pausing');
 
-	// Re-probe when the layout changes, and at most twice a second while training.
+	/** Re-probe every 50 steps while training (steps arrive faster than a probe takes). */
+	const checkpoint = $derived(Math.floor(cubicStep / 50));
 	$effect(() => {
+		if (source !== 'trained') return;
 		const l = layout;
-		const step = cubic.step;
-		void step;
+		void checkpoint;
 		let cancelled = false;
-		const timer = setTimeout(
-			async () => {
-				try {
-					await bench.ensure();
-					const engine = bench.engineHandle;
-					if (!engine || cancelled) return;
-					const r = await engine.probe('cubic', l);
-					if (!cancelled) {
-						probe = r;
-						probeError = null;
-					}
-				} catch (e) {
-					if (!cancelled) probeError = e instanceof Error ? e.message : String(e);
-				}
-			},
-			training ? 500 : 0
-		);
+		(async () => {
+			await bench.ensure();
+			const engine = bench.engineHandle;
+			if (!engine || cancelled) return;
+			const r = await engine.probe('cubic', l);
+			if (!cancelled) trained = r;
+		})().catch(() => {});
 		return () => {
 			cancelled = true;
-			clearTimeout(timer);
 		};
 	});
 
-	function trainCubic() {
-		bench.start({ only: ['cubic'], until: Math.max(1500, cubic.step + 500) });
+	const probe = $derived<ProbeResult>(source === 'trained' && trained ? trained : exact);
+	const hasScores = $derived(probe === exact);
+	const shown = $derived<Quantity>(hasScores ? quantity : 'weights');
+
+	const partners = $derived(setPartners(sets, query));
+	/** For a trained model, read the head that lines up best with the true SETs. */
+	const head = $derived.by(() => {
+		if (probe.heads === 1) return 0;
+		const a = Array.from({ length: probe.heads }, (_, h) =>
+			setAlignment(querySlice(probe, h, query), partners)
+		);
+		return a.indexOf(Math.max(...a));
+	});
+
+	const slice = $derived(querySlice(probe, head, query));
+	const edges = $derived(topHyperedges(slice, 5, query));
+	const selected = $derived(pick ?? (edges[0] ? { j: edges[0].j, k: edges[0].k } : null));
+
+	/** Normalise to [0, 1] for display; NaN (masked) cells stay NaN. */
+	function unit(a: Float32Array): Float32Array {
+		let lo = Infinity;
+		let hi = -Infinity;
+		for (const v of a)
+			if (!Number.isNaN(v)) {
+				lo = Math.min(lo, v);
+				hi = Math.max(hi, v);
+			}
+		const span = hi - lo || 1;
+		return a.map((v) => (Number.isNaN(v) ? NaN : (v - lo) / span));
 	}
 
-	// ── read-outs ────────────────────────────────────────────────────────────
-	const partners = $derived(setPartners(sets, query));
-	const alignment = $derived(
-		probe ? [0, 1, 2, 3].map((h) => setAlignment(querySlice(probe!, h, query), partners)) : []
+	const scoreSlices = $derived(
+		hasScores ? Array.from({ length: C }, (_, i) => scoreSlice(probe as ExactProbe, i)) : []
 	);
-	const head = $derived(
-		headChoice !== 'auto'
-			? headChoice
-			: alignment.length
-				? alignment.indexOf(Math.max(...alignment))
-				: 0
-	);
-	const slice = $derived(probe ? querySlice(probe, head, query) : new Float32Array(C * C));
-	const edges = $derived(probe ? topHyperedges(slice, 6, query) : []);
-	const selected = $derived(pick ?? (edges[0] ? { j: edges[0].j, k: edges[0].k } : null));
-	const tensor = $derived(probe ? cardTensor(probe, head) : null);
-	const slices = $derived(
-		probe ? Array.from({ length: C }, (_, i) => querySlice(probe!, head, i)) : []
-	);
-	const moment = $derived(probe ? pairMoment(probe, head, query) : null);
-	const sink = $derived(probe ? sinkMass(probe, head, query) : 0);
+	const weightSlices = $derived(Array.from({ length: C }, (_, i) => querySlice(probe, head, i)));
+	const ribbon = $derived.by(() => {
+		const src = shown === 'scores' ? scoreSlices : weightSlices;
+		const flat = new Float32Array(C * C * C);
+		src.forEach((s, i) => flat.set(s, i * C * C));
+		const u = unit(flat);
+		return src.map((_, i) => {
+			const sl = u.subarray(i * C * C, (i + 1) * C * C);
+			// scores: emphasise the top of the range so SET cells stand out from the texture
+			return shown === 'scores' ? sl.map((v) => (Number.isNaN(v) ? NaN : v ** 2.6)) : sl;
+		});
+	});
+	const cubeValues = $derived.by(() => {
+		if (shown === 'scores') {
+			const u = new Float32Array(C * C * C);
+			ribbon.forEach((s, i) => u.set(s.map((v) => (Number.isNaN(v) ? 0 : v ** 1.25)), i * C * C));
+			return u;
+		}
+		return unit(cardTensor(probe, head));
+	});
+	const graphEdges = $derived.by(() => {
+		const top = edges[0]?.weight || 1;
+		return edges.map((e) => ({ j: e.j, k: e.k, weight: e.weight / top }));
+	});
 
-	const weightJK = $derived(selected ? slice[selected.j * C + selected.k] : 0);
-	const weightKJ = $derived(selected ? slice[selected.k * C + selected.j] : 0);
-	const selectedIsSet = $derived(
+	// ── read-outs for the inspector ──────────────────────────────────────────
+	const n = $derived(probe.n);
+	const at = (i: number, j: number, k: number) => ((i + 1) * n + j + 1) * n + k + 1;
+	const scoreA = $derived(
+		hasScores && selected ? (probe as ExactProbe).scores[at(query, selected.j, selected.k)] : null
+	);
+	const weightP = $derived(selected ? slice[selected.j * C + selected.k] : 0);
+	const weightSwap = $derived(selected ? slice[selected.k * C + selected.j] : 0);
+	const sink = $derived(sinkMass(probe, head, query));
+	const isSetPick = $derived(
 		!!selected &&
 			partners.some(
 				([a, b]) => (a === selected.j && b === selected.k) || (a === selected.k && b === selected.j)
 			)
 	);
-
-	const v1 = $derived(probe && selected ? valueRow(probe.v1, probe, head, selected.j + 1) : null);
-	const v2 = $derived(probe && selected ? valueRow(probe.v2, probe, head, selected.k + 1) : null);
-	const d = $derived(v1 && v2 ? v1.map((x, c) => x * v2[c]) : null);
+	const v1 = $derived(selected ? valueRow(probe.v1, probe, head, selected.j + 1) : null);
+	const v2 = $derived(selected ? valueRow(probe.v2, probe, head, selected.k + 1) : null);
+	const dvec = $derived(v1 && v2 ? v1.map((x, c) => x * v2[c]) : null);
 	const vmax = $derived(
-		v1 && v2 ? Math.max(...Array.from(v1, Math.abs), ...Array.from(v2, Math.abs)) : 1
+		v1 && v2 ? Math.max(1e-6, ...Array.from(v1, Math.abs), ...Array.from(v2, Math.abs)) : 1
 	);
-	const dmax = $derived(d ? Math.max(1e-6, ...Array.from(d, Math.abs)) : 1);
-	const momentMax = $derived(moment ? Math.max(1e-6, ...Array.from(moment, Math.abs)) : 1);
+	const dmax = $derived(dvec ? Math.max(1e-6, ...Array.from(dvec, Math.abs)) : 1);
 	const trueCells = $derived(
 		partners.flatMap(([a, b]) => [[a, b] as [number, number], [b, a] as [number, number]])
 	);
-	const prob = $derived(probe ? probe.probs[query] : undefined);
-	const isMember = $derived(partners.length > 0);
 
+	// ── query tour ───────────────────────────────────────────────────────────
+	let touring = $state(false);
+	$effect(() => {
+		if (!touring) return;
+		const id = setInterval(() => step(1), 1400);
+		return () => clearInterval(id);
+	});
 	function setQuery(t: number) {
 		query = t;
 		pick = null;
@@ -161,27 +195,49 @@
 	function step(delta: number) {
 		setQuery((query + delta + C) % C);
 	}
+	function reset() {
+		touring = false;
+		tau = 0.33;
+		quantity = 'scores';
+		setQuery(firstMember(layout));
+	}
+	function trainCubic() {
+		source = 'trained';
+		bench.start({ only: ['cubic'], until: Math.max(1500, cubicStep + 500) });
+	}
+	const cardOptions = $derived(layout.map((_, t) => t));
+	let ribbonWidth = $state(1100);
+	let innerWidth = $state(1600);
+
+	// the dotted leader from the selected voxel to the query node
+	let cubeAnchor = $state<{ x: number; y: number } | null>(null);
+	let graphAnchor = $state<{ x: number; y: number } | null>(null);
+	const link = $derived(
+		mode === 'linked' && innerWidth > 1100 && cubeAnchor && graphAnchor
+			? { a: cubeAnchor, b: graphAnchor }
+			: null
+	);
+	/** Twelve slices across the ribbon: width minus gaps, padding and borders. */
+	const sliceSize = $derived(Math.max(48, Math.min(84, Math.floor((ribbonWidth - 11 * 8 - 12 * 10) / C))));
 </script>
 
 <svelte:head>
 	<title>Linked tensor lab | Polyformer</title>
 </svelte:head>
+<svelte:window bind:innerWidth />
 
 <PageFrame
 	rail={[
-		{ id: 'tensor', label: 'Tensor', icon: Cube },
-		{ id: 'relations', label: 'Relations', icon: Network },
-		{ id: 'maps', label: 'Maps', icon: Grid },
-		{ id: 'algebra', label: 'Algebra', icon: FunctionIcon }
+		{ id: 'tensor', label: 'Tensor lab', icon: Cube, href: resolve('/explore') },
+		{ id: 'diagrams', label: 'Diagrams', icon: Atom, href: resolve('/explore/diagrams') }
 	]}
-	active={section}
-	onselect={(id) => (section = id)}
+	active="tensor"
 >
 	<div class="lab" data-mode={mode}>
 		<header class="head">
-			<div class="title">
-				<h1 class="page-title">Cubic attention</h1>
-				<div class="seg" role="group" aria-label="View">
+			<div class="title-row">
+				<h1>Cubic attention</h1>
+				<div class="seg" role="group" aria-label="Layout">
 					<button aria-pressed={mode === 'tensor'} onclick={() => (mode = 'tensor')}>Tensor</button>
 					<button aria-pressed={mode === 'relations'} onclick={() => (mode = 'relations')}
 						>Relations</button
@@ -189,547 +245,662 @@
 					<button aria-pressed={mode === 'linked'} onclick={() => (mode = 'linked')}>Linked</button>
 				</div>
 			</div>
-			<p class="lede">
-				One trained cubic head, read three ways. Pick a query card: the cube, the hypergraph and the
-				slice all show where it puts its weight over ordered pairs of other cards.
+			<p class="sub">
+				One head scores every query against every ordered pair of other cards. Pick a card, a voxel
+				or a membrane; all views follow.
 			</p>
-			<div class="model">
-				{#if cubic.step === 0}
-					<span class="hint">The cubic model is untrained, so its weights are diffuse.</span>
-					<button
-						class="btn primary"
-						onclick={trainCubic}
-						disabled={training || bench.status === 'booting'}
-					>
-						<Icon icon={Play} size={14} />Train cubic to step 1,500
-					</button>
-				{:else}
-					<span class="hint num">
-						Cubic model at step {cubic.step.toLocaleString('en-US')}{cubic.acc !== undefined
-							? `, ${pct(cubic.acc)} held-out token accuracy`
-							: ''}
-					</span>
-					{#if !training && cubic.step < 1500}
-						<button class="btn" onclick={trainCubic}
-							><Icon icon={Play} size={14} />Keep training</button
-						>
-					{/if}
-				{/if}
-				{#if probeError}<span class="hint">{probeError}</span>{/if}
-			</div>
 		</header>
 
-		<div class="stage">
-			<section class="panel view cube-view" id="tensor" aria-label="Attention tensor">
-				<div class="panel-head">
-					<div class="panel-title">
-						<Icon icon={Cube} size={16} />Normalized weights <MathTex tex={'P_{ijk}'} />
-					</div>
-					<span class="hint">Drag to orbit, click a bright cell</span>
+		<section class="stage" aria-label="Linked views">
+			<div class="view cube-view" id="tensor">
+				<div class="view-label">
+					<span
+						>{shown === 'scores' ? 'Attention scores' : 'Attention weights'}
+						<MathTex tex={shown === 'scores' ? 'A' : 'P'} /></span
+					>
 				</div>
-				<div class="cube-wrap">
-					<VoxelCube
-						values={tensor}
-						n={C}
-						{query}
-						{selected}
-						onpick={(c) => {
-							query = c.i;
-							pick = { j: c.j, k: c.k };
-						}}
-					/>
+				<TensorCube
+					values={cubeValues}
+					n={C}
+					{query}
+					{selected}
+					onpick={(c) => {
+						query = c.i;
+						pick = { j: c.j, k: c.k };
+					}}
+					onanchor={(p) => (cubeAnchor = p)}
+				/>
+				<div class="view-foot">Drag to orbit. Click a bright voxel to select it.</div>
+			</div>
+			<div class="view graph-view" id="relations">
+				<div class="view-label">
+					<span>Linked view</span>
+					<small>The selected hyperedge is the selected voxel.</small>
 				</div>
-			</section>
+				<Hypergraph3D
+					{layout}
+					{query}
+					edges={graphEdges}
+					{selected}
+					{sets}
+					onquery={setQuery}
+					onedge={(e) => (pick = e)}
+					onanchor={(p) => (graphAnchor = p)}
+				/>
+			</div>
+		</section>
 
-			<section class="panel view graph-view" id="relations" aria-label="Hypergraph">
-				<div class="panel-head">
-					<div class="panel-title">
-						<Icon icon={Network} size={16} />Top hyperedges of query {query + 1}
+		<aside class="inspector" id="algebra" aria-label="Selected interaction">
+			<div class="insp-head">
+				<h2>Selected interaction</h2>
+
+			</div>
+
+			<div class="pickers">
+				<label class="picker">
+					<span class="p-label"><span class="port q" aria-hidden="true"></span>Query <i>i</i></span>
+					<select value={query} onchange={(e) => setQuery(+e.currentTarget.value)}>
+						{#each cardOptions as t (t)}<option value={t}>Card {t + 1}</option>{/each}
+					</select>
+					<SetCard card={layout[query]} width={34} />
+				</label>
+				<label class="picker">
+					<span class="p-label"><span class="port r1" aria-hidden="true"></span>Role 1 <i>j</i></span>
+					<select
+						value={selected?.j ?? 0}
+						onchange={(e) => (pick = { j: +e.currentTarget.value, k: selected?.k ?? 0 })}
+					>
+						{#each cardOptions as t (t)}<option value={t} disabled={t === query}>Card {t + 1}</option
+							>{/each}
+					</select>
+					{#if selected}<SetCard card={layout[selected.j]} width={34} />{/if}
+				</label>
+				<label class="picker">
+					<span class="p-label"><span class="port r2" aria-hidden="true"></span>Role 2 <i>k</i></span>
+					<select
+						value={selected?.k ?? 0}
+						onchange={(e) => (pick = { j: selected?.j ?? 0, k: +e.currentTarget.value })}
+					>
+						{#each cardOptions as t (t)}<option value={t} disabled={t === query}>Card {t + 1}</option
+							>{/each}
+					</select>
+					{#if selected}<SetCard card={layout[selected.k]} width={34} />{/if}
+				</label>
+			</div>
+
+			<div class="block">
+				<h3>Attention score</h3>
+				<div class="eq"><MathTex display tex={'A_{ijk} = \\langle Q_i,\\ K^1_j \\odot K^2_k \\rangle'} /></div>
+				<p class="note">A query scores a pair of keys.</p>
+			</div>
+
+			<div class="block">
+				<h3>Value interaction</h3>
+				<div class="eq"><MathTex display tex={'D_{jk} = V^1_j \\odot V^2_k'} /></div>
+				<p class="note">Pairs of values interact before aggregation.</p>
+			</div>
+
+			<div class="block">
+				<h3>Value features</h3>
+				{#if v1 && v2 && dvec}
+					<div class="strips">
+						<MathTex tex="V^1_j" /><FeatureStrip values={v1} max={vmax} cell={11} height={16} label="Role 1 value features" />
+						<MathTex tex="V^2_k" /><FeatureStrip values={v2} max={vmax} cell={11} height={16} label="Role 2 value features" />
 					</div>
-					<span class="legend">
-						<span class="lg"
-							><svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" /></svg
-							>query <i>i</i></span
-						>
-						<span class="lg"
-							><svg width="12" height="12" aria-hidden="true"
-								><rect x="2" y="2" width="8" height="8" /></svg
-							>role 1 <i>j</i></span
-						>
-						<span class="lg"
-							><svg width="12" height="12" aria-hidden="true"
-								><polygon points="6,1 11,6 6,11 1,6" /></svg
-							>role 2 <i>k</i></span
-						>
-						<span class="lg"
-							><svg width="16" height="12" aria-hidden="true"
-								><line x1="1" y1="6" x2="15" y2="6" class="dash" /></svg
-							>true SET</span
-						>
-					</span>
-				</div>
-				<div class="graph-wrap">
-					<Hypergraph
-						{layout}
-						{query}
-						{edges}
-						{selected}
-						truth={partners}
-						onquery={setQuery}
-						onedge={(e) => (pick = e)}
-					/>
-				</div>
-			</section>
-
-			<aside class="panel inspector" id="algebra" aria-label="Selected interaction">
-				<div class="panel-head"><div class="panel-title">Selected interaction</div></div>
-				{#if selected}
-					<div class="roles">
-						<div class="role">
-							<svg width="12" height="12" aria-hidden="true"><circle cx="6" cy="6" r="4.5" /></svg>
-							<span>Query <i>i</i></span>
-							<SetCard card={layout[query]} width={44} />
-						</div>
-						<div class="role">
-							<svg width="12" height="12" aria-hidden="true"
-								><rect x="2" y="2" width="8" height="8" /></svg
-							>
-							<span>Role 1 <i>j</i></span>
-							<SetCard card={layout[selected.j]} width={44} />
-						</div>
-						<div class="role">
-							<svg width="12" height="12" aria-hidden="true"
-								><polygon points="6,1 11,6 6,11 1,6" /></svg
-							>
-							<span>Role 2 <i>k</i></span>
-							<SetCard card={layout[selected.k]} width={44} />
-						</div>
-					</div>
-
-					<div class="block">
-						<div class="label">Attention score</div>
-						<MathTex display tex={OPERATORS.cubic.logitTex} />
-						<dl class="kv">
-							<div>
-								<dt><MathTex tex={'P_{ijk}'} /></dt>
-								<dd class="num">{pct(weightJK, 2)}</dd>
-							</div>
-							<div>
-								<dt><MathTex tex={'P_{ikj}'} /></dt>
-								<dd class="num">{pct(weightKJ, 2)}</dd>
-							</div>
-							<div>
-								<dt>Sink</dt>
-								<dd class="num">{pct(sink, 1)}</dd>
-							</div>
-							<div>
-								<dt>Is a SET</dt>
-								<dd>{selectedIsSet ? 'Yes' : 'No'}</dd>
-							</div>
-						</dl>
-					</div>
-
-					<div class="block">
-						<div class="label">Value interaction</div>
-						<MathTex display tex={'D_{jk} = V^1_j \\odot V^2_k'} />
-						{#if v1 && v2 && d}
-							<div class="strips">
-								<MathTex tex="V^1_j" /><FeatureStrip
-									values={v1}
-									max={vmax}
-									label="Role 1 value features"
-								/>
-								<MathTex tex="V^2_k" /><FeatureStrip
-									values={v2}
-									max={vmax}
-									label="Role 2 value features"
-								/>
-								<MathTex tex={'D_{jk}'} /><FeatureStrip
-									values={d}
-									max={dmax}
-									label="Pair value features"
-								/>
-							</div>
-						{/if}
-					</div>
-
-					<div class="block">
-						<div class="label">Prediction for query {query + 1}</div>
-						<p class="pred">
-							<span class="num">{pct(prob)}</span> in a SET.
-							<span class="hint">{isMember ? 'It is in one.' : 'It is in none.'}</span>
-						</p>
+					<h3 class="mt">Resulting feature vector</h3>
+					<div class="strips">
+						<MathTex tex={'D_{jk}'} /><FeatureStrip values={dvec} max={dmax} cell={11} height={16} label="Pair value features" />
 					</div>
 				{/if}
-			</aside>
-		</div>
+			</div>
 
-		<div class="maps" id="maps">
-			<section class="panel map" aria-label="Query slice">
-				<div class="panel-head">
-					<div class="panel-title">Query slice <MathTex tex={'P_{i,:,:}'} /></div>
-					<span class="hint">rows <i>j</i>, columns <i>k</i>; dots mark true SETs</span>
-				</div>
-				<div class="map-body">
-					<Heatmap
-						values={slice}
-						rows={C}
-						cols={C}
-						size={216}
-						selected={selected ? [selected.j, selected.k] : null}
-						marks={trueCells}
-						label="Query slice of P for query {query + 1}"
-						onpick={([j, k]) => j !== k && (pick = { j, k })}
-					/>
-				</div>
-			</section>
+			<div class="block">
+				<h3>Selected quantities</h3>
+				<table class="qty">
+					<tbody>
+						<tr>
+							<th><MathTex tex={'A_{ijk}'} /></th>
+							<td>Scalar score</td>
+							<td class="num">{scoreA === null ? '—' : scoreA.toFixed(2)}</td>
+						</tr>
+						<tr>
+							<th><MathTex tex={'P_{ijk}'} /></th>
+							<td>Scalar weight</td>
+							<td class="num">{pct(weightP, 1)}</td>
+						</tr>
+						<tr>
+							<th><MathTex tex={'P_{ikj}'} /></th>
+							<td>Swapped roles</td>
+							<td class="num">{pct(weightSwap, 1)}</td>
+						</tr>
+						<tr>
+							<th>Sink</th>
+							<td>No pair fits</td>
+							<td class="num">{pct(sink, 1)}</td>
+						</tr>
+						<tr>
+							<th>SET</th>
+							<td>Do <i>i, j, k</i> form one?</td>
+							<td>{isSetPick ? 'Yes' : 'No'}</td>
+						</tr>
+					</tbody>
+				</table>
+			</div>
 
-			<section class="panel map" aria-label="Pair moment">
-				<div class="panel-head">
-					<div class="panel-title">Pair moment <MathTex tex={'M_i = V^{1\\top} P_i V^2'} /></div>
-				</div>
-				<div class="map-body">
-					{#if moment && probe}
-						<Heatmap
-							values={moment}
-							rows={probe.dh}
-							cols={probe.dh}
-							size={216}
-							scale="signed"
-							max={momentMax}
-							diagonal
-							label="Pair moment matrix for query {query + 1}"
-						/>
-					{/if}
-					<p class="hint cap">
-						Every feature pair the head could bind. Its outlined diagonal is the Hadamard output
-						<MathTex tex={'Y_i = \\sum_{jk} P_{ijk} D_{jk}'} />.
+			<div class="block source">
+				<h3>{source === 'exact' ? 'Constructed head' : 'Trained head'}</h3>
+				{#if source === 'exact'}
+					<p class="note">
+						Built by hand, not learned: 16 trilinear channels compute
+						<MathTex tex={'\\sum_t \\cos\\tfrac{2\\pi}{3}(a_t+b_t+c_t)'} />, which is 4 for every SET and at
+						most 2.5 otherwise. Switch the head to Trained to see what gradient descent finds.
 					</p>
-				</div>
-			</section>
+				{:else if cubicStep === 0}
+					<p class="note">The cubic model has not trained yet, so this view still shows the constructed head.</p>
+					<button class="btn primary" onclick={trainCubic} disabled={training}>
+						<Icon icon={Play} size={14} />Train to step 1,500
+					</button>
+				{:else}
+					<p class="note num">
+						Learned by gradient descent, step {cubicStep.toLocaleString('en-US')}. Head {head + 1} lines up
+						best with the true SETs.
+					</p>
+				{/if}
+			</div>
+		</aside>
 
-			<section class="panel map ribbon" aria-label="All query slices">
-				<div class="panel-head">
-					<div class="panel-title">Query slices of <MathTex tex="P" /></div>
-					<span class="hint"
-						>head {head + 1}{headChoice === 'auto' ? ', most SET-aligned' : ''}</span
-					>
-				</div>
-				<div class="thumbs">
-					{#each slices as s, i (i)}
-						<button
-							class={['thumb', i === query && 'on']}
-							onclick={() => setQuery(i)}
-							aria-label="Query card {i + 1}"
-						>
-							<span class="hint num"><i>i</i> = {i + 1}</span>
-							<Heatmap
-								values={s}
-								rows={C}
-								cols={C}
-								size={60}
-								gap={0}
-								label="Slice for query {i + 1}"
-							/>
-						</button>
-					{/each}
-				</div>
-			</section>
-		</div>
-
-		<footer class="transport" aria-label="Lab controls">
-			<span class="hint">Query <i>i</i></span>
-			<button class="btn icon-only" aria-label="Previous query" onclick={() => step(-1)}
-				><Icon icon={ArrowLeft} size={16} /></button
-			>
-			<span class="num q">{query + 1}</span>
-			<button class="btn icon-only" aria-label="Next query" onclick={() => step(1)}
-				><Icon icon={ArrowRight} size={16} /></button
-			>
-			<span class="divider"></span>
-			<span class="hint">Head</span>
-			<div class="seg" role="group" aria-label="Attention head">
-				<button aria-pressed={headChoice === 'auto'} onclick={() => (headChoice = 'auto')}
-					>Auto</button
-				>
-				{#each [0, 1, 2, 3] as h (h)}
+		<section class="ribbon" id="maps" aria-label="Query slices">
+			<div class="ribbon-head">
+				<h2>Query slices of <MathTex tex={shown === 'scores' ? 'A' : 'P'} /></h2>
+				<div class="seg" role="group" aria-label="Quantity">
 					<button
-						aria-pressed={headChoice === h}
-						onclick={() => (headChoice = h)}
-						title={alignment.length ? `${pct(alignment[h])} of weight on true SETs` : undefined}
-						>{h + 1}</button
+						aria-pressed={shown === 'scores'}
+						disabled={!hasScores}
+						onclick={() => (quantity = 'scores')}>Scores</button
 					>
+					<button aria-pressed={shown === 'weights'} onclick={() => (quantity = 'weights')}
+						>Weights</button
+					>
+				</div>
+			</div>
+			<div class="slices" bind:clientWidth={ribbonWidth}>
+				{#each ribbon as s, i (i)}
+					<button
+						class="slice"
+						class:on={i === query}
+						onclick={() => setQuery(i)}
+						aria-label="Query slice for card {i + 1}"
+					>
+						<span class="s-label"><i>i</i> = {i + 1}</span>
+						<Heatmap
+							values={s}
+							rows={C}
+							cols={C}
+							size={sliceSize}
+							max={1}
+							selected={i === query && selected ? [selected.j, selected.k] : null}
+							marks={i === query ? trueCells : []}
+							label="Slice for card {i + 1}"
+						/>
+					</button>
 				{/each}
 			</div>
-			<span class="divider"></span>
-			<button class="btn" onclick={newLayout}><Icon icon={Dice} size={16} />Deal new layout</button>
-			<span class="hint sets num">{sets.length} SETs on the table</span>
+		</section>
+
+		<footer class="transport" aria-label="Lab controls">
+			<div class="group">
+				<span class="t-label">Query <i>i</i></span>
+				<div class="stepper">
+					<button onclick={() => step(-1)} aria-label="Previous query"
+						><Icon icon={Previous} size={16} /></button
+					>
+					<span class="num">{query + 1}</span>
+					<button onclick={() => step(1)} aria-label="Next query"><Icon icon={Next} size={16} /></button>
+				</div>
+			</div>
+			<div class="group temp">
+				<Icon icon={Thermometer} size={16} />
+				<label class="t-label" for="tau">Temperature <i>τ</i></label>
+				<input
+					id="tau"
+					type="range"
+					min="0.08"
+					max="1.5"
+					step="0.01"
+					bind:value={tau}
+					disabled={source !== 'exact'}
+				/>
+				<span class="num val">{tau.toFixed(2)}</span>
+			</div>
+			<div class="group">
+				<span class="t-label">Head</span>
+				<div class="seg" role="group" aria-label="Head">
+					<button aria-pressed={source === 'exact'} onclick={() => (source = 'exact')}>Constructed</button>
+					<button aria-pressed={source === 'trained'} onclick={() => (source = 'trained')}>Trained</button>
+				</div>
+			</div>
+			<div class="group keys">
+				<button class="key" onclick={reset}><Icon icon={Reset} size={17} /><span>Reset</span></button>
+				<button class="key" onclick={() => step(-1)}
+					><Icon icon={Previous} size={17} /><span>Back</span></button
+				>
+				<button class="key play" class:on={touring} onclick={() => (touring = !touring)}>
+					<Icon icon={touring ? Pause : Play} size={17} /><span>{touring ? 'Pause' : 'Tour'}</span>
+				</button>
+				<button class="key" onclick={() => step(1)}><Icon icon={Next} size={17} /><span>Step</span></button>
+				<button class="key" onclick={newLayout}><Icon icon={Dice} size={17} /><span>Deal</span></button>
+			</div>
+			<div class="group right">
+				<span class="t-label num">{sets.length} SETs on the table</span>
+			</div>
 		</footer>
+		{#if link}
+			<svg class="link" aria-hidden="true">
+				<line x1={link.a.x} y1={link.a.y} x2={link.b.x} y2={link.b.y} />
+				<circle cx={link.a.x} cy={link.a.y} r="2.5" />
+			</svg>
+		{/if}
 	</div>
 </PageFrame>
 
 <style>
 	.lab {
-		display: flex;
-		flex-direction: column;
-		gap: 14px;
-		padding: 18px 20px 0;
-		min-height: calc(100dvh - var(--bar-h));
+		--transport-h: 60px;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 312px;
+		grid-template-rows: auto minmax(300px, 1fr) auto;
+		grid-template-areas:
+			'head insp'
+			'stage insp'
+			'ribbon insp';
+		gap: 0 20px;
+		height: calc(100dvh - var(--bar-h) - var(--transport-h));
+		padding: 18px 0 0 28px;
 	}
 	.head {
-		display: grid;
-		grid-template-columns: auto 1fr auto;
-		align-items: center;
-		gap: 6px 24px;
+		grid-area: head;
 	}
-	.title {
+	.title-row {
 		display: flex;
 		align-items: center;
-		gap: 16px;
+		gap: 18px;
 	}
-	.head .lede {
-		margin: 0;
+	h1 {
+		font-size: 28px;
+		font-weight: 500;
+		letter-spacing: -0.025em;
+		line-height: 1.1;
+	}
+	.sub {
+		margin-top: 6px;
+		max-width: 70ch;
+		color: var(--color-ink-3);
 		font-size: var(--text-sm);
-		max-width: 62ch;
-	}
-	.model {
-		display: flex;
-		align-items: center;
-		gap: 12px;
-		justify-content: flex-end;
 	}
 
 	.stage {
+		grid-area: stage;
 		display: grid;
-		grid-template-columns: minmax(0, 1fr) minmax(0, 1.08fr) 292px;
-		gap: 14px;
-		min-height: 440px;
+		grid-template-columns: 1.08fr 1fr;
+		min-height: 0;
+		margin-top: 4px;
 	}
-	.lab[data-mode='tensor'] .stage {
-		grid-template-columns: minmax(0, 1fr) 292px;
+	/* a single view takes the whole stage; the other is hidden, never squeezed to zero */
+	.lab[data-mode='tensor'] .stage,
+	.lab[data-mode='relations'] .stage {
+		grid-template-columns: minmax(0, 1fr);
 	}
 	.lab[data-mode='tensor'] .graph-view,
 	.lab[data-mode='relations'] .cube-view {
 		display: none;
 	}
-	.lab[data-mode='relations'] .stage {
-		grid-template-columns: minmax(0, 1fr) 292px;
-	}
 	.view {
-		display: flex;
-		flex-direction: column;
-		min-width: 0;
-	}
-	.cube-wrap,
-	.graph-wrap {
 		position: relative;
-		flex: 1;
-		min-height: 380px;
-	}
-	.graph-wrap {
-		padding: 10px 18px 18px;
-	}
-	.legend {
-		display: flex;
-		gap: 12px;
-		font-size: var(--text-2xs);
-		color: var(--color-ink-2);
-	}
-	.lg {
-		display: inline-flex;
-		align-items: center;
-		gap: 5px;
-		white-space: nowrap;
-	}
-	.lg svg,
-	.role svg {
-		fill: none;
-		stroke: var(--color-ink);
-		stroke-width: 1.3;
-	}
-	.lg .dash {
-		stroke: var(--color-ink-2);
-		stroke-dasharray: 3 3;
-	}
-
-	.inspector {
-		display: flex;
-		flex-direction: column;
+		min-height: 0;
 		min-width: 0;
 	}
-	.roles {
-		display: grid;
-		grid-template-columns: repeat(3, 1fr);
-		gap: 6px;
-		padding: 12px 14px;
-		border-bottom: 1px solid #222;
-	}
-	.role {
+	.view-label {
+		position: absolute;
+		z-index: 2;
+		top: 8px;
+		left: 0;
 		display: flex;
 		flex-direction: column;
-		align-items: center;
-		gap: 6px;
-		padding: 8px 4px;
-		border: 1px solid var(--color-edge);
-		border-radius: var(--radius-ui);
-		background: var(--color-well);
-		font-size: var(--text-xs);
-		color: var(--color-ink-2);
+		gap: 2px;
+		font-size: 15px;
+		font-weight: 500;
+		pointer-events: none;
 	}
-	.block {
-		padding: 12px 14px;
-		border-bottom: 1px solid #222;
-	}
-	.block:last-child {
-		border-bottom: 0;
-	}
-	.label {
-		font-size: var(--text-xs);
-		color: var(--color-ink-2);
-	}
-	.kv {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 4px 16px;
-		margin: 2px 0 0;
-		font-size: var(--text-sm);
-	}
-	.kv div {
+	.view-label > span {
 		display: flex;
-		justify-content: space-between;
+		gap: 6px;
 		align-items: baseline;
 	}
-	.kv dt {
-		color: var(--color-ink-2);
+	.view-label small {
+		font-size: var(--text-xs);
+		font-weight: 400;
+		color: var(--color-ink-3);
 	}
-	.kv dd {
-		margin: 0;
+	.graph-view .view-label {
+		left: 12px;
+	}
+	.view-foot {
+		position: absolute;
+		left: 0;
+		bottom: 6px;
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+		pointer-events: none;
+	}
+
+	/* inspector: one quiet column, spacing instead of boxes */
+	.inspector {
+		grid-area: insp;
+		align-self: stretch;
+		overflow-y: auto;
+		margin-top: -18px;
+		padding: 18px 22px 24px;
+		background: #0c0c0c;
+		border-left: 1px solid #1a1a1a;
+	}
+	.insp-head {
+		padding-bottom: 6px;
+	}
+	h2 {
+		display: flex;
+		gap: 6px;
+		align-items: baseline;
+		font-size: 15px;
+		font-weight: 500;
+		color: var(--color-ink);
+	}
+	.pickers {
+		display: grid;
+		grid-template-columns: repeat(3, 1fr);
+		gap: 10px;
+		padding: 12px 0 6px;
+	}
+	.picker {
+		display: grid;
+		justify-items: center;
+		gap: 8px;
+	}
+	.p-label {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+	}
+	.p-label i,
+	.t-label i,
+	.s-label i {
+		font-family: var(--font-math);
+		font-size: 1.15em;
+		color: var(--color-ink);
+	}
+	.picker select {
+		width: 100%;
+	}
+	.port {
+		flex: none;
+		display: inline-block;
+		width: 8px;
+		height: 8px;
+		border: 1px solid var(--color-ink-2);
+	}
+	.port.q {
+		border-radius: 50%;
+	}
+	.port.r1 {
+		border-radius: 1px;
+	}
+	.port.r2 {
+		width: 7px;
+		height: 7px;
+		transform: rotate(45deg);
+	}
+	.block {
+		padding: 14px 0 4px;
+	}
+	h3 {
+		font-size: var(--text-xs);
+		font-weight: 500;
+		color: var(--color-ink-2);
+		margin-bottom: 4px;
+	}
+	h3.mt {
+		margin-top: 12px;
+	}
+	.eq {
+		font-size: 18px;
+	}
+	.eq :global(.katex-display) {
+		margin: 0.1em 0;
+		text-align: left;
+	}
+	.note {
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+		line-height: 1.5;
 	}
 	.strips {
 		display: grid;
-		grid-template-columns: 34px auto;
+		grid-template-columns: 30px 1fr;
+		gap: 8px 6px;
 		align-items: center;
-		gap: 6px 8px;
-		margin-top: 2px;
+		font-size: 14px;
 	}
-	.pred {
-		margin-top: 4px;
-		font-size: var(--text-sm);
+	.qty {
+		width: 100%;
+		border-collapse: collapse;
+		font-size: var(--text-xs);
+	}
+	.qty th {
+		width: 48px;
+		text-align: left;
+		font-weight: 400;
+		font-size: 14px;
+		color: var(--color-ink);
+	}
+	.qty td {
+		padding: 5px 0;
+		color: var(--color-ink-3);
+	}
+	.qty td.num {
+		text-align: right;
+		color: var(--color-ink);
+	}
+	.source .btn {
+		margin-top: 10px;
 	}
 
-	.maps {
-		display: grid;
-		grid-template-columns: auto auto minmax(0, 1fr);
-		gap: 14px;
+	/* ribbon */
+	.ribbon {
+		grid-area: ribbon;
+		padding: 8px 0 12px;
 	}
-	.map-body {
+	.ribbon-head {
 		display: flex;
-		flex-direction: column;
-		gap: 10px;
-		padding: 14px;
-	}
-	.cap {
-		max-width: 216px;
-	}
-	.thumbs {
-		display: grid;
-		grid-template-columns: repeat(6, max-content);
-		gap: 10px 12px;
-		padding: 12px 14px;
-		justify-content: start;
-	}
-	.thumb {
-		display: flex;
-		flex-direction: column;
 		align-items: center;
+		justify-content: space-between;
+		margin-bottom: 6px;
+	}
+	.slices {
+		display: flex;
+		gap: 8px;
+		overflow-x: auto;
+		padding-bottom: 2px;
+	}
+	.slice {
+		display: grid;
 		gap: 4px;
-		padding: 4px;
-		border: 1px solid transparent;
-		border-radius: var(--radius-ui);
-		background: none;
-		color: inherit;
-		font: inherit;
+		justify-items: center;
+		padding: 5px;
+		border: 0;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--color-ink-3);
 		cursor: pointer;
 	}
-	.thumb:hover {
-		border-color: var(--color-edge);
+	.slice:hover {
+		background: #121212;
 	}
-	.thumb.on {
-		border-color: var(--color-ink);
-		box-shadow: 0 0 10px rgb(255 255 255 / 0.18);
+	.slice.on {
+		background: #161616;
+		color: var(--color-ink);
+	}
+	.s-label {
+		font-size: var(--text-2xs);
+		white-space: nowrap;
 	}
 
+	/* transport */
 	.transport {
-		position: sticky;
+		position: fixed;
+		left: var(--rail-w);
+		right: 0;
 		bottom: 0;
-		margin: auto -20px 0;
+		z-index: 10;
+		height: var(--transport-h);
+		display: flex;
+		align-items: center;
+		gap: 30px;
+		padding: 0 22px 0 28px;
+		border-top: 1px solid #1a1a1a;
+		background: var(--color-void);
+	}
+	.group {
 		display: flex;
 		align-items: center;
 		gap: 10px;
-		height: 52px;
-		padding: 0 20px;
-		background: rgb(8 8 8 / 0.94);
-		border-top: 1px solid var(--color-edge);
-		backdrop-filter: blur(6px);
 	}
-	.q {
-		min-width: 18px;
-		text-align: center;
-	}
-	.divider {
-		width: 1px;
-		height: 20px;
-		background: var(--color-edge);
-		margin: 0 6px;
-	}
-	.sets {
+	.group.right {
 		margin-left: auto;
 	}
+	.t-label {
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+		white-space: nowrap;
+	}
+	.stepper {
+		display: flex;
+		align-items: center;
+		height: 28px;
+		border-radius: 6px;
+		background: #1a1a1a;
+	}
+	.stepper button {
+		display: grid;
+		place-items: center;
+		width: 28px;
+		height: 100%;
+		border: 0;
+		background: transparent;
+		color: var(--color-ink-3);
+		cursor: pointer;
+	}
+	.stepper button:hover {
+		color: var(--color-ink);
+	}
+	.stepper span {
+		min-width: 24px;
+		text-align: center;
+		font-size: var(--text-sm);
+	}
+	.temp input {
+		width: 140px;
+	}
+	.temp :global(svg) {
+		color: var(--color-ink-3);
+	}
+	.val {
+		min-width: 34px;
+		font-size: var(--text-sm);
+		color: var(--color-ink);
+	}
+	.keys {
+		gap: 2px;
+	}
+	.key {
+		display: grid;
+		justify-items: center;
+		gap: 3px;
+		min-width: 46px;
+		padding: 5px 4px 3px;
+		border: 0;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--color-ink-3);
+		font-size: var(--text-2xs);
+		cursor: pointer;
+	}
+	.key:hover {
+		color: var(--color-ink);
+		background: #141414;
+	}
+	.key.play {
+		color: var(--color-ink);
+	}
+	.key.play :global(svg) {
+		box-sizing: content-box;
+		padding: 5px;
+		margin: -5px 0 0;
+		border-radius: 6px;
+		background: var(--color-ink);
+		color: var(--color-void);
+	}
 
-	@media (max-width: 1320px) {
+	.link {
+		position: fixed;
+		inset: 0;
+		z-index: 5;
+		width: 100%;
+		height: 100%;
+		pointer-events: none;
+	}
+	.link line {
+		stroke: rgb(245 245 245 / 0.6);
+		stroke-width: 1;
+		stroke-dasharray: 1.5 4;
+	}
+	.link circle {
+		fill: var(--color-ink);
+	}
+
+	@media (max-width: 1100px) {
+		.lab {
+			height: auto;
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-areas: 'head' 'stage' 'ribbon' 'insp';
+			padding: 16px 16px var(--transport-h);
+		}
 		.stage {
-			grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+			grid-template-columns: minmax(0, 1fr);
+			grid-auto-rows: 380px;
 		}
 		.inspector {
-			grid-column: 1 / -1;
-		}
-		.maps {
-			grid-template-columns: auto auto;
-		}
-		.ribbon {
-			grid-column: 1 / -1;
-		}
-		.head {
-			grid-template-columns: 1fr;
-		}
-		.model {
-			justify-content: flex-start;
-		}
-	}
-	@media (max-width: 760px) {
-		.lab {
-			padding: 14px 16px 0;
-		}
-		.stage,
-		.lab[data-mode] .stage {
-			grid-template-columns: minmax(0, 1fr);
-		}
-		.maps {
-			grid-template-columns: minmax(0, 1fr);
-		}
-		.thumbs {
-			grid-template-columns: repeat(4, max-content);
-		}
-		.legend {
-			display: none;
+			margin: 0;
+			border: 0;
+			border-radius: 8px;
 		}
 		.transport {
-			margin: auto -16px 0;
-			padding: 0 16px;
+			left: 0;
+			gap: 18px;
 			overflow-x: auto;
+			padding: 0 16px;
 		}
-		.sets {
-			display: none;
+	}
+	@media (max-width: 640px) {
+		h1 {
+			font-size: 24px;
+		}
+		.title-row {
+			flex-wrap: wrap;
+			gap: 10px;
+		}
+		.stage {
+			grid-auto-rows: 320px;
 		}
 	}
 </style>

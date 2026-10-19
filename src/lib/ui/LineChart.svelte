@@ -10,6 +10,8 @@
 		ys: ArrayLike<number>;
 		/** Thicker line for the series under study. */
 		emphasis?: boolean;
+		/** A recorded run drawn faintly behind the live ones, for the live run to race. */
+		ghost?: boolean;
 	}
 
 	export interface ReferenceLine {
@@ -57,7 +59,7 @@
 	let width = $state(0);
 	/** End labels need a right margin; on phones the tooltip and runs table carry identity instead. */
 	const narrow = $derived(width > 0 && width < 520);
-	const PAD = $derived({ l: 44, r: narrow ? 14 : 128, t: 12, b: 28 });
+	const PAD = $derived({ l: 48, r: narrow ? 26 : 150, t: 12, b: 44 });
 	let hoverX = $state<number | null>(null);
 
 	const toneHex = (t: number) => {
@@ -98,12 +100,14 @@
 		return out;
 	});
 
-	/** End labels, nudged apart so they never collide. */
+	/** End labels, nudged apart so they never collide. Ghosts are labelled only while nothing is live. */
 	const endLabels = $derived.by(() => {
 		void version;
+		const live = series.some((s) => !s.ghost && s.xs.length > 0);
 		const items = series
-			.filter((s) => s.xs.length > 0)
+			.filter((s) => s.xs.length > 0 && !!s.ghost !== live)
 			.map((s) => ({
+				ghost: !!s.ghost,
 				id: s.id,
 				label: s.label,
 				tone: s.tone,
@@ -113,7 +117,7 @@
 			}))
 			.sort((a, b) => a.y - b.y);
 		for (let i = 1; i < items.length; i++)
-			if (items[i].y - items[i - 1].y < 13) items[i].y = items[i - 1].y + 13;
+			if (items[i].y - items[i - 1].y < 16) items[i].y = items[i - 1].y + 16;
 		const overflow = items.length ? items[items.length - 1].y - (PAD.t + plotH) : 0;
 		if (overflow > 0) for (const it of items) it.y -= overflow;
 		return items;
@@ -125,11 +129,18 @@
 		const x = ((hoverX - PAD.l) / plotW) * xMax;
 		if (x < 0 || x > xMax) return null;
 		const rows = series
+			.filter((s) => !s.ghost || !series.some((o) => !o.ghost && o.id === s.id && o.xs.length > 0))
 			.map((s) => {
 				const i = lastAtOrBefore(s.xs, x);
 				return i < 0
 					? null
-					: { id: s.id, label: s.label, tone: s.tone, value: s.ys[i], at: s.xs[i] };
+					: {
+							id: s.id + (s.ghost ? ':ghost' : ''),
+							label: s.label + (s.ghost ? ' (recorded)' : ''),
+							tone: s.tone,
+							value: s.ys[i],
+							at: s.xs[i]
+						};
 			})
 			.filter((r) => r !== null)
 			.sort((a, b) => b.value - a.value);
@@ -150,7 +161,7 @@
 		g.clearRect(0, 0, w, height);
 
 		// grid
-		g.font = '11px "Geist Variable", system-ui, sans-serif';
+		g.font = '12px "Geist Variable", system-ui, sans-serif';
 		g.textBaseline = 'middle';
 		g.lineWidth = 1;
 		for (const t of yTicks) {
@@ -208,8 +219,9 @@
 		for (const s of ordered) {
 			const n = s.xs.length;
 			if (!n) continue;
+			g.globalAlpha = s.ghost ? 0.3 : 1;
 			g.strokeStyle = toneHex(s.tone);
-			g.lineWidth = s.emphasis ? 2 : 1.5;
+			g.lineWidth = s.emphasis ? 2.25 : 1.5;
 			g.setLineDash(s.dash ? s.dash.split(' ').map(Number) : []);
 			g.lineJoin = 'round';
 			g.beginPath();
@@ -224,13 +236,14 @@
 			g.lineTo(tx(s.xs[n - 1]), ty(s.ys[n - 1]));
 			g.stroke();
 		}
+		g.globalAlpha = 1;
 		g.restore();
 		g.setLineDash([]);
 
 		// end markers
 		for (const s of ordered) {
 			const n = s.xs.length;
-			if (!n) continue;
+			if (!n || s.ghost) continue;
 			g.fillStyle = toneHex(s.tone);
 			g.beginPath();
 			g.arc(tx(s.xs[n - 1]), ty(s.ys[n - 1]), s.emphasis ? 3 : 2.2, 0, Math.PI * 2);
@@ -270,6 +283,7 @@
 	{#each narrow ? [] : endLabels as l (l.id)}
 		<span
 			class="end num"
+			class:ghost={l.ghost}
 			style:top="{l.y}px"
 			style:left="{l.x + 8}px"
 			style:color={toneHex(l.tone)}
@@ -278,10 +292,10 @@
 		</span>
 	{/each}
 
-	<span class="xlabel">{xLabel}</span>
+	<span class="xlabel" style:left="{PAD.l + plotW / 2}px">{xLabel}</span>
 
 	{#if hover}
-		<div class="tip" style:left="{Math.min(hover.px + 12, width - 190)}px">
+		<div class="tip" style:left="{Math.min(hover.px + 12, width - 232)}px">
 			<div class="tip-head num">{xLabel} {formatX(hover.at)}</div>
 			{#each hover.rows as r (r.id)}
 				<div class="tip-row">
@@ -308,22 +322,25 @@
 	.end {
 		position: absolute;
 		transform: translateY(-50%);
-		font-size: var(--text-2xs);
+		font-size: var(--text-xs);
 		white-space: nowrap;
 		pointer-events: none;
 	}
+	.end.ghost {
+		opacity: 0.55;
+	}
 	.xlabel {
 		position: absolute;
-		right: var(--pad-r);
-		bottom: -2px;
-		font-size: var(--text-2xs);
+		bottom: 2px;
+		transform: translateX(-50%);
+		font-size: var(--text-xs);
 		color: var(--color-ink-3);
 		pointer-events: none;
 	}
 	.tip {
 		position: absolute;
 		top: 8px;
-		width: 178px;
+		width: 220px;
 		padding: 8px 10px;
 		background: rgb(21 21 21 / 0.96);
 		border: 1px solid var(--color-rule);

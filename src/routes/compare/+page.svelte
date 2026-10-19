@@ -1,31 +1,73 @@
 <script lang="ts">
-	import { getBench, TOTAL_STEPS, BATCH, EVAL_LAYOUTS } from '#lib/engine/bench.svelte.ts';
-	import { evalPositiveRate, firstLayoutOfBatch } from '#lib/engine/data.ts';
+	import { asset } from '$app/paths';
+	import type { ChaseInstance } from '#lib/chase/chase.ts';
+	import { BATCH, EVAL_LAYOUTS, getBench, TOTAL_STEPS } from '#lib/engine/bench.svelte.ts';
+	import { firstExampleOfBatch } from '#lib/engine/data.ts';
+	import type { SuiteId } from '#lib/engine/runs.ts';
 	import { getOperator } from '#lib/model/operators/index.ts';
-	import { setMembership } from '#lib/set/cards.ts';
+	import { setMembership, type Card } from '#lib/set/cards.ts';
+	import ChaseLists from '#lib/ui/ChaseLists.svelte';
 	import Icon from '#lib/ui/Icon.svelte';
 	import LineChart, { type Series } from '#lib/ui/LineChart.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { compact, duration, flops, ms, pct } from '#lib/ui/format.ts';
-	import { Cards, Compare, Layers, Pause, Play, Reset, Timer } from '#lib/ui/icons.ts';
+	import { Cards, Chip, Download, Pause, Play, Reset, Timer, Workflow } from '#lib/ui/icons.ts';
 
-	const bench = getBench();
+	let suite = $state<SuiteId>('set');
+	const bench = $derived(getBench(suite));
 
 	type Axis = 'steps' | 'compute';
 	let axis = $state<Axis>('steps');
-	let section = $state('bench');
+	let heroHeight = $state(340);
 
-	const positive = evalPositiveRate(EVAL_LAYOUTS);
-	const majority = Math.max(positive, 1 - positive);
+	// ── recorded runs: the same engine, run once in a browser and saved ──────
+	interface RecordedRun {
+		evalSteps: number[];
+		evalAccuracy: number[];
+		evalLayout: number[];
+		steps: number[];
+		loss: number[];
+		msMedian: number;
+		params?: number;
+		flops?: number;
+	}
+	interface Recorded {
+		suite: SuiteId;
+		recordedAt: string;
+		device: string;
+		seed: number;
+		runs: Record<string, RecordedRun>;
+	}
+	const RECORDINGS: Record<SuiteId, string> = {
+		set: asset('recorded/set.json'),
+		chase: asset('recorded/chase.json')
+	};
+	let recorded = $state.raw<Recorded | null>(null);
+	$effect(() => {
+		const url = RECORDINGS[suite];
+		let cancelled = false;
+		recorded = null;
+		fetch(url)
+			.then((r) => (r.ok ? r.json() : null))
+			.then((j: Recorded | null) => {
+				if (!cancelled && j?.runs) recorded = j;
+			})
+			.catch(() => {});
+		return () => {
+			cancelled = true;
+		};
+	});
 
 	const running = $derived(bench.status === 'training' || bench.status === 'pausing');
 	const finished = $derived(bench.step >= TOTAL_STEPS);
-	const flopsOf = (id: string) => bench.runInfo(id)?.trainFlopsPerStep ?? 0;
-	const maxFlops = $derived(Math.max(1, ...bench.info.map((r) => r.trainFlopsPerStep)));
-
-	/** Scale x for the compute axis, in TFLOP. */
+	const live = $derived.by(() => {
+		void bench.version;
+		return bench.runs.some((r) => bench.history[r.id].evalSteps.length > 0);
+	});
+	const flopsOf = (id: string) => bench.runInfo(id)?.trainFlopsPerStep ?? recorded?.runs[id]?.flops ?? 0;
+	const maxFlops = $derived(Math.max(1, ...bench.runs.map((r) => flopsOf(r.id))));
 	const xs = (id: string, steps: number[]) =>
 		axis === 'steps' ? steps : steps.map((s) => (s * flopsOf(id)) / 1e12);
 
@@ -39,363 +81,350 @@
 		return out;
 	}
 
-	const accuracySeries = $derived.by((): Series[] => {
+	/** Live series plus a recorded ghost for every run that has one. */
+	function seriesOf(pick: (h: { steps: number[]; ys: number[] }) => number[], which: 'acc' | 'layout' | 'loss') {
 		void bench.version;
-		return bench.runs.map((r) => ({
-			id: r.id,
-			label: r.label,
-			tone: r.tone,
-			dash: r.dash,
-			emphasis: r.id === 'cubic',
-			xs: xs(r.id, bench.history[r.id].evalSteps),
-			ys: bench.history[r.id].evalAccuracy
-		}));
-	});
-	const layoutSeries = $derived.by((): Series[] => {
-		void bench.version;
-		return bench.runs.map((r) => ({
-			id: r.id,
-			label: r.label,
-			tone: r.tone,
-			dash: r.dash,
-			emphasis: r.id === 'cubic',
-			xs: xs(r.id, bench.history[r.id].evalSteps),
-			ys: bench.history[r.id].evalLayout
-		}));
-	});
-	const lossSeries = $derived.by((): Series[] => {
-		void bench.version;
-		return bench.runs.map((r) => ({
-			id: r.id,
-			label: r.label,
-			tone: r.tone,
-			dash: r.dash,
-			emphasis: r.id === 'cubic',
-			xs: xs(r.id, bench.history[r.id].steps),
-			ys: ema(bench.history[r.id].loss)
-		}));
-	});
+		const out: Series[] = [];
+		for (const r of bench.runs) {
+			const h = bench.history[r.id];
+			const rec = recorded?.runs[r.id];
+			const base = { id: r.id, label: r.label, tone: r.tone, dash: r.dash, emphasis: r.tone === 1 };
+			if (rec) {
+				const [st, ys] =
+					which === 'acc'
+						? [rec.evalSteps, rec.evalAccuracy]
+						: which === 'layout'
+							? [rec.evalSteps, rec.evalLayout]
+							: [rec.steps, rec.loss];
+				out.push({ ...base, ghost: true, xs: xs(r.id, st), ys: pick({ steps: st, ys }) });
+			}
+			const [st, ys] =
+				which === 'acc'
+					? [h.evalSteps, h.evalAccuracy]
+					: which === 'layout'
+						? [h.evalSteps, h.evalLayout]
+						: [h.steps, h.loss];
+			out.push({ ...base, xs: xs(r.id, st), ys: pick({ steps: st, ys }) });
+		}
+		return out;
+	}
+	const accuracySeries = $derived(seriesOf((h) => h.ys, 'acc'));
+	const layoutSeries = $derived(seriesOf((h) => h.ys, 'layout'));
+	const lossSeries = $derived(seriesOf((h) => ema(h.ys), 'loss'));
 
 	const xMax = $derived(axis === 'steps' ? TOTAL_STEPS : (TOTAL_STEPS * maxFlops) / 1e12);
-	const xLabel = $derived(axis === 'steps' ? 'Step' : 'Training compute, TFLOP');
+	const xLabel = $derived(axis === 'steps' ? 'Training step' : 'Training compute, TFLOP');
 	const formatX = $derived(
-		axis === 'steps' ? (v: number) => String(Math.round(v)) : (v: number) => v.toFixed(1)
+		axis === 'steps' ? (v: number) => v.toLocaleString('en-US') : (v: number) => v.toFixed(1)
 	);
+	const majority = $derived(bench.majority);
 
+	// ── the leaderboard ──────────────────────────────────────────────────────
 	const rows = $derived.by(() => {
 		void bench.version;
 		return bench.runs.map((r) => {
 			const h = bench.history[r.id];
-			const info = bench.runInfo(r.id);
-			const hit = h.evalAccuracy.findIndex((a) => a >= 0.95);
+			const rec = recorded?.runs[r.id];
+			const isLive = h.evalSteps.length > 0;
+			const accs = isLive ? h.evalAccuracy : (rec?.evalAccuracy ?? []);
+			const steps = isLive ? h.evalSteps : (rec?.evalSteps ?? []);
+			const hit = accs.findIndex((a) => a >= 0.95);
 			return {
 				spec: r,
 				op: getOperator(r.operator),
-				params: info?.params,
-				flops: info?.trainFlopsPerStep,
-				ms: h.msMedian,
-				step: h.step,
-				token: h.evalAccuracy.at(-1),
-				layout: h.evalLayout.at(-1),
-				reached: hit >= 0 ? h.evalSteps[hit] : undefined
+				params: bench.runInfo(r.id)?.params ?? rec?.params,
+				flops: bench.runInfo(r.id)?.trainFlopsPerStep ?? rec?.flops,
+				ms: isLive ? h.msMedian : (rec?.msMedian ?? 0),
+				acc: accs.at(-1),
+				isLive,
+				recordedOnly: !isLive && !!rec,
+				reached: hit >= 0 ? steps[hit] : undefined
 			};
 		});
 	});
+	const best = $derived(Math.max(0, ...rows.map((r) => r.acc ?? 0)));
 
-	// The shared input: the first layout of the batch the models are seeing now.
+	// ── the shared input: the first example of the batch every model sees now ─
 	const shownStep = $derived(Math.floor(bench.step / 25) * 25);
-	const layout = $derived(firstLayoutOfBatch(bench.seed, shownStep));
-	const members = $derived(setMembership(layout));
-	const memberCount = $derived(members.filter(Boolean).length);
+	const example = $derived(firstExampleOfBatch(bench.task.id, bench.seed, shownStep));
+	const layout = $derived(suite === 'set' ? (example as Card[]) : []);
+	const members = $derived(suite === 'set' ? setMembership(layout) : []);
 
 	function toggle() {
 		if (running) bench.pause();
 		else bench.start();
 	}
-
 	const primaryLabel = $derived(
 		bench.status === 'booting'
-			? 'Starting…'
+			? 'Starting'
 			: running
 				? bench.status === 'pausing'
-					? 'Pausing…'
+					? 'Pausing'
 					: 'Pause'
 				: finished
 					? 'Finished'
 					: bench.step > 0
 						? 'Resume'
-						: 'Start training'
+						: 'Train'
 	);
 
-	function changeSeed(delta: number) {
-		bench.reset(Math.max(0, bench.seed + delta));
+	/** Download every run's history: the format of the recorded runs. */
+	function exportRuns() {
+		const thin = <T,>(a: T[], k: number) => a.filter((_, i) => i % k === 0 || i === a.length - 1);
+		const data: Recorded = {
+			suite,
+			recordedAt: new Date().toISOString().slice(0, 10),
+			device: bench.device ?? 'unknown',
+			seed: bench.seed,
+			runs: Object.fromEntries(
+				bench.runs
+					.filter((r) => bench.history[r.id].steps.length > 0)
+					.map((r) => {
+						const h = bench.history[r.id];
+						const loss = ema(h.loss);
+						return [
+							r.id,
+							{
+								evalSteps: h.evalSteps,
+								evalAccuracy: h.evalAccuracy.map((v) => +v.toFixed(4)),
+								evalLayout: h.evalLayout.map((v) => +v.toFixed(4)),
+								steps: thin(h.steps, 10),
+								loss: thin(loss, 10).map((v) => +v.toPrecision(4)),
+								msMedian: +h.msMedian.toFixed(2),
+								params: bench.runInfo(r.id)?.params,
+								flops: bench.runInfo(r.id)?.trainFlopsPerStep
+							}
+						];
+					})
+			)
+		};
+		const url = URL.createObjectURL(new Blob([JSON.stringify(data)], { type: 'application/json' }));
+		const a = document.createElement('a');
+		a.href = url;
+		a.download = `${suite}.json`;
+		a.click();
+		URL.revokeObjectURL(url);
 	}
+
+	const COPY: Record<SuiteId, { lede: string; question: string }> = {
+		set: {
+			lede: 'Every model sees the same batches of twelve cards and says, for each card, whether it belongs to a SET on the table. Only the attention operator differs.',
+			question: 'For each card: is it part of any SET on the table?'
+		},
+		chase: {
+			lede: 'Twelve nodes form linked lists. The query names a start node and must return the payload at the end of its list, one to three hops away. One DS-PA layer against cubic and standard attention at one to three layers.',
+			question: 'Follow the list from the ringed start node. What payload is at its end?'
+		}
+	};
 </script>
 
 <svelte:head>
-	<title>SET bench | Polyformer</title>
+	<title>{suite === 'set' ? 'SET bench' : 'Pointer-chase bench'} | Polyformer</title>
 </svelte:head>
 
 <PageFrame
 	rail={[
-		{ id: 'bench', label: 'Learning curves', icon: Compare },
-		{ id: 'runs', label: 'Runs', icon: Layers },
-		{ id: 'task', label: 'Shared input', icon: Cards }
+		{ id: 'set', label: 'SET', icon: Cards },
+		{ id: 'chase', label: 'Pointer chase', icon: Workflow }
 	]}
-	active={section}
-	onselect={(id) => (section = id)}
+	active={suite}
+	onselect={(id) => (suite = id as SuiteId)}
 >
-	<div class="page">
+	<div class="bench">
 		<header class="head">
-			<div>
-				<h1 class="page-title">SET bench</h1>
-				<p class="lede">
-					Five attention mechanisms learn the same task from identical batches, trained live in this
-					browser. Only the attention operator differs.
-				</p>
+			<div class="title-row">
+				<h1>One task, many mechanisms</h1>
+				<div class="seg" role="group" aria-label="Task">
+					<button aria-pressed={suite === 'set'} onclick={() => (suite = 'set')}>SET</button>
+					<button aria-pressed={suite === 'chase'} onclick={() => (suite = 'chase')}>Pointer chase</button>
+				</div>
 			</div>
-			<dl class="spec">
-				<div>
-					<dt>Batch</dt>
-					<dd class="num">{BATCH} layouts</dd>
-				</div>
-				<div>
-					<dt>Steps</dt>
-					<dd class="num">{TOTAL_STEPS.toLocaleString('en-US')}</dd>
-				</div>
-				<div>
-					<dt>Optimizer</dt>
-					<dd>AdamW, 2e-3, cosine</dd>
-				</div>
-				<div>
-					<dt>Held out</dt>
-					<dd class="num">{EVAL_LAYOUTS.toLocaleString('en-US')} layouts</dd>
-				</div>
-			</dl>
+			<p class="sub">{COPY[suite].lede}</p>
 		</header>
 
-		<div class="body">
-			<section class="charts" id="bench" aria-label="Learning curves">
-				<div class="panel">
-					<div class="panel-head">
-						<div class="panel-title">
-							<Icon icon={Compare} size={16} />Held-out token accuracy
-						</div>
-						<div class="seg" role="group" aria-label="Horizontal axis">
-							<button aria-pressed={axis === 'steps'} onclick={() => (axis = 'steps')}>Steps</button
-							>
-							<button aria-pressed={axis === 'compute'} onclick={() => (axis = 'compute')}
-								>Compute</button
-							>
-						</div>
-					</div>
-					<div class="chart-pad">
-						<LineChart
-							label="Held-out token accuracy by training step"
-							series={accuracySeries}
-							version={bench.version}
-							{xMax}
-							{xLabel}
-							{formatX}
-							yMin={0.4}
-							yMax={1}
-							yTicks={[0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1]}
-							formatY={(v) => pct(v, 0)}
-							reference={{ y: majority, label: `Majority class ${pct(majority)}` }}
-							height={300}
-						/>
-					</div>
+		<section class="hero" aria-label="Held-out accuracy">
+			<div class="h-row">
+				<h2>Held-out accuracy</h2>
+				<span class="badge" class:live>
+					{live
+						? 'Live in this browser'
+						: recorded
+							? `Recorded ${recorded.recordedAt} on ${recorded.device === 'webgpu' ? 'WebGPU' : recorded.device}`
+							: 'Press Train to start'}
+				</span>
+				<div class="seg" role="group" aria-label="Horizontal axis">
+					<button aria-pressed={axis === 'steps'} onclick={() => (axis = 'steps')}>Steps</button>
+					<button aria-pressed={axis === 'compute'} onclick={() => (axis = 'compute')}>Compute</button>
 				</div>
+			</div>
+			<div class="chart-fill" bind:clientHeight={heroHeight}>
+				<LineChart
+					label="Held-out token accuracy"
+					series={accuracySeries}
+					version={bench.version}
+					{xMax}
+					{xLabel}
+					{formatX}
+					yMin={suite === 'set' ? 0.4 : 0}
+					yMax={1}
+					yTicks={suite === 'set' ? [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] : [0, 0.2, 0.4, 0.6, 0.8, 1]}
+					formatY={(v) => pct(v, 0)}
+					reference={{ y: majority, label: `Majority class ${pct(majority, 0)}` }}
+					height={Math.max(220, heroHeight)}
+				/>
+			</div>
+		</section>
 
-				<div class="pair">
-					<div class="panel">
-						<div class="panel-head">
-							<div class="panel-title">Training loss</div>
-							<span class="hint">Cross-entropy, smoothed, log scale</span>
-						</div>
-						<div class="chart-pad">
-							<LineChart
-								label="Training loss by step"
-								series={lossSeries}
-								version={bench.version}
-								{xMax}
-								{xLabel}
-								{formatX}
-								log
-								yMin={1e-4}
-								yMax={1}
-								yTicks={[1e-4, 1e-3, 1e-2, 1e-1, 1]}
-								formatY={(v) => (v >= 0.01 ? v.toFixed(2) : v.toExponential(0))}
-								height={200}
-							/>
-						</div>
-					</div>
-					<div class="panel">
-						<div class="panel-head">
-							<div class="panel-title">Layouts fully correct</div>
-							<span class="hint">All 12 cards right</span>
-						</div>
-						<div class="chart-pad">
-							<LineChart
-								label="Share of held-out layouts with every card correct"
-								series={layoutSeries}
-								version={bench.version}
-								{xMax}
-								{xLabel}
-								{formatX}
-								yMin={0}
-								yMax={1}
-								yTicks={[0, 0.25, 0.5, 0.75, 1]}
-								formatY={(v) => pct(v, 0)}
-								height={200}
-							/>
-						</div>
-					</div>
+		<section class="lower" aria-label="Loss and input">
+			<div class="mini">
+				<h3>Training loss <small>smoothed, log scale</small></h3>
+				<LineChart
+					label="Training loss"
+					series={lossSeries}
+					version={bench.version}
+					{xMax}
+					{xLabel}
+					{formatX}
+					log
+					yMin={1e-4}
+					yMax={suite === 'set' ? 1 : 3}
+					yTicks={[1e-4, 1e-3, 1e-2, 1e-1, 1]}
+					formatY={(v) => (v >= 0.01 ? v.toFixed(2) : v.toExponential(0))}
+					height={160}
+				/>
+			</div>
+			{#if suite === 'set'}
+				<div class="mini">
+					<h3>Tables fully right <small>all twelve cards</small></h3>
+					<LineChart
+						label="Share of held-out tables with every card right"
+						series={layoutSeries}
+						version={bench.version}
+						{xMax}
+						{xLabel}
+						{formatX}
+						yMin={0}
+						yMax={1}
+						yTicks={[0, 0.25, 0.5, 0.75, 1]}
+						formatY={(v) => pct(v, 0)}
+						height={160}
+					/>
 				</div>
-
-				<div class="panel" id="runs">
-					<div class="panel-head">
-						<div class="panel-title"><Icon icon={Layers} size={16} />Runs</div>
-						<span class="hint">d = 64, 4 heads, one block unless noted</span>
-					</div>
-					<div class="table-wrap">
-						<table>
-							<thead>
-								<tr>
-									<th class="check"><span class="sr">Train</span></th>
-									<th>Model</th>
-									<th>Scores</th>
-									<th class="r">Params</th>
-									<th class="r">Compute / step</th>
-									<th class="r">Time / step</th>
-									<th class="r">Step</th>
-									<th class="r">Token acc.</th>
-									<th class="r">Layouts</th>
-									<th class="r">Reached 95%</th>
-								</tr>
-							</thead>
-							<tbody>
-								{#each rows as row (row.spec.id)}
-									<tr class={{ lead: row.spec.id === 'cubic' }}>
-										<td class="check">
-											<input
-												type="checkbox"
-												aria-label="Train {row.spec.label}"
-												bind:checked={bench.enabled[row.spec.id]}
-												disabled={running}
-											/>
-										</td>
-										<td>
-											<span class="model">
-												<svg width="22" height="8" aria-hidden="true">
-													<line
-														x1="0"
-														y1="4"
-														x2="22"
-														y2="4"
-														stroke="rgb({70 + row.spec.tone * 175} {70 + row.spec.tone * 175} {70 +
-															row.spec.tone * 175})"
-														stroke-width={row.spec.id === 'cubic' ? 2 : 1.5}
-														stroke-dasharray={row.spec.dash}
-													/>
-												</svg>
-												{row.spec.label}
-											</span>
-										</td>
-										<td class="tex"><MathTex tex={row.op.logitTex} /></td>
-										<td class="r num">{row.params ? compact(row.params) : '—'}</td>
-										<td class="r num">{row.flops ? flops(row.flops) : '—'}</td>
-										<td class="r num">{ms(row.ms)}</td>
-										<td class="r num">{row.step.toLocaleString('en-US')}</td>
-										<td class="r num strong">{pct(row.token)}</td>
-										<td class="r num">{pct(row.layout)}</td>
-										<td class="r num">{row.reached ? `step ${row.reached}` : '—'}</td>
-									</tr>
-								{/each}
-							</tbody>
-						</table>
-					</div>
-				</div>
-			</section>
-
-			<aside class="task panel" id="task" aria-label="Shared input">
-				<div class="panel-head">
-					<div class="panel-title"><Icon icon={Cards} size={16} />Shared input</div>
-					<span class="hint num">batch {shownStep}</span>
-				</div>
-				<div class="task-body">
-					<p class="task-q">For each card: is it part of any SET on the table?</p>
+			{/if}
+			<div class="input">
+				<h3>Shared input <small class="num">batch {shownStep.toLocaleString('en-US')}</small></h3>
+				<p class="q">{COPY[suite].question}</p>
+				{#if suite === 'set'}
 					<div class="cards">
 						{#each layout as card, i (i)}
-							<div class={['slot', members[i] && 'in']}>
-								<SetCard {card} width={64} dim={!members[i]} />
-								<span class="mark" aria-label={members[i] ? 'in a SET' : 'not in a SET'}></span>
-							</div>
+							<span class="slot" class:in={members[i]}>
+								<SetCard {card} width={30} dim={!members[i]} />
+							</span>
 						{/each}
 					</div>
-					<p class="hint">
-						{memberCount} of 12 cards belong to a SET. Every model sees this layout, plus {BATCH -
-							1}
-						more, at this step.
-					</p>
-					<div class="rule">
-						<p>Three cards form a SET when each attribute is all the same or all different.</p>
-						<MathTex display tex={'a + b + c \\equiv 0 \\pmod 3 \\ \\text{in every attribute}'} />
-					</div>
-				</div>
-			</aside>
-		</div>
+				{:else}
+					<ChaseLists instance={example as ChaseInstance} compact />
+				{/if}
+			</div>
+		</section>
+
+		<aside class="board" aria-label="Runs">
+			<div class="b-head">
+				<h2>Runs</h2>
+				<span class="hint">d = 64, 4 heads, one block unless noted</span>
+			</div>
+			<ol class="runs">
+				{#each rows as row (row.spec.id)}
+					<li class="run" class:lead={row.acc !== undefined && row.acc === best && best > 0}>
+						<div class="r-top">
+							<svg width="22" height="10" aria-hidden="true">
+								<line
+									x1="0"
+									y1="5"
+									x2="22"
+									y2="5"
+									stroke="rgb({70 + row.spec.tone * 175} {70 + row.spec.tone * 175} {70 + row.spec.tone * 175})"
+									stroke-width={row.spec.tone === 1 ? 2.25 : 1.5}
+									stroke-dasharray={row.spec.dash}
+								/>
+							</svg>
+							<span class="name">{row.spec.label}</span>
+							<span class="acc num" class:rec={row.recordedOnly}>{row.acc === undefined ? '—' : pct(row.acc, 0)}</span>
+						</div>
+						<div class="formula"><MathTex tex={row.op.logitTex} /></div>
+						<div class="meta num">
+							<span>{row.params ? `${compact(row.params)} params` : '—'}</span>
+							<span>{row.flops ? `${flops(row.flops)} / step` : ''}</span>
+							<span>{row.ms ? ms(row.ms) : ''}</span>
+						</div>
+						<div class="r-foot">
+							<span class="hint num"
+								>{row.reached !== undefined
+									? `95% at step ${row.reached.toLocaleString('en-US')}`
+									: row.acc !== undefined
+										? 'Not at 95% yet'
+										: 'Not trained'}{row.recordedOnly ? ' · recorded' : ''}</span
+							>
+							<label class="switch">
+								<input type="checkbox" bind:checked={bench.enabled[row.spec.id]} disabled={running} />
+								<span>Train</span>
+							</label>
+						</div>
+					</li>
+				{/each}
+			</ol>
+			<dl class="spec">
+				<div><dt>Batch</dt><dd class="num">{BATCH}</dd></div>
+				<div><dt>Steps</dt><dd class="num">{TOTAL_STEPS.toLocaleString('en-US')}</dd></div>
+				<div><dt>Optimizer</dt><dd>AdamW, cosine</dd></div>
+				<div><dt>Held out</dt><dd class="num">{EVAL_LAYOUTS.toLocaleString('en-US')}</dd></div>
+			</dl>
+		</aside>
 
 		<footer class="transport" aria-label="Training controls">
-			<button
-				class="btn icon-only"
-				onclick={() => bench.reset()}
-				disabled={bench.status === 'booting'}
-				title="Reset to step 0"
-				aria-label="Reset to step 0"
-			>
-				<Icon icon={Reset} size={16} />
-			</button>
-			<button
-				class="btn primary go"
-				onclick={toggle}
-				disabled={bench.status === 'booting' ||
-					bench.status === 'pausing' ||
-					(finished && !running)}
-			>
-				<Icon icon={running ? Pause : Play} size={16} />{primaryLabel}
-			</button>
-
-			<div class="progress" aria-label="Training progress">
-				<div class="bar">
-					<div class="fill" style:width="{(bench.step / TOTAL_STEPS) * 100}%"></div>
+			<div class="group">
+				<button
+					class="key"
+					onclick={() => bench.reset()}
+					disabled={bench.status === 'booting' || running}
+					aria-label="Reset to step 0"><Icon icon={Reset} size={17} /><span>Reset</span></button
+				>
+				<button
+					class="key play"
+					onclick={toggle}
+					disabled={bench.status === 'booting' || bench.status === 'pausing' || (finished && !running)}
+					><Icon icon={running ? Pause : Play} size={17} /><span>{primaryLabel}</span></button
+				>
+			</div>
+			<div class="group grow">
+				<div class="progress" aria-label="Training progress">
+					<div class="bar"><div class="fill" style:width="{(bench.step / TOTAL_STEPS) * 100}%"></div></div>
+					<span class="num">{bench.step.toLocaleString('en-US')} / {TOTAL_STEPS.toLocaleString('en-US')}</span>
 				</div>
-				<span class="num"
-					>{bench.step.toLocaleString('en-US')} / {TOTAL_STEPS.toLocaleString('en-US')}</span
+			</div>
+			<div class="group">
+				<span class="t-label">Seed</span>
+				<div class="stepper">
+					<button onclick={() => bench.reset(Math.max(0, bench.seed - 1))} disabled={running || bench.seed === 0} aria-label="Previous seed">−</button>
+					<span class="num">{bench.seed}</span>
+					<button onclick={() => bench.reset(bench.seed + 1)} disabled={running} aria-label="Next seed">+</button>
+				</div>
+			</div>
+			<div class="group">
+				<span class="t-label num"><Icon icon={Timer} size={16} />{duration(bench.elapsedMs)}</span>
+				<span class="t-label"
+					><Icon icon={Chip} size={16} />{bench.device === 'webgpu'
+						? 'WebGPU'
+						: bench.device === 'wasm'
+							? 'WebAssembly'
+							: 'Starts on first run'}</span
 				>
 			</div>
-
-			<div class="seed">
-				<span class="hint">Seed</span>
-				<button
-					class="btn icon-only ghost"
-					aria-label="Previous seed"
-					onclick={() => changeSeed(-1)}
-					disabled={running || bench.seed === 0}>−</button
-				>
-				<span class="num seed-v">{bench.seed}</span>
-				<button
-					class="btn icon-only ghost"
-					aria-label="Next seed"
-					onclick={() => changeSeed(1)}
-					disabled={running}>+</button
+			<div class="group right">
+				<button class="key" onclick={exportRuns} disabled={!live}
+					><Icon icon={Download} size={17} /><span>Export</span></button
 				>
 			</div>
-
-			<span class="elapsed hint num"
-				><Icon icon={Timer} size={14} />{duration(bench.elapsedMs)}</span
-			>
-
 			{#if bench.error}
 				<span class="error" role="alert">{bench.error}</span>
 			{/if}
@@ -404,277 +433,335 @@
 </PageFrame>
 
 <style>
-	.page {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		padding: 20px 20px 0;
-		min-height: calc(100dvh - var(--bar-h));
+	.bench {
+		--transport-h: 60px;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 330px;
+		grid-template-rows: auto minmax(260px, 1fr) auto;
+		grid-template-areas:
+			'head board'
+			'hero board'
+			'lower board';
+		gap: 0 22px;
+		height: calc(100dvh - var(--bar-h) - var(--transport-h));
+		padding: 18px 0 0 28px;
 	}
 	.head {
+		grid-area: head;
+	}
+	.title-row {
 		display: flex;
-		align-items: flex-end;
-		justify-content: space-between;
+		align-items: center;
+		gap: 18px;
+	}
+	h1 {
+		font-size: 28px;
+		font-weight: 500;
+		letter-spacing: -0.025em;
+		line-height: 1.1;
+	}
+	.sub {
+		margin-top: 6px;
+		max-width: 84ch;
+		color: var(--color-ink-3);
+		font-size: var(--text-sm);
+		line-height: 1.5;
+	}
+	h2 {
+		font-size: 15px;
+		font-weight: 500;
+	}
+	h3 {
+		display: flex;
+		align-items: baseline;
+		gap: 8px;
+		font-size: var(--text-xs);
+		font-weight: 500;
+		color: var(--color-ink-2);
+		margin-bottom: 4px;
+	}
+	h3 small {
+		font-size: var(--text-2xs);
+		font-weight: 400;
+		color: var(--color-ink-3);
+	}
+
+	.hero {
+		grid-area: hero;
+		display: grid;
+		grid-template-rows: auto minmax(0, 1fr);
+		min-height: 0;
+		margin-top: 14px;
+	}
+	.h-row {
+		display: flex;
+		align-items: center;
+		gap: 14px;
+		margin-bottom: 4px;
+	}
+	.h-row .seg {
+		margin-left: auto;
+	}
+	.badge {
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+	}
+	.badge.live {
+		color: var(--color-ink);
+	}
+	.chart-fill {
+		min-height: 0;
+		overflow: hidden;
+	}
+
+	.lower {
+		grid-area: lower;
+		display: grid;
+		grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
 		gap: 24px;
-		flex-wrap: wrap;
+		padding: 8px 0 12px;
+	}
+	.input .q {
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+		margin-bottom: 8px;
+	}
+	.cards {
+		display: grid;
+		grid-template-columns: repeat(6, max-content);
+		gap: 6px 10px;
+	}
+	.slot {
+		display: block;
+	}
+
+	/* leaderboard */
+	.board {
+		grid-area: board;
+		align-self: stretch;
+		overflow-y: auto;
+		margin-top: -18px;
+		padding: 18px 22px 22px;
+		background: #0c0c0c;
+		border-left: 1px solid #1a1a1a;
+	}
+	.b-head {
+		display: flex;
+		align-items: baseline;
+		justify-content: space-between;
+		padding-bottom: 4px;
+	}
+	.runs {
+		display: grid;
+	}
+	.run {
+		display: grid;
+		gap: 4px;
+		padding: 11px 0;
+	}
+	.r-top {
+		display: grid;
+		grid-template-columns: 22px 1fr auto;
+		gap: 10px;
+		align-items: center;
+	}
+	.name {
+		font-size: var(--text-sm);
+	}
+	.acc {
+		font-size: 19px;
+		font-weight: 500;
+		letter-spacing: -0.02em;
+		color: var(--color-ink-2);
+	}
+	.acc.rec {
+		opacity: 0.6;
+	}
+	.run.lead .acc {
+		color: var(--color-ink);
+	}
+	.formula {
+		font-size: 12.5px;
+		color: var(--color-ink-2);
+		overflow-x: auto;
+	}
+	.meta {
+		display: flex;
+		gap: 12px;
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+	}
+	.r-foot {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.r-foot .hint {
+		font-size: var(--text-2xs);
+	}
+	.switch {
+		display: inline-flex;
+		align-items: center;
+		gap: 6px;
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+		cursor: pointer;
 	}
 	.spec {
-		display: flex;
-		gap: 22px;
-		margin: 0;
-	}
-	.spec div {
-		display: flex;
-		flex-direction: column;
-		gap: 2px;
+		display: grid;
+		grid-template-columns: repeat(2, 1fr);
+		gap: 10px;
+		margin-top: 14px;
 	}
 	.spec dt {
 		font-size: var(--text-2xs);
 		color: var(--color-ink-3);
 	}
 	.spec dd {
-		margin: 0;
-		font-size: var(--text-sm);
+		font-size: var(--text-xs);
 		color: var(--color-ink-2);
-	}
-	.body {
-		display: grid;
-		grid-template-columns: minmax(0, 1fr) 300px;
-		gap: 16px;
-		align-items: start;
-	}
-	.charts {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		min-width: 0;
-	}
-	.pair {
-		display: grid;
-		grid-template-columns: 1fr 1fr;
-		gap: 16px;
-	}
-	.chart-pad {
-		padding: 14px 6px 14px 4px;
 	}
 
-	.table-wrap {
-		overflow-x: auto;
+	/* transport */
+	.transport {
+		position: fixed;
+		left: var(--rail-w);
+		right: 0;
+		bottom: 0;
+		z-index: 10;
+		height: var(--transport-h);
+		display: flex;
+		align-items: center;
+		gap: 28px;
+		padding: 0 22px 0 28px;
+		border-top: 1px solid #1a1a1a;
+		background: var(--color-void);
 	}
-	table {
-		width: 100%;
-		border-collapse: collapse;
-		font-size: var(--text-sm);
+	.group {
+		display: flex;
+		align-items: center;
+		gap: 8px;
 	}
-	th {
-		text-align: left;
-		font-weight: 400;
-		font-size: var(--text-2xs);
-		color: var(--color-ink-3);
-		padding: 10px 12px 8px;
-		border-bottom: 1px solid #222;
-		white-space: nowrap;
+	.group.grow {
+		flex: 1;
 	}
-	td {
-		padding: 9px 12px;
-		border-bottom: 1px solid #1e1e1e;
-		color: var(--color-ink-2);
-		white-space: nowrap;
-	}
-	tr:last-child td {
-		border-bottom: 0;
-	}
-	tr.lead td {
-		color: var(--color-ink);
-	}
-	.r {
-		text-align: right;
-	}
-	.strong {
-		color: var(--color-ink);
-	}
-	.check {
-		width: 28px;
-		padding-right: 0;
-	}
-	.model {
+	.t-label {
 		display: inline-flex;
 		align-items: center;
-		gap: 10px;
-	}
-	.tex {
-		font-size: 12px;
-	}
-	input[type='checkbox'] {
-		appearance: none;
-		width: 14px;
-		height: 14px;
-		border: 1px solid var(--color-rule);
-		border-radius: 3px;
-		background: transparent;
-		display: grid;
-		place-items: center;
-		cursor: pointer;
-	}
-	input[type='checkbox']:checked {
-		background: var(--color-ink);
-		border-color: var(--color-ink);
-	}
-	input[type='checkbox']:checked::after {
-		content: '';
-		width: 7px;
-		height: 4px;
-		border: 1.5px solid var(--color-void);
-		border-top: 0;
-		border-right: 0;
-		transform: translateY(-1px) rotate(-45deg);
-	}
-	input[type='checkbox']:disabled {
-		opacity: 0.5;
-		cursor: default;
-	}
-	.sr {
-		position: absolute;
-		width: 1px;
-		height: 1px;
-		overflow: hidden;
-		clip-path: inset(50%);
-	}
-
-	.task {
-		position: sticky;
-		top: calc(var(--bar-h) + 16px);
-	}
-	.task-body {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
-		padding: 14px;
-	}
-	.task-q {
-		color: var(--color-ink);
-	}
-	.cards {
-		display: grid;
-		grid-template-columns: repeat(4, 1fr);
-		gap: 8px 4px;
-		justify-items: center;
-	}
-	.slot {
-		display: flex;
-		flex-direction: column;
-		align-items: center;
-		gap: 5px;
-	}
-	.mark {
-		width: 5px;
-		height: 5px;
-		border-radius: 50%;
-		border: 1px solid var(--color-rule);
-	}
-	.slot.in .mark {
-		background: var(--color-ink);
-		border-color: var(--color-ink);
-	}
-	.rule {
-		padding-top: 12px;
-		border-top: 1px solid #222;
-		color: var(--color-ink-2);
-		font-size: var(--text-sm);
-	}
-
-	.transport {
-		position: sticky;
-		bottom: 0;
-		margin: auto -20px 0;
-		display: flex;
-		align-items: center;
-		gap: 14px;
-		height: 52px;
-		padding: 0 20px;
-		background: rgb(8 8 8 / 0.94);
-		border-top: 1px solid var(--color-edge);
-		backdrop-filter: blur(6px);
-	}
-	.go {
-		min-width: 132px;
+		gap: 6px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+		white-space: nowrap;
 	}
 	.progress {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		flex: 1;
-		max-width: 420px;
-		font-size: var(--text-sm);
+		gap: 12px;
+		width: 100%;
+		font-size: var(--text-xs);
 		color: var(--color-ink-2);
 	}
-	.progress .bar {
+	.bar {
 		flex: 1;
-		height: 2px;
-		background: var(--color-control);
+		height: 3px;
+		border-radius: 2px;
+		background: #222;
+		overflow: hidden;
 	}
-	.progress .fill {
+	.fill {
 		height: 100%;
 		background: var(--color-ink);
+		transition: width 200ms linear;
 	}
-	.seed {
+	.stepper {
 		display: flex;
 		align-items: center;
-		gap: 4px;
+		height: 28px;
+		border-radius: 6px;
+		background: #1a1a1a;
 	}
-	.seed-v {
-		min-width: 18px;
+	.stepper button {
+		width: 28px;
+		height: 100%;
+		border: 0;
+		background: transparent;
+		color: var(--color-ink-3);
+		font-size: 14px;
+		cursor: pointer;
+	}
+	.stepper button:disabled {
+		opacity: 0.35;
+		cursor: default;
+	}
+	.stepper span {
+		min-width: 22px;
 		text-align: center;
+		font-size: var(--text-sm);
 	}
-	.elapsed {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
+	.key {
+		display: grid;
+		justify-items: center;
+		gap: 3px;
+		min-width: 46px;
+		padding: 5px 4px 3px;
+		border: 0;
+		border-radius: 6px;
+		background: transparent;
+		color: var(--color-ink-3);
+		font-size: var(--text-2xs);
+		cursor: pointer;
+	}
+	.key:hover:not(:disabled) {
+		color: var(--color-ink);
+		background: #141414;
+	}
+	.key:disabled {
+		opacity: 0.4;
+		cursor: default;
+	}
+	.key.play {
+		color: var(--color-ink);
+	}
+	.key.play :global(svg) {
+		box-sizing: content-box;
+		padding: 5px;
+		margin: -5px 0 0;
+		border-radius: 6px;
+		background: var(--color-ink);
+		color: var(--color-void);
 	}
 	.error {
 		font-size: var(--text-xs);
 		color: var(--color-ink);
-		border: 1px solid var(--color-rule);
-		padding: 3px 8px;
-		border-radius: var(--radius-ui);
 	}
 
-	@media (max-width: 1180px) {
-		.body {
+	@media (max-width: 1200px) {
+		.bench {
+			height: auto;
 			grid-template-columns: minmax(0, 1fr);
+			grid-template-areas: 'head' 'hero' 'lower' 'board';
+			grid-template-rows: auto auto auto auto;
+			padding: 16px 16px var(--transport-h);
 		}
-		.task {
-			position: static;
-		}
-		.cards {
-			grid-template-columns: repeat(6, 1fr);
-		}
-	}
-	@media (max-width: 760px) {
-		.pair {
-			grid-template-columns: minmax(0, 1fr);
-		}
-		.spec {
-			flex-wrap: wrap;
-			gap: 12px 18px;
-		}
-		.cards {
-			grid-template-columns: repeat(4, 1fr);
-		}
-		.page {
-			padding: 16px 16px 0;
+		.board {
+			margin: 0;
+			border: 0;
+			border-radius: 8px;
 		}
 		.transport {
-			margin: auto -16px 0;
+			left: 0;
+			gap: 18px;
+			overflow-x: auto;
 			padding: 0 16px;
+		}
+	}
+	@media (max-width: 640px) {
+		h1 {
+			font-size: 24px;
+		}
+		.title-row {
+			flex-wrap: wrap;
 			gap: 10px;
-		}
-		.seed,
-		.elapsed {
-			display: none;
-		}
-		.go {
-			min-width: 0;
 		}
 	}
 </style>

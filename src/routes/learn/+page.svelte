@@ -1,26 +1,57 @@
 <script lang="ts">
+	import { resolve } from '$app/paths';
+	import Cite from '#lib/learn/Cite.svelte';
+	import LearnFigure from '#lib/learn/LearnFigure.svelte';
+	import { REFERENCES } from '#lib/learn/references.ts';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
-	import { resolve } from '$app/paths';
-	import { Cards, Cube, FunctionIcon, Layers, Link, Network } from '#lib/ui/icons.ts';
 	import type { Card } from '#lib/set/cards.ts';
+	import { Atom, Book, Cube, Note } from '#lib/ui/icons.ts';
+
+	const PARTS = [
+		{ id: 'part-known', label: 'Known', icon: Book, title: 'What was known' },
+		{ id: 'part-new', label: 'New here', icon: Cube, title: 'What this project adds' },
+		{ id: 'part-beyond', label: 'Beyond', icon: Atom, title: 'Letting the data choose the arity' },
+		{ id: 'references', label: 'Sources', icon: Note, title: 'References' }
+	];
+	const CHAPTERS: { id: string; title: string; part: string }[] = [
+		{ id: 'pairwise', title: 'Pairwise attention', part: 'part-known' },
+		{ id: 'product', title: 'A generalized dot product', part: 'part-known' },
+		{ id: 'cubic', title: 'Cubic polyattention', part: 'part-known' },
+		{ id: 'cost', title: 'What it costs', part: 'part-known' },
+		{ id: 'degree2', title: 'Cheaper, degree-2 relatives', part: 'part-known' },
+		{ id: 'barrier', title: 'The coupling barrier', part: 'part-new' },
+		{ id: 'set', title: 'SET is Match3', part: 'part-new' },
+		{ id: 'head', title: 'A head built by hand', part: 'part-new' },
+		{ id: 'binding', title: 'Values as binding', part: 'part-new' },
+		{ id: 'training', title: 'What training shows', part: 'part-new' },
+		{ id: 'arity', title: 'Order k needs a k-way term', part: 'part-new' },
+		{ id: 'diagrams', title: 'Sum over diagrams', part: 'part-beyond' },
+		{ id: 'sectors', title: 'Making it train', part: 'part-beyond' },
+		{ id: 'chase', title: 'What DS-PA learns', part: 'part-beyond' }
+	];
+	const number = (id: string) => CHAPTERS.findIndex((c) => c.id === id) + 1;
 
 	let section = $state('pairwise');
+	const part = $derived(CHAPTERS.find((c) => c.id === section)?.part ?? section);
 
-	const sections = [
-		{ id: 'pairwise', label: 'Pairwise attention', icon: Network },
-		{ id: 'product', label: 'A generalized dot product', icon: FunctionIcon },
-		{ id: 'cubic', label: 'Cubic polyattention', icon: Cube },
-		{ id: 'barrier', label: 'The coupling barrier', icon: Layers },
-		{ id: 'set', label: 'SET as Match3', icon: Cards },
-		{ id: 'binding', label: 'Values as binding', icon: Link }
-	];
+	/** The chapter crossing the middle band of the viewport drives the figure. */
+	function watch(el: HTMLElement) {
+		const io = new IntersectionObserver(
+			(entries) => {
+				for (const e of entries) if (e.isIntersecting) section = e.target.id;
+			},
+			{ rootMargin: '-40% 0px -55% 0px' }
+		);
+		el.querySelectorAll('section[id]').forEach((s) => io.observe(s));
+		return () => io.disconnect();
+	}
 
 	// one attribute, the three cases
 	const cases: { name: string; cards: Card[]; e: number; all: number }[] = [
 		{
-			name: 'Count: all equal',
+			name: 'All equal',
 			cards: [
 				[1, 0, 0, 0],
 				[1, 1, 1, 1],
@@ -30,7 +61,7 @@
 			all: 1
 		},
 		{
-			name: 'Count: two equal',
+			name: 'Two equal',
 			cards: [
 				[1, 0, 0, 0],
 				[1, 1, 1, 1],
@@ -40,7 +71,7 @@
 			all: 0
 		},
 		{
-			name: 'Count: all different',
+			name: 'All different',
 			cards: [
 				[0, 0, 0, 0],
 				[1, 1, 1, 1],
@@ -56,234 +87,550 @@
 	<title>Learn | Polyformer</title>
 </svelte:head>
 
-<PageFrame rail={sections} active={section} onselect={(id) => (section = id)}>
-	<article class="learn">
-		<header class="intro">
-			<h1 class="page-title">From pairs to triples</h1>
-			<p class="lede">
-				Attention lets each token score every other token. Cubic polyattention lets each token score
-				every ordered pair of other tokens, with one trilinear product. This page builds it up in
-				six steps and shows why it learns SET where every degree-2 design stalls.
-			</p>
-		</header>
-
-		<section id="pairwise">
-			<h2><span class="n">1</span>Pairwise attention</h2>
-			<p>
-				A query <MathTex tex="Q_i" /> scores each key <MathTex tex="K_j" /> with a dot product, the scores
-				are normalized over <MathTex tex="j" />, and the output is a weighted sum of values.
-			</p>
-			<MathTex
-				display
-				tex={'P_{ij} = \\operatorname{softmax}_j \\frac{\\langle Q_i, K_j \\rangle}{\\sqrt{d}}, \\qquad Y_i = \\sum_j P_{ij} V_j'}
-			/>
-			<p>
-				Every score involves exactly two tokens. Relations among three tokens must be assembled
-				indirectly, across heads or layers.
-			</p>
-		</section>
-
-		<section id="product">
-			<h2><span class="n">2</span>A generalized dot product</h2>
-			<p>
-				The dot product sums the products of matching coordinates. Nothing stops at two factors: the
-				trilinear form multiplies three.
-			</p>
-			<MathTex
-				display
-				tex="\langle a, b \rangle = \sum_c a_c b_c \qquad\longrightarrow\qquad \langle a, b, e \rangle = \sum_c a_c\, b_c\, e_c = \langle a,\, b \odot e \rangle"
-			/>
-			<p>
-				Written with the Hadamard product <MathTex tex="\odot" />, it is still one dot product: the
-				query against the elementwise product of two keys. It is large only when all three vectors
-				agree on the same coordinates.
-			</p>
-		</section>
-
-		<section id="cubic">
-			<h2><span class="n">3</span>Cubic polyattention</h2>
-			<p>
-				Give each token one query and two role-specific keys and values. Query <MathTex tex="i" />
-				scores the ordered pair <MathTex tex="(j, k)" />, with <MathTex tex="j" /> in role 1 and
-				<MathTex tex="k" /> in role 2:
-			</p>
-			<MathTex
-				display
-				tex={"A_{ijk} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\rangle, \\qquad P_{ijk} = \\frac{\\exp(A_{ijk}/\\sqrt{d})}{\\sum_{j'k'} \\exp(A_{ij'k'}/\\sqrt{d})}"}
-			/>
-			<MathTex
-				display
-				tex={'D_{jk} = V^1_j \\odot V^2_k, \\qquad Y_i = \\sum_{j,k} P_{ijk}\\, D_{jk}'}
-			/>
-			<figure class="ports">
-				<svg viewBox="0 0 300 150" aria-hidden="true">
-					<polygon points="150,22 62,124 238,124" class="mem" />
-					<circle cx="150" cy="22" r="7" class="port" />
-					<rect x="55" y="117" width="14" height="14" class="port" />
-					<polygon points="238,115 247,124 238,133 229,124" class="port" />
-					<text x="150" y="8" class="t">query i</text>
-					<text x="38" y="146" class="t">role 1 j</text>
-					<text x="262" y="146" class="t">role 2 k</text>
-				</svg>
-				<figcaption class="hint">
-					One hyperedge. Roles are carried by the separate projections, so <MathTex tex="(j,k)" /> and
-					<MathTex tex="(k,j)" /> are different pairs even though <MathTex tex="\odot" /> commutes.
-				</figcaption>
-			</figure>
-			<p>
-				The softmax runs jointly over all <MathTex tex="n^2" /> ordered pairs. Pairs that reuse the query
-				or repeat a key are masked, and a sink token at position 0 gives every query somewhere to put
-				weight it does not need. Both contractions are matrix products,
-				<MathTex tex={'(Q_i \\odot K^1)\\,K^{2\\top}'} /> for the scores and
-				<MathTex tex="P_i V^2" /> for the values, so the cost is <MathTex tex="O(n^3 d)" /> with no <MathTex
-					tex="n^3 d"
-				/> intermediate.
-			</p>
-		</section>
-
-		<section id="barrier">
-			<h2><span class="n">4</span>The coupling barrier</h2>
-			<p>
-				Earlier triple-attention designs keep every score term degree 2: a sum of pairwise dot
-				products on the edges of the triangle. The Columbia tree uses the path
-				<MathTex tex="i - j - k" />; Strassen attention uses all three edges.
-			</p>
-			<MathTex display tex={'A^{\\text{deg 2}}_{ijk} = f(i,j) + g(j,k) + h(i,k)'} />
-			<p>
-				Fix the query and double-center the score matrix over <MathTex tex="(j,k)" />. The terms
-				that depend on <MathTex tex="(i,j)" /> or <MathTex tex="(i,k)" /> alone cancel, and what remains
-				is the centered <MathTex tex="g(j,k)" />, which is the same for every query:
-			</p>
-			<MathTex
-				display
-				tex={'\\tilde A^{\\text{deg 2}}_{i,jk} = \\tilde g(j,k) \\qquad \\text{vs.} \\qquad \\tilde A^{\\text{cubic}}_{i,jk} = \\sum_c Q_{ic}\\, \\tilde K^1_{jc}\\, \\tilde K^2_{kc}'}
-			/>
-			<p>
-				So in any degree-2 head the way <MathTex tex="j" /> and <MathTex tex="k" /> couple is decided
-				before the query arrives. The query can only re-weight <MathTex tex="j" /> and
-				<MathTex tex="k" /> separately. In the cubic head each query mixes up to
-				<MathTex tex="d" /> coupling patterns of its own: which pairs belong together depends on who is
-				asking.
-			</p>
-		</section>
-
-		<section id="set">
-			<h2><span class="n">5</span>SET is Match3 over <MathTex tex={'\\mathbb{Z}_3^4'} /></h2>
-			<p>
-				A SET card has four attributes with three values each, so a card is a vector in
-				<MathTex tex={'\\mathbb{Z}_3^4'} />. Three cards form a SET when every attribute is all the
-				same or all different, which is exactly <MathTex tex="a + b + c \equiv 0 \pmod 3" />. Write <MathTex
-					tex={'e_{ab}'}
-				/> for “cards a and b agree on this attribute”. Then, per attribute,
-			</p>
-			<MathTex
-				display
-				tex={'\\mathbb{1}[\\text{SET}] = 1 - (e_{ab} + e_{bc} + e_{ac}) + 3\\,\\mathbb{1}[a = b = c]'}
-			/>
-			<div class="cases">
-				{#each cases as c (c.name)}
-					<div class="case">
-						<div class="trio">
-							{#each c.cards as card, i (i)}<SetCard {card} width={52} />{/each}
+<PageFrame rail={PARTS.map(({ id, label, icon }) => ({ id, label, icon }))} active={part}>
+	<div class="learn">
+		<article class="text" {@attach watch}>
+			<header class="intro">
+				<h1>From pairs to diagrams</h1>
+				<p class="lede">
+					How attention generalizes from pairs of tokens to triples, why that matters, and how a Feynman-diagram view lets
+					the data decide how many tokens each interaction joins. Every chapter says where its content comes from:
+				</p>
+				<ul class="legend">
+					<li><span class="mark prior"></span>Prior work, with references</li>
+					<li><span class="mark new"></span>New in this project</li>
+					<li><span class="mark measured"></span>Measured with this app's engine</li>
+				</ul>
+				<nav class="toc" aria-label="Chapters">
+					{#each PARTS.slice(0, 3) as p (p.id)}
+						<div class="toc-part">
+							<span class="toc-title">{p.title}</span>
+							<ol>
+								{#each CHAPTERS.filter((c) => c.part === p.id) as c (c.id)}
+									<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- in-page anchor -->
+									<li><a href="#{c.id}"><span class="num">{number(c.id)}</span>{c.title}</a></li>
+								{/each}
+							</ol>
 						</div>
-						<div class="case-name">{c.name}</div>
-						<div class="hint num">
-							1 − {c.e} + 3·{c.all} = {1 - c.e + 3 * c.all}
-						</div>
-					</div>
-				{/each}
-			</div>
-			<p>
-				The agreement terms are pairwise, so a degree-2 head can express them. The last term is not:
-				with one-hot attribute embeddings, <MathTex
-					tex={'\\mathbb{1}[a=b=c] = \\langle a,\\, b \\odot c\\rangle'}
-				/>, a single trilinear product. Pairwise logits are also blind on average: every pair of
-				cards completes exactly one SET, so any score built from pairs has the same mean on SET and
-				non-SET triples.
-			</p>
-			<p>
-				A cubic head can score the whole rule at once. Place each attribute value
-				<MathTex tex="v" /> on the unit circle at <MathTex tex="\omega^v" />, with
-				<MathTex tex={'\\omega = e^{2\\pi i/3}'} />. Then
-			</p>
-			<MathTex
-				display
-				tex={'\\mathbb{1}[a + b + c \\equiv 0] = \\tfrac{1}{3}\\bigl(1 + 2\\,\\mathrm{Re}(\\omega^a \\omega^b \\omega^c)\\bigr)'}
-			/>
-			<MathTex
-				display
-				tex={'\\mathrm{Re}(z_1 z_2 z_3) = x_1x_2x_3 - x_1y_2y_3 - y_1x_2y_3 - y_1y_2x_3, \\qquad z = x + iy'}
-			/>
-			<p>
-				and the real part of a product of three unit numbers is four trilinear products of their
-				cosines and sines. Four channels per attribute make sixteen, one head of the bench’s width:
-				it scores every SET at 4 and every other triple at most 2.5.
-			</p>
-			<p>
-				The task in the <a href={resolve('/compare')}>SET bench</a> deals 12 cards and asks, for each
-				card, whether it belongs to some SET on the table.
-			</p>
-		</section>
+					{/each}
+				</nav>
+			</header>
 
-		<section id="binding">
-			<h2><span class="n">6</span>Values as binding</h2>
-			<p>
-				Scores choose pairs; values decide what a pair says. The Hadamard pair value multiplies the
-				two keys’ features channel by channel, so a channel is active only when both tokens carry
-				it. It is the diagonal of a richer object, the pair moment:
-			</p>
-			<MathTex
-				display
-				tex={'M_i = V^{1\\top} P_i\\, V^2 = \\sum_{j,k} P_{ijk}\\, V^1_j V^{2\\top}_k, \\qquad \\operatorname{diag}(M_i) = Y_i'}
-			/>
-			<p>
-				Each entry <MathTex tex={'(M_i)_{ab}'} /> asks: how much does the query’s chosen pair have feature
-				<MathTex tex="a" /> in role 1 together with feature <MathTex tex="b" /> in role 2? The
-				<a href={resolve('/explore')}>linked tensor lab</a> shows this matrix for the trained model.
-			</p>
-		</section>
-	</article>
+			<!-- ── Part I ─────────────────────────────────────────────────── -->
+			<h2 class="part" id="part-known">What was known</h2>
+
+			<section id="pairwise">
+				<h3><span class="n">1</span>Pairwise attention</h3>
+				<p class="src"><span class="mark prior"></span>Prior work <Cite id="vaswani" /></p>
+				<p>
+					A transformer layer lets every token look at every other one. Each token emits a query <MathTex tex="Q_i" />, a
+					key <MathTex tex="K_i" /> and a value <MathTex tex="V_i" />; a query scores each key with a dot product, the scores
+					are normalized over keys, and the output is the weighted sum of values:
+				</p>
+				<MathTex
+					display
+					tex={"P_{ij} = \\frac{\\exp\\left(\\langle Q_i, K_j \\rangle/\\sqrt{d}\\right)}{\\sum_{j'} \\exp\\left(\\langle Q_i, K_{j'} \\rangle/\\sqrt{d}\\right)}, \\qquad Y_i = \\sum_j P_{ij}\\, V_j"}
+				/>
+				<p>
+					Every score involves exactly two tokens. A relation among three tokens must be assembled indirectly, across heads
+					and layers, and there are simple tasks where small transformers provably cannot do that
+					<Cite id={['hahn', 'sanford']} />. The cost is <MathTex tex="O(n^2 d)" /> per head for a sequence of
+					<MathTex tex="n" /> tokens.
+				</p>
+			</section>
+
+			<section id="product">
+				<h3><span class="n">2</span>A generalized dot product</h3>
+				<p class="src"><span class="mark prior"></span>Standard multilinear algebra</p>
+				<p>
+					The dot product sums the products of matching coordinates. Nothing stops at two factors: the trilinear form
+					multiplies three, and it can be written as one dot product against an elementwise (Hadamard) product:
+				</p>
+				<MathTex
+					display
+					tex="\langle a, b \rangle = \sum_c a_c b_c \qquad\longrightarrow\qquad \langle a, b, e \rangle = \sum_c a_c\, b_c\, e_c = \langle a,\, b \odot e \rangle"
+				/>
+				<p>
+					It is large only when all three vectors are large on the same coordinates. Read the other way, a width-<MathTex
+						tex="d"
+					/> trilinear form is a sum of <MathTex tex="d" /> rank-one three-way tensors, one per coordinate. That count comes
+					back in chapter 6: it is how many different ways of pairing tokens a single query can ask for.
+				</p>
+			</section>
+
+			<section id="cubic">
+				<h3><span class="n">3</span>Cubic polyattention</h3>
+				<p class="src">
+					<span class="mark prior"></span>Prior work <Cite id={['clift', 'sanford', 'roy']} />, derived independently in this
+					project's notebook <Cite id="neo" />
+				</p>
+				<p>
+					Give each token one query and two role-specific keys and values. Query <MathTex tex="i" /> scores the ordered pair
+					<MathTex tex="(j, k)" />, with <MathTex tex="j" /> in role 1 and <MathTex tex="k" /> in role 2, and the softmax runs
+					jointly over all pairs:
+				</p>
+				<MathTex
+					display
+					tex={"A_{ijk} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\rangle, \\qquad P_{ijk} = \\frac{\\exp(A_{ijk}/\\sqrt{d})}{\\sum_{j'k'} \\exp(A_{ij'k'}/\\sqrt{d})}, \\qquad Y_i = \\sum_{j,k} P_{ijk}\\,\\bigl(V^1_j \\odot V^2_k\\bigr)"}
+				/>
+				<p>
+					Clift et al. introduced this operator as 2-simplicial attention, and Sanford et al. studied it as tensor attention
+					and showed that one head solves Match3, a task that defeats pairwise attention. Roy et al. made it fast enough to
+					train at scale. The Polyformer notebook arrived at the same operator independently in April 2023 under the name
+					cubic polyattention, which this app keeps.
+				</p>
+				<p>
+					The scores fill an <MathTex tex="n \times n \times n" /> tensor. Pairs that reuse the query or repeat a key are
+					masked, and a sink token at position 0 gives every query somewhere to put weight it does not need.
+				</p>
+			</section>
+
+			<section id="cost">
+				<h3><span class="n">4</span>What it costs</h3>
+				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['roy', 'alman']} /></p>
+				<p>
+					For one query, all <MathTex tex="n^2" /> pair scores come from a single matrix product, and the values factor the
+					same way, so no <MathTex tex="n \times n \times d" /> tensor is ever built:
+				</p>
+				<MathTex
+					display
+					tex={'S_i = \\bigl(Q_i \\odot K^1\\bigr)\\,K^{2\\top} \\in \\mathbb{R}^{n \\times n}, \\qquad Y_i = \\sum_j V^1_j \\odot \\bigl(P_i V^2\\bigr)_j'}
+				/>
+				<p>
+					That is <MathTex tex="O(n^2 d)" /> per query and <MathTex tex="O(n^3 d)" /> per head, against
+					<MathTex tex="O(n^2 d)" /> for pairwise attention. Roy et al. restrict each role to a local window of
+					<MathTex tex="w" /> keys, which costs <MathTex tex="O(n\,w^2 d)" /> and makes long sequences practical. Alman and
+					Song study when such higher-order attention can be computed faster than the naive bound at all, and find it depends
+					on how large the entries are allowed to be.
+				</p>
+			</section>
+
+			<section id="degree2">
+				<h3><span class="n">5</span>Cheaper, degree-2 relatives</h3>
+				<p class="src"><span class="mark prior"></span>Prior work <Cite id={['kozachinskiy', 'chakrabarti']} /></p>
+				<p>
+					A cheaper way to involve three tokens is to sum pairwise dot products along the edges of the triangle
+					<MathTex tex="(i, j, k)" />. Each term is bilinear, so the whole score has degree 2 in the token features:
+				</p>
+				<MathTex
+					display
+					tex={'\\begin{aligned}A^{\\text{tree}}_{ijk} &= \\langle Q_i, K^1_j \\rangle + \\langle K^1_j, K^2_k \\rangle \\\\ A^{\\text{Strassen}}_{ijk} &= \\langle Q_i, K^1_j \\rangle + \\langle K^1_j, K^2_k \\rangle + \\langle Q_i, K^2_k \\rangle\\end{aligned}'}
+				/>
+				<p>
+					Strassen attention, named for its fast matrix-multiplication algorithm, scores all three edges and runs in
+					<MathTex tex={'O(n^{\\omega})'} /> time. Chakrabarti, Pitassi and Alman unify all of these as poly-attention:
+					polynomials over a graph of token roles, classified by cost and by what they can compute. Their tree mechanism is
+					the path <MathTex tex="i - j - k" />.
+				</p>
+			</section>
+
+			<!-- ── Part II ────────────────────────────────────────────────── -->
+			<h2 class="part" id="part-new">What this project adds</h2>
+
+			<section id="barrier">
+				<h3><span class="n">6</span>The coupling barrier</h3>
+				<p class="src"><span class="mark new"></span>New in this project</p>
+				<p>
+					Fix a query and look at its <MathTex tex="n \times n" /> score matrix over pairs. For any degree-2 score
+					<MathTex tex={'A_{ijk} = f(i,j) + g(j,k) + h(i,k)'} />, the softmax factorizes:
+				</p>
+				<MathTex
+					display
+					tex={'P_{ijk} = \\frac{1}{Z_i}\\; \\underbrace{e^{f(i,j)}}_{\\text{row weight}}\\; \\underbrace{e^{g(j,k)}}_{\\text{shared kernel}}\\; \\underbrace{e^{h(i,k)}}_{\\text{column weight}}'}
+				/>
+				<p>
+					<strong>Claim.</strong> Every query sees the same coupling kernel <MathTex tex={'G_{jk} = e^{g(j,k)}'} />; it can
+					only rescale its rows and columns. <strong>Proof.</strong> Once <MathTex tex="i" /> is fixed,
+					<MathTex tex="f(i,j)" /> depends on <MathTex tex="j" /> alone and <MathTex tex="h(i,k)" /> on <MathTex tex="k" />
+					alone. Double centering, <MathTex tex={'\\tilde M = M - \\bar M_{j\\cdot} - \\bar M_{\\cdot k} + \\bar M'} />,
+					removes exactly such terms, so <MathTex tex={'\\tilde A_{i,jk} = \\tilde g(j,k)'} /> for every
+					<MathTex tex="i" />. ∎
+				</p>
+				<p>Which pairs belong together is therefore decided before the query arrives. The cubic score has no such limit:</p>
+				<MathTex
+					display
+					tex={'\\tilde A^{\\text{cubic}}_{i,jk} = \\sum_{c=1}^{d} Q_{ic}\\; \\bigl(K^1_{\\cdot c} \\otimes K^2_{\\cdot c}\\bigr)^{\\sim}_{jk}'}
+				/>
+				<p>
+					a query-dependent mix of up to <MathTex tex="d" /> coupling patterns. The figure shows it on real heads: three
+					identical slices from a degree-2 head, three different ones from a cubic head.
+				</p>
+			</section>
+
+			<section id="set">
+				<h3><span class="n">7</span>SET is Match3</h3>
+				<p class="src">
+					<span class="mark prior"></span>Match3 <Cite id="sanford" />, SET geometry <Cite id="davis" />;
+					<span class="mark new inline"></span>the reduction and averaging argument are new here
+				</p>
+				<p>
+					A SET card has four attributes with three values each, so a card is a vector in <MathTex
+						tex={'\\mathbb{Z}_3^4'}
+					/>. Three cards form a SET when every attribute is all the same or all different, which is exactly
+					<MathTex tex="a + b + c \equiv 0 \pmod 3" /> in every coordinate. SETs are the lines of the affine space
+					<MathTex tex={'\\mathrm{AG}(4, 3)'} />: any two cards determine the third, so the deck holds exactly 1,080 SETs
+					among its 85,320 triples. Per attribute, the rule splits into pairwise agreement and one three-way term:
+				</p>
+				<MathTex display tex={'\\mathbb{1}[\\text{SET}] = 1 - (e_{ab} + e_{bc} + e_{ac}) + 3\\,\\mathbb{1}[a = b = c]'} />
+				<div class="cases">
+					{#each cases as c (c.name)}
+						<div class="case">
+							<div class="trio">
+								{#each c.cards as card, i (i)}<SetCard {card} width={30} />{/each}
+							</div>
+							<div class="case-name">{c.name}</div>
+							<div class="hint num">1 − {c.e} + 3·{c.all} = {1 - c.e + 3 * c.all}</div>
+						</div>
+					{/each}
+				</div>
+				<p>
+					<strong>Pairwise scores are blind on average.</strong> Let
+					<MathTex tex={'\\Phi(T) = \\sum_{\\{a,b\\} \\subset T} \\varphi(a,b)'} /> be any score built from pairs. Every pair of
+					cards lies in exactly one SET and in exactly 79 triples, so pairs are covered evenly by both, and the mean of
+					<MathTex tex="\Phi" /> over SETs equals its mean over all triples: three times the mean of
+					<MathTex tex="\varphi" /> over pairs. Only the three-way term separates them. ∎
+				</p>
+				<p>
+					The task on the <a href={resolve('/compare')}>bench</a> deals twelve cards and asks, for each card, whether it
+					belongs to some SET on the table.
+				</p>
+			</section>
+
+			<section id="head">
+				<h3><span class="n">8</span>A head built by hand</h3>
+				<p class="src"><span class="mark new"></span>New in this project</p>
+				<p>
+					One cubic head can compute the whole rule. Put each attribute value <MathTex tex="v" /> on the unit circle at
+					<MathTex tex="\omega^v" /> with <MathTex tex={'\\omega = e^{2\\pi i/3}'} />. Summing the three cube roots of unity
+					picks out multiples of 3:
+				</p>
+				<MathTex
+					display
+					tex={'\\mathbb{1}[a + b + c \\equiv 0] = \\tfrac{1}{3}\\left(1 + 2\\cos\\tfrac{2\\pi}{3}(a + b + c)\\right)'}
+				/>
+				<p>and the cosine of a sum of three angles is four trilinear products of their cosines and sines:</p>
+				<MathTex
+					display
+					tex="\cos(\alpha + \beta + \gamma) = c_\alpha c_\beta c_\gamma - c_\alpha s_\beta s_\gamma - s_\alpha c_\beta s_\gamma - s_\alpha s_\beta c_\gamma"
+				/>
+				<p>
+					So with four channels per attribute, <MathTex tex="Q = (c, -c, -s, -s)" />, <MathTex tex="K^1 = (c, s, c, s)" />
+					and <MathTex tex="K^2 = (c, s, s, c)" />, sixteen channels give
+				</p>
+				<MathTex
+					display
+					tex={'A_{ijk} = \\sum_{t=1}^{4} \\cos\\tfrac{2\\pi}{3}\\bigl(a_t + b_t + c_t\\bigr) = 4 - \\tfrac{3}{2}\\,m'}
+				/>
+				<p>
+					where <MathTex tex="m" /> counts the attributes that break the rule. Every SET scores 4 and everything else at most
+					2.5. This head is the default in the <a href={resolve('/explore')}>tensor lab</a>, so its pictures are exact
+					before anything has trained.
+				</p>
+			</section>
+
+			<section id="binding">
+				<h3><span class="n">9</span>Values as binding</h3>
+				<p class="src">
+					<span class="mark prior"></span>Bilinear values <Cite id="clift" />, Hadamard values <Cite id="chakrabarti" />;
+					<span class="mark new inline"></span>the indexing check is new here
+				</p>
+				<p>
+					Scores choose pairs; values decide what a pair says. Clift et al. combine a pair's values with a full bilinear map;
+					the Hadamard value keeps only its diagonal, which costs the same as the scores. Both are views of one object, the
+					pair moment:
+				</p>
+				<MathTex
+					display
+					tex={'M_i = V^{1\\top} P_i\\, V^2 = \\sum_{j,k} P_{ijk}\\, V^1_j V^{2\\top}_k, \\qquad \\operatorname{diag}(M_i) = Y_i'}
+				/>
+				<p>
+					The value must be read at the keys. Poly-attention's definition does this, but its released implementation of the
+					tree mechanism reads one value at the query position instead. With the same scores, that indexing drops SET to
+					chance (54%), while Hadamard and full-moment values reach 100% in about 800 steps.
+				</p>
+			</section>
+
+			<section id="training">
+				<h3><span class="n">10</span>What training shows</h3>
+				<p class="src"><span class="mark measured"></span>Measured with this app's engine <Cite id="jaxjs" /></p>
+				<p>
+					Every model on the bench sees identical batches; only the attention operator differs. One layer, width 64, four
+					heads, 4,000 steps of AdamW, seed 0, scored on 1,024 held-out tables:
+				</p>
+				<table class="nums">
+					<thead><tr><th>Model</th><th>Held-out accuracy</th><th>Reaches 95%</th><th>ms / step</th></tr></thead>
+					<tbody>
+						<tr class="hi"><td>Cubic</td><td>100%</td><td>step 500</td><td>12.2</td></tr>
+						<tr><td>DS-PA, 2 rounds</td><td>100%</td><td>step 700</td><td>35.7</td></tr>
+						<tr><td>Strassen</td><td>95.8%</td><td>step 2,350</td><td>11.3</td></tr>
+						<tr><td>Tree (Columbia)</td><td>76.4%</td><td>never</td><td>11.0</td></tr>
+						<tr><td>Standard, 2 layers</td><td>64.4%</td><td>never</td><td>15.5</td></tr>
+						<tr><td>Standard, 1 layer</td><td>60.5%</td><td>never</td><td>8.4</td></tr>
+					</tbody>
+				</table>
+				<p>
+					Always guessing the more common answer scores 53.5%. The cubic head sits at chance until step 400 and is at 99% by
+					step 500: the three-way rule is learned all at once rather than gradually. At this length the cubic head costs
+					about the same time per step as the degree-2 ones. The ordering held on a second seed in offline runs.
+				</p>
+			</section>
+
+			<section id="arity">
+				<h3><span class="n">11</span><span>Order <MathTex tex="k" /> needs a <MathTex tex="k" />-way term</span></h3>
+				<p class="src">
+					<span class="mark prior"></span>Match-<MathTex tex="t" /> and <MathTex tex="t" />-tensor attention
+					<Cite id="sanford" />; <span class="mark new inline"></span>the four-card test is new here
+				</p>
+				<p>
+					Ask instead whether four cards sum to zero, and cubic attention stalls at the majority rate, just as pairwise
+					attention did on SET. The counting argument of chapter 7 moves up one order: three cards almost always determine
+					the fourth, so every score built from triples is close to blind on average. A quartic head learns it:
+				</p>
+				<MathTex display tex={'A_{ijkl} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\odot K^3_l \\rangle'} />
+				<p>
+					A fixed arity is a fixed bet. The head pays <MathTex tex="n^k" /> whether the data needs pairs, triples or long
+					chains, and some problems need a different depth for every example.
+				</p>
+			</section>
+
+			<!-- ── Part III ───────────────────────────────────────────────── -->
+			<h2 class="part" id="part-beyond">Letting the data choose the arity</h2>
+
+			<section id="diagrams">
+				<h3><span class="n">12</span>Sum over diagrams</h3>
+				<p class="src">
+					<span class="mark new"></span>New in this project: Dyson–Schwinger polyattention (DS-PA), after
+					<Cite id={['dyson', 'schwinger', 'feynman']} />
+				</p>
+				<p>
+					In quantum field theory, the Dyson–Schwinger equations define a quantity self-consistently in terms of itself;
+					iterating them generates every Feynman diagram, each weighted by its couplings. DS-PA borrows that shape. Each
+					token's state <MathTex tex="\Phi_t" /> is rebuilt for <MathTex tex="R" /> rounds from the previous round's
+					states, choosing among five kinds of term with one softmax:
+				</p>
+				<MathTex
+					display
+					tex={'\\begin{aligned}\\Phi^{r}_t = \\;& \\pi_{\\text{leaf}}\\, v_t + \\sum_j \\pi_j\\, \\Phi^{r-1}_j \\\\ &+ \\sum_{jk} \\pi_{jk}\\, \\Phi^{r-1}_j \\odot \\Phi^{r-1}_k \\\\ &+ \\sum_{jm} \\pi_{jm}\\, \\Phi^{r-1}_j \\odot \\Psi^{r}_m + \\pi_{\\text{carry}}\\, \\Phi^{r-1}_t\\end{aligned}'}
+				/>
+				<p>
+					All five are scored by a single trilinear vertex,
+					<MathTex tex="\langle q_t \odot \omega_r,\; u_\alpha \odot w_\beta \rangle" />, where
+					<MathTex tex="\omega_r" /> is a learned clock for round <MathTex tex="r" /> and
+					<MathTex tex="\alpha, \beta" /> range over tokens, a vacuum of value 1, and <MathTex tex="M" /> virtual modes. A
+					mode <MathTex tex={'\\Psi^r_m = \\sum_{kl} \\rho_{m,kl}\\, \\Phi^{r-1}_k \\odot \\Phi^{r-1}_l'} /> is a learned query
+					that binds a pair of tokens by itself, so an exchange term reaches three tokens at once.
+				</p>
+				<p>
+					Unrolled, a state is a weighted sum of trees: a hop extends a chain, a cubic vertex doubles the number of leaves,
+					an exchange adds a pair. After <MathTex tex="R" /> rounds one token can draw on anything from one token to
+					<MathTex tex="3^R" /> of them, and the softmax weights decide which. Each round costs
+					<MathTex tex="O(n^3 d + n^2 M d)" />, like one cubic layer. The figure draws those trees in the style of
+					TikZ-Feynman <Cite id="ellis" />; the <a href={resolve('/explore/diagrams')}>Diagrams</a> screen draws them for a
+					model training live.
+				</p>
+			</section>
+
+			<section id="sectors">
+				<h3><span class="n">13</span>Making it train</h3>
+				<p class="src"><span class="mark new"></span>New in this project</p>
+				<p>The first versions did not learn. Three changes fixed that, each for a reason that can be stated:</p>
+				<p>
+					<strong>Chemical potentials.</strong> The sectors offer very different numbers of options: one leaf, about
+					<MathTex tex="n" /> hops, about <MathTex tex="n^2" /> cubic pairs, <MathTex tex="nM" /> exchanges. With equal logits
+					a softmax gives each sector mass in proportion to its size, so at initialization almost everything goes to cubic
+					and exchange terms. A fixed bias per sector removes that:
+				</p>
+				<MathTex
+					display
+					tex={"\\mu_s = -\\log |S_s| \\quad\\Longrightarrow\\quad \\sum_{o \\in S_s} \\frac{e^{\\mu_s}}{\\sum_{s'} |S_{s'}|\\, e^{\\mu_{s'}}} = \\frac{1}{5}"}
+				/>
+				<p>
+					like a chemical potential fixing how many particles of each kind a system holds.
+					<strong>An RMS readout.</strong> Hadamard products of values below 1 shrink geometrically with depth, so the final
+					state is divided by its root mean square. <strong>An absorbing carry.</strong> Without a way to keep its state, a
+					token must rebuild everything every round, and an answer found in round 1 is overwritten in round 2. The carry term
+					makes finished results fixed points.
+				</p>
+			</section>
+
+			<section id="chase">
+				<h3><span class="n">14</span>What DS-PA learns</h3>
+				<p class="src"><span class="mark measured"></span>Measured with this app's engine</p>
+				<p>
+					Pointer chasing asks for a depth that varies by example <Cite id="chakrabarti07" />: twelve nodes form linked lists,
+					and the query must return the payload at the end of its start node's list, one to three hops away.
+				</p>
+				<table class="nums">
+					<thead><tr><th>Model</th><th>Held-out accuracy</th><th>Parameters</th><th>ms / step</th></tr></thead>
+					<tbody>
+						<tr class="hi"><td>DS-PA, 4 rounds, 1 layer</td><td>100%</td><td>61k</td><td>103</td></tr>
+						<tr><td>Standard, 3 layers</td><td>94.2%</td><td>154k</td><td>43</td></tr>
+						<tr><td>Standard, 2 layers</td><td>88.9%</td><td>104k</td><td>28</td></tr>
+						<tr><td>Cubic, 1 layer</td><td>84.5%</td><td>63k</td><td>20</td></tr>
+						<tr><td>Standard, 1 layer</td><td>64.5%</td><td>54k</td><td>15</td></tr>
+					</tbody>
+				</table>
+				<p>
+					DS-PA passes 95% by step 250. Its trained computation tree, expanded with the diagram probe, follows the true
+					pointer path one hop per round, the same algorithm as the ideal construction. It is not a universal winner: on
+					four-card SET it stays at the majority rate, and on three-hop composition, where an untied chain of heads succeeds,
+					it stalls near 60%.
+				</p>
+			</section>
+
+			<section id="references" class="refs">
+				<h2 class="part">References</h2>
+				<ol>
+					{#each REFERENCES as r (r.id)}
+						<li id="ref-{r.id}">
+							<span class="who">{r.authors}.</span>
+							{#if r.url}
+								<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link -->
+								<a href={r.url} rel="external noopener noreferrer" target="_blank">{r.title}</a>.
+							{:else}
+								<span class="title">{r.title}</span>.
+							{/if}
+							<span class="venue">{r.venue}, {r.year}.</span>
+						</li>
+					{/each}
+				</ol>
+			</section>
+		</article>
+
+		<aside class="figure" aria-live="polite">
+			<LearnFigure {section} />
+		</aside>
+	</div>
 </PageFrame>
 
 <style>
 	.learn {
-		max-width: 760px;
-		padding: 28px 28px 80px 40px;
+		display: grid;
+		grid-template-columns: minmax(0, 620px) minmax(0, 1fr);
+		gap: 48px;
+		padding: 0 32px 0 40px;
 	}
-	.intro {
-		padding-bottom: 20px;
-		border-bottom: 1px solid var(--color-edge);
+	.text {
+		padding: 32px 0 30vh;
+	}
+	h1 {
+		font-family: 'KaTeX_Main', 'Times New Roman', serif;
+		font-size: 38px;
+		font-weight: 400;
+		line-height: 1.1;
+	}
+	.lede {
+		margin-top: 12px;
+		font-size: 15px;
+		line-height: 1.65;
+		color: var(--color-ink-2);
+	}
+	.legend {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 6px 20px;
+		margin-top: 10px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+	}
+	.legend li {
+		display: inline-flex;
+		align-items: center;
+	}
+	.mark {
+		display: inline-block;
+		flex: none;
+		width: 7px;
+		height: 7px;
+		margin-right: 6px;
+		border-radius: 50%;
+		border: 1px solid var(--color-ink-3);
+		vertical-align: 0;
+	}
+	.mark.new {
+		border-color: var(--color-ink);
+		background: var(--color-ink);
+	}
+	.mark.measured {
+		border-color: var(--color-ink-2);
+		background: radial-gradient(circle, var(--color-ink-2) 0 1.5px, transparent 2px);
+	}
+	.mark.inline {
+		margin-left: 4px;
+	}
+	.toc {
+		display: grid;
+		grid-template-columns: repeat(3, auto);
+		gap: 18px;
+		margin-top: 26px;
+		padding-top: 18px;
+		border-top: 1px solid #1a1a1a;
+	}
+	.toc-title {
+		display: block;
+		margin-bottom: 6px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-2);
+	}
+	.toc ol {
+		display: grid;
+		gap: 3px;
+	}
+	.toc a {
+		display: flex;
+		gap: 8px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+		text-decoration: none;
+	}
+	.toc a:hover {
+		color: var(--color-ink);
+	}
+	.toc a .num {
+		min-width: 14px;
+	}
+	h2.part {
+		margin: 56px 0 4px;
+		font-family: 'KaTeX_Main', 'Times New Roman', serif;
+		font-size: 26px;
+		font-weight: 400;
+		scroll-margin-top: calc(var(--bar-h) + 16px);
 	}
 	section {
-		padding: 26px 0 6px;
-		border-bottom: 1px solid #1c1c1c;
-		scroll-margin-top: calc(var(--bar-h) + 12px);
+		padding: 26px 0 4px;
+		scroll-margin-top: calc(var(--bar-h) + 16px);
 	}
-	section:last-child {
-		border-bottom: 0;
-	}
-	h2 {
+	h3 {
 		display: flex;
 		align-items: baseline;
 		gap: 12px;
-		font-size: var(--text-lg);
+		font-size: 18px;
 		font-weight: 500;
 		letter-spacing: -0.01em;
-		margin-bottom: 10px;
 	}
 	.n {
+		font-family: 'KaTeX_Main', 'Times New Roman', serif;
+		font-size: 15px;
+		color: var(--color-ink-3);
+		min-width: 14px;
+	}
+	.src {
+		margin: 4px 0 12px 26px;
+		line-height: 1.6;
 		font-size: var(--text-xs);
 		color: var(--color-ink-3);
-		font-variant-numeric: tabular-nums;
-		width: 14px;
 	}
 	p {
 		color: var(--color-ink-2);
-		line-height: 1.65;
+		font-size: 15px;
+		line-height: 1.7;
 		margin: 0 0 12px;
-		max-width: 68ch;
 	}
 	p :global(.katex) {
+		color: var(--color-ink);
+	}
+	strong {
+		font-weight: 500;
 		color: var(--color-ink);
 	}
 	a {
@@ -297,41 +644,9 @@
 	}
 	section :global(.math.display) {
 		margin: 4px 0 14px;
-		padding: 10px 16px;
-		background: var(--color-panel);
-		border: 1px solid #1f1f1f;
-		border-radius: var(--radius-ui);
-	}
-	.ports {
-		margin: 4px 0 16px;
-		display: flex;
-		align-items: center;
-		gap: 22px;
-	}
-	.ports svg {
-		width: 240px;
-		flex: none;
-	}
-	.ports .mem {
-		fill: rgb(245 245 245 / 0.12);
-		stroke: #f5f5f5;
-		stroke-width: 1.3;
-		stroke-linejoin: round;
-		filter: drop-shadow(0 0 5px rgb(255 255 255 / 0.25));
-	}
-	.ports .port {
-		fill: var(--color-void);
-		stroke: var(--color-ink);
-		stroke-width: 1.5;
-	}
-	.ports .t {
-		fill: var(--color-ink-2);
-		font-size: 12px;
-		text-anchor: middle;
-	}
-	.ports figcaption {
-		max-width: 34ch;
-		line-height: 1.55;
+		padding: 6px 0;
+		overflow-x: auto;
+		font-size: 15.5px;
 	}
 	.cases {
 		display: grid;
@@ -342,26 +657,95 @@
 	.case {
 		display: flex;
 		flex-direction: column;
-		gap: 6px;
-		padding: 12px;
-		background: var(--color-panel);
-		border: 1px solid #1f1f1f;
-		border-radius: var(--radius-ui);
+		gap: 5px;
 	}
 	.trio {
 		display: flex;
-		gap: 4px;
+		gap: 6px;
 	}
 	.case-name {
-		font-size: var(--text-sm);
+		font-size: var(--text-xs);
+		color: var(--color-ink-2);
 	}
-	@media (max-width: 760px) {
+	.nums {
+		width: 100%;
+		margin: 2px 0 14px;
+		border-collapse: collapse;
+		font-size: var(--text-sm);
+		font-variant-numeric: tabular-nums;
+	}
+	.nums th {
+		padding: 0 10px 6px 0;
+		text-align: left;
+		font-weight: 400;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+	}
+	.nums td {
+		padding: 4px 10px 4px 0;
+		color: var(--color-ink-2);
+	}
+	.nums tr.hi td {
+		color: var(--color-ink);
+	}
+	.refs ol {
+		display: grid;
+		gap: 10px;
+		margin-top: 14px;
+		padding-left: 22px;
+		list-style: decimal;
+		font-size: var(--text-xs);
+		line-height: 1.55;
+		color: var(--color-ink-3);
+	}
+	.refs li:target {
+		color: var(--color-ink);
+	}
+	.refs .who,
+	.refs .title {
+		color: var(--color-ink-2);
+	}
+
+	/* the sticky figure */
+	.figure {
+		position: sticky;
+		top: calc(var(--bar-h) + 20px);
+		height: calc(100dvh - var(--bar-h) - 40px);
+		display: grid;
+		align-items: center;
+	}
+
+	/* phones and tablets: the figure pins under the bar and the text scrolls beneath it */
+	@media (max-width: 1100px) {
 		.learn {
-			padding: 18px 16px 60px;
+			grid-template-columns: minmax(0, 1fr);
+			gap: 0;
+			padding: 0 16px;
 		}
-		.ports {
-			flex-direction: column;
-			align-items: flex-start;
+		.figure {
+			order: -1;
+			z-index: 5;
+			top: var(--bar-h);
+			height: 42dvh;
+			margin: 0 -16px;
+			padding: 10px 16px;
+			background: var(--color-void);
+			border-bottom: 1px solid #1a1a1a;
+			overflow: hidden;
+		}
+		.figure :global(figcaption) {
+			display: none;
+		}
+		.text {
+			padding: 20px 0 80px;
+		}
+		.toc {
+			grid-template-columns: minmax(0, 1fr);
+		}
+	}
+	@media (max-width: 640px) {
+		h1 {
+			font-size: 30px;
 		}
 		.cases {
 			grid-template-columns: minmax(0, 1fr);

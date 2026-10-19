@@ -5,12 +5,14 @@
 		id: string;
 		label: string;
 		icon: IconData;
+		/** A resolved link to another screen; in-page sections omit it. */
+		href?: string;
 	}
 </script>
 
 <script lang="ts">
 	/**
-	 * Page body: a 48px icon rail of in-page sections beside the content.
+	 * Page body: a labelled icon rail of in-page sections beside the content.
 	 * The rail mirrors the page's own structure; it never lists unrelated tools.
 	 */
 	import type { Snippet } from 'svelte';
@@ -31,17 +33,19 @@
 
 <div class="frame">
 	<aside class="rail" aria-label="Sections">
+		<!-- eslint-disable svelte/no-navigation-without-resolve -- screen links arrive resolved; the rest are in-page anchors -->
 		{#each rail as item (item.id)}
 			<a
-				href="#{item.id}"
+				href={item.href ?? `#${item.id}`}
 				class={{ on: active === item.id }}
-				title={item.label}
-				aria-label={item.label}
+				aria-current={active === item.id ? 'page' : undefined}
 				onclick={() => onselect?.(item.id)}
 			>
-				<Icon icon={item.icon} size={18} />
+				<Icon icon={item.icon} size={20} />
+				<span>{item.label}</span>
 			</a>
 		{/each}
+		<!-- eslint-enable svelte/no-navigation-without-resolve -->
 	</aside>
 	<main>
 		{@render children()}
@@ -61,16 +65,20 @@
 		display: flex;
 		flex-direction: column;
 		align-items: center;
-		gap: 6px;
-		padding-top: 10px;
-		border-right: 1px solid var(--color-edge);
+		gap: 4px;
+		padding-top: 12px;
+		border-right: 1px solid #1a1a1a;
 		background: var(--color-void);
 	}
 	.rail a {
 		display: grid;
 		place-items: center;
-		width: 34px;
-		height: 34px;
+		gap: 6px;
+		width: 64px;
+		padding: 10px 0 9px;
+		font-size: var(--text-2xs);
+		text-align: center;
+		line-height: 1;
 		border-radius: var(--radius-ui);
 		color: var(--color-ink-3);
 		transition:

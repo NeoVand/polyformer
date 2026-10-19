@@ -1,11 +1,11 @@
 <script lang="ts">
-	/** A standalone SET card. */
+	/** A standalone SET card glyph: a square of symbols, no face. */
 	import { VALUE_NAMES, type Card } from '#lib/set/cards.ts';
 	import CardFace from './CardFace.svelte';
 
 	let {
 		card,
-		width = 72,
+		width = 40,
 		selected = false,
 		dim = false
 	}: { card: Card; width?: number; selected?: boolean; dim?: boolean } = $props();
@@ -15,14 +15,7 @@
 	);
 </script>
 
-<svg
-	{width}
-	height={(width * 2) / 3}
-	viewBox="-2 -2 {width + 4} {(width * 2) / 3 + 4}"
-	role="img"
-	aria-label={label}
-	class="set-card"
->
+<svg {width} height={width} viewBox="0 0 {width} {width}" role="img" aria-label={label} class="set-card">
 	<CardFace {card} {width} {selected} {dim} />
 </svg>
 

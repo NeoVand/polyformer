@@ -6,7 +6,7 @@ import SetCard from './SetCard.svelte';
 describe('SetCard.svelte', () => {
 	it('draws one symbol per count and names the card for screen readers', async () => {
 		render(SetCard, { card: [2, 1, 0, 2] });
-		const card = page.getByRole('img', { name: 'three solid purple ovals' });
+		const card = page.getByRole('img', { name: 'three solid purple circles' });
 		await expect.element(card).toBeInTheDocument();
 		expect(card.element().querySelectorAll('path').length).toBe(3);
 	});

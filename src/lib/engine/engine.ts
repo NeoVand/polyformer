@@ -3,6 +3,7 @@
  * step/eval events. The page never touches a jax-js array.
  */
 import type {
+	DiagramResult,
 	EvalMetric,
 	InitRequest,
 	InitResult,
@@ -92,6 +93,15 @@ export class Engine {
 
 	probe(run: string, layout: Card[]): Promise<ProbeResult> {
 		return this.call('probe', { run, layout: layout.map((c) => [...c]) });
+	}
+
+	/**
+	 * DS-PA computation tree for one example and one token (a sequence position,
+	 * e.g. the chase query at CHASE_QUERY_POS or a SET card at 1…12). `example`
+	 * is the task's plain data: a Card[] layout for SET, a ChaseInstance for chase.
+	 */
+	diagram(run: string, example: unknown, token: number, topK = 4): Promise<DiagramResult> {
+		return this.call('diagram', { run, example, token, topK });
 	}
 
 	exportWeights(run: string): Promise<{ weights: Float32Array; step: number }> {

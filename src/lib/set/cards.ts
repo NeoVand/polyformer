@@ -23,7 +23,7 @@ export type Card = readonly [number, number, number, number];
 export const ATTR_NAMES = ['number', 'shape', 'shading', 'colour'] as const;
 export const VALUE_NAMES = [
 	['one', 'two', 'three'],
-	['diamond', 'oval', 'squiggle'],
+	['diamond', 'circle', 'square'],
 	['solid', 'striped', 'open'],
 	['red', 'green', 'purple']
 ] as const;

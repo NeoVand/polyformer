@@ -6,13 +6,14 @@
 		values,
 		max,
 		label,
-		cell = 12
-	}: { values: ArrayLike<number>; max: number; label: string; cell?: number } = $props();
+		cell = 12,
+		height = 14
+	}: { values: ArrayLike<number>; max: number; label: string; cell?: number; height?: number } = $props();
 
 	const cells = $derived(Array.from(values, (v) => shade(v, max, 'signed')));
 </script>
 
-<div class="strip" role="img" aria-label={label} style:--cell="{cell}px">
+<div class="strip" role="img" aria-label={label} style:--cell="{cell}px" style:--h="{height}px">
 	{#each cells as s, i (i)}
 		<span style:background="rgb({s} {s} {s})"></span>
 	{/each}
@@ -29,6 +30,6 @@
 	}
 	span {
 		width: var(--cell);
-		height: 14px;
+		height: var(--h);
 	}
 </style>

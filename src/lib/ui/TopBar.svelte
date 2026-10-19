@@ -3,28 +3,31 @@
 	import { resolve } from '$app/paths';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import Icon from './Icon.svelte';
-	import { Chip } from './icons.ts';
+	import { Book, Compare, Cube, Note } from './icons.ts';
 
-	const bench = getBench();
+	const sets = getBench('set');
+	const chase = getBench('chase');
 
 	const nav = [
-		{ label: 'Learn', href: resolve('/learn'), match: '/learn' },
-		{ label: 'Explore', href: resolve('/explore'), match: '/explore' },
-		{ label: 'Compare', href: resolve('/compare'), match: '/compare' },
-		{ label: 'Notes', href: resolve('/notes'), match: '/notes' }
+		{ label: 'Learn', href: resolve('/learn'), match: '/learn', icon: Book },
+		{ label: 'Explore', href: resolve('/explore'), match: '/explore', icon: Cube },
+		{ label: 'Compare', href: resolve('/compare'), match: '/compare', icon: Compare },
+		{ label: 'Notes', href: resolve('/notes'), match: '/notes', icon: Note }
 	];
 
 	const titles: Record<string, string> = {
-		'/learn': 'Learn / From pairs to triples',
-		'/explore': 'Explore / Linked tensor lab',
-		'/compare': 'Compare / SET bench',
-		'/notes': 'Notes / Research log'
+		'/learn': 'From pairs to diagrams',
+		'/explore': 'Linked tensor lab',
+		'/explore/diagrams': 'Sum over diagrams',
+		'/compare': 'Bench',
+		'/notes': 'Research log'
 	};
 
 	const route = $derived(page.route.id ?? '/');
 	const crumb = $derived(titles[route] ?? '');
-	const backend = $derived(
-		bench.device === 'webgpu' ? 'WebGPU' : bench.device === 'wasm' ? 'WebAssembly' : bench.device
+	/** Shown only while a model trains, so the bar stays quiet otherwise. */
+	const live = $derived(
+		[sets, chase].find((b) => b.status === 'training' || b.status === 'pausing') ?? null
 	);
 </script>
 
@@ -42,25 +45,16 @@
 			<a
 				href={item.href}
 				class={{ active: route.startsWith(item.match) }}
-				aria-current={route.startsWith(item.match) ? 'page' : undefined}>{item.label}</a
+				aria-current={route.startsWith(item.match) ? 'page' : undefined}
+				><Icon icon={item.icon} size={16} />{item.label}</a
 			>
 		{/each}
 	</nav>
 
 	<div class="right">
-		<span class="engine" title="Where training runs: everything stays in this browser">
-			<Icon icon={Chip} size={16} />
-			{#if bench.device}
-				<span class="num">{backend}</span>
-				{#if bench.status === 'training'}
-					<span class="live num">step {bench.step}</span>
-				{/if}
-			{:else if bench.status === 'booting'}
-				<span>Starting…</span>
-			{:else}
-				<span class="muted">In-browser</span>
-			{/if}
-		</span>
+		{#if live}
+			<span class="live num"><i aria-hidden="true"></i>Training, step {live.step.toLocaleString('en-US')}</span>
+		{/if}
 	</div>
 </header>
 
@@ -73,7 +67,7 @@
 		display: grid;
 		grid-template-columns: 1fr auto 1fr;
 		align-items: center;
-		padding: 0 14px 0 16px;
+		padding: 0 16px 0 22px;
 		background: var(--color-void);
 		border-bottom: 1px solid var(--color-edge);
 	}
@@ -84,7 +78,7 @@
 		min-width: 0;
 	}
 	.wordmark {
-		font-size: var(--text-lg);
+		font-size: 17px;
 		font-weight: 450;
 		letter-spacing: -0.015em;
 		color: var(--color-ink);
@@ -96,9 +90,8 @@
 		background: var(--color-rule);
 	}
 	.crumb {
-		font-family: var(--font-mono);
-		font-size: var(--text-2xs);
-		color: var(--color-ink-2);
+		font-size: var(--text-sm);
+		color: var(--color-ink-3);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -112,14 +105,18 @@
 		position: relative;
 		display: flex;
 		align-items: center;
+		gap: 7px;
 		padding: 0 14px;
-		color: var(--color-ink-2);
+		color: var(--color-ink-3);
 		text-decoration: none;
 		font-size: var(--text-ui);
 		transition: color 120ms ease;
 	}
 	nav a:hover {
 		color: var(--color-ink);
+	}
+	nav a :global(svg) {
+		opacity: 0.85;
 	}
 	nav a.active {
 		color: var(--color-ink);
@@ -138,24 +135,24 @@
 		display: flex;
 		justify-content: flex-end;
 	}
-	.engine {
+	.live {
 		display: inline-flex;
 		align-items: center;
 		gap: 8px;
-		height: 28px;
-		padding: 0 10px;
-		border: 1px solid var(--color-edge);
-		border-radius: var(--radius-ui);
-		color: var(--color-ink-2);
 		font-size: var(--text-xs);
+		color: var(--color-ink-2);
 	}
-	.engine .muted {
-		color: var(--color-ink-3);
+	.live i {
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: var(--color-ink);
+		animation: pulse 1.6s ease-in-out infinite;
 	}
-	.live {
-		color: var(--color-ink);
-		padding-left: 8px;
-		border-left: 1px solid var(--color-edge);
+	@keyframes pulse {
+		50% {
+			opacity: 0.25;
+		}
 	}
 	@media (max-width: 860px) {
 		.crumb,

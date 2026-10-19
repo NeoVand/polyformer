@@ -1,22 +1,30 @@
 /**
- * A small pre-LN transformer for per-token SET classification, with a
- * pluggable attention operator.
+ * A small pre-LN transformer for per-token classification, with a pluggable
+ * attention operator and a pluggable task.
  *
- * Input: sum of four attribute embedding tables (one matmul against the
+ * Input: sum of the task's embedding tables (one matmul against the
  * concatenated one-hot features) plus learned positional embeddings.
  * Block: x += Wo·attn(LN x); x += MLP(LN x) with a 4× GELU MLP. Biases on all
- * projections. Head: LN, then 2 logits per token.
+ * projections. Head: LN, then one logit per class per token.
  *
  * All arrays follow jax-js move semantics: every function consumes its array
  * arguments unless noted.
  */
 import { numpy as np, nn, tree, type Array as Tensor } from '@jax-js/jax';
-import { FEATURE_DIM, SEQ_LEN } from '../set/cards.ts';
 import { gaussian, mulberry32 } from '../set/rng.ts';
-import { getOperator, type AttentionOperator, type OperatorId } from './operators/index.ts';
+import { getTask, type TaskId } from '../tasks/index.ts';
+import {
+	getOperator,
+	type AttentionOperator,
+	type OperatorId,
+	type OperatorOptions
+} from './operators/index.ts';
 
 export interface ModelConfig {
 	operator: OperatorId;
+	/** Operator options merged over the operator's defaults. */
+	options: OperatorOptions;
+	task: TaskId;
 	layers: number;
 	dModel: number;
 	heads: number;
@@ -27,16 +35,24 @@ export interface ModelConfig {
 	classes: number;
 }
 
-export function defaultConfig(operator: OperatorId, layers = 1): ModelConfig {
+export function defaultConfig(
+	operator: OperatorId,
+	layers = 1,
+	task: TaskId = 'set',
+	options: OperatorOptions = {}
+): ModelConfig {
+	const t = getTask(task);
 	return {
 		operator,
+		options: { ...getOperator(operator).defaults, ...options },
+		task,
 		layers,
 		dModel: 64,
 		heads: 4,
 		mlpRatio: 4,
-		seqLen: SEQ_LEN,
-		featureDim: FEATURE_DIM,
-		classes: 2
+		seqLen: t.seqLen,
+		featureDim: t.featureDim,
+		classes: t.classes
 	};
 }
 
@@ -55,6 +71,8 @@ export interface Layer {
 	ln2: Norm;
 	fc1: Dense;
 	fc2: Dense;
+	/** Operator-owned parameters (only for operators with `initExtra`). */
+	extra?: Record<string, Tensor>;
 }
 export interface Params {
 	emb: Tensor;
@@ -86,14 +104,21 @@ export function initParams(cfg: ModelConfig, seed: number): Params {
 	for (let l = 0; l < cfg.layers; l++) {
 		const proj: Record<string, Dense> = {};
 		for (const name of op.projections) proj[name] = dense(D, D);
-		layers.push({
+		const layer: Layer = {
 			ln1: norm(D),
 			proj,
 			out: dense(D, D),
 			ln2: norm(D),
 			fc1: dense(D, cfg.mlpRatio * D),
 			fc2: dense(cfg.mlpRatio * D, D)
-		});
+		};
+		if (op.initExtra)
+			layer.extra = op.initExtra({ H: cfg.heads, n: cfg.seqLen, dh: D / cfg.heads }, cfg.options, {
+				normal,
+				full: (shape, value) => np.full(shape, value),
+				fromArray: (values, shape) => np.array(values).reshape(shape)
+			});
+		layers.push(layer);
 	}
 	return {
 		emb: normal([cfg.featureDim, D], 1 / Math.sqrt(D)),
@@ -126,9 +151,19 @@ function layerNorm(x: Tensor, p: Norm): Tensor {
 
 export interface LayerCapture {
 	/** [B, H, n, n] or [B, H, n, n·n]. */
-	weights: Tensor;
+	weights?: Tensor;
 	/** Value projections, each [B, H, n, dh]. */
-	values: Tensor[];
+	values?: Tensor[];
+	/** DS-PA per-round option weights, each [B, H, n, K]. */
+	rounds?: Tensor[];
+	/** DS-PA per-round mode pair weights, each [B, H, M, n·n]. */
+	modes?: Tensor[];
+}
+
+/** Release every tensor a capture holds (inside or outside jit). */
+export function disposeCapture(c: LayerCapture) {
+	c.weights?.dispose();
+	for (const t of [...(c.values ?? []), ...(c.rounds ?? []), ...(c.modes ?? [])]) t.dispose();
 }
 
 /** Rows are [B·n, D]; returns per-token logits [B·n, classes]. Consumes params and features. */
@@ -161,8 +196,10 @@ export function forward(
 				.reshape([B, n, H, dh])
 				.transpose([0, 2, 1, 3]);
 		});
-		const r = op.attend(proj, { B, H, n, dh }, capture);
-		if (capture && r.weights && r.values) captures.push({ weights: r.weights, values: r.values });
+		const ctx = layer.extra ? { extra: layer.extra, options: cfg.options } : undefined;
+		const r = op.attend(proj, { B, H, n, dh }, capture, ctx);
+		if (capture)
+			captures.push({ weights: r.weights, values: r.values, rounds: r.rounds, modes: r.modes });
 		const y = r.y.transpose([0, 2, 1, 3]).reshape([B * n, D]);
 		x = x.add(linear(y, layer.out));
 		const h2 = layerNorm(x.ref, layer.ln2);
@@ -170,6 +207,23 @@ export function forward(
 	}
 	const logits = linear(layerNorm(x, params.lnf), params.head);
 	return { logits, captures };
+}
+
+/**
+ * Per-row correctness [rows] as 0/1 floats; rows without a label score 0 (and
+ * carry zero weight). Consumes logits and labels.
+ */
+function correctness(logits: Tensor, labels: Tensor, classes: number): Tensor {
+	if (classes === 2) {
+		// predict 1 iff logit₁ > logit₀
+		const margin = logits.ref.slice([], 1).sub(logits.slice([], 0));
+		return np.where(np.greater(margin, 0), labels.ref.slice([], 1), labels.slice([], 0));
+	}
+	// right iff the labelled class has the top logit
+	const labelled = np.sum(logits.ref.mul(labels.ref), -1);
+	const rows = labelled.shape;
+	const top = np.max(logits, -1);
+	return np.where(np.greaterEqual(labelled, top), np.sum(labels, -1), np.zeros(rows));
 }
 
 /**
@@ -187,10 +241,7 @@ export function lossAndAccuracy(
 	const total = np.sum(weights.ref);
 	const nll = np.sum(nn.logSoftmax(logits.ref, -1).mul(labels.ref), -1).neg();
 	const loss = np.sum(nll.mul(weights.ref)).div(total.ref);
-	// two classes: predict 1 iff logit₁ > logit₀
-	const margin = logits.ref.slice([], 1).sub(logits.slice([], 0));
-	const predOne = np.greater(margin, 0);
-	const correct = np.where(predOne, labels.ref.slice([], 1), labels.slice([], 0));
+	const correct = correctness(logits, labels, cfg.classes);
 	const accuracy = np.sum(correct.mul(weights)).div(total);
 	return [loss, accuracy];
 }
@@ -210,11 +261,10 @@ export function evalSums(
 	const { logits } = forward(params, cfg, features);
 	const nll = np.sum(nn.logSoftmax(logits.ref, -1).mul(labels.ref), -1).neg();
 	const lossSum = np.sum(nll.mul(weights.ref));
-	const margin = logits.ref.slice([], 1).sub(logits.slice([], 0));
-	const correct = np.where(np.greater(margin, 0), labels.ref.slice([], 1), labels.slice([], 0));
+	const correct = correctness(logits, labels, cfg.classes);
 	const counted = correct.mul(weights.ref);
 	const correctSum = np.sum(counted.ref);
-	// BOS rows count as correct so a layout is right iff all 12 cards are
+	// unweighted rows count as correct, so a sequence is right iff every scored token is
 	const perLayout = np.min(counted.add(np.ones(weights.shape).sub(weights)).reshape([-1, n]), 1);
 	return np.stack([lossSum, correctSum, np.sum(perLayout)]);
 }
@@ -230,6 +280,6 @@ export function forwardFlops(cfg: ModelConfig): number {
 	const perLayer =
 		2 * n * D * D * (op.projections.length + 1) + // projections + output
 		2 * n * D * F * 2 + // MLP
-		op.flops(n, H, dh);
+		op.flops(n, H, dh, cfg.options);
 	return 2 * n * cfg.featureDim * D + cfg.layers * perLayer + 2 * n * D * cfg.classes;
 }
