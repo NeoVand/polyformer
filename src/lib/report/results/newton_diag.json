@@ -4,37 +4,37 @@
 			"task": "zs3",
 			"label": "Match-3",
 			"chance": 0.5,
-			"runs": 4,
+			"runs": 3,
 			"bal": 1.0,
-			"knockout": [1.0, 0.9978, 0.507, 1.0, 1.0, 1.0],
-			"contrib": [0.3385, 0.1169, 0.4925, 0.0247, 0.0155, 0.012]
+			"knockout": [1.0, 1.0, 0.5013, 1.0, 1.0, 1.0],
+			"contrib": [0.1632, 0.1312, 0.3499, 0.13, 0.11, 0.1156]
 		},
 		{
 			"task": "zs4",
 			"label": "Match-4",
 			"chance": 0.5,
-			"runs": 4,
-			"bal": 0.7175,
-			"knockout": [0.713, 0.7102, 0.6899, 0.5355, 0.7157, 0.7163],
-			"contrib": [0.2743, 0.1031, 0.1731, 0.3549, 0.058, 0.0364]
+			"runs": 3,
+			"bal": 1.0,
+			"knockout": [1.0, 1.0, 1.0, 0.5002, 1.0, 1.0],
+			"contrib": [0.151, 0.0977, 0.1663, 0.3343, 0.1431, 0.1076]
 		},
 		{
 			"task": "zs5",
 			"label": "Match-5",
 			"chance": 0.5,
 			"runs": 3,
-			"bal": 0.6022,
-			"knockout": [0.6027, 0.6028, 0.5981, 0.5898, 0.5111, 0.5963],
-			"contrib": [0.3056, 0.0865, 0.098, 0.1558, 0.2561, 0.098]
+			"bal": 0.8475,
+			"knockout": [0.849, 0.8461, 0.8502, 0.8473, 0.5005, 0.8499],
+			"contrib": [0.2754, 0.0807, 0.242, 0.1315, 0.1767, 0.0937]
 		},
 		{
 			"task": "arity",
 			"label": "Smallest arity",
 			"chance": 0.25,
-			"runs": 2,
-			"bal": 0.9074,
-			"knockout": [0.8871, 0.8875, 0.6126, 0.5587, 0.7261, 0.9029],
-			"contrib": [0.258, 0.0861, 0.2756, 0.208, 0.1396, 0.0326]
+			"runs": 3,
+			"bal": 1.0,
+			"knockout": [1.0, 1.0, 0.7389, 0.6842, 0.7531, 1.0],
+			"contrib": [0.1366, 0.0851, 0.2369, 0.2391, 0.218, 0.0845]
 		}
 	],
 	"scatter": [
@@ -109,6 +109,20 @@
 			"bal": 0.9198
 		},
 		{
+			"task": "arity",
+			"seed": 2,
+			"found": 38,
+			"of": 40,
+			"bal": 0.9878
+		},
+		{
+			"task": "arity",
+			"seed": 0,
+			"found": 33,
+			"of": 40,
+			"bal": 0.8951
+		},
+		{
 			"task": "zs3",
 			"seed": 0,
 			"found": 40,
@@ -128,6 +142,552 @@
 			"found": 33,
 			"of": 40,
 			"bal": 0.8951
+		},
+		{
+			"task": "zs3",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs3",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 29,
+			"of": 40,
+			"bal": 0.8605
+		},
+		{
+			"task": "zs3",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 22,
+			"of": 40,
+			"bal": 0.7804
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 32,
+			"of": 40,
+			"bal": 0.9017
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 36,
+			"of": 40,
+			"bal": 0.958
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 37,
+			"of": 40,
+			"bal": 0.9666
+		},
+		{
+			"task": "zs3",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 0.9999
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 35,
+			"of": 40,
+			"bal": 0.9442
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 20,
+			"of": 40,
+			"bal": 0.7601
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 18,
+			"of": 40,
+			"bal": 0.7391
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 26,
+			"of": 40,
+			"bal": 0.8258
+		},
+		{
+			"task": "zs3",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs3",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs3",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs3",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs3",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 33,
+			"of": 40,
+			"bal": 0.9221
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 29,
+			"of": 40,
+			"bal": 0.8752
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 4,
+			"of": 40,
+			"bal": 0.5565
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 18,
+			"of": 40,
+			"bal": 0.7482
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 4,
+			"of": 40,
+			"bal": 0.5601
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 4,
+			"of": 40,
+			"bal": 0.5432
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 39,
+			"of": 40,
+			"bal": 0.9959
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 32,
+			"of": 40,
+			"bal": 0.9178
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 10,
+			"of": 40,
+			"bal": 0.6088
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 6,
+			"of": 40,
+			"bal": 0.5808
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 9,
+			"of": 40,
+			"bal": 0.6192
+		},
+		{
+			"task": "arity",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 1,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "arity",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 22,
+			"of": 40,
+			"bal": 0.7718
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 0.9999
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 9,
+			"of": 40,
+			"bal": 0.6635
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 18,
+			"of": 40,
+			"bal": 0.7332
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 34,
+			"of": 40,
+			"bal": 0.9467
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 30,
+			"of": 40,
+			"bal": 0.8813
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 16,
+			"of": 40,
+			"bal": 0.7363
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 13,
+			"of": 40,
+			"bal": 0.706
+		},
+		{
+			"task": "arity",
+			"seed": 0,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 1,
+			"of": 40,
+			"bal": 0.5174
+		},
+		{
+			"task": "arity",
+			"seed": 2,
+			"found": 40,
+			"of": 40,
+			"bal": 1.0
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 2,
+			"of": 40,
+			"bal": 0.5327
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 7,
+			"of": 40,
+			"bal": 0.6029
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 11,
+			"of": 40,
+			"bal": 0.6827
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 20,
+			"of": 40,
+			"bal": 0.7737
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 20,
+			"of": 40,
+			"bal": 0.7787
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 8,
+			"of": 40,
+			"bal": 0.6146
+		},
+		{
+			"task": "zs4",
+			"seed": 2,
+			"found": 17,
+			"of": 40,
+			"bal": 0.7503
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 9,
+			"of": 40,
+			"bal": 0.6351
+		},
+		{
+			"task": "zs5",
+			"seed": 1,
+			"found": 4,
+			"of": 40,
+			"bal": 0.5602
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 8,
+			"of": 40,
+			"bal": 0.6132
+		},
+		{
+			"task": "zs4",
+			"seed": 0,
+			"found": 14,
+			"of": 40,
+			"bal": 0.7172
+		},
+		{
+			"task": "zs4",
+			"seed": 1,
+			"found": 14,
+			"of": 40,
+			"bal": 0.7133
+		},
+		{
+			"task": "zs5",
+			"seed": 0,
+			"found": 4,
+			"of": 40,
+			"bal": 0.5588
+		},
+		{
+			"task": "zs5",
+			"seed": 2,
+			"found": 7,
+			"of": 40,
+			"bal": 0.6023
 		}
 	],
 	"examples": [
@@ -184,5 +744,167 @@
 			]
 		}
 	],
-	"hist": [0, 24, 173, 297, 230, 132, 42, 20, 14, 92]
+	"hist": [0, 24, 173, 297, 230, 132, 42, 20, 14, 92],
+	"mixed": [
+		{
+			"task": "zs3",
+			"model": "mix34-r256-s12000",
+			"seeds": [2, 1, 0],
+			"bal": [0.9774, 0.947, 0.9782],
+			"bal_mean": 0.9675,
+			"params": 0
+		},
+		{
+			"task": "zs3",
+			"model": "mix345-r256-fnorm-s6000",
+			"seeds": [0, 1, 2],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs3",
+			"model": "mix345-r256-s18000",
+			"seeds": [0, 2, 1],
+			"bal": [0.8971, 0.9374, 0.8912],
+			"bal_mean": 0.9086,
+			"params": 0
+		},
+		{
+			"task": "zs3",
+			"model": "mix345-r256-s6000",
+			"seeds": [0, 1, 2],
+			"bal": [0.9078, 0.8529, 0.9257],
+			"bal_mean": 0.8955,
+			"params": 0
+		},
+		{
+			"task": "zs3",
+			"model": "mix345-r256-shared-fnorm-s18000",
+			"seeds": [0, 2, 1],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs3",
+			"model": "mix345-r256-shared-fnorm-s6000",
+			"seeds": [2, 0, 1],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs3",
+			"model": "mix345-r512-shared-fnorm-s18000",
+			"seeds": [1, 0, 2],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs4",
+			"model": "mix34-r256-s12000",
+			"seeds": [2, 1, 0],
+			"bal": [0.9311, 0.8767, 0.9321],
+			"bal_mean": 0.9133,
+			"params": 0
+		},
+		{
+			"task": "zs4",
+			"model": "mix345-r256-fnorm-s6000",
+			"seeds": [0, 1, 2],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs4",
+			"model": "mix345-r256-s18000",
+			"seeds": [0, 2, 1],
+			"bal": [0.8465, 0.878, 0.8282],
+			"bal_mean": 0.8509,
+			"params": 0
+		},
+		{
+			"task": "zs4",
+			"model": "mix345-r256-s6000",
+			"seeds": [0, 1, 2],
+			"bal": [0.8512, 0.8017, 0.8741],
+			"bal_mean": 0.8423,
+			"params": 0
+		},
+		{
+			"task": "zs4",
+			"model": "mix345-r256-shared-fnorm-s18000",
+			"seeds": [0, 2, 1],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs4",
+			"model": "mix345-r256-shared-fnorm-s6000",
+			"seeds": [2, 0, 1],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs4",
+			"model": "mix345-r512-shared-fnorm-s18000",
+			"seeds": [1, 0, 2],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs5",
+			"model": "mix345-r256-fnorm-s6000",
+			"seeds": [0, 1, 2],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs5",
+			"model": "mix345-r256-s18000",
+			"seeds": [0, 2, 1],
+			"bal": [0.8277, 0.8616, 0.8113],
+			"bal_mean": 0.8335,
+			"params": 0
+		},
+		{
+			"task": "zs5",
+			"model": "mix345-r256-s6000",
+			"seeds": [0, 1, 2],
+			"bal": [0.8298, 0.789, 0.8624],
+			"bal_mean": 0.8271,
+			"params": 0
+		},
+		{
+			"task": "zs5",
+			"model": "mix345-r256-shared-fnorm-s18000",
+			"seeds": [0, 2, 1],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs5",
+			"model": "mix345-r256-shared-fnorm-s6000",
+			"seeds": [2, 0, 1],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		},
+		{
+			"task": "zs5",
+			"model": "mix345-r512-shared-fnorm-s18000",
+			"seeds": [1, 0, 2],
+			"bal": [1.0, 1.0, 1.0],
+			"bal_mean": 1.0,
+			"params": 0
+		}
+	]
 }

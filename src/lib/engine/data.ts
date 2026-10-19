@@ -7,8 +7,8 @@ import { getTask, makeTaskBatch, type TaskBatch, type TaskId } from '../tasks/in
 export const EVAL_SEED = 0x5e7e7a1;
 
 /** Per-task stream offsets; SET keeps its original streams so its bench is unchanged. */
-const TRAIN_OFFSET: Record<TaskId, number> = { set: 7919, chase: 104729 };
-const EVAL_SEEDS: Record<TaskId, number> = { set: EVAL_SEED, chase: 0xc4a5e };
+const TRAIN_OFFSET: Record<TaskId, number> = { set: 7919, chase: 104729, match4: 1299709 };
+const EVAL_SEEDS: Record<TaskId, number> = { set: EVAL_SEED, chase: 0xc4a5e, match4: 0x4a7c4 };
 
 const trainSeed = (seed: number, step: number, task: TaskId = 'set') =>
 	deriveSeed(seed + TRAIN_OFFSET[task], step);

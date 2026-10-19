@@ -6,6 +6,7 @@
 	import type { SuiteId } from '#lib/engine/runs.ts';
 	import { getOperator } from '#lib/model/operators/index.ts';
 	import { setMembership, type Card } from '#lib/set/cards.ts';
+	import { zeroSumMembers } from '#lib/tasks/matchk.ts';
 	import ChaseLists from '#lib/ui/ChaseLists.svelte';
 	import Icon from '#lib/ui/Icon.svelte';
 	import LineChart, { type Series } from '#lib/ui/LineChart.svelte';
@@ -13,7 +14,17 @@
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { compact, duration, flops, ms, pct } from '#lib/ui/format.ts';
-	import { Cards, Chip, Download, Pause, Play, Reset, Timer, Workflow } from '#lib/ui/icons.ts';
+	import {
+		Cards,
+		Chip,
+		Download,
+		Matrix,
+		Pause,
+		Play,
+		Reset,
+		Timer,
+		Workflow
+	} from '#lib/ui/icons.ts';
 
 	let suite = $state<SuiteId>('set');
 	const bench = $derived(getBench(suite));
@@ -42,7 +53,9 @@
 	}
 	const RECORDINGS: Record<SuiteId, string> = {
 		set: asset('recorded/set.json'),
-		chase: asset('recorded/chase.json')
+		chase: asset('recorded/chase.json'),
+		// recorded once in a browser; until then the bench simply starts empty
+		match4: asset('recorded/match4.json' as Parameters<typeof asset>[0])
 	};
 	let recorded = $state.raw<Recorded | null>(null);
 	$effect(() => {
@@ -151,8 +164,11 @@
 	// ── the shared input: the first example of the batch every model sees now ─
 	const shownStep = $derived(Math.floor(bench.step / 25) * 25);
 	const example = $derived(firstExampleOfBatch(bench.task.id, bench.seed, shownStep));
-	const layout = $derived(suite === 'set' ? (example as Card[]) : []);
-	const members = $derived(suite === 'set' ? setMembership(layout) : []);
+	const cardSuite = $derived(suite === 'set' || suite === 'match4');
+	const layout = $derived(cardSuite ? (example as Card[]) : []);
+	const members = $derived(
+		suite === 'set' ? setMembership(layout) : suite === 'match4' ? zeroSumMembers(layout, 4) : []
+	);
 
 	function toggle() {
 		if (running) bench.pause();
@@ -218,18 +234,26 @@
 		chase: {
 			lede: 'Twelve nodes form linked lists. The query names a start node and must return the payload at the end of its list, one to three hops away. One Feynman attention layer against cubic and standard attention at one to three layers.',
 			question: 'Follow the list from the ringed start node. What payload is at its end?'
+		},
+		match4: {
+			lede: 'Nine cards. A card is positive when it and three others sum to zero, attribute by attribute. Every operator of order below four stays at chance; Newton attention offers every arity at once, in time linear in the table.',
+			question: 'For each card: does it complete a zero sum with three others?'
 		}
 	};
 </script>
 
 <svelte:head>
-	<title>{suite === 'set' ? 'SET bench' : 'Pointer-chase bench'} | Polyformer</title>
+	<title
+		>{suite === 'set' ? 'SET bench' : suite === 'chase' ? 'Pointer-chase bench' : 'Four-card bench'} |
+		Polyformer</title
+	>
 </svelte:head>
 
 <PageFrame
 	rail={[
 		{ id: 'set', label: 'SET', icon: Cards },
-		{ id: 'chase', label: 'Pointer chase', icon: Workflow }
+		{ id: 'chase', label: 'Pointer chase', icon: Workflow },
+		{ id: 'match4', label: 'Four cards', icon: Matrix }
 	]}
 	active={suite}
 	onselect={(id) => (suite = id as SuiteId)}
@@ -242,6 +266,9 @@
 					<button aria-pressed={suite === 'set'} onclick={() => (suite = 'set')}>SET</button>
 					<button aria-pressed={suite === 'chase'} onclick={() => (suite = 'chase')}
 						>Pointer chase</button
+					>
+					<button aria-pressed={suite === 'match4'} onclick={() => (suite = 'match4')}
+						>Four cards</button
 					>
 				</div>
 			</div>
@@ -273,9 +300,9 @@
 					{xMax}
 					{xLabel}
 					{formatX}
-					yMin={suite === 'set' ? 0.4 : 0}
+					yMin={cardSuite ? 0.4 : 0}
 					yMax={1}
-					yTicks={suite === 'set' ? [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] : [0, 0.2, 0.4, 0.6, 0.8, 1]}
+					yTicks={cardSuite ? [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] : [0, 0.2, 0.4, 0.6, 0.8, 1]}
 					formatY={(v) => pct(v, 0)}
 					reference={{ y: majority, label: `Majority class ${pct(majority, 0)}` }}
 					height={Math.max(220, heroHeight)}
@@ -295,7 +322,7 @@
 					{formatX}
 					log
 					yMin={1e-4}
-					yMax={suite === 'set' ? 1 : 3}
+					yMax={cardSuite ? 1 : 3}
 					yTicks={[1e-4, 1e-3, 1e-2, 1e-1, 1]}
 					formatY={(v) => (v >= 0.01 ? v.toFixed(2) : v.toExponential(0))}
 					height={160}
@@ -322,7 +349,7 @@
 			<div class="input">
 				<h3>Shared input <small class="num">batch {shownStep.toLocaleString('en-US')}</small></h3>
 				<p class="q">{COPY[suite].question}</p>
-				{#if suite === 'set'}
+				{#if cardSuite}
 					<div class="cards">
 						{#each layout as card, i (i)}
 							<span class="slot" class:in={members[i]}>

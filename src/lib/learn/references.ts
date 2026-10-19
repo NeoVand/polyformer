@@ -11,7 +11,8 @@ export interface Reference {
 export const REFERENCES: Reference[] = [
 	{
 		id: 'vaswani',
-		authors: 'A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, I. Polosukhin',
+		authors:
+			'A. Vaswani, N. Shazeer, N. Parmar, J. Uszkoreit, L. Jones, A. N. Gomez, Ł. Kaiser, I. Polosukhin',
 		title: 'Attention is all you need',
 		venue: 'Advances in Neural Information Processing Systems 30',
 		year: 2017,
@@ -58,14 +59,17 @@ export const REFERENCES: Reference[] = [
 	{
 		id: 'alman',
 		authors: 'J. Alman, Z. Song',
-		title: 'How to capture higher-order correlations? Generalizing matrix softmax attention to Kronecker computation',
+		title:
+			'How to capture higher-order correlations? Generalizing matrix softmax attention to Kronecker computation',
 		venue: 'International Conference on Learning Representations',
 		year: 2024
 	},
 	{
 		id: 'kozachinskiy',
-		authors: 'A. Kozachinskiy, F. Urrutia, H. Jimenez, T. Steifer, G. Pizarro, M. Fuentes, F. Meza, C. Buc, C. Rojas',
-		title: 'Strassen attention: unlocking compositional abilities in transformers based on a new lower bound method',
+		authors:
+			'A. Kozachinskiy, F. Urrutia, H. Jimenez, T. Steifer, G. Pizarro, M. Fuentes, F. Meza, C. Buc, C. Rojas',
+		title:
+			'Strassen attention: unlocking compositional abilities in transformers based on a new lower bound method',
 		venue: 'arXiv:2501.19215',
 		year: 2025,
 		url: 'https://arxiv.org/abs/2501.19215'
@@ -123,6 +127,22 @@ export const REFERENCES: Reference[] = [
 		venue: 'arXiv:1601.05437',
 		year: 2016,
 		url: 'https://arxiv.org/abs/1601.05437'
+	},
+	{
+		id: 'abbe',
+		authors: 'E. Abbe, E. Boix-Adserà, T. Misiakiewicz',
+		title: 'SGD learning on neural networks: leap complexity and saddle-to-saddle dynamics',
+		venue: 'COLT',
+		year: 2023,
+		url: 'https://arxiv.org/abs/2302.11055'
+	},
+	{
+		id: 'nanda',
+		authors: 'N. Nanda, L. Chan, T. Lieberum, J. Smith, J. Steinhardt',
+		title: 'Progress measures for grokking via mechanistic interpretability',
+		venue: 'ICLR',
+		year: 2023,
+		url: 'https://arxiv.org/abs/2301.05217'
 	},
 	{
 		id: 'jaxjs',

@@ -26,8 +26,9 @@ import {
 	type Card
 } from '../set/cards.ts';
 import type { Rng } from '../set/rng.ts';
+import { encodeMatch, zeroSumMembers } from './matchk.ts';
 
-export type TaskId = 'set' | 'chase';
+export type TaskId = 'set' | 'chase' | 'match4';
 
 export interface TaskBatch {
 	batch: number;
@@ -88,9 +89,35 @@ export const CHASE_TASK: TaskSpec<ChaseInstance> = {
 	targetAt: (inst, position) => (position === CHASE_QUERY_POS ? solveChase(inst).payload : null)
 };
 
+/** Match-4: nine cards; a card is positive when it and three others sum to zero. */
+const MATCH_SIZE = 9;
+export const MATCH4_TASK: TaskSpec<Card[]> = {
+	id: 'match4',
+	name: 'Four-card zero sum',
+	seqLen: MATCH_SIZE + 1,
+	featureDim: FEATURE_DIM,
+	classes: 2,
+	lossPositions: Array.from({ length: MATCH_SIZE }, (_, i) => i + 1),
+	deal: (rng) => dealLayout(rng, MATCH_SIZE),
+	encode: (layouts) => encodeMatch(layouts, 4),
+	isExample(x): x is Card[] {
+		if (!Array.isArray(x) || x.length !== MATCH_SIZE) return false;
+		const ok = x.every(
+			(c) =>
+				Array.isArray(c) &&
+				c.length === ATTRS &&
+				c.every((v) => Number.isInteger(v) && v >= 0 && v < 3)
+		);
+		return ok && new Set(x.map((c) => c.join())).size === MATCH_SIZE;
+	},
+	targetAt: (layout, position) =>
+		position >= 1 && position <= MATCH_SIZE ? Number(zeroSumMembers(layout, 4)[position - 1]) : null
+};
+
 export const TASKS: Record<TaskId, TaskSpec> = {
 	set: SET_TASK as TaskSpec,
-	chase: CHASE_TASK as TaskSpec
+	chase: CHASE_TASK as TaskSpec,
+	match4: MATCH4_TASK as TaskSpec
 };
 
 export function getTask(id: TaskId): TaskSpec {

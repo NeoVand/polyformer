@@ -90,7 +90,8 @@
 	let flowTask = $state<SuiteId>('set');
 	const recordings: Record<SuiteId, Record<string, RecordedRun> | null> = $state({
 		set: null,
-		chase: null
+		chase: null,
+		match4: null
 	});
 	let chaseRec = $state.raw<ChaseRecording | null>(null);
 	let setRec = $state.raw<SetRecording | null>(null);

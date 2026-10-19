@@ -1,5 +1,6 @@
 import { cubic } from './cubic.ts';
 import { dspa } from './dspa.ts';
+import { newton } from './newton.ts';
 import { standard } from './standard.ts';
 import { strassen } from './strassen.ts';
 import { tree } from './tree.ts';
@@ -20,7 +21,8 @@ export const OPERATORS: Record<OperatorId, AttentionOperator> = {
 	tree,
 	strassen,
 	cubic,
-	dspa
+	dspa,
+	newton
 };
 
 export function getOperator(id: OperatorId): AttentionOperator {

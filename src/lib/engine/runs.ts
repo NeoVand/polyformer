@@ -9,8 +9,11 @@ export interface RunSpec {
 	label: string;
 	/** Task this run trains on; defaults to SET. */
 	task?: TaskId;
-	/** Operator options (Feynman attention rounds and modes). */
+	/** Operator options (Feynman attention rounds and modes, Newton attention order). */
 	options?: OperatorOptions;
+	/** Model width and heads, when a run needs other than the default 64 and 4. */
+	dModel?: number;
+	heads?: number;
 	/** Trains when Start is pressed unless switched off; defaults to true. */
 	defaultEnabled?: boolean;
 	/** Grayscale step for charts and legends, 0 (dim) … 1 (bright). The run under study is brightest. */
@@ -102,7 +105,53 @@ export const CHASE_RUNS: RunSpec[] = [
 	}
 ];
 
-export type SuiteId = 'set' | 'chase';
+/**
+ * The four-card bench: every operator below order 4 stays at chance on Match-4; Newton attention,
+ * which offers every arity at once, is the one small model that leaves it.
+ */
+export const MATCH4_RUNS: RunSpec[] = [
+	{
+		id: 'newton',
+		operator: 'newton',
+		layers: 1,
+		task: 'match4',
+		label: 'Newton · order 5',
+		options: { order: 5 },
+		dModel: 128,
+		tone: 1,
+		dash: ''
+	},
+	{
+		id: 'cubic',
+		operator: 'cubic',
+		layers: 1,
+		task: 'match4',
+		label: 'Cubic',
+		tone: 0.72,
+		dash: '6 3'
+	},
+	{
+		id: 'dspa',
+		operator: 'dspa',
+		layers: 1,
+		task: 'match4',
+		label: 'Feynman · 2 rounds',
+		options: { rounds: 2, modes: 16 },
+		tone: 0.6,
+		dash: '10 3'
+	},
+	{
+		id: 'std2',
+		operator: 'standard',
+		layers: 2,
+		task: 'match4',
+		label: 'Standard · 2 layers',
+		tone: 0.45,
+		dash: '2 3'
+	}
+];
+
+export type SuiteId = 'set' | 'chase' | 'match4';
 
 export interface Suite {
 	id: SuiteId;
@@ -113,7 +162,8 @@ export interface Suite {
 
 export const SUITES: Record<SuiteId, Suite> = {
 	set: { id: 'set', task: 'set', label: 'SET bench', runs: BENCH_RUNS },
-	chase: { id: 'chase', task: 'chase', label: 'Pointer-chase bench', runs: CHASE_RUNS }
+	chase: { id: 'chase', task: 'chase', label: 'Pointer-chase bench', runs: CHASE_RUNS },
+	match4: { id: 'match4', task: 'match4', label: 'Four-card bench', runs: MATCH4_RUNS }
 };
 
 export const runById = (id: string, suite: SuiteId = 'set') =>

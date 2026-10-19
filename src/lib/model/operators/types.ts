@@ -8,7 +8,7 @@ export interface HeadShape {
 	dh: number;
 }
 
-export type OperatorId = 'standard' | 'tree' | 'strassen' | 'cubic' | 'dspa';
+export type OperatorId = 'standard' | 'tree' | 'strassen' | 'cubic' | 'dspa' | 'newton';
 
 /** Per-run knobs for operators that have them (ignored by the rest). */
 export interface OperatorOptions {
@@ -16,6 +16,8 @@ export interface OperatorOptions {
 	rounds?: number;
 	/** Virtual exchange modes (Feynman attention). */
 	modes?: number;
+	/** Highest arity offered (Newton attention). */
+	order?: number;
 }
 
 /** Host-side initialisers handed to `initExtra`, drawing from the model's seeded stream. */
@@ -60,8 +62,8 @@ export interface AttentionOperator {
 	name: string;
 	/** Short label for legends. */
 	short: string;
-	/** 2 = scores over keys j; 3 = scores over ordered key pairs (j, k). */
-	arity: 2 | 3;
+	/** 2 = scores over keys j; 3 = scores over ordered key pairs (j, k); 'all' = every arity at once. */
+	arity: 2 | 3 | 'all';
 	/** Per-head projections the block must produce, in order. */
 	projections: readonly string[];
 	/** Logit formula in TeX, for the UI. */

@@ -26,6 +26,10 @@ def label(r: dict) -> str:
         m = "dspa5-lin"
     if m == "newton":
         m = f"newton-K{opt('--order') or 6}-r{opt('--rank') or 32}-h{opt('--heads') or 4}"
+        m += "-shared" if opt("--readout") == "shared" else ""
+        m += "-fnorm" if opt("--fnorm") == "1" else ""
+        m += "-raw" if opt("--rawphase") == "1" else ""
+        m += f"-L{r['layers']}" if r.get("layers", 1) > 1 else ""
     if opt("--d"):
         m += f"-d{opt('--d')}"
     if opt("--steps") and m.startswith("newton") and opt("--steps") != "4000" and opt("--steps") != "6000":

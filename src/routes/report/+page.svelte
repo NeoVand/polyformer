@@ -8,6 +8,7 @@
 	import ArityUseFigure from '#lib/report/ArityUseFigure.svelte';
 	import CharactersFigure from '#lib/report/CharactersFigure.svelte';
 	import newtonDiag from '#lib/report/results/newton_diag.json';
+	import lm from '#lib/report/results/lm.json';
 	import EvidenceMatrix from '#lib/report/EvidenceMatrix.svelte';
 	import FeynmanFigure from '#lib/report/FeynmanFigure.svelte';
 	import MarginalDemo from '#lib/report/MarginalDemo.svelte';
@@ -83,6 +84,10 @@
 	const phaseA = grid('phase_a');
 	const newtonA = grid('newton_a');
 	const newtonB = grid('newton_b');
+	const newtonC = grid('newton_c');
+	const newtonE = grid('newton_e');
+	/** Newton attention as Section 5 defines it: normalised arities, one shared read-out. */
+	const FINAL = 'newton-K6-r256-h4-shared-fnorm';
 
 	const BASE_TASKS = [
 		{ id: 'set', label: 'SET' },
@@ -100,7 +105,8 @@
 		{ id: 'quartic', label: 'Dense quartic' },
 		{ id: 'dspa4', label: 'Feynman' },
 		{ id: 'newton', label: 'Newton attention, rank 32' },
-		{ id: 'newton-K6-r256-h4', label: 'Newton attention, rank 256' }
+		{ id: 'newton-K6-r256-h4', label: 'Newton attention, rank 256' },
+		{ id: FINAL, label: 'the same, normalised arities' }
 	];
 	const LADDER_TASKS = [
 		{ id: 'zs3', label: 'Match-3' },
@@ -120,7 +126,8 @@
 		{ id: 'dspa5-d192', label: 'the same, width 192' },
 		{ id: 'dspa5-lin', label: 'the same, no cubic sector' },
 		{ id: 'newton', label: 'Newton attention, rank 32' },
-		{ id: 'newton-K6-r256-h4', label: 'Newton attention, rank 256' }
+		{ id: 'newton-K6-r256-h4', label: 'Newton attention, rank 256' },
+		{ id: FINAL, label: 'the same, normalised arities' }
 	];
 	const ORDER_MODELS = [
 		{ id: 'newton-K3-r32-h4', label: 'Order 3' },
@@ -138,13 +145,47 @@
 		{ id: 'standard-3L-d256', label: 'Standard, 3 layers, width 256' },
 		{ id: 'cubic-d192', label: 'Cubic, width 192' }
 	];
+	const FIX_TASKS = [
+		...LADDER_TASKS,
+		{ id: 'set', label: 'SET' },
+		{ id: 'set4', label: 'Four-card SET' }
+	];
+	const FIX_MODELS = [
+		{ id: 'newton-K6-r256-h4', label: 'Own read-out per arity' },
+		{ id: 'newton-K6-r256-h4-shared', label: 'Shared read-out' },
+		{ id: 'newton-K6-r256-h4-fnorm', label: 'Normalised arities' },
+		{ id: FINAL, label: 'Shared and normalised' },
+		{ id: 'newton-K6-r512-h4-fnorm', label: 'Normalised, rank 512' },
+		{ id: 'newton-K6-r512-h4-shared-fnorm', label: 'Shared and normalised, rank 512' }
+	];
+	// one layer trained on Match-3, 4 and 5 at once, next to the same layer trained on each alone
+	const MIX_ROWS = [
+		...newtonB
+			.filter((r) => r.model === 'newton-K6-r256-h4')
+			.map((r) => ({ ...r, model: 'alone' })),
+		...newtonE.filter((r) => r.model === FINAL).map((r) => ({ ...r, model: 'alone-final' })),
+		...newtonDiag.mixed
+	];
+	const MIX_MODELS = [
+		{ id: 'alone', label: 'Own read-outs, each task alone' },
+		{ id: 'mix345-r256-s6000', label: 'Own read-outs, trained together' },
+		{ id: 'mix345-r256-s18000', label: 'the same, 18,000 steps' },
+		{ id: 'alone-final', label: 'Shared and normalised, each task alone' },
+		{ id: 'mix345-r256-shared-fnorm-s6000', label: 'Shared and normalised, trained together' }
+	];
+	const LM_LABEL: Record<string, string> = {
+		gpt: 'Softmax attention',
+		hybrid: 'Softmax attention with a Newton attention branch',
+		newton: 'Newton attention in place of softmax attention'
+	};
 	const CURVE_MODELS = [
 		{ id: 'standard-3L', label: 'Standard, 3 layers', tone: 0.45, dash: '2 3' },
 		{ id: 'dspa5', label: 'Feynman, Newton primitives', tone: 0.6, dash: '6 3' },
 		{ id: 'cubic', label: 'Cubic', tone: 0.8, dash: '' },
 		{ id: 'quartic', label: 'Dense quartic', tone: 0.8, dash: '8 3 2 3' },
 		{ id: 'newton', label: 'Newton, rank 32', tone: 0.7, dash: '1 3' },
-		{ id: 'newton-K6-r256-h4', label: 'Newton, rank 256', tone: 1, dash: '', emphasis: true }
+		{ id: 'newton-K6-r256-h4', label: 'Newton, rank 256', tone: 0.9, dash: '4 2' },
+		{ id: FINAL, label: 'Newton, normalised arities', tone: 1, dash: '', emphasis: true }
 	];
 
 	// ── equations ────────────────────────────────────────────────────────────
@@ -173,7 +214,7 @@
 		width: String.raw`d \;\ge\; |G| - 1`,
 		nPhase: String.raw`\phi_t = \sigma(W_g h_t) \odot \exp\!\big(i\, W_\theta h_t\big) \in \mathbb C^{r}`,
 		nPow: String.raw`P^{(-q)}_j = \sum_{t \ne q} \phi_t^{\odot j}, \qquad m\, e^{(-q)}_m = \sum_{j=1}^{m} (-1)^{j-1}\, e^{(-q)}_{m-j} \odot P^{(-q)}_j`,
-		nOut: String.raw`y_q = W_o \Big[\, \operatorname{Re},\, \operatorname{Im} \Big]\Big( \tbinom{n-1}{m}^{-1} \phi_q \odot e^{(-q)}_m \Big)_{m=0}^{K-1}`,
+		nOut: String.raw`y_q = \sum_{m=0}^{K-1} \alpha_m \odot W_o\, \nu\Big( \big[\operatorname{Re},\, \operatorname{Im}\big]\, \tbinom{n-1}{m}^{-1} \phi_q \odot e^{(-q)}_m \Big), \qquad \nu(u) = \frac{u}{\operatorname{rms}(u)}`,
 		nSubset: String.raw`\phi_q \odot e^{(-q)}_m \;=\; \sum_{S \subseteq [n]\setminus\{q\},\ |S| = m}\ \ \bigodot_{t \in S \cup \{q\}} \phi_t`,
 		nCost: String.raw`O(nKr)`
 	};
@@ -229,13 +270,16 @@
 				power sums and Newton's identities count the
 				<MathTex tex="k" />-way relations of every token, for every <MathTex tex="k" />, in time
 				linear in the sequence (Theorem 5). Newton attention turns that identity into a layer with
-				learnable phases. Offered every arity up to six, it solves SET and Match-3 on every seed,
-				reaches 95% where the label is the smallest arity at which a token completes a relation (the
-				best fixed-order operator reaches 54%), and is the only operator above chance on five-way
-				relations. Capping its order below a task's arity returns it to exactly chance, and widening
-				fixed-order baselines to its size does not move them. Switching off one arity at a time
-				shows that the trained layer depends on exactly the arities each task contains, and its
-				channels converge to the characters of the group: on Match-3 it recovers all of them.
+				learnable phases. Offered every arity up to six, it solves SET, Match-3, Match-4 and the
+				task whose label is the smallest arity at which a token completes a relation on every seed
+				(the best fixed-order operator reaches 54% on the last), and reaches 97.5% on Match-5.
+				Trained on three arities at once, it is exact on all three. Capping its order below a task's
+				arity returns it to exactly chance, and widening fixed-order baselines to its size does not
+				move them. Switching off one arity at a time shows that the trained layer depends on exactly
+				the arities each task contains, and its channels converge to the characters of the group:
+				across 93 runs, accuracy is close to linear in the number of characters found, and exact
+				when all 40 are. In a small byte-level language model it does not help, so the gain is
+				specific to relations among many tokens.
 			</p>
 		</section>
 
@@ -294,8 +338,9 @@
 				algebra, which count every arity at linear cost, and Newton attention, the layer built on
 				them, with knockouts showing the arity a trained layer uses and probes showing it learns the
 				group's characters. (iv) A measured Match-<MathTex tex="k" /> ladder across ten operators, three
-				seeds each, with order ablations and width-matched baselines. (v) Every result reproducible in
-				this page or in the published harness.
+				seeds each, with order ablations and width-matched baselines; evidence that characters found at
+				one arity carry over to others; and a language-model test where the layer does not help. (v) Every
+				result reproducible in this page or in the published harness.
 			</p>
 		</section>
 
@@ -664,8 +709,19 @@
 				tokens,
 			</p>
 			<MathTex display tex={T.nPow} />
-			<p>and the layer reads out every arity up to <MathTex tex="K" /> at once:</p>
+			<p>
+				and the layer reads out every arity up to <MathTex tex="K" /> at once, through one read-out
+				<MathTex tex="W_o" /> shared by all of them and a learned scale <MathTex
+					tex={String.raw`\alpha_m`}
+				/> per arity:
+			</p>
 			<MathTex display tex={T.nOut} />
+			<p>
+				Each arity's features are normalised to unit RMS before the read-out. Higher arities are
+				averages of products of more gates below one, so without it they are far smaller than the
+				low ones and learn slowly. The layer as first run gave every arity its own read-out and did
+				not normalise; Section 6.4 reports both.
+			</p>
 			<figure class="wide fig">
 				<ComputeGraph graph={NEWTON} label="Computation graph of Newton attention" />
 				<figcaption>
@@ -682,8 +738,8 @@
 					so the term with index <MathTex tex="m" /> is attention of arity <MathTex tex="m+1" />
 					with a product kernel, every arity costs <MathTex tex={T.nCost} />, and no tuple is ever
 					enumerated. Repeated indices, which make naive factorised higher-order attention count a
-					token twice, are removed exactly by the alternating terms of the recursion. The output
-					projection weighs the arities: that is where the data chooses.
+					token twice, are removed exactly by the alternating terms of the recursion. The scales
+					<MathTex tex={String.raw`\alpha_m`} /> weigh the arities: that is where the data chooses.
 				</p>
 			</Theorem>
 		</section>
@@ -755,7 +811,7 @@
 				answering the majority class scores 50%.
 			</p>
 			<ReplicationTable
-				rows={[...baseline, ...newton(newtonA), ...newtonB]}
+				rows={[...baseline, ...newton(newtonA), ...newtonB, ...newtonE]}
 				tasks={BASE_TASKS}
 				models={BASE_MODELS}
 				caption="Table 2. Mean of three seeds; each dot is one seed on a strip from chance to 100%. SET tasks: balanced accuracy, chance 50%. Pointer chase and three-hop: accuracy over eight answers, chance 12.5%."
@@ -764,10 +820,10 @@
 				SET is solved by cubic attention, Feynman attention and Newton attention at rank 256 on
 				every seed; no depth of standard attention gets past 62%. On four-card SET dense quartic
 				attention learns on two of three seeds, Newton attention at rank 256 reaches 76% on all
-				three, and everything else stays at exactly chance. On three-hop composition Feynman
-				attention succeeds on two of three seeds. On pointer chasing three standard layers match
-				Feynman attention, with 2.5 times the parameters. Newton attention has no routing, and at
-				rank 32 it is weak on both chain tasks.
+				three and 99.9% with normalised arities (Section 6.4), and everything else stays at exactly
+				chance. On three-hop composition Feynman attention succeeds on two of three seeds. On
+				pointer chasing three standard layers match Feynman attention, with 2.5 times the
+				parameters. Newton attention has no routing, and at rank 32 it is weak on both chain tasks.
 			</p>
 
 			<h3>6.3 The Match-<MathTex tex="k" /> ladder</h3>
@@ -779,7 +835,7 @@
 				completes a zero sum: none, 3, 4 or 5. Every operator, three seeds, 6,000 steps.
 			</p>
 			<ReplicationTable
-				rows={[...phaseA, ...newton(newtonA), ...newtonB]}
+				rows={[...phaseA, ...newton(newtonA), ...newtonB, ...newtonE]}
 				tasks={LADDER_TASKS}
 				models={LADDER_MODELS}
 				caption="Table 3. Balanced accuracy, mean of three seeds with each seed as a dot. Chance is 50% for Match-k and 25% for the smallest-arity task."
@@ -793,21 +849,24 @@
 				Newton construction (pooled modes, self-products, products of modes) stays at exactly chance
 				on Match-4 at width 64, 128 and 192, above the <MathTex tex="|G| = 81" /> that Proposition 6 asks
 				for: the composition is representable, and it is not found. Removing its cubic sector loses Match-3
-				as well.
+				as well. Newton attention with normalised arities solves every rung up to Match-4 and the smallest-arity
+				task on every seed, and reaches 85% on Match-5.
 			</p>
 			<figure class="wide fig">
 				<CurvesFigure
-					rows={[...phaseA, ...newton(newtonA), ...newtonB]}
+					rows={[...phaseA, ...newton(newtonA), ...newtonB, ...newtonE]}
 					panels={[
 						{ task: 'zs3', title: 'Match-3' },
-						{ task: 'zs4', title: 'Match-4' }
+						{ task: 'zs4', title: 'Match-4' },
+						{ task: 'zs5', title: 'Match-5' }
 					]}
 					models={CURVE_MODELS}
 				/>
 				<figcaption>
 					<b>Figure 7.</b> Held-out balanced accuracy through training, mean of three seeds. Models of
 					the task's order sit at chance and then snap; models below it never leave. Newton attention
-					climbs without the long plateau; at rank 32 it stops short of exact.
+					climbs without the long plateau. With its own read-out per arity it stops short of exact; with
+					normalised arities it is exact on Match-3 and Match-4 within 4,000 steps.
 				</figcaption>
 			</figure>
 
@@ -861,28 +920,46 @@
 					layers widened to 2.4M stay at chance on Match-4 and Match-5. Dense quartic attention is
 					still better on Match-4, 84% on two of three seeds with 69k parameters, at a cost that
 					grows as
-					<MathTex tex="n^4" />. A read-out that shares weights across arities is the next step.
+					<MathTex tex="n^4" />.
 				</p>
+				<p>
+					Two changes to the read-out close the gap (Table 7). The first normalises each arity's
+					features to unit RMS before they are read. On its own it takes Match-4 from 71% to 98%.
+					The second shares one read-out across arities, with a learned scale per arity. The same
+					characters count relations of every size, so one map can read them all; on its own it
+					helps less, but it cuts the layer from 0.96M parameters to 0.30M. Together they solve SET,
+					four-card SET, Match-3, Match-4 and the smallest-arity task on every seed at rank 256.
+					Match-5 needs more channels: 85% at rank 256, and 97.5% to 98.1% at rank 512, where three
+					of six seeds are exact.
+				</p>
+				<div class="wide">
+					<ReplicationTable
+						rows={[...newtonB, ...newtonC, ...newtonE]}
+						tasks={FIX_TASKS}
+						models={FIX_MODELS}
+						caption="Table 7. The read-out of Newton attention: its own projection per arity as in Table 6, one projection shared across arities, each arity's features normalised to unit RMS, and both. Rank 256 unless stated, four heads, order 6, 6,000 steps. Balanced accuracy, three seeds."
+					/>
+				</div>
 			{:else}
 				<p class="pending">Running now: rank 128 and 256, with width-matched baselines.</p>
 			{/if}
 
 			<h3>6.5 What the trained layer computes</h3>
 			<p>
-				Two probes look inside a trained layer (rank 256, four heads, order 6). The first switches
-				off one arity's read-out at a time and scores the model again (Figure 8). On Match-3 only
-				arity 3 matters: without it accuracy falls to chance, and without any other arity it does
-				not move. Match-4 rests on arity 4 and Match-5 on arity 5. On the smallest-arity task, whose
-				labels involve relations of three, four and five cards, the layer depends on exactly arities
-				3, 4 and 5 and ignores 1, 2 and 6. Nothing told it which arities a task has.
+				Two probes look inside a trained layer (rank 256, four heads, order 6, shared and normalised
+				read-out). The first switches off one arity at a time and scores the model again (Figure 8).
+				On Match-3 only arity 3 matters: without it accuracy falls to chance, and without any other
+				arity it does not move. Match-4 rests on arity 4 and Match-5 on arity 5. On the
+				smallest-arity task, whose labels involve relations of three, four and five cards, the layer
+				depends on exactly arities 3, 4 and 5 and ignores 1, 2 and 6. Nothing told it which arities
+				a task has.
 			</p>
 			<figure class="wide fig">
 				<ArityUseFigure rows={newtonDiag.knock} />
 				<figcaption>
 					<b>Figure 8.</b> The arity a trained Newton attention layer uses. For each task, the share
-					of its accuracy above chance that is lost when the read-out of arity <MathTex tex="k" /> is
-					switched off; the number left of each row is the full model's balanced accuracy. Mean over the
-					runs with this configuration.
+					of its accuracy above chance that is lost when the term of arity <MathTex tex="k" /> is switched
+					off; the number left of each row is the full model's balanced accuracy. Mean of three seeds.
 				</figcaption>
 			</figure>
 			<p>
@@ -893,10 +970,16 @@
 				/> up to one constant rotation; the resultant <MathTex tex="R" /> of the leftover phases is 1
 				exactly then. After training on Match-3, about one channel in eleven is a character to three decimals,
 				and between them they cover all 40 characters up to conjugation (Figure 9a): the layer rediscovers
-				the Fourier basis of the group, without being told there is one. On Match-4 the same layer finds
-				11 to 17 of the 40 and on Match-5 about 7, and accuracy rises with the number found (Figure 9b).
-				That locates the remaining gap. The layer picks the right arity; it has not found enough characters
-				to count exactly.
+				the Fourier basis of the group, without being told there is one. With its own read-out per arity
+				the layer finds only 11 to 17 of the 40 on Match-4 and about 7 on Match-5, and that was the gap:
+				it picked the right arity but had too few characters to count exactly. Across all 93 runs we probed,
+				whatever the task and configuration, a run is exact exactly when it has found all 40, and in between
+				accuracy is close to linear in the count (Figure 9b): on every one of the 74 Match-<MathTex
+					tex="k"
+				/> runs, balanced accuracy is within five points of <MathTex
+					tex={String.raw`\tfrac12 + \tfrac12 \cdot \tfrac{\text{found}}{40}`}
+				/>, as if each character carried an equal share of the answer. Why the relation is linear we
+				do not yet know.
 			</p>
 			<figure class="wide fig">
 				<CharactersFigure examples={newtonDiag.examples} points={newtonDiag.scatter} />
@@ -904,18 +987,71 @@
 					<b>Figure 9.</b> Newton attention learns characters. (a) Every card's learned phase on the four
 					most character-like channels of a layer trained on Match-3, shaded by the character's value
 					on that card: the 81 cards fall into three tight clusters a third of a turn apart. (b) Every
-					run's balanced accuracy against the number of distinct characters its channels contain.
+					run's balanced accuracy against the number of distinct characters its channels contain, over
+					every configuration of Tables 6 and 7.
 				</figcaption>
 			</figure>
-			<p class="pending">
-				Running now: one layer trained on Match-3, 4 and 5 together and scored on each, to test
-				whether characters found on triples carry over to larger arities.
+			<p>
+				A character that counts triples also counts quadruples and quintuples, so what a layer
+				learns at one arity should serve the others. To test this we trained one layer on Match-3, 4
+				and 5 at once, with the first token announcing <MathTex tex="k" />, and scored it on each
+				(Table 8). Each arity then sees a third of the tables that a single-task run sees. Even so,
+				with its own read-out per arity the mixed layer reaches 84% on Match-4 and 83% on Match-5,
+				where the same layer trained on either alone stays near 71% and 57%, though Match-3 falls
+				from 100% to 90%. With the shared, normalised read-out it is exact on all three arities on
+				every seed, at rank 256, where Match-5 alone reaches 85%. Features found on small relations
+				carry the large ones, the way a staircase of easier targets carries a learner past a leap <Cite
+					refs={BIB}
+					id="abbe"
+				/>.
 			</p>
+			<div class="wide">
+				<ReplicationTable
+					rows={MIX_ROWS}
+					tasks={LADDER_TASKS.slice(0, 3)}
+					models={MIX_MODELS}
+					caption="Table 8. One layer trained on Match-3, 4 and 5 together and scored on each, against the same layer trained on each task alone. Rank 256, four heads, order 6, 6,000 steps unless stated. Balanced accuracy, three seeds."
+				/>
+			</div>
 
-			<h3>6.6 Next</h3>
+			<h3>6.6 A small language model</h3>
+			<p>
+				Text is not made of zero sums, and Newton attention has no keys or values: its gates are set
+				per token, not chosen by the query, so it cannot retrieve a particular earlier token. To see
+				what that means for a sequence model, we trained byte-level language models on enwik8 with
+				3.3M parameters: four layers of width 256, a context of 256 bytes, and 8,000 steps of 64
+				sequences, with causal Newton attention built from prefix power sums (Table 9). Placed
+				beside softmax attention in every layer, with the MLP narrowed to keep the parameter count,
+				it leaves validation bits per character where they were. In place of softmax attention it
+				costs 0.85 bits per character. Newton attention is a layer for relations among many tokens,
+				not a replacement for attention.
+			</p>
+			<table class="nums">
+				<caption
+					>Table 9. Byte-level language models on enwik8, matched in parameters. Validation bits per
+					character, lower is better: mean of three seeds, then each seed.</caption
+				>
+				<thead>
+					<tr><th>Model</th><th class="r">Params</th><th class="r">Bits per character</th></tr>
+				</thead>
+				<tbody>
+					{#each lm as row (row.arch)}
+						<tr class:hi={row.arch === 'gpt'}>
+							<td>{LM_LABEL[row.arch]}</td>
+							<td class="r">{(row.params / 1e6).toFixed(2)}M</td>
+							<td class="r"
+								>{row.mean.toFixed(3)}
+								<span class="seeds">{row.bpc.map((b) => b.toFixed(3)).join(', ')}</span></td
+							>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+
+			<h3>6.7 Next</h3>
 			<p>Established benchmarks, each on its own published protocol:</p>
 			<table class="nums plan">
-				<caption>Table 7. Planned benchmarks and the published numbers to beat.</caption>
+				<caption>Table 10. Planned benchmarks and the published numbers to beat.</caption>
 				<thead><tr><th>Benchmark</th><th>Why</th><th>To beat</th></tr></thead>
 				<tbody>
 					<tr>
@@ -1001,9 +1137,9 @@
 			<ul>
 				<li>Theorem 1 is about means of scores, not a lower bound for every classifier.</li>
 				<li>
-					Theorem 5 is a construction. Newton attention learns it exactly for three-way relations
-					and only in part beyond (71% on Match-4, 60% on Match-5 at rank 256), because it finds
-					only some of the characters those arities need.
+					Theorem 5 is a construction. Newton attention learns it exactly through four-way relations
+					at rank 256, and on five-way relations on three of six seeds at rank 512; how the width it
+					needs grows with arity and with the group is not yet measured.
 				</li>
 				<li>
 					The width <MathTex tex="|G|" /> grows exponentially with the number of attributes, and the tasks
@@ -1011,7 +1147,11 @@
 				</li>
 				<li>
 					Newton attention has no routing, so on chain tasks it is weaker than Feynman attention,
-					and its read-out is large: 0.79M of its 0.96M parameters at rank 256.
+					and in a small language model it does not help (Table 9).
+				</li>
+				<li>
+					The tasks trained together in Table 8 share one group. Whether characters carry over
+					between different relations is untested.
 				</li>
 			</ul>
 		</section>
@@ -1240,6 +1380,11 @@
 	}
 	.nums tr.hi td {
 		color: var(--color-ink);
+	}
+	.nums .seeds {
+		margin-left: 6px;
+		font-size: var(--text-xs);
+		color: var(--color-ink-3);
 	}
 	.nums tr.base td {
 		color: var(--color-ink-3);

@@ -34,6 +34,15 @@
 		softmax
 	} from './figures.ts';
 	import DiagramSum from './DiagramSum.svelte';
+	import ArityFigure from '#lib/report/ArityFigure.svelte';
+	import ArityUseFigure from '#lib/report/ArityUseFigure.svelte';
+	import CharactersFigure from '#lib/report/CharactersFigure.svelte';
+	import NewtonDemo from '#lib/report/NewtonDemo.svelte';
+	import ReplicationTable from '#lib/report/ReplicationTable.svelte';
+	import phaseA from '#lib/report/results/phase_a.json';
+	import newtonB from '#lib/report/results/newton_b.json';
+	import newtonE from '#lib/report/results/newton_e.json';
+	import newtonDiag from '#lib/report/results/newton_diag.json';
 	import QedDiagram from './QedDiagram.svelte';
 	import { REFERENCES } from './references.ts';
 
@@ -639,6 +648,83 @@
 			Held-out accuracy on pointer chase, recorded with this app's engine. One Feynman attention
 			layer (61k parameters) reaches 95% by step 250 and 100% after; three standard layers (154k)
 			reach 94%.
+		</figcaption>
+	</figure>
+{:else if section === 'composition'}
+	<figure class="fig wide">
+		<ReplicationTable
+			rows={[...phaseA, ...newtonB, ...newtonE]}
+			tasks={[
+				{ id: 'zs3', label: 'Match-3' },
+				{ id: 'zs4', label: 'Match-4' },
+				{ id: 'zs5', label: 'Match-5' }
+			]}
+			models={[
+				{ id: 'standard-3L', label: 'Standard, 3 layers' },
+				{ id: 'cubic', label: 'Cubic' },
+				{ id: 'quartic', label: 'Dense quartic' },
+				{ id: 'dspa4', label: 'Feynman' },
+				{ id: 'dspa5-d192', label: 'Feynman, Newton parts, width 192' },
+				{ id: 'newton-K6-r256-h4-shared-fnorm', label: 'Newton attention' }
+			]}
+			caption="Balanced accuracy, chance 50%. Mean of three seeds; each dot is one seed."
+		/>
+		<figcaption>
+			Only an operator with a native k-way term leaves chance on Match-k. Feynman attention with
+			every part of the Newton construction, wider than the group, does not. Newton attention offers
+			every arity natively.
+		</figcaption>
+	</figure>
+{:else if section === 'characters'}
+	<figure class="fig wide">
+		<ArityFigure panels={['a', 'b']} />
+		<figcaption>
+			Top: one card in relations of three arities, each a zero sum. Bottom: under one character a
+			SET's phases multiply to 1; under all 81 they agree, while any other triple's cancel.
+		</figcaption>
+	</figure>
+{:else if section === 'newton'}
+	<figure class="fig wide">
+		<NewtonDemo />
+	</figure>
+{:else if section === 'newtonattn'}
+	<figure class="fig wide">
+		<ArityUseFigure rows={newtonDiag.knock} />
+		<CharactersFigure examples={newtonDiag.examples} points={newtonDiag.scatter} />
+		<figcaption>
+			Top: the share of accuracy lost when one arity of a trained layer is switched off. Bottom:
+			learned phases of the 81 cards on four channels fall into three clusters, a character; and
+			accuracy rises with the number of characters a run finds, exact when it has all 40.
+		</figcaption>
+	</figure>
+{:else if section === 'transfer'}
+	<figure class="fig wide">
+		<ReplicationTable
+			rows={[
+				...newtonB
+					.filter((r) => r.model === 'newton-K6-r256-h4')
+					.map((r) => ({ ...r, model: 'alone' })),
+				...newtonE
+					.filter((r) => r.model === 'newton-K6-r256-h4-shared-fnorm')
+					.map((r) => ({ ...r, model: 'alone-final' })),
+				...newtonDiag.mixed
+			]}
+			tasks={[
+				{ id: 'zs3', label: 'Match-3' },
+				{ id: 'zs4', label: 'Match-4' },
+				{ id: 'zs5', label: 'Match-5' }
+			]}
+			models={[
+				{ id: 'alone', label: 'First version, each task alone' },
+				{ id: 'mix345-r256-s6000', label: 'First version, trained together' },
+				{ id: 'alone-final', label: 'Newton attention, each task alone' },
+				{ id: 'mix345-r256-shared-fnorm-s6000', label: 'Newton attention, trained together' }
+			]}
+			caption="Balanced accuracy, chance 50%. Mean of three seeds; each dot is one seed. Rank 256, 6,000 steps."
+		/>
+		<figcaption>
+			One layer trained on three arities at once, scored on each. Each arity gets a third of the
+			data and still does better than a layer trained on it alone.
 		</figcaption>
 	</figure>
 {:else}

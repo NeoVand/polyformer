@@ -24,12 +24,24 @@ image = (
 )
 
 
-def _run(argv: list[str]) -> dict:
+# the language-model runs: enwik8 baked into the image, lm.py instead of polybench.py
+lm_image = (
+    modal.Image.debian_slim(python_version="3.12")
+    .apt_install("wget", "unzip")
+    .run_commands(
+        "wget -q http://mattmahoney.net/dc/enwik8.zip -O /root/enwik8.zip && cd /root && unzip -q enwik8.zip && rm enwik8.zip"
+    )
+    .pip_install("jax[cuda12]", "optax", "numpy")
+    .add_local_file(pathlib.Path(__file__).parent / "lm.py", "/root/lm.py")
+)
+
+
+def _run(argv: list[str], script: str = "/root/polybench.py") -> dict:
     import subprocess
     import sys
 
     t0 = time.time()
-    p = subprocess.run([sys.executable, "/root/polybench.py", *argv], capture_output=True, text=True)
+    p = subprocess.run([sys.executable, script, *argv], capture_output=True, text=True)
     lines = [l for l in p.stdout.splitlines() if l.startswith("{")]
     if p.returncode != 0 or not lines:
         return {"argv": argv, "error": (p.stderr or p.stdout)[-2000:], "wall": round(time.time() - t0, 1)}
@@ -47,6 +59,11 @@ def run_l4(argv: list[str]) -> dict:
 @app.function(image=image, gpu="H100", timeout=3 * 3600)
 def run_h100(argv: list[str]) -> dict:
     return _run(argv)
+
+
+@app.function(image=lm_image, gpu="H100", timeout=3 * 3600)
+def run_lm(argv: list[str]) -> dict:
+    return _run(argv, "/root/lm.py")
 
 
 def grid(task: list[str], model: list[str], seed: list[int], **fixed) -> list[list[str]]:
@@ -165,6 +182,38 @@ def newton_d() -> list[list[str]]:
     return runs
 
 
+def newton_e() -> list[list[str]]:
+    """The two fixes that worked, together and across every task: normalised features per
+    arity, and one read-out shared by all arities."""
+    every = ["zs3", "zs4", "zs5", "arity", "set", "set4"]
+    runs = grid(every, ["newton"], [0, 1, 2], steps=6000, rank=256, readout="shared", fnorm=1)
+    runs += grid(["zs4", "zs5", "arity", "set4"], ["newton"], [0, 1, 2], steps=6000, rank=512, readout="shared", fnorm=1)
+    runs += grid(["zs3", "arity", "set", "set4"], ["newton"], [0, 1, 2], steps=6000, rank=256, fnorm=1)
+    runs += grid(["zs5"], ["newton"], [0, 1, 2], steps=6000, rank=512, fnorm=1)
+    runs += grid(["zs5"], ["newton"], [0, 1, 2], steps=12000, rank=256, fnorm=1)
+    return runs
+
+
+def newton_f() -> list[list[str]]:
+    """Mixed arities with the fixes: does the transfer survive, and does it close the gap?"""
+    runs = grid(["mix345"], ["newton"], [0, 1, 2], steps=6000, rank=256, fnorm=1)
+    runs += grid(["mix345"], ["newton"], [0, 1, 2], steps=6000, rank=256, fnorm=1, readout="shared")
+    runs += grid(["mix345"], ["newton"], [0, 1, 2], steps=18000, rank=256, fnorm=1, readout="shared")
+    runs += grid(["mix345"], ["newton"], [0, 1, 2], steps=18000, rank=512, fnorm=1, readout="shared")
+    return runs
+
+
+def lm_a() -> list[list[str]]:
+    """Byte-level enwik8, matched parameters: GPT, GPT with a Newton branch, Newton alone."""
+    runs = []
+    for seed in (0, 1, 2):
+        base = ["--steps", "8000", "--seed", str(seed)]
+        runs.append(["--arch", "gpt", *base])
+        runs.append(["--arch", "hybrid", "--rank", "32", *base])
+        runs.append(["--arch", "newton", "--rank", "64", *base])
+    return runs
+
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
     "baseline": baseline(),
@@ -174,19 +223,22 @@ GRIDS = {
     "newton_c": newton_c(),
     "newton_fig": newton_fig(),
     "newton_d": newton_d(),
+    "newton_e": newton_e(),
+    "newton_f": newton_f(),
+    "lm_a": lm_a(),
 }
 
 
 @app.local_entrypoint()
 def main(grid: str = "smoke", gpu: str = "L4"):
     runs = GRIDS[grid]
-    fn = run_h100 if gpu.upper() == "H100" else run_l4
+    fn = run_lm if grid.startswith("lm_") else run_h100 if gpu.upper() == "H100" else run_l4
     out = pathlib.Path(__file__).parent / "results" / f"{grid}.jsonl"
     t0 = time.time()
     with out.open("a") as f:
         for r in fn.map(runs, order_outputs=False):
             f.write(json.dumps(r) + "\n")
             f.flush()
-            brief = {k: r.get(k) for k in ("task", "model", "seed", "tok_acc", "seq_acc", "secs", "error")}
+            brief = {k: r.get(k) for k in ("task", "model", "arch", "seed", "tok_acc", "val_bpc", "secs", "error")}
             print(json.dumps(brief))
     print(f"{len(runs)} runs in {time.time() - t0:.0f}s -> {out}")

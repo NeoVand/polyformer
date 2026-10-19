@@ -113,6 +113,8 @@ function disposeRuns() {
 
 function buildRun(spec: RunSpec, index: number, seed: number): Run {
 	const cfg = defaultConfig(spec.operator, spec.layers, spec.task ?? 'set', spec.options);
+	if (spec.dModel) cfg.dModel = spec.dModel;
+	if (spec.heads) cfg.heads = spec.heads;
 	const params = initParams(cfg, deriveSeed(seed, index + 1));
 	const solver = fusedAdamW<Params>((p, f, l, w) => lossAndAccuracy(p, cfg, f, l, w), {
 		...DEFAULT_ADAMW,

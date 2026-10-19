@@ -57,8 +57,24 @@ cubic value aggregation is O(n^3 d), not O(n^2 d).
   Order capped below the task's arity gives exactly 50.0 (ranks 32 and 128).
   Width-matched cubic (0.52M) and standard 3L (2.4M) stay at chance on Match-4/5.
   Width is the lever (rank 8 -> 128: 54.7 -> 63.6 on Match-4); steps are not (6k vs 20k).
-- Open: a read-out that shares weights across arities (0.79M of 0.96M params are read-out);
-  why learned phases fall short of exact characters; routing for chain tasks.
+- Read-out fix (newton_c, newton_e): normalising each arity's features to unit RMS before the
+  read-out (`--fnorm 1`) is the change that matters; sharing one read-out across arities with a
+  per-arity scale (`--readout shared`) cuts params 0.96M -> 0.30M. Rank 256, shared + normalised:
+  SET 100, four-card SET 99.9, Match-3 100, Match-4 100, smallest-arity 100, Match-5 84.8.
+  Rank 512: Match-5 97.5 (shared) / 98.1 (own read-outs), three of six seeds exact.
+- Knockouts on the fixed layer: Match-k depends on arity k alone; smallest-arity on exactly 3, 4, 5.
+- Characters: across 93 probed runs, a run is exact iff it has all 40 characters of Z_3^4 (up to
+  conjugation); on all 74 Match-k runs balanced accuracy is within 5 points of 1/2 + found/80
+  (r = 0.997). Unexplained: why linear.
+- Transfer (newton_d, newton_f): one layer on Match-3/4/5 together (first token announces k),
+  each arity a third of the data. Own read-outs: 89.5 / 84.2 / 82.7 vs alone 100 / 70.6 / 56.8.
+  Shared + normalised, rank 256: 100 / 100 / 100 on every seed (Match-5 alone: 84.8).
+- Language model (lm.py, lm_a): enwik8 bytes, 4 layers, d 256, ctx 256, 8k steps, 3.3M params,
+  three seeds. Softmax 1.651 bpc; softmax + causal Newton branch 1.657; Newton only 2.497.
+  No gain on text: Newton attention has no keys/values, so no retrieval.
+- Open: why accuracy is linear in characters found; width needed vs arity and group; routing
+  for chain tasks; a query-dependent selection of which tokens enter the subsets; transfer
+  between different relations, not just arities of one group.
 
 ## Experiments
 

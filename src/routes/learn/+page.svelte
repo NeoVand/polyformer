@@ -8,12 +8,15 @@
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import type { Card } from '#lib/set/cards.ts';
-	import { Atom, Book, Cube, Note } from '#lib/ui/icons.ts';
+	import { Atom, Book, Cube, Matrix, Note } from '#lib/ui/icons.ts';
+	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
+	import { CUBIC, FEYNMAN, GENERAL, NEWTON, PAIRWISE } from '#lib/viz/computeGraphs.ts';
 
 	const PARTS = [
 		{ id: 'part-known', label: 'Known', icon: Book, title: 'What was known' },
 		{ id: 'part-new', label: 'New here', icon: Cube, title: 'What this project adds' },
 		{ id: 'part-beyond', label: 'Beyond', icon: Atom, title: 'Letting the data choose the arity' },
+		{ id: 'part-algebra', label: 'Algebra', icon: Matrix, title: 'Arity is algebra' },
 		{ id: 'references', label: 'Sources', icon: Note, title: 'References' }
 	];
 	const CHAPTERS: { id: string; title: string; part: string }[] = [
@@ -32,7 +35,12 @@
 		{ id: 'dyson', title: 'Summing them all at once', part: 'part-beyond' },
 		{ id: 'diagrams', title: 'Sum over diagrams', part: 'part-beyond' },
 		{ id: 'sectors', title: 'Making it train', part: 'part-beyond' },
-		{ id: 'chase', title: 'What Feynman attention learns', part: 'part-beyond' }
+		{ id: 'chase', title: 'What Feynman attention learns', part: 'part-beyond' },
+		{ id: 'composition', title: 'Composing arity does not train', part: 'part-algebra' },
+		{ id: 'characters', title: 'A relation is agreement of phases', part: 'part-algebra' },
+		{ id: 'newton', title: 'Every arity at once', part: 'part-algebra' },
+		{ id: 'newtonattn', title: 'Newton attention', part: 'part-algebra' },
+		{ id: 'transfer', title: 'Small relations teach large ones', part: 'part-algebra' }
 	];
 	const number = (id: string) => CHAPTERS.findIndex((c) => c.id === id) + 1;
 
@@ -96,8 +104,9 @@
 			<header class="intro">
 				<h1>From pairs to diagrams</h1>
 				<p class="lede">
-					How attention generalizes from pairs of tokens to triples, why that matters, and how a
-					Feynman-diagram view lets the data decide how many tokens each interaction joins. Every
+					How attention generalizes from pairs of tokens to triples, why that matters, how a
+					Feynman-diagram view lets the data decide how many tokens each interaction joins, and how
+					the algebra of the inputs turns every arity into something one layer can learn. Every
 					chapter says where its content comes from:
 				</p>
 				<ul class="legend">
@@ -106,7 +115,7 @@
 					<li><span class="mark measured"></span>Measured with this app's engine</li>
 				</ul>
 				<nav class="toc" aria-label="Chapters">
-					{#each PARTS.slice(0, 3) as p (p.id)}
+					{#each PARTS.slice(0, 4) as p (p.id)}
 						<div class="toc-part">
 							<span class="toc-title">{p.title}</span>
 							<ol>
@@ -137,6 +146,7 @@
 					display
 					tex={"P_{ij} = \\frac{\\exp\\left(\\langle Q_i, K_j \\rangle/\\sqrt{d}\\right)}{\\sum_{j'} \\exp\\left(\\langle Q_i, K_{j'} \\rangle/\\sqrt{d}\\right)}, \\qquad Y_i = \\sum_j P_{ij}\\, V_j"}
 				/>
+				<ComputeGraph graph={PAIRWISE} label="Computation graph of pairwise attention" />
 				<p>
 					Every score involves exactly two tokens. A relation among three tokens must be assembled
 					indirectly, across heads and layers, and there are simple tasks where small transformers
@@ -183,6 +193,7 @@
 					display
 					tex={"A_{ijk} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\rangle, \\qquad P_{ijk} = \\frac{\\exp(A_{ijk}/\\sqrt{d})}{\\sum_{j'k'} \\exp(A_{ij'k'}/\\sqrt{d})}, \\qquad Y_i = \\sum_{j,k} P_{ijk}\\,\\bigl(V^1_j \\odot V^2_k\\bigr)"}
 				/>
+				<ComputeGraph graph={CUBIC} label="Computation graph of cubic polyattention" />
 				<p>
 					Clift et al. introduced this operator as 2-simplicial attention, and Sanford et al.
 					studied it as tensor attention and showed that one head solves Match3, a task that defeats
@@ -451,6 +462,11 @@
 					tex={'A_{ijkl} = \\langle Q_i,\\; K^1_j \\odot K^2_k \\odot K^3_l \\rangle'}
 				/>
 				<p>
+					Every order has the same shape, the original notebook's general polyattention: a query
+					against ordered tuples of role-specific keys, with values multiplied along the tuple.
+				</p>
+				<ComputeGraph graph={GENERAL} label="Computation graph of polyattention of order N" />
+				<p>
 					A fixed arity is a fixed bet. The head pays <MathTex tex="n^k" /> whether the data needs pairs,
 					triples or long chains, and some problems need a different depth for every example.
 				</p>
@@ -527,9 +543,9 @@
 					whole families of them at once. The simplest is for a single particle. Draw the <em
 						>dressed</em
 					>
-					propagator, everything that can happen to an electron on its way from one point to
-					another, as a double line, and let the blob <MathTex tex="\Sigma" />, the self-energy,
-					stand for every diagram that cannot be split in two by cutting one line. Then
+					propagator, everything that can happen to an electron on its way from one point to another,
+					as a double line, and let the blob <MathTex tex="\Sigma" />, the self-energy, stand for
+					every diagram that cannot be split in two by cutting one line. Then
 				</p>
 				<DiagramSum
 					lhs="dressed"
@@ -613,6 +629,7 @@
 						<tr><td>the vacuum</td><td>a vacuum token of value 1</td></tr>
 					</tbody>
 				</table>
+				<ComputeGraph graph={FEYNMAN} label="Computation graph of Feynman attention" />
 				<p>
 					All five terms are scored by a single vertex,
 					<MathTex tex="\langle q_t \odot \omega_r,\; u_\alpha \odot w_\beta \rangle" />, where
@@ -713,6 +730,159 @@
 					ideal construction. It is not a universal winner: on four-card SET it stays at the
 					majority rate, and on three-hop composition, where an untied chain of heads succeeds, it
 					stalls near 60%.
+				</p>
+			</section>
+
+			<!-- ── Part IV ────────────────────────────────────────────────── -->
+			<h2 class="part" id="part-algebra">Arity is algebra</h2>
+			<p class="part-lede">
+				Part III let one softmax choose among arities. This part asks what an arity is, why stacking
+				smaller ones does not reach it, and how a single layer can offer every arity at once.
+			</p>
+
+			<section id="composition">
+				<h3><span class="n">17</span>Composing arity does not train</h3>
+				<p class="src">
+					<span class="mark measured"></span>Measured on cloud GPUs with the research harness, three
+					seeds per model
+				</p>
+				<p>
+					Match-<MathTex tex="k" /> generalizes SET: a card is positive when it and <MathTex
+						tex="k-1"
+					/> others on the table sum to zero, attribute by attribute, modulo 3. SET is Match-3, and chapter
+					11's four-card test is Match-4. On Match-3, 4 and 5, standard attention at any depth stays at
+					chance from Match-4 up. Cubic attention and Feynman attention solve Match-3 and stop there.
+					Dense quartic attention learns Match-4 on two seeds of three, after a long plateau.
+				</p>
+				<p>
+					Most telling: Feynman attention given every building block of the construction in chapter
+					19, at widths up to 192, stays at exactly chance on Match-4. It could represent the answer
+					by composing smaller products; gradient descent never finds the composition.
+				</p>
+				<p>
+					Chapter 7's counting argument, made exact, says why. For a zero-sum relation, any set of
+					fewer than <MathTex tex="k" /> of its cards is uniformly distributed whether or not the relation
+					holds, so nothing built from fewer cards correlates with the label. A gradient has nothing to
+					climb until the model already computes a <MathTex tex="k" />-way product. Abbe et al. call
+					the number of coordinates that must be learned together the leap of a function <Cite
+						id="abbe"
+					/>; here it is <MathTex tex="k" />.
+				</p>
+			</section>
+
+			<section id="characters">
+				<h3><span class="n">18</span>A relation is agreement of phases</h3>
+				<p class="src">
+					<span class="mark prior"></span>Characters of finite abelian groups, classical;
+					<span class="mark new inline"></span>reading attention through them is new here
+				</p>
+				<p>
+					Give every card a phase. Pick <MathTex tex={String.raw`c \in \mathbb Z_3^4`} /> and send card
+					<MathTex tex="x" /> to the unit complex number <MathTex
+						tex={String.raw`\phi_c(x) = \omega^{\langle c, x\rangle}`}
+					/>, with <MathTex tex={String.raw`\omega = e^{2\pi i/3}`} />. Multiplying phases adds
+					cards,
+					<MathTex tex={String.raw`\phi_c(x)\,\phi_c(y) = \phi_c(x + y)`} />, so a SET's three
+					phases multiply to 1 for every one of the 81 choices of <MathTex tex="c" />. A near miss
+					may agree under a few of them, but averaged over all 81 the products of any other triple
+					cancel:
+				</p>
+				<MathTex
+					display
+					tex={String.raw`\frac{1}{81}\sum_{c} \phi_c(x)\,\phi_c(y)\,\phi_c(z) \;=\; \mathbf 1\big[x + y + z = 0\big]`}
+				/>
+				<p>
+					These <MathTex tex={String.raw`\phi_c`} /> are the characters of the group, its Fourier basis.
+					In this basis a <MathTex tex="k" />-way relation is a product of <MathTex tex="k" /> phases,
+					averaged, and a Hadamard product of character vectors is the character vector of a sum of cards.
+					Networks are known to find Fourier features for group arithmetic <Cite id="nanda" />;
+					chapter 20 shows an attention layer finding these.
+				</p>
+			</section>
+
+			<section id="newton">
+				<h3><span class="n">19</span>Every arity at once</h3>
+				<p class="src">
+					<span class="mark new"></span>New in this project, built on Newton's identities
+				</p>
+				<p>
+					Pool every token's phases into power sums, <MathTex
+						tex={String.raw`P_j = \sum_t \phi(x_t)^{\odot j}`}
+					/>: one pass over the sequence for each <MathTex tex="j" />. Newton's identities turn
+					power sums into elementary symmetric polynomials, the sums over every set of <MathTex
+						tex="m"
+					/> distinct tokens of the product of their phases:
+				</p>
+				<MathTex
+					display
+					tex={String.raw`m\, e_m \;=\; \sum_{j=1}^{m} (-1)^{j-1}\, e_{m-j} \odot P_j, \qquad e_m = \sum_{|S| = m}\; \bigodot_{t \in S} \phi(x_t)`}
+				/>
+				<p>
+					Averaged over the characters, as in chapter 18, the coefficient of each card in <MathTex
+						tex={String.raw`e_{k-1}`}
+					/> of the other cards counts its zero-sum relations of size <MathTex tex="k" />. A handful
+					of power sums count every card's relations of every size, with no tuple ever listed. The
+					figure counts them live on a fresh table and checks each count against brute-force
+					enumeration.
+				</p>
+			</section>
+
+			<section id="newtonattn">
+				<h3><span class="n">20</span>Newton attention</h3>
+				<p class="src">
+					<span class="mark new"></span>New in this project;
+					<span class="mark measured inline"></span>measured on cloud GPUs, three seeds per model
+				</p>
+				<p>
+					Newton attention makes that construction learnable. Each token gets <MathTex tex="r" /> complex
+					channels with a learned phase and a learned gate, so a character is one linear map away. The
+					rest is fixed algebra: leave-one-out power sums, Newton's identities, and for each arity the
+					query's phases times the elementary symmetric polynomial of the other tokens. A linear read-out
+					weighs the arities. Every arity up to <MathTex tex="K" /> costs <MathTex tex="O(nKr)" />,
+					linear in the sequence.
+				</p>
+				<ComputeGraph graph={NEWTON} label="Computation graph of Newton attention" />
+				<p>
+					With every arity up to six on offer, it solves SET, Match-3, Match-4 and a task whose
+					label is the smallest arity at which a card completes a relation, on every seed (the best
+					fixed-order operator reaches 54% on the last), and with more channels it reaches 97.5% on
+					Match-5. Cap its order below the task's arity and it falls to exactly chance. Two details
+					matter. Each arity's features are normalised before the read-out, because high arities are
+					products of many numbers below one and otherwise barely learn. And one read-out is shared
+					by every arity, because the same characters count relations of every size.
+				</p>
+				<p>
+					Two probes show what it learned. Switch off one arity at a time: on Match-3 only arity 3
+					matters, on Match-4 only arity 4, and on the smallest-arity task exactly arities 3, 4 and
+					5. Nothing told it which arities the task has. And its channels become characters. Every
+					run that solves its task has found all 40 up to conjugation, and a run that falls short
+					has accuracy close to linear in how many it found.
+				</p>
+			</section>
+
+			<section id="transfer">
+				<h3><span class="n">21</span>Small relations teach large ones</h3>
+				<p class="src">
+					<span class="mark measured inline"></span>Measured on cloud GPUs, three seeds per model
+				</p>
+				<p>
+					A character that counts triples also counts quadruples. So train one layer on Match-3, 4
+					and 5 at once, with the first token saying which, and score it on each. Each arity sees a
+					third of the data, yet the mixed layer is exact on all three on every seed, where the same
+					layer trained on Match-5 alone reaches 85%. Even the first version of the layer, with its
+					own read-out per arity, went from 57% to 83% on Match-5 this way. Easy relations find the
+					characters and hard ones reuse them, the staircase that carries a learner past a leap <Cite
+						id="abbe"
+					/>.
+				</p>
+				<p>
+					Where it does not help is text. In a byte-level language model of 3.3M parameters trained
+					on enwik8, a Newton attention branch beside softmax attention leaves bits per character
+					where they were, 1.657 against 1.651, and Newton attention in place of softmax attention
+					is much worse, at 2.50. It has no keys or values, so it cannot fetch a particular earlier
+					token, which language modelling relies on. It is a layer for relations among many tokens,
+					not a replacement for attention. The Compare tab's four-card suite trains it in your
+					browser next to cubic attention, Feynman attention and two standard layers.
 				</p>
 			</section>
 
