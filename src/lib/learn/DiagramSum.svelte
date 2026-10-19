@@ -15,9 +15,11 @@
 		/** End with "+ …". */
 		more?: boolean;
 	} = $props();
+
+	const captioned = $derived(terms.some((t) => t.caption));
 </script>
 
-<div class="sum" role="img" aria-label="Diagram expansion">
+<div class="sum" class:captioned role="img" aria-label="Diagram expansion">
 	<figure><QedDiagram kind={lhs} {width} /></figure>
 	<span class="op"><MathTex tex="=" /></span>
 	{#each terms as t, i (i)}
@@ -31,27 +33,46 @@
 </div>
 
 <style>
+	/* every diagram, operator and the left side share one centre line; captions hang
+	   below their diagram without changing its box */
 	.sum {
 		display: flex;
 		flex-wrap: wrap;
 		align-items: center;
-		gap: 8px 7px;
+		gap: 10px 7px;
 		margin: 8px 0 16px;
 	}
+	.sum.captioned {
+		row-gap: 30px;
+		margin-bottom: 34px;
+	}
 	figure {
-		display: grid;
-		justify-items: center;
-		gap: 4px;
+		position: relative;
 		margin: 0;
+		line-height: 0;
 	}
 	figcaption {
+		position: absolute;
+		top: calc(100% + 6px);
+		left: 50%;
+		transform: translateX(-50%);
 		font-size: 12px;
+		line-height: 1;
+		white-space: nowrap;
 		color: var(--color-ink-3);
 	}
 	figcaption :global(.katex) {
 		color: var(--color-ink-3);
 	}
 	.op {
+		display: inline-flex;
+		align-items: center;
 		font-size: 17px;
+		line-height: 1;
+	}
+	/* KaTeX centres its box, not the math axis that + and = sit on */
+	.op :global(.katex) {
+		position: relative;
+		top: -0.09em;
 	}
 </style>
