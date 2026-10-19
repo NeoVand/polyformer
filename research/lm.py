@@ -5,6 +5,8 @@ sequence model. Three architectures with matched parameter counts:
     gpt     softmax attention + MLP, pre-LayerNorm, L layers
     hybrid  the same, plus a causal Newton attention branch beside each attention, MLP narrowed
     newton  Newton attention in place of softmax attention
+    sfa     subset attention: softmax attention whose weights also feed Newton's identities, so every
+            arity up to K reads distinct subsets of the tokens the query selects (MLP narrowed)
 
 Causal Newton attention: position t sees the tokens before it. Power sums are exclusive prefix
 sums, P_j(t) = sum_{s<t} phi_s^j; Newton's identities give e_m(t), the sum over m-subsets of
@@ -60,9 +62,16 @@ def init(key, cfg):
          "lnf": ln_init(D), "layers": []}
     for _ in range(L):
         lyr = {"ln1": ln_init(D), "ln2": ln_init(D)}
-        if cfg.arch in ("gpt", "hybrid"):
+        if cfg.arch in ("gpt", "hybrid", "sfa"):
             lyr["qkv"] = dense(next(ks), D, 3 * D)
             lyr["o"] = dense(next(ks), D, D, scale=1 / math.sqrt(2 * L))
+        if cfg.arch == "sfa":
+            H, r, K = cfg.heads, cfg.rank, cfg.order
+            lyr["th"] = dense(next(ks), D, H * r)
+            lyr["g"] = dense(next(ks), D, H * r)
+            lyr["no"] = dense(next(ks), H * 2 * r, D, scale=1 / math.sqrt(2 * L))
+            # --alpha0: arities 2..K start switched off, so the layer starts as softmax attention
+            lyr["alpha"] = jnp.ones((K, D)).at[1:].set(0.0 if cfg.alpha0 else 1.0)
         if cfg.arch in ("hybrid", "newton"):
             H, r, K = cfg.nheads, cfg.rank, cfg.order
             lyr["lnn"] = ln_init(D)
@@ -82,11 +91,84 @@ def softmax_attention(cfg, lyr, x):
     q, k, v = jnp.split(lin(lyr["qkv"], x), 3, -1)
     sh = lambda t: t.reshape(B, T, H, D // H).transpose(0, 2, 1, 3)
     q, k, v = sh(q), sh(k), sh(v)
-    s = jnp.einsum("bhtc,bhsc->bhts", q, k) / math.sqrt(D // H)
+    s = capped_scores(cfg, q, k)
     mask = jnp.tril(jnp.ones((T, T), bool))
     s = jnp.where(mask, s, -1e9)
     y = jnp.einsum("bhts,bhsc->bhtc", jax.nn.softmax(s, -1), v)
     return lin(lyr["o"], y.transpose(0, 2, 1, 3).reshape(B, T, D))
+
+
+HI = jax.lax.Precision.HIGHEST
+
+
+def subset_moments(p, phi, K, mu=0.2):
+    """
+    Arity read-outs of a weighted token set with a Poisson vacuum, for m = 0..K-1:
+
+        A_m(q) = [z^m] e^{mu z} prod_t (1 + z p_qt phi_t)  /  [z^m] e^{mu z} prod_t (1 + z p_qt)
+
+    Without the vacuum (mu = 0) this is the mean of prod_{t in S} phi_t over distinct m-subsets S drawn with
+    probability proportional to prod_{t in S} p_qt (a k-DPP with a diagonal kernel); A_1 is then softmax
+    attention with values phi, and uniform p gives Newton attention. The vacuum lets a subset hold empty
+    slots (value 1) at price mu each, so the read-out is a mixture of arities m, m - 1, ..., weighted by
+    e_i(p) mu^(m-i) / (m-i)!. It is also what makes Newton's identities safe in float32: the denominator is
+    at least mu^m / m!, so the error stays near eps ((1 + mu) / mu)^m however sharp p is. In power sums the
+    vacuum is one term, mu added to the first. p: [B, H, Q, T] (zero on excluded tokens, rows summing to
+    at most 1), phi: [B, H, T, r] complex. The power sums are K - 1 attention passes with weights p^j and
+    values phi^j, at full float32 precision: TF32 matmuls would break the cancellations.
+    """
+    pj, fj, P, Z = p, phi, [], []
+    for j in range(1, K):
+        P.append(jnp.einsum("bhqt,bhtc->bhqc", pj, fj.real, precision=HI)
+                 + 1j * jnp.einsum("bhqt,bhtc->bhqc", pj, fj.imag, precision=HI) + (mu if j == 1 else 0.0))
+        Z.append(pj.sum(-1, keepdims=True) + (mu if j == 1 else 0.0))
+        pj, fj = pj * p, fj * phi
+    sign = lambda j: (-1.0) ** (j - 1)
+    one = jnp.ones(p.shape[:3] + (phi.shape[-1],), phi.dtype)
+    E, N = [one], [jnp.ones(p.shape[:3] + (1,), p.dtype)]
+    for m in range(1, K):
+        E.append(sum(sign(j) * E[m - j] * P[j - 1] for j in range(1, m + 1)) / m)
+        N.append(sum(sign(j) * N[m - j] * Z[j - 1] for j in range(1, m + 1)) / m)
+    if mu > 0:
+        return [E[m] / N[m] for m in range(K)]
+    # no vacuum: exact canonical read-outs, zero where no m-subset has weight (ill-conditioned in float32)
+    return [E[0]] + [jnp.where(N[m] > 1e-30, E[m] / jnp.where(N[m] > 1e-30, N[m], 1.0), 0.0) for m in range(1, K)]
+
+def capped_scores(cfg, q, k):
+    s = jnp.einsum("bhtc,bhsc->bhts", q, k) / math.sqrt(q.shape[-1])
+    return cfg.cap * jnp.tanh(s / cfg.cap) if cfg.cap else s
+
+
+def causal_subset_moments(cfg, q, k, phi):
+    """The query's softmax weights on the strict past, and the arity read-outs over distinct subsets of
+    earlier tokens. q, k: [B, H, T, dh]; phi: [B, H, T, r] complex."""
+    T, K = q.shape[2], cfg.order
+    past = jnp.tril(jnp.ones((T, T), bool), -1)
+    p = jax.nn.softmax(jnp.where(past, capped_scores(cfg, q, k), -1e9), -1) * past
+    # the vacuum also covers positions with fewer than m earlier tokens: their subsets fill with empty slots
+    return subset_moments(p, phi, K, cfg.vac), p
+
+
+def sfa_attention(cfg, lyr, x):
+    """Subset attention: causal softmax attention, plus every arity up to K over distinct subsets of the
+    earlier tokens drawn with the same weights, each arity RMS-normalised and read by one projection."""
+    B, T, D = x.shape
+    H, r, K = cfg.heads, cfg.rank, cfg.order
+    q, k, v = jnp.split(lin(lyr["qkv"], x), 3, -1)
+    sh = lambda t: t.reshape(B, T, H, -1).transpose(0, 2, 1, 3)
+    q, k, v = sh(q), sh(k), sh(v)
+    s = jnp.where(jnp.tril(jnp.ones((T, T), bool)), capped_scores(cfg, q, k), -1e9)
+    y = jnp.einsum("bhts,bhsc->bhtc", jax.nn.softmax(s, -1), v)
+    y = lin(lyr["o"], y.transpose(0, 2, 1, 3).reshape(B, T, D))
+    th = cfg.phase * sh(lin(lyr["th"], x))
+    phi = jax.nn.sigmoid(sh(lin(lyr["g"], x))) * jnp.exp(1j * th)
+    A, _ = causal_subset_moments(cfg, q, k, phi)
+    for m in range(K):
+        f = phi * A[m]
+        f = jnp.concatenate([f.real, f.imag], -1).transpose(0, 2, 1, 3).reshape(B, T, H * 2 * r)
+        f = f / jnp.sqrt((f ** 2).mean(-1, keepdims=True) + 1e-6)
+        y = y + lin(lyr["no"], f) * lyr["alpha"][m]
+    return y
 
 
 def newton_attention(cfg, lyr, x):
@@ -121,6 +203,8 @@ def forward(cfg, p, idx):
     T = idx.shape[1]
     x = p["emb"][idx] + p["pos"][None, :T]
     for lyr in p["layers"]:
+        if cfg.arch == "sfa":
+            x = x + sfa_attention(cfg, lyr, ln(lyr["ln1"], x))
         if cfg.arch in ("gpt", "hybrid"):
             x = x + softmax_attention(cfg, lyr, ln(lyr["ln1"], x))
         if cfg.arch in ("hybrid", "newton"):
@@ -141,6 +225,10 @@ def main():
     ap.add_argument("--rank", type=int, default=32)
     ap.add_argument("--order", type=int, default=4)
     ap.add_argument("--phase", type=float, default=2.0)
+    # subset attention: Poisson vacuum (price of an empty slot) and an optional tanh cap on the logits
+    ap.add_argument("--vac", type=float, default=0.2)
+    ap.add_argument("--alpha0", type=int, default=0)
+    ap.add_argument("--cap", type=float, default=0.0)
     ap.add_argument("--ctx", type=int, default=256)
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--steps", type=int, default=8000)
@@ -156,7 +244,9 @@ def main():
         per_layer = attn + 8 * D * D
         if cfg.arch == "gpt":
             cfg.mlp = 4 * D
-        elif cfg.arch == "hybrid":
+        elif cfg.arch in ("hybrid", "sfa"):
+            if cfg.arch == "sfa":
+                newton = 2 * D * cfg.heads * r + 2 * cfg.heads * r * D
             cfg.mlp = max(D, int((per_layer - attn - newton) / (2 * D)))
         else:
             cfg.mlp = max(D, int((per_layer - newton) / (2 * D)))
@@ -203,7 +293,7 @@ def main():
         if (it + 1) % max(1, cfg.steps // 16) == 0:
             curve.append((it + 1, round(float(l) / math.log(2), 4), bpc(params)))
     print(json.dumps({"arch": cfg.arch, "seed": cfg.seed, "params": nparams, "mlp": cfg.mlp,
-                      "rank": cfg.rank, "order": cfg.order, "steps": cfg.steps, "val_bpc": curve[-1][2],
+                      "rank": cfg.rank, "order": cfg.order, "vac": cfg.vac, "alpha0": cfg.alpha0, "cap": cfg.cap, "steps": cfg.steps, "val_bpc": curve[-1][2],
                       "curve": curve, "secs": round(time.time() - t0, 1), "backend": jax.default_backend()}))
 
 

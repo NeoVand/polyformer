@@ -234,6 +234,69 @@ def lm_a() -> list[list[str]]:
     return runs
 
 
+def sfa_a() -> list[list[str]]:
+    """Subset attention (polybench --model sfa): does query-dependent selection keep Newton attention's
+    arity results, add what selection should add, and remove its failures on chains?"""
+    nw = {"readout": "shared", "fnorm": 1}
+    runs = []
+    # A. the Match-k ladder at the newton_e configuration, plus the exclusion and vacuum ablations
+    runs += grid(["zs3", "zs4", "zs5", "arity"], ["sfa"], [0, 1, 2], steps=6000, rank=256, fnorm=1)
+    runs += grid(["zs4"], ["sfa"], [0, 1, 2], steps=6000, rank=256, fnorm=1, stats="bose")
+    runs += grid(["zs4"], ["sfa"], [0, 1, 2], steps=6000, rank=256, fnorm=1, vac=0.0)
+    # B. keyed Match-k: zero sums count only among cards with the query's key; other keys are distractors
+    for rank in (64, 256):
+        runs += grid(["kzs3", "kzs4"], ["sfa"], [0, 1, 2], steps=6000, rank=rank, fnorm=1)
+        runs += grid(["kzs3", "kzs4"], ["newton"], [0, 1, 2], steps=6000, rank=rank, **nw)
+    runs += grid(["kzs3", "kzs4"], ["sa"], [0, 1, 2], steps=6000, layers=3)
+    runs += grid(["kzs3", "kzs4"], ["cubic"], [0, 1, 2], steps=6000)
+    # C. chains, the baseline grid's protocol: depth, and the walk sector in one layer
+    for layers in (1, 2, 3):
+        runs += grid(["chase", "compose3"], ["sfa"], [0, 1, 2], steps=4000, rank=32, order=4, fnorm=1, layers=layers)
+    runs += grid(["chase"], ["sfa"], [0, 1, 2], steps=4000, rank=32, order=4, fnorm=1, hops=4)
+    runs += grid(["compose3"], ["sfa"], [0, 1, 2], steps=4000, rank=32, order=4, fnorm=1, hops=3)
+    # D. width on Match-4, one head: channels needed with and without selection
+    for rank in (32, 64, 128, 256):
+        runs += grid(["zs4"], ["sfa"], [0, 1, 2], steps=6000, heads=1, rank=rank, fnorm=1)
+        runs += grid(["zs4"], ["newton"], [0, 1, 2], steps=6000, heads=1, rank=rank, **nw)
+    return runs
+
+
+def lm_sfa() -> list[list[str]]:
+    """enwik8 with subset attention in place of softmax attention (it contains it), its arity-1-only
+    ablation, and a rerun of the GPT baseline to check the numbers carry over."""
+    runs = []
+    for seed in (0, 1, 2):
+        base = ["--steps", "8000", "--seed", str(seed)]
+        runs.append(["--arch", "sfa", "--order", "4", "--rank", "32", *base])
+        runs.append(["--arch", "sfa", "--order", "1", "--rank", "32", *base])
+    runs.append(["--arch", "gpt", "--steps", "8000", "--seed", "0"])
+    return runs
+
+
+def sfa_b() -> list[list[str]]:
+    """Follow-ups to sfa_a: how much the vacuum costs on pure arity tasks, and keyed Match-4 with a
+    distractor curriculum (sfa_a's keyed tasks sat at majority for every model)."""
+    nw = {"readout": "shared", "fnorm": 1}
+    runs = []
+    runs += grid(["zs5"], ["sfa"], [0, 1, 2], steps=6000, rank=256, fnorm=1, vac=0.0)
+    runs += grid(["zs5"], ["sfa"], [0, 1, 2], steps=6000, rank=512, fnorm=1, vac=0.0)
+    runs += grid(["zs4", "zs5"], ["sfa"], [0, 1, 2], steps=6000, rank=256, fnorm=1, vac=0.05)
+    runs += grid(["kd4"], ["sfa"], [0, 1, 2], steps=10000, rank=256, fnorm=1, vac=0.05)
+    runs += grid(["kd4"], ["sfa"], [0, 1, 2], steps=10000, rank=256, fnorm=1, vac=0.0)
+    runs += grid(["kd4"], ["newton"], [0, 1, 2], steps=10000, rank=256, **nw)
+    return runs
+
+
+def lm_sfa_b() -> list[list[str]]:
+    """Subset attention on enwik8 with arities 2..4 switched off at initialisation, and a smaller vacuum."""
+    runs = []
+    for seed in (0, 1, 2):
+        base = ["--steps", "8000", "--seed", str(seed), "--arch", "sfa", "--order", "4", "--rank", "32"]
+        runs.append([*base, "--alpha0", "1"])
+        runs.append([*base, "--alpha0", "1", "--vac", "0.05"])
+    return runs
+
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
     "baseline": baseline(),
@@ -247,6 +310,10 @@ GRIDS = {
     "newton_f": newton_f(),
     "homa_m3": homa_m3(),
     "lm_a": lm_a(),
+    "sfa_a": sfa_a(),
+    "lm_sfa": lm_sfa(),
+    "sfa_b": sfa_b(),
+    "lm_sfa_b": lm_sfa_b(),
 }
 
 

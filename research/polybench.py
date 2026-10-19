@@ -201,6 +201,50 @@ def task_arity(rng, B, n=9, m=4, ks=(3, 4, 5)):
     msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
     return tok, tgt, msk
 
+def task_keyed(rng, B, U=3, g=10, k=3):
+    # Keyed Match-k: every card carries one of U keys (g cards per key, shuffled). Card i is positive iff it
+    # lies in a zero-sum k-subset of distinct cards WITH ITS OWN KEY. Zero sums across keys are distractors,
+    # so the layer must select by key (query-dependent) and relate by group algebra (arity k) at once.
+    import itertools
+    n = U * g
+    f = _deal(rng, B, n, 4)
+    key = np.stack([rng.permutation(np.repeat(np.arange(U), g)) for _ in range(B)])
+    y = np.zeros((B, n), bool)
+    for comb in itertools.combinations(range(n), k):
+        c = list(comb)
+        hit = (f[:, c].sum(1) % 3 == 0).all(-1) & (key[:, c] == key[:, c[:1]]).all(-1)
+        y[:, c] |= hit[:, None]
+    bos = np.concatenate([np.full((B, 1, 4), 3), np.full((B, 1, 1), U)], -1)
+    tok = np.concatenate([bos, np.concatenate([f, key[..., None]], -1)], 1)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y.astype(np.int32)], 1)
+    msk = np.concatenate([np.zeros((B, 1)), np.ones((B, n))], 1)
+    return tok, tgt, msk
+
+def task_keydist(rng, B, g=9, D=7, k=4, fixed=None):
+    # Keyed Match-k with a distractor curriculum: g cards with key 0, d ~ U{0..D} distractor cards with key 1
+    # (or d = fixed), and D - d padding tokens that are not cards. Every card is scored within its own key.
+    # With d = 0 this is plain Match-k (Newton attention's signal exists); as d grows, zero sums across keys
+    # multiply and only a layer that selects by key keeps the relation clean.
+    import itertools
+    n = g + D
+    f = _deal(rng, B, n, 4)
+    d = np.full(B, fixed) if fixed is not None else rng.integers(0, D + 1, B)
+    slot = np.arange(n)[None]
+    key = np.where(slot < g, 0, np.where(slot < g + d[:, None], 1, 2))   # 2 = padding
+    perm = np.argsort(rng.random((B, n)), axis=1)
+    f, key = np.take_along_axis(f, perm[..., None], 1), np.take_along_axis(key, perm, 1)
+    y = np.zeros((B, n), bool)
+    for comb in itertools.combinations(range(n), k):
+        c = list(comb)
+        hit = (f[:, c].sum(1) % 3 == 0).all(-1) & (key[:, c] == key[:, c[:1]]).all(-1) & (key[:, c[0]] < 2)
+        y[:, c] |= hit[:, None]
+    f = np.where((key == 2)[..., None], 3, f)                           # padding shows no card
+    bos = np.concatenate([np.full((B, 1, 4), 3), np.full((B, 1, 1), 3)], -1)
+    tok = np.concatenate([bos, np.concatenate([f, key[..., None]], -1)], 1)
+    tgt = np.concatenate([np.zeros((B, 1), np.int32), y.astype(np.int32)], 1)
+    msk = np.concatenate([np.zeros((B, 1)), (key < 2).astype(np.float64)], 1)
+    return tok, tgt, msk
+
 def task_chase(rng, B, n=12, NID=16, P=8):
     # Linked lists; terminals point to themselves. The query token is a bare pointer to a start node.
     # Target: payload of the terminal reached from the start (0-3 hops after the first lookup).
@@ -294,6 +338,9 @@ def task_andortree(rng, B, n=14, NID=24, maxd=3):
     return toks, tgt, msk
 
 TASKS = {
+    "kzs3": (lambda r, B: task_keyed(r, B, 3, 10, 3), [4, 4, 4, 4, 4], 2, False),
+    "kzs4": (lambda r, B: task_keyed(r, B, 2, 8, 4), [4, 4, 4, 4, 3], 2, False),
+    "kd4": (lambda r, B: task_keydist(r, B, 9, 7, 4), [4, 4, 4, 4, 4], 2, False),
     "zs3": (lambda r, B: task_matchk(r, B, 12, 3, 4), [4, 4, 4, 4], 2, False),
     "zs4": (lambda r, B: task_matchk(r, B, 9, 4, 4), [4, 4, 4, 4], 2, False),
     "zs5": (lambda r, B: task_matchk(r, B, 9, 5, 4), [4, 4, 4, 4], 2, False),
@@ -389,6 +436,25 @@ def init(key, cfg, vocabs, C, T):
                 a["alpha"] = jnp.ones((K, D))
             else:
                 a["o"] = dense(next(ks), H * K * r * 2, D)
+        if cfg.model == "sfa":
+            # subset attention: one softmax per head selects, Newton's identities read every arity from it
+            r, K = cfg.rank, cfg.order
+            a = {"q": dense(next(ks), D, H * dh), "k": dense(next(ks), D, H * dh),
+                 "th": dense(next(ks), D, H * r), "g": dense(next(ks), D, H * r)}
+            if cfg.qzero:
+                # zero queries give uniform weights: the layer starts as Newton attention
+                a["q"]["w"] = jnp.zeros_like(a["q"]["w"])
+            if cfg.vpath:
+                a["v"] = dense(next(ks), D, H * dh)
+                a["ov"] = dense(next(ks), H * dh, D)
+            a["o"] = dense(next(ks), H * r * 2, D)
+            a["alpha"] = jnp.ones((K, D))
+            if cfg.hops:
+                # the walk sector: R hop matrices (untied), each a softmax over every token, self-loops allowed
+                for l in range(cfg.hops):
+                    a[f"hq{l}"], a[f"hk{l}"] = dense(next(ks), D, H * dh), dense(next(ks), D, H * dh)
+                a["hv"] = dense(next(ks), D, H * dh)
+                a["ow"] = dense(next(ks), cfg.hops * H * dh, D)
         if cfg.model == "path":
             a["len"] = dense(next(ks), D, H * cfg.plen)
         if cfg.model == "branch":
@@ -482,9 +548,58 @@ def path_attention(cfg, a, x, heads, dh):
     ve = heads(lin(a["ve"], x))
     return jnp.einsum("bhitk,bhitkc,bhkc->bhic", P, jnp.stack(betas, 3), ve)
 
+HI = jax.lax.Precision.HIGHEST
+
+def subset_moments(p, phi, K, mu=0.2, bose=False):
+    """
+    Arity read-outs of a weighted token set with a Poisson vacuum, for m = 0..K-1:
+
+        A_m(q) = [z^m] e^{mu z} prod_t (1 + z p_qt phi_t)  /  [z^m] e^{mu z} prod_t (1 + z p_qt)
+
+    Without the vacuum (mu = 0) this is the mean of prod_{t in S} phi_t over distinct m-subsets S drawn with
+    probability proportional to prod_{t in S} p_qt (a k-DPP with a diagonal kernel); A_1 is then softmax
+    attention with values phi, and uniform p gives Newton attention. The vacuum lets a subset hold empty
+    slots (value 1) at price mu each, so the read-out is a mixture of arities m, m - 1, ..., weighted by
+    e_i(p) mu^(m-i) / (m-i)!. It is also what makes Newton's identities safe in float32: the denominator is
+    at least mu^m / m!, so the error stays near eps ((1 + mu) / mu)^m however sharp p is. In power sums the
+    vacuum is one term, mu added to the first. p: [B, H, Q, T] (zero on excluded tokens, rows summing to
+    at most 1), phi: [B, H, T, r] complex. The power sums are K - 1 attention passes with weights p^j and
+    values phi^j, at full float32 precision: TF32 matmuls would break the cancellations.
+    bose: complete homogeneous polynomials instead (multisets, repeated tokens allowed).
+    """
+    pj, fj, P, Z = p, phi, [], []
+    for j in range(1, K):
+        P.append(jnp.einsum("bhqt,bhtc->bhqc", pj, fj.real, precision=HI)
+                 + 1j * jnp.einsum("bhqt,bhtc->bhqc", pj, fj.imag, precision=HI) + (mu if j == 1 else 0.0))
+        Z.append(pj.sum(-1, keepdims=True) + (mu if j == 1 else 0.0))
+        pj, fj = pj * p, fj * phi
+    sign = (lambda j: 1.0) if bose else (lambda j: (-1.0) ** (j - 1))
+    one = jnp.ones(p.shape[:3] + (phi.shape[-1],), phi.dtype)
+    E, N = [one], [jnp.ones(p.shape[:3] + (1,), p.dtype)]
+    for m in range(1, K):
+        E.append(sum(sign(j) * E[m - j] * P[j - 1] for j in range(1, m + 1)) / m)
+        N.append(sum(sign(j) * N[m - j] * Z[j - 1] for j in range(1, m + 1)) / m)
+    if mu > 0:
+        return [E[m] / N[m] for m in range(K)]
+    # no vacuum: exact canonical read-outs, zero where no m-subset has weight (ill-conditioned in float32)
+    return [E[0]] + [jnp.where(N[m] > 1e-30, E[m] / jnp.where(N[m] > 1e-30, N[m], 1.0), 0.0) for m in range(1, K)]
+
+def sfa_inputs(cfg, a, x, heads, dh):
+    """Scores, the query's weights on the other tokens, and the complex channels of subset attention."""
+    T = x.shape[1]
+    q, k = heads(lin(a["q"], x)), heads(lin(a["k"], x))
+    s = jnp.einsum("bhic,bhjc->bhij", q, k) / math.sqrt(dh)
+    if cfg.cap > 0:
+        s = cfg.cap * jnp.tanh(s / cfg.cap)
+    others = ~jnp.eye(T, dtype=bool)
+    p = jax.nn.softmax(jnp.where(others, s, -1e9), -1) * others
+    th = cfg.phase * heads(lin(a["th"], x))
+    phi = jax.nn.sigmoid(heads(lin(a["g"], x))) * jnp.exp(1j * th)
+    return s, p, phi
+
 def newton_parts(cfg, a, feats, H, K, r, D):
     """Each arity's contribution to the layer output, [B, T, K, D], before the bias."""
-    if cfg.readout == "shared":
+    if cfg.readout == "shared" or cfg.model == "sfa":
         W = a["o"]["w"].reshape(H, 2 * r, D)
         return jnp.einsum("bthkc,hcd->btkd", feats, W) * a["alpha"][None, None]
     W = a["o"]["w"].reshape(H, K, 2 * r, D)
@@ -524,6 +639,41 @@ def attention(cfg, a, x):
         if getattr(cfg, "want_parts", False):
             return parts
         return parts.sum(2) + a["o"]["b"]
+    if cfg.model == "sfa":
+        # Subset attention. One softmax per head picks which tokens a query reads; Newton's identities on
+        # the weighted power sums give, for every arity m + 1 <= K, the query's channels times the mean
+        # channel product over distinct m-subsets of the others, drawn with probability prod p_qt, with
+        # empty slots allowed at price vac. Arity 2 is softmax attention on the channels (plus a sink of
+        # value 1); with vac = 0 and uniform weights it is Newton attention.
+        r, K = cfg.rank, cfg.order
+        s, p, phi = sfa_inputs(cfg, a, x, heads, dh)
+        A = subset_moments(p, phi, K, cfg.vac, bose=cfg.stats == "bose")
+        out = jnp.stack([phi * A[m] for m in range(K)], 3)
+        feats = jnp.concatenate([out.real, out.imag], -1).transpose(0, 2, 1, 3, 4)  # [B, T, H, K, 2r]
+        if cfg.fnorm:
+            feats = feats / jnp.sqrt((feats ** 2).mean((2, 4), keepdims=True) + 1e-6)
+        parts = newton_parts(cfg, a, feats, H, K, r, D)
+        if getattr(cfg, "knock", -1) >= 0:
+            parts = parts * (jnp.arange(K) != cfg.knock)[None, None, :, None]
+        if getattr(cfg, "want_parts", False):
+            return parts
+        y = parts.sum(2) + a["o"]["b"]
+        if cfg.vpath:
+            # the same scores read linear values too, query included: standard attention, exactly
+            v = heads(lin(a["v"], x))
+            o = jnp.einsum("bhij,bhjc->bhic", jax.nn.softmax(s, -1), v)
+            y = y + lin(a["ov"], o.transpose(0, 2, 1, 3).reshape(B, T, -1))
+        if cfg.hops:
+            # walks from the query: after l hops the walker is at M_l = A_1 A_2 ... A_l, and reads the values
+            # there. Arity counts how many tokens meet at once; walks count how many steps lie between them.
+            hv = heads(lin(a["hv"], x))
+            M, walks = None, []
+            for l in range(cfg.hops):
+                A_l = jax.nn.softmax(jnp.einsum("bhic,bhjc->bhij", heads(lin(a[f"hq{l}"], x)), heads(lin(a[f"hk{l}"], x))) / math.sqrt(dh), -1)
+                M = A_l if M is None else jnp.einsum("bhij,bhjk->bhik", M, A_l)
+                walks.append(jnp.einsum("bhik,bhkc->bhic", M, hv))
+            y = y + lin(a["ow"], jnp.concatenate(walks, -1).transpose(0, 2, 1, 3).reshape(B, T, -1))
+        return y
     if cfg.model in ("dspa", "dspa2", "dspa3", "dspa4"):
         # Dyson-Schwinger polyattention: ONE trilinear vertex <q_p * clock_r, u_a * w_b> over
         # tokens + vacuum (value = 1, the Hadamard identity) + M virtual modes. A single softmax per parent
@@ -766,6 +916,8 @@ def main():
     ap.add_argument("--task", default="match3"); ap.add_argument("--model", default="cubic")
     ap.add_argument("--layers", type=int, default=1); ap.add_argument("--d", type=int, default=64)
     ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0); ap.add_argument("--readout", default="full"); ap.add_argument("--fnorm", type=int, default=0); ap.add_argument("--diag", type=int, default=1)
+    # subset attention (--model sfa): Poisson vacuum, optional logit cap, zero-initialised queries, statistics, linear-value path
+    ap.add_argument("--vac", type=float, default=0.2); ap.add_argument("--cap", type=float, default=0.0); ap.add_argument("--qzero", type=int, default=1); ap.add_argument("--stats", default="fermi"); ap.add_argument("--vpath", type=int, default=1); ap.add_argument("--hops", type=int, default=0)
     ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--batch", type=int, default=128)
     ap.add_argument("--lr", type=float, default=2e-3); ap.add_argument("--seed", type=int, default=0)
     # backbone: --embed fourier (frozen Fourier basis of Z_M, then a learned projection), --pos 0 (no
@@ -851,7 +1003,7 @@ def main():
             ta, sa, ba = evaluate(params, etok, etgt, emsk)
             curve.append((it + 1, round(float(l), 4), round(float(ta), 4), round(float(sa), 4), round(float(ba), 4)))
     ta, sa, ba = evaluate(params, etok, etgt, emsk)
-    tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") + ("_shared" if cfg.readout == "shared" else "") + ("_fnorm" if cfg.fnorm else "") if cfg.model == "newton" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
+    tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") + ("_shared" if cfg.readout == "shared" else "") + ("_fnorm" if cfg.fnorm else "") if cfg.model == "newton" else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_bose" if cfg.stats == "bose" else "") + ("" if cfg.vpath else "_novp") + ("" if cfg.qzero else "_qrand") + (f"_v{cfg.vac:g}" if cfg.vac != 0.2 else "") + (f"_c{cfg.cap:g}" if cfg.cap else "") + (f"_w{cfg.hops}" if cfg.hops else "") if cfg.model == "sfa" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
     out = {"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed,
            "params": int(nparams), "tok_acc": round(float(ta), 4), "seq_acc": round(float(sa), 4),
            "bal_acc": round(float(ba), 4), "backend": jax.default_backend(),
@@ -862,7 +1014,13 @@ def main():
         for k in [int(c) for c in cfg.task[3:]]:
             ktok, ktgt, kmsk = task_mix(np.random.default_rng(20_000 + cfg.seed + k), 2048, 9, 4, fixed=k)
             out["per_k"][str(k)] = round(float(evaluate(params, ktok, ktgt, kmsk)[2]), 4)
-    if cfg.model == "newton" and cfg.diag and cfg.layers == 1 and not multilabel:
+    if cfg.task == "kd4":
+        # score the clean and the most distracted tables separately
+        out["per_d"] = {}
+        for dd in (0, 3, 7):
+            dtok, dtgt, dmsk = task_keydist(np.random.default_rng(30_000 + cfg.seed + dd), 2048, 9, 7, 4, fixed=dd)
+            out["per_d"][str(dd)] = round(float(evaluate(params, dtok, dtgt, dmsk)[2]), 4)
+    if cfg.model in ("newton", "sfa") and cfg.diag and cfg.layers == 1 and cfg.recur == 1 and not multilabel:
         out["diag"] = newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with)
     print(json.dumps(out))
 
@@ -894,7 +1052,7 @@ def newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with):
         knock.append(round(float(eval_with(ck)(params, etok, etgt, emsk)[2]), 4))
     res = {"contrib": [round(float(v), 4) for v in contrib], "knockout": knock}
     cards = np.asarray(tok)[np.asarray(msk) > 0]
-    if cards.size and cards.max() < 3:
+    if cards.size and cards.max() < 3 and not cfg.task.startswith("k"):
         th = np.asarray(cfg.phase * lin(L0["attn"]["th"], h))[np.asarray(msk) > 0]
         g = np.asarray(jax.nn.sigmoid(lin(L0["attn"]["g"], h)))[np.asarray(msk) > 0]
         F = cards.shape[-1]
