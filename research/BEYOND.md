@@ -1073,3 +1073,5 @@ arms, then execute complete seed blocks in seed order, keeping paired comparison
 cap prevents completion, report the exact absent runs and no three-seed headline. No funds transfer
 from another stage. Timeouts and all failures count. Final timeouts are recorded in the executable
 plan and are not silently increased after a failed job.
+
+- 2026-10-20 — Stopped by Neo's request (Claude killed Astra and stopped Modal app ap-WBhF1QRlk72BhrDgvh6Cil with the GDN1/DP4 baseline runs still active). Verdict at stop: A and C failed the Stage-1 confirmation; B failed the language gate on every completed seed (seed 2: 0.38% below raw softmax, 0.72% above convolved softmax; convolved Parallax best). About $76 of $150 spent.
