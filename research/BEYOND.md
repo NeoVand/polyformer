@@ -268,6 +268,15 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   C/A confirmations remain queued afterward. Language accounting amendment is committed at
   `cfcd1bb`; all top-level diagnostic worker sources remain unchanged.
 
+
+- 2026-10-20 14:49 UTC — Fingerprinted both existing language token binaries through Modal's
+  local control-plane read API, without a Modal Function or GPU slot. Full SHA-256 evidence,
+  exact byte/token counts, stable before/after metadata and explicit provenance gaps are saved in
+  `results/beyond_language_planning/dataset.json`. The corpus is 744.583M training / 7.515M
+  validation tokens. Bind this committed evidence into the language plan and rehash after the
+  study. No dataset contents, worker source or training recipe changed; the original unpinned
+  download revision and tokenizer build cannot be recovered retrospectively.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
@@ -605,6 +614,19 @@ independent-random initialization and branch scale .1 as the diagnostic screen, 
 heads. GDN1/DP4 retain their native width-4 convolution, key width .75D and value width 1.5D;
 chunk size 32 counts microsteps. Historical LOCAL.md results are context, not substitutes for any
 fresh comparator in the headline.
+
+**Fixed token corpus.** Before any language quality run, fingerprint both existing token files on
+`polyformer-data/fineweb_edu` and bind the committed `results/beyond_language_planning/dataset.json`
+into the executable plan. The observed corpus has 744,582,584 training and 7,514,908 validation
+uint16 tokens. Its SHA-256 values are `b5684af6fa868293bf2628c41b08e54ea2a0ef8894f515bab299d17e909cf10b`
+(train) and `5afa5156b009815de51f8b244741fc7ff0bab45fb582ed99ccce5dd2ed0cf0b9` (validation).
+Current preparation code describes one FineWeb-Edu shard, `sample/10BT/000_00000.parquet`, preserving
+row order, assigning zero-based document indices divisible by 100 to validation and all others to
+training. It uses GPT-2 tiktoken ordinary encoding plus EOT 50256 after each document. The original
+Hugging Face revision and tokenizer build were not recorded; current source evidence does not prove
+the historical preparation invocation. The binary hashes identify the actual benchmark from this
+point onward. Sampling uses random contiguous 513-token windows for 512 targets. Repeat the full
+fingerprint after the study and report agreement or changes; no retokenization or split changes.
 
 **Rate tuning, then independent seeds.** Every included arm, including raw softmax, receives exactly
 three fresh 3,051-update runs (99,975,168 tokens), seed 0, rates {.002, .004, .008}, warmup 305 updates,

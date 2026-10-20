@@ -1,13 +1,16 @@
 # Stage-2 language planning handoff
 
-The implementation and validation are local only. They do not import Modal or launch work.
+The planner and its tests are local only and do not launch work. The separate dataset helper
+uses Modal's read-only Volume download API from the local process; it creates no App or Function.
 The planner lives below `research/analysis/`, so it does not change the frozen top-level
 `research/*.py` source map. No executable language plan has been frozen.
 
 Paths below are relative to the worktree:
 
 - `research/analysis/beyond_language_protocol.py`: planner, validation-only rate selector, final-block exporter.
-- `research/analysis/test_beyond_language_protocol.py`: 27 CPU tests, including all seven survivor subsets.
+- `research/analysis/test_beyond_language_protocol.py`: 30 CPU tests, including all seven survivor subsets and dataset integrity.
+- `research/analysis/beyond_dataset_fingerprint.py`: replayable streaming token-file fingerprint.
+- `research/results/beyond_language_planning/dataset.json`: pre-quality corpus fingerprint and provenance limits.
 - `research/results/beyond_language_planning/proof.json`: artifact hashes, test output and portability checks.
 - `research/results/beyond_language_planning/tables.md`: B/C and A/B/C draft planning tables.
 - `research/results/beyond_language_planning/budget.json`: timing inputs and previously settled language spend.
@@ -44,9 +47,56 @@ registration commit, and full strict-code confirmation outcomes remain alongside
 
 The plan freezes every top-level research Python hash, all five model hashes, the exact full argparse
 configuration, JAX/Optax/NumPy versions, Section5 registration hash, compute counters, timeouts,
-Stage-1 closure hash, reporting bridge hash, planner hash and gate-policy adapter hash. Result selection checks job, manifest,
+Stage-1 closure hash, reporting bridge hash, planner hash, gate-policy adapter hash, and committed dataset evidence.
+Result selection checks job, manifest,
 source, runtime, configuration, completed steps, tokens, FLOPs and final raw validation identity.
 It allows BEYOND Log updates outside Section5; a Section5 change invalidates exports.
+
+## Dataset fingerprint
+
+The completed read-only command was:
+
+```sh
+/tmp/beyond-venv/bin/python research/analysis/beyond_dataset_fingerprint.py \
+  --out research/results/beyond_language_planning/dataset.json
+```
+
+The environment-specific Python path can be replaced with any local Python containing Modal.
+No Modal Function was called. The helper streamed 1,504,194,984 bytes in 39.894 seconds and
+verified that the file sizes and modification timestamps agreed before and after the read.
+
+| File | Bytes | Tokens | SHA-256 |
+| --- | ---: | ---: | --- |
+| train.bin | 1,489,165,168 | 744,582,584 | `b5684af6fa868293bf2628c41b08e54ea2a0ef8894f515bab299d17e909cf10b` |
+| val.bin | 15,029,816 | 7,514,908 | `5afa5156b009815de51f8b244741fc7ff0bab45fb582ed99ccce5dd2ed0cf0b9` |
+
+The current preparation source selects `HuggingFaceFW/fineweb-edu`,
+`sample/10BT/000_00000.parquet`; holds out zero-based document indices divisible by 100;
+and applies GPT-2 ordinary tokenization with EOT 50256 appended after each document.
+This is evidence of the current source recipe, not proof of the historical preparation invocation.
+The original Hugging Face revision, source Parquet digest, and tokenizer build are unknown.
+The binary hashes identify the corpus actually present now.
+
+Production `freeze` requires `--dataset-evidence` committed at `--evidence-commit`.
+The plan embeds the full evidence, its canonical seal, the file-byte SHA, and a worktree-relative path.
+Plan verification, rate selection, final reporting, and exports verify the local bound evidence,
+preparation/helper source hashes, and every arm's dataset path. They do not hash the remote files
+for every job. Drafts may omit dataset evidence.
+
+Canonical evidence seal: `234bfccad2d94c2cacfa837dc4435e49fe03024954ba0ac8b7a3304c1615ba32`.
+File-byte SHA: `8fbe5ba2a626dc61375af5fac0b80992910e6eb1ed6ac91c443fe75036135570`.
+
+After the study, repeat with a new immutable output and compare both files:
+
+```sh
+python research/analysis/beyond_dataset_fingerprint.py \
+  --compare research/results/beyond_language_planning/dataset.json \
+  --out research/results/beyond_language_planning/dataset_final.json
+```
+
+This final rehash is planned, not yet performed. A mismatch raises an error. Size/mtime checks
+are not an atomic volume snapshot; pre/post matching hashes establish the observed endpoints,
+not a claim that every training invocation independently verified its mount.
 
 ## Conservative control allowance
 
@@ -76,7 +126,7 @@ estimate for A and must not be confused with the more conservative no-CSE allowa
 
 ## Freeze after Stage1 and the reporting amendment
 
-Commit the planner, the reporting amendment, the Stage-1 closure artifact, the source bridge and
+Commit the planner, the dataset helper/evidence, the reporting amendment, the Stage-1 closure artifact, the source bridge and
 the Section5 registration before freezing. Keep the planner in its nested analysis location.
 It hashes all top-level research Python files and separately records its own source hash.
 Section5 must contain the control-allowance policy ID above before freezing is permitted.
@@ -116,6 +166,7 @@ still owns every reservation and actual launch; no launch command is included he
 python research/analysis/beyond_language_protocol.py freeze \
   --confirmation research/results/STAGE1_CLOSURE.json \
   --source-bridge research/results/STAGE2_BRIDGE.json \
+  --dataset-evidence research/results/beyond_language_planning/dataset.json \
   --budget research/results/beyond_language_planning/budget.json \
   --evidence-commit HEAD \
   --out research/results/STAGE2_PLAN.json

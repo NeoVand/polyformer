@@ -1,11 +1,12 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-14:18 UTC, after all 59 main seed-0 tuning runs and before any independent confirmation outcome is
-reported here. A, B and C each reach 100% selected validation accuracy on all six primary diagnostic
-cells. This establishes that each combination can learn the screened tasks in at least one run.
-It establishes neither reliable performance across seeds nor a language-modeling advantage.
-Independent confirmation is in progress; language quality results are pending.
+14:51 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+accuracy in all 18 independent cells**. Its original-code outcome is **unconfirmed** because two
+standalone reference runs failed that code's additional accuracy floor. A and C's independent
+confirmations are pending; all three candidates reached 100% selected seed-0 validation in the
+six primary cells. The descriptive grid is running, and no language quality sweep has begun.
+These results establish successful synthetic-task learning in this regime, not a language advantage.
 
 The question is whether one affordable layer can combine content selection, improved local
 estimation and order-sensitive composition, then beat both softmax and modern matrix-state RNNs
@@ -91,9 +92,9 @@ These are selected seed-0 results, not independent confirmation.
 
 | Candidate | Selected seed-0 validation | Independent seeds 1/2/3: written rule | Independent seeds 1/2/3: original code | Language eligibility |
 |---|---|---|---|---|
-| A | 100% in all six cells | Pending | Pending | Pending |
-| B | 100% in all six cells | Pending | Pending | Pending |
-| C | 100% in all six cells | Pending | Pending | Pending |
+| A | 100% in all six cells | Pending | Unconfirmed: reference floor | Pending |
+| B | 100% in all six cells | Passed: 100% in all 18 cells | Unconfirmed: reference floor | Eligible under written rule |
+| C | 100% in all six cells | Pending | Unconfirmed: reference floor | Pending |
 
 A disclosed protocol discrepancy requires reporting both columns. The written gate required
 candidate accuracy of at least 90% on retrieval or 95% on second-half word positions, and no more
@@ -105,7 +106,11 @@ candidates, rates and references.
 Before any confirmation launch, commit `445048e487906265c99a135e08ccedea39a03230` registered
 [Section 4.1](BEYOND.md#41-written-rule-reconciliation-before-independent-confirmation):
 use the written rule prospectively and preserve the original executable outcome alongside it.
-Missing, failed or nonfinite references cannot establish a pass. The
+Missing, failed or nonfinite references cannot establish a pass. Independent confirmation made
+this distinction material: the one-layer S5 prefix reference scored 6.624% at seed 1 and the
+two-layer S5 reference scored 1.523% at seed 3; all other reference scores were 100%. B scored
+100% in those cells and all its others. The [B confirmation artifact](results/beyond_stage1_b_confirmation.json)
+records both outcomes. The
 [strict selection](results/beyond_stage1_selection_strict.json) remains immutable; the
 [adapter](analysis/beyond_gate_reconciliation.py) checks the registration, original seal and
 unchanged selection identities. Any future result passing only the reconciled rule must be labeled
@@ -118,8 +123,11 @@ achieves 74.85% balanced Match-3 test accuracy under a separately calibrated fix
 useful composition. Regression must distinguish the calibrated algebraic capability from what a
 trained probe actually learns.
 
-Language, if candidates qualify, uses FineWeb-Edu, GPT-2 tokens, six layers of width 512, context
-512, batch 64, BF16 and Muon. Every included arm receives three fresh approximately 100M-token
+Language, if candidates qualify, uses a single FineWeb-Edu shard, GPT-2 tokens, six layers of width
+512, context 512, batch 64, BF16 and Muon. The fixed binaries contain 744.58M training tokens and
+7.51M held-out tokens. Their full [fingerprints](results/beyond_language_planning/dataset.json) were
+recorded before quality runs. Current preparation code specifies a document-level 99:1 split;
+the original dataset revision and tokenizer build were not recorded. Every included arm receives three fresh approximately 100M-token
 rate trials at {.002, .004, .008}. Only final unrounded validation loss selects the rate.
 Fresh seeds 1/2/3 use candidate schedules set by the most expensive surviving candidate's
 approximately 400M-token nominal budget. Before any language quality results, a conservative

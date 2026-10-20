@@ -8,6 +8,7 @@ import json
 from pathlib import Path
 import subprocess
 import tempfile
+from types import SimpleNamespace
 import unittest
 
 HERE = Path(__file__).resolve().parent
@@ -16,12 +17,17 @@ p = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(p)
 ROOT = HERE.parent
 BUDGET = json.loads((ROOT / "results" / "beyond_language_planning" / "budget.json").read_text())
+DATASET_PATH = ROOT / "results" / "beyond_language_planning" / "dataset.json"
+DATASET = json.loads(DATASET_PATH.read_text())
+DATA_SPEC = importlib.util.spec_from_file_location("fingerprint", HERE / "beyond_dataset_fingerprint.py")
+fingerprint = importlib.util.module_from_spec(DATA_SPEC)
+DATA_SPEC.loader.exec_module(fingerprint)
 REGISTRATION_COMMIT = "445048e487906265c99a135e08ccedea39a03230"
 ORIGINAL_SELECTION = json.loads(p.git(ROOT, "show", f"{REGISTRATION_COMMIT}:{p.STRICT_SELECTION_PATH}"))
 
 
 def fixture_plan():
-    plan = p.build_plan(ROOT, ["B", "C"], BUDGET)
+    plan = p.build_plan(ROOT, ["B", "C"], BUDGET, dataset=DATASET, dataset_path=DATASET_PATH)
     confirmation = confirmation_for(plan)
     # Synthetic sealed provenance for pure-function tests; production CLI
     # separately requires committed evidence and an audited source bridge.
@@ -263,6 +269,88 @@ class ProtocolTests(unittest.TestCase):
             plan = p.seal({**self.plan, **updates})
             with self.assertRaises(p.ProtocolError):
                 p.verify_plan(plan)
+
+    def test_dataset_evidence_is_required_and_bound_for_frozen_plans(self):
+        p.verify_plan(self.plan)
+        for field in ("dataset_evidence", "dataset_evidence_sha256",
+                      "dataset_evidence_file_sha256", "dataset_evidence_path"):
+            bad = p.seal({**self.plan, field: None})
+            with self.subTest(field=field), self.assertRaises(p.ProtocolError):
+                p.verify_plan(bad)
+        bad = copy.deepcopy(self.plan)
+        bad["dataset_evidence"]["files"]["train.bin"]["sha256"] = "a" * 64
+        bad["dataset_evidence"] = p.seal(bad["dataset_evidence"])
+        bad["dataset_evidence_sha256"] = bad["dataset_evidence"]["sha256"]
+        with self.assertRaises(p.ProtocolError):
+            p.select_rates(p.seal(bad), [self.manifest], self.results)
+        bad = copy.deepcopy(self.plan)
+        bad["expected_configs"]["tuning"]["B"]["data"] = "/data/different"
+        with self.assertRaises(p.ProtocolError):
+            p.verify_plan(p.seal(bad))
+        draft = p.build_plan(ROOT, ["B"], BUDGET)
+        self.assertIsNone(draft["dataset_evidence"])
+        with self.assertRaisesRegex(p.ProtocolError, "dataset-evidence"):
+            p.build_plan(ROOT, ["B", "C"], BUDGET, confirmation=confirmation_for(self.plan))
+
+    def test_dataset_schema_size_paths_and_current_recipe_are_checked(self):
+        for mode in ("tokens", "missing_split", "path", "volume", "stable", "helper", "recipe"):
+            bad = copy.deepcopy(DATASET)
+            if mode == "tokens":
+                bad["files"]["train.bin"]["tokens"] += 1
+            elif mode == "missing_split":
+                del bad["files"]["val.bin"]
+            elif mode == "path":
+                bad["files"]["val.bin"]["worker_path"] = "/data/different/val.bin"
+            elif mode == "volume":
+                bad["volume_name"] = "different"
+            elif mode == "stable":
+                bad["metadata_stable_during_read"] = False
+            elif mode == "helper":
+                bad["fingerprint_runtime"]["helper_sha256"] = "a" * 64
+            else:
+                bad["recipe_evidence"]["preparation_code_sha256"] = "a" * 64
+            bad = p.seal(bad)
+            with self.subTest(mode=mode), tempfile.TemporaryDirectory(dir=ROOT / "results") as d:
+                path = Path(d) / "dataset.json"
+                p.write_immutable(path, bad)
+                with self.assertRaises(p.ProtocolError):
+                    p.build_plan(ROOT, ["B"], BUDGET, dataset=bad, dataset_path=path)
+        bad = p.seal({**self.plan, "dataset_evidence_path": "../dataset.json"})
+        with self.assertRaises(p.ProtocolError):
+            p.verify_plan(bad)
+
+    def test_dataset_streaming_hash_and_truncated_or_changing_volume(self):
+        payloads = {"fineweb_edu/train.bin": b"\x01\x00\x02\x00",
+                    "fineweb_edu/val.bin": b"\x03\x00"}
+
+        class FakeVolume:
+            listings = 0
+            changing = False
+            truncated = False
+
+            def iterdir(self, directory, recursive=False):
+                self.listings += 1
+                return [SimpleNamespace(path=path, size=len(data),
+                                        mtime=1234 + (self.listings if self.changing else 0))
+                        for path, data in payloads.items()]
+
+            def read_file(self, path):
+                data = payloads[path][:-1] if self.truncated else payloads[path]
+                return iter([data[:1], data[1:]])
+
+        actual = fingerprint.fingerprint_files(FakeVolume())
+        self.assertEqual(actual["train.bin"]["sha256"], p.digest(payloads["fineweb_edu/train.bin"]))
+        self.assertEqual(actual["train.bin"]["tokens"], 2)
+        for mode in ("changing", "truncated"):
+            volume = FakeVolume()
+            setattr(volume, mode, True)
+            with self.subTest(mode=mode), self.assertRaises(ValueError):
+                fingerprint.fingerprint_files(volume)
+        observed = copy.deepcopy(DATASET)
+        fingerprint.compare_files(DATASET, observed)
+        observed["files"]["val.bin"]["sha256"] = "a" * 64
+        with self.assertRaises(ValueError):
+            fingerprint.compare_files(DATASET, p.seal(observed))
 
     def test_stage1_requires_all18_unique_cells_and_all_survivors(self):
         confirmation = confirmation_for(self.plan)

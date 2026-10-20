@@ -1,0 +1,68 @@
+{
+  "elapsed_seconds": 39.894,
+  "files": {
+    "train.bin": {
+      "bytes": 1489165168,
+      "modified_unix": 1792445368,
+      "modified_utc": "2026-10-19T21:29:28+00:00",
+      "sha256": "b5684af6fa868293bf2628c41b08e54ea2a0ef8894f515bab299d17e909cf10b",
+      "tokens": 744582584,
+      "volume_path": "fineweb_edu/train.bin",
+      "worker_path": "/data/fineweb_edu/train.bin"
+    },
+    "val.bin": {
+      "bytes": 15029816,
+      "modified_unix": 1792445369,
+      "modified_utc": "2026-10-19T21:29:29+00:00",
+      "sha256": "5afa5156b009815de51f8b244741fc7ff0bab45fb582ed99ccce5dd2ed0cf0b9",
+      "tokens": 7514908,
+      "volume_path": "fineweb_edu/val.bin",
+      "worker_path": "/data/fineweb_edu/val.bin"
+    }
+  },
+  "fingerprint_runtime": {
+    "helper_sha256": "be86c110f14d1685d1ae28e647cd2814a2459238994e195395ef4aeba1752fde",
+    "modal": "1.6.2",
+    "python": "3.12.12 (main, Feb  4 2026, 01:57:59) [Clang 21.1.4 ]"
+  },
+  "limitations": [
+    "Pins the observed token bytes, not the unrecorded original download revision or tokenizer build.",
+    "Pre/post size and mtime agreement is checked; this is not an atomic immutable-volume snapshot.",
+    "No per-job remote rehash; repeat this fingerprint after the study and compare both file digests."
+  ],
+  "metadata_stable_during_read": true,
+  "method": "local control-plane modal.Volume.read_file streaming SHA-256; no Modal Functions",
+  "observed_completed_utc": "2026-10-20T14:48:20.960017+00:00",
+  "observed_started_utc": "2026-10-20T14:47:41.066255+00:00",
+  "recipe_evidence": {
+    "huggingface_dataset": "HuggingFaceFW/fineweb-edu",
+    "observed_repository_commit": "e650433948c657f56e13d8cc5ed01ff4bf93e54c",
+    "original_huggingface_revision": null,
+    "original_parquet_sha256": null,
+    "original_tokenizer_build": null,
+    "parquet_path": "sample/10BT/000_00000.parquet",
+    "preparation_code_path": "research/modal_run.py",
+    "preparation_code_sha256": "5f0cb5babe8702def82fd904f522738078aa21a7ac3652190bd3b1f82bc15203",
+    "scope": "Current preparation source describes the intended recipe; this does not prove the historical preparation invocation.",
+    "split": "Preserve Parquet row order; zero-based document indices divisible by 100 are validation; all others training.",
+    "tokenizer": "tiktoken.get_encoding('gpt2'), encode_ordinary_batch; append EOT 50256 to every document.",
+    "unknown_reason": "Preparation used an unpinned dataset revision and unpinned packages; the volume contains no preparation metadata sidecar."
+  },
+  "sampling_recipe": {
+    "final_validation_seed": 5678,
+    "training": "numpy.default_rng(run seed); contiguous 513-token windows with replacement produce 512 next-token targets.",
+    "tuning_validation_seed": 1234,
+    "validation_scope": "Both samples draw from val.bin; different window draws, not separate document partitions."
+  },
+  "schema": "beyond_dataset_fingerprint",
+  "schema_version": 1,
+  "sha256": "234bfccad2d94c2cacfa837dc4435e49fe03024954ba0ac8b7a3304c1615ba32",
+  "storage": {
+    "byte_order_evidence": "Preparation and reader use native numpy.uint16 on the Linux Modal runtime; no file header.",
+    "bytes_per_token": 2,
+    "dtype": "uint16"
+  },
+  "volume_name": "polyformer-data",
+  "volume_object_id": "vo-ElD4BWSemMzTImPK1dobfo",
+  "worker_data_directory": "/data/fineweb_edu"
+}

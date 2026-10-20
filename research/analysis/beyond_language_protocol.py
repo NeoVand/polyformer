@@ -9,7 +9,8 @@ does not change the frozen top-level research source map. From the worktree:
 After reporting amendments and Stage-1 confirmation are committed:
 
     python research/analysis/beyond_language_protocol.py freeze --confirmation CONFIRM.json \
-        --source-bridge BRIDGE.json --budget BUDGET.json --out PLAN.json
+        --source-bridge BRIDGE.json --dataset-evidence DATASET.json \
+        --budget BUDGET.json --out PLAN.json
     python research/analysis/beyond_language_protocol.py export --plan PLAN.json \
         --phase tuning --out TUNING_JOBS.json
     python research/analysis/beyond_language_protocol.py select --plan PLAN.json \
@@ -540,7 +541,86 @@ def verify_bridge_commits(root, bridge):
         raise ProtocolError("bridge does not contain the exact committed lm.py diff")
 
 
-def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evidence_commit=None):
+def verify_dataset_evidence(evidence):
+    if not isinstance(evidence, dict):
+        raise ProtocolError("a frozen language plan requires dataset evidence")
+    check_seal(evidence)
+    if (evidence.get("schema"), evidence.get("schema_version")) != ("beyond_dataset_fingerprint", 1):
+        raise ProtocolError("unsupported dataset evidence")
+    if (evidence.get("volume_name") != "polyformer-data"
+            or evidence.get("worker_data_directory") != "/data/fineweb_edu"
+            or not evidence.get("metadata_stable_during_read")):
+        raise ProtocolError("dataset evidence names a different or changing corpus")
+    if evidence.get("storage", {}).get("dtype") != "uint16" or evidence["storage"].get("bytes_per_token") != 2:
+        raise ProtocolError("dataset storage differs from the uint16 language reader")
+    if set(evidence.get("files", {})) != {"train.bin", "val.bin"}:
+        raise ProtocolError("dataset evidence must fingerprint both train.bin and val.bin")
+    for name, row in evidence["files"].items():
+        sha = row.get("sha256")
+        if not isinstance(sha, str) or len(sha) != 64 or any(c not in "0123456789abcdef" for c in sha):
+            raise ProtocolError(f"invalid dataset file digest: {name}")
+        size, tokens = row.get("bytes"), row.get("tokens")
+        if (type(size) is not int or type(tokens) is not int or tokens <= 513
+                or size != 2 * tokens or row.get("volume_path") != f"fineweb_edu/{name}"
+                or row.get("worker_path") != f"/data/fineweb_edu/{name}"):
+            raise ProtocolError(f"invalid dataset file size/token/path identity: {name}")
+    for key in ("observed_started_utc", "observed_completed_utc"):
+        if not evidence.get(key):
+            raise ProtocolError(f"dataset evidence lacks {key}")
+    return evidence
+
+
+def dataset_binding(root, evidence, path):
+    if evidence is None:
+        if path is not None:
+            raise ProtocolError("dataset path provided without evidence")
+        return {"dataset_evidence": None, "dataset_evidence_sha256": None,
+                "dataset_evidence_file_sha256": None, "dataset_evidence_path": None}
+    verify_dataset_evidence(evidence)
+    if path is None:
+        raise ProtocolError("dataset evidence requires its local artifact path")
+    path = Path(path).resolve()
+    try:
+        relative = path.relative_to(Path(root).resolve().parent).as_posix()
+    except ValueError as exc:
+        raise ProtocolError("dataset evidence must be inside the worktree") from exc
+    content = path.read_bytes()
+    if json.loads(content) != evidence:
+        raise ProtocolError("dataset evidence file differs from supplied evidence")
+    return {"dataset_evidence": copy.deepcopy(evidence),
+            "dataset_evidence_sha256": evidence["sha256"],
+            "dataset_evidence_file_sha256": digest(content),
+            "dataset_evidence_path": relative}
+
+
+def verify_plan_dataset(plan, root=None):
+    evidence = verify_dataset_evidence(plan.get("dataset_evidence"))
+    if plan.get("dataset_evidence_sha256") != evidence["sha256"]:
+        raise ProtocolError("frozen dataset evidence digest mismatch")
+    root = Path(root).resolve() if root else Path(__file__).resolve().parent.parent
+    path = plan.get("dataset_evidence_path")
+    if not isinstance(path, str) or Path(path).is_absolute() or ".." in Path(path).parts:
+        raise ProtocolError("dataset evidence must have a worktree-relative path")
+    source = root.parent / path
+    try:
+        content = source.read_bytes()
+    except OSError as exc:
+        raise ProtocolError(f"cannot read bound dataset evidence: {source}") from exc
+    if (digest(content) != plan.get("dataset_evidence_file_sha256")
+            or json.loads(content) != evidence):
+        raise ProtocolError("bound dataset evidence file differs from the frozen plan")
+    if evidence.get("recipe_evidence", {}).get("preparation_code_sha256") != plan["source_hashes"].get("modal_run.py"):
+        raise ProtocolError("dataset recipe evidence differs from the frozen preparation source")
+    helper = Path(__file__).with_name("beyond_dataset_fingerprint.py")
+    if evidence.get("fingerprint_runtime", {}).get("helper_sha256") != digest(helper.read_bytes()):
+        raise ProtocolError("dataset fingerprint helper differs from its recorded source")
+    if any(cfg.get("data") != evidence["worker_data_directory"]
+           for cfg in plan["expected_configs"]["tuning"].values()):
+        raise ProtocolError("a language configuration points outside the fingerprinted dataset")
+
+
+def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evidence_commit=None,
+               dataset=None, dataset_path=None):
     root = Path(root).resolve()
     survivors = sorted(survivors)
     if not survivors or len(set(survivors)) != len(survivors) or not set(survivors) <= {"A", "B", "C"}:
@@ -553,7 +633,10 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
     counts = counts_from_source(root, configs)
     if sources(root) != before:
         raise ProtocolError("research sources changed while calculating the plan")
+    dataset_fields = dataset_binding(root, dataset, dataset_path)
     if confirmation is not None:
+        if dataset is None:
+            raise ProtocolError("production freeze requires committed --dataset-evidence")
         verify_confirmation(confirmation, survivors, models, bridge, repository=root.parent,
                             evidence_commit=evidence_commit)
         if "val_loss_raw" not in (root / "lm.py").read_text():
@@ -586,6 +669,7 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
         } if confirmation else {},
         "stage1_budget_deferrals": copy.deepcopy(confirmation.get("budget_deferrals", {})) if confirmation else {},
         "source_bridge_sha256": bridge["sha256"] if bridge else None,
+        **dataset_fields,
         "budget_input_sha256": digest(budget),
         "arm_order": order, "survivors": survivors, "target_arm": target_arm,
         "target_training_flops": float(target),
@@ -679,15 +763,18 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
         "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds",
         "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
     }
+    if dataset is not None:
+        verify_plan_dataset(plan, root)
     return seal(plan)
 
 
-def verify_plan(plan):
+def verify_plan(plan, *, research_root=None):
     check_seal(plan)
     if (plan.get("schema"), plan.get("schema_version")) != ("beyond_language_plan", 1):
         raise ProtocolError("unsupported language plan")
     if plan.get("status") != "frozen":
         raise ProtocolError("draft plans cannot export jobs or select rates")
+    verify_plan_dataset(plan, research_root)
     if plan.get("planner_sha256") != digest(Path(__file__).read_bytes()):
         raise ProtocolError("language planner source differs from the frozen plan")
     if plan.get("gate_policy_adapter_sha256") != digest(Path(__file__).with_name("beyond_gate_reconciliation.py").read_bytes()):
@@ -930,6 +1017,8 @@ def main():
         sub = commands.add_parser(mode)
         sub.add_argument("--budget", required=True)
         sub.add_argument("--out", required=True)
+        sub.add_argument("--dataset-evidence", required=(mode == "freeze"),
+                         help="committed token-file fingerprint (optional for drafts)")
         if mode == "draft":
             sub.add_argument("--survivors", required=True)
         else:
@@ -957,10 +1046,11 @@ def main():
     root = Path(args.research_root).resolve() if args.research_root else default_research_root()
     if args.command in ("draft", "freeze"):
         budget = json.loads(Path(args.budget).read_text())
-        confirmation = bridge = commit = None
+        confirmation = bridge = commit = dataset = None
         if args.command == "freeze":
             commit = git(root, "rev-parse", args.evidence_commit).decode().strip()
             confirmation = committed_file(root, args.confirmation, commit)
+            dataset = committed_file(root, args.dataset_evidence, commit)
             if args.source_bridge:
                 bridge = committed_file(root, args.source_bridge, commit)
                 verify_bridge_commits(root, bridge)
@@ -969,12 +1059,16 @@ def main():
             survivors = confirmation["passed_candidates"]
         else:
             survivors = args.survivors.split(",")
+            if args.dataset_evidence:
+                dataset = json.loads(Path(args.dataset_evidence).read_text())
         plan = build_plan(root, survivors, budget, confirmation=confirmation,
-                          bridge=bridge, evidence_commit=commit)
+                          bridge=bridge, evidence_commit=commit,
+                          dataset=dataset, dataset_path=args.dataset_evidence)
         write_immutable(args.out, plan)
         print(table(plan))
     elif args.command == "select":
         plan = committed_file(root, args.plan, args.plan_commit)
+        verify_plan(plan, research_root=root)
         manifests = [json.loads(Path(p).read_text()) for p in args.manifest]
         for manifest in manifests:
             verify_manifest_registration(root, plan, manifest)
@@ -986,7 +1080,7 @@ def main():
         write_immutable(args.out, result)
     elif args.command == "export":
         plan = committed_file(root, args.plan, args.plan_commit)
-        verify_plan(plan)
+        verify_plan(plan, research_root=root)
         if sources(root) != plan["source_hashes"]:
             raise ProtocolError("research source map changed since the frozen plan")
         if digest(language_registration((root / "BEYOND.md").read_text())) != plan["language_registration_sha256"]:
