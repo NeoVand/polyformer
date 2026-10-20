@@ -102,25 +102,31 @@ def main():
             return len(xs) == 3 and all(lo < x < hi for x in xs)
 
         layers = ["newton"] + [f"holo d={d}" for d in (2, 3, 4, 5, 8)]
+        ceil = {"g3_a4": 0.831, "g3_a5": 0.772}       # order-blind ceilings (GROUPS.md section 2)
         p1 = all(all_ge(a, t, 0.95) for a in layers for t in ("g3_z12", "g3_z60"))
-        p2 = all(all_le(a, "g3_a5", 0.55) for a in ("newton", "holo d=2")) and all(all_ge(a, "g3_a5", 0.95) for a in ("holo d=5", "holo d=8"))
-        p3 = all(all_between(a, "g3_a4", 0.55, 0.90) for a in ("newton", "holo d=2")) and all(all_ge(f"holo d={d}", "g3_a4", 0.95) for d in (3, 4, 5, 8))
-        means = [statistics.mean(c2[(f"holo d={d}", "g3_a5")]) if c2.get((f"holo d={d}", "g3_a5")) else None for d in (2, 3, 4, 5)]
-        p4 = None not in means and all(b >= a - 1e-9 for a, b in zip(means, means[1:])) and all(
-            all_between(f"holo d={d}", "g3_a5", 0.55, 0.95) for d in (3, 4))
-        print("\n| Prediction | Holds |\n|---|---|")
-        for name, v in (("P1 abelian groups: every layer >= 95%", p1),
-                        ("P2 A5: Newton, d=2 <= 55%; d=5, d=8 >= 95%", p2),
-                        ("P3 A4: Newton, d=2 in (55, 90); d>=3 >= 95%", p3),
-                        ("P4 A5 ladder non-decreasing, d=3 and d=4 in (55, 95)", p4)):
-            print(f"| {name} | {'yes' if v else 'no'} |")
-        print("\n**P5, the Plancherel law** (accuracy against 1/2 + mass/2, held mass per run)\n")
-        print("| Run | Accuracy | Held mass | 1/2 + mass/2 | Gap |\n|---|---|---|---|---|")
-        for r in sorted(e2, key=lambda r: (r["task"], arm(r), r["seed"])):
-            if "rep" in r:
-                pred = 0.5 + r["rep"]["mass"] / 2
-                print(f"| {r['task']} {arm(r)} s{r['seed']} | {100 * r['bal_acc']:.1f} | {r['rep']['mass']:.2f} | {100 * pred:.1f} | {100 * (r['bal_acc'] - pred):+.1f} |")
-
+        p2 = all(all_le(a, "g3_a5", ceil["g3_a5"] + 0.02) for a in ("newton", "holo d=2")) and all(all_ge(a, "g3_a5", 0.95) for a in ("holo d=5", "holo d=8"))
+        p3 = all(all_le(a, "g3_a4", ceil["g3_a4"] + 0.02) for a in ("newton", "holo d=2")) and all(all_ge(f"holo d={d}", "g3_a4", 0.95) for d in (3, 4, 5, 8))
+        means = {d: statistics.mean(c2[(f"holo d={d}", "g3_a5")]) for d in (3, 4, 5) if c2.get((f"holo d={d}", "g3_a5"))}
+        if all_ge("holo d=3", "g3_a5", 0.95):
+            p4 = "faithfulness"
+        elif all_le("holo d=3", "g3_a5", 0.90) and len(means) == 3 and means[3] < means[4] < means[5]:
+            p4 = "Plancherel"
+        else:
+            p4 = "undecided"
+        print("\n| Prediction | Registered criterion | Outcome |\n|---|---|---|")
+        for name, crit, v in (("P1", "Z12, Z60: Newton and every d >= 95%", "holds" if p1 else "fails"),
+                              ("P2", "A5: Newton, d=2 <= 79.2%; d=5, d=8 >= 95%", "holds" if p2 else "fails"),
+                              ("P3", "A4: Newton, d=2 <= 85.1%; d>=3 >= 95%", "holds" if p3 else "fails"),
+                              ("P4", "A5 d=3 >= 95% (faithfulness) or <= 90% with rising means (Plancherel)", p4)):
+            print(f"| {name} | {crit} | {v} |")
+        print("\n**Irreps held** (multiplicity >= 1/2 in a head with homomorphism error < 0.5; per seed)\n")
+        names = {"g3_a4": ["1", "1'", "1''", "3"], "g3_a5": ["1", "3", "3'", "4", "5"]}
+        print("| Task | Arm | Seed 0 | Seed 1 | Seed 2 |\n|---|---|---|---|---|")
+        for t in ("g3_a4", "g3_a5"):
+            for d in (2, 3, 4, 5, 8):
+                runs = sorted((r for r in e2 if r["task"] == t and arm(r) == f"holo d={d}" and "rep" in r), key=lambda r: r["seed"])
+                cells = [", ".join(names[t][i] for i in r["rep"]["held"]) or "none" for r in runs]
+                print(f"| {t} | d={d} | " + " | ".join(cells) + " |")
 
 if __name__ == "__main__":
     main()

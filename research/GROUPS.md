@@ -178,6 +178,119 @@ What the pilot changed, before freezing:
    order-blind against order-aware features, not representation learning; Z60 and A5 carry the representation
    question.
 
-## 5. Results
+## 5. Results (20 October 2026)
 
-(filled in after)
+164 runs on L4 (pilot 11, experiment 1 54 + 3, experiment 2 96 + 3), about 3.6 GPU-hours, roughly $3 of the $25 cap.
+Tables from `python3 research/grp_summary.py grp_e1 grp_e2`.
+
+### 5.1 Experiment 1: composition is needed
+
+Balanced accuracy %, mean (seeds 0, 1, 2):
+
+| Arm | Match-3 | Match-4 | Match-5 |
+|---|---|---|---|
+| softmax 1L, frozen characters | 54.8 (54.9, 54.9, 54.6) | 50.0 (50.0, 50.0, 50.0) | 50.0 (50.0, 50.0, 50.0) |
+| softmax 2L, frozen characters | 54.7 (55.2, 54.9, 54.0) | 50.0 (50.0, 50.0, 50.0) | 50.0 (50.0, 50.0, 50.0) |
+| softmax 1L, rotated characters | 54.8 (54.5, 54.9, 54.8) | 50.0 (50.0, 50.0, 50.0) | 50.0 (50.0, 50.0, 50.0) |
+| softmax 2L, rotated characters | 53.9 (54.5, 54.4, 52.9) | 50.0 (50.0, 50.0, 50.0) | 50.0 (50.0, 50.0, 50.0) |
+| softmax 1L, learned tables | 58.1 (57.2, 59.4, 57.6) | 50.9 (50.7, 51.0, 50.9) | 50.0 (50.0, 50.0, 50.0) |
+| softmax 2L, learned tables | 58.6 (60.9, 58.2, 56.9) | 50.5 (50.9, 50.0, 50.6) | 50.0 (50.0, 50.0, 50.0) |
+| *Newton attention (newton_e, reference)* | *100* | *100* | *85* |
+
+Exploratory: softmax 2L on frozen characters for 20,000 steps on Match-4 is 50.0 on all three seeds.
+
+**Registered reading: composition is needed** (both depths <= 60% on Match-4 on 3 of 3 seeds; in fact exactly 50.0).
+Handed every character of Z_3^4, softmax with an MLP does not learn the multiplicative read-out, at either depth or
+with more steps; on Match-3 it does slightly worse than with learned tables. Rotating the characters changes nothing,
+as expected for a model whose first operation is linear. So Newton attention's advantage is the product (its
+generating function), not its coordinates. The reframe's strong form, "higher order is only a choice of
+coordinates", is refuted.
+
+### 5.2 Experiment 2: commutativity is the line
+
+Balanced accuracy %, mean (seeds 0, 1, 2); order-blind ceilings A4 83.1, A5 77.2:
+
+| Arm | Z12 | A4 | Z60 | A5 |
+|---|---|---|---|---|
+| holonomy d = 2 (commuting) | 100.0 | 81.1 (81.7, 81.0, 80.7) | 100.0 | 73.1 (73.6, 73.1, 72.5) |
+| holonomy d = 3 | 100.0 | 100.0 | 100.0 | 94.1 (93.4, 94.0, 94.8) |
+| holonomy d = 4 | 100.0 | 100.0 | 100.0 | 99.5 (99.2, 99.5, 99.7) |
+| holonomy d = 5 | 100.0 | 100.0 | 100.0 | 100.0 (99.97, 99.96, 99.98) |
+| holonomy d = 8 | 100.0 | 100.0 | 100.0 | 100.0 |
+| Newton attention | 100.0 | 80.7 (81.1, 80.8, 80.3) | 100.0 | 76.1 (76.1, 76.4, 75.9) |
+| softmax 1L (positions) | 98.2 (96.4, 100.0, 98.2) | 81.0 (80.6, 81.1, 81.2) | 50.1 | 50.0 |
+| softmax 3L (positions) | 100.0 | 99.7 (99.6, 99.9, 99.8) | 50.8 (50.6, 50.2, 51.4) | 50.0 |
+
+Exploratory (after the registered decision): holonomy d = 3 on A5 for 20,000 steps reaches **99.2, 99.4, 99.3** and is
+still rising, holding the same two 3-dimensional irreps.
+
+| Prediction | Registered criterion | Outcome |
+|---|---|---|
+| P1 | Z12, Z60: Newton and every d >= 95% | **holds** (all 100.0) |
+| P2 | A5: Newton, d = 2 <= 79.2%; d = 5, d = 8 >= 95% | **holds** (76.1, 73.1; 100.0, 100.0) |
+| P3 | A4: Newton, d = 2 <= 85.1%; d >= 3 >= 95% | **holds** (80.7, 81.1; all 100.0) |
+| P4 | A5 d = 3 >= 95% (faithfulness) or <= 90% with rising means (Plancherel) | **undecided** at 6,000 steps (93.4-94.8); the exploratory 20,000-step runs (99.2-99.4) favour faithfulness |
+
+**Irreps the trained heads hold** (multiplicity >= 1/2 in a head with homomorphism error < 0.5), per seed:
+
+| Group | d = 2 | d = 3 | d = 4 | d = 5 |
+|---|---|---|---|---|
+| A4 | none; 1', 1''; 1', 1'' | 3; 3; 3 | 3; none; 3 | none (x3) |
+| A5 | none (x3) | 3, 3'; 3, 3'; 3, 3' | 3'; 4; 3, 4 | 5; 5; 4, 5 |
+
+The best heads are close to exact representations: on A5 at d = 3 the multiplicities of 3 and 3' are 0.95-1.01 with
+homomorphism errors down to 0.05 (random rotations sit near 1.4). "None" at large d is a limit of the measure, not
+an absence: it averages over every pair of elements, including those a head's gate switches off, so a head that is
+a representation only where it is open fails it. The held-mass column is therefore a lower bound and P5's
+"larger irreps first" is only suggestive (at d = 4 and 5 the heads usually take the largest irrep that fits).
+
+**What the numbers say.**
+
+- **Commuting features reach exactly what order-blind information allows.** Newton attention and d = 2 sit at or
+  under the ceilings on A4 (80.7, 81.1 against 83.1) and A5 (76.1, 73.1 against 77.2). On A4 the commuting layer
+  finds precisely the characters of the abelian quotient Z3 (1', 1''), the only nontrivial one-dimensional
+  representations A4 has.
+- **Non-commuting rotations learn the group.** One layer at d >= 3 solves both non-abelian groups, and its heads are
+  the groups' irreducible representations: the tetrahedral 3 of A4 and the two icosahedral 3s of A5 at d = 3, the 4
+  and 5 of A5 at d = 4 and 5.
+- **The smallest faithful representation is enough; dimension buys speed.** A5's 3-dimensional irreps carry only 31%
+  of the Plancherel mass, yet d = 3 reaches 99.3% with more steps. The ladder at 6,000 steps (73.1, 94.1, 99.5, 100,
+  100 for d = 2, 3, 4, 5, 8) is a learning-speed ladder above d = 3, not a capacity ladder. The Plancherel law as
+  registered in the first draft is wrong for a layer with per-token gates.
+- **Softmax composes nothing.** On the 60-element groups, 1 and 3 layers stay at chance even on abelian Z60, where
+  every phase or rotation layer is exact. On the 12-element groups with 6 positions, 3-layer softmax reads the whole
+  sequence (100 and 99.7): a small-universe effect, not composition.
+
+## 6. What this means
+
+1. The strong reframe was wrong and the experiment says why: the higher-order content of Newton attention is the
+   **composition** (a product of group-valued features summed over subsets), not the coordinates. Softmax given the
+   coordinates still cannot compose.
+2. The refined reframe holds on this evidence: **what a layer can relate is set by the group its features compose
+   in.** Softmax composes nothing; Newton attention composes in an abelian group (phases) and reaches exactly the
+   order-blind information; holonomy attention composes in SO(d), learns the irreducible representations of a
+   non-abelian group from labels alone, and solves what order-blind layers cannot. Newton attention is its
+   commuting d = 2 case (checked to 2e-16); the walk sector, which solved pointer chains, is the same idea with hop
+   matrices.
+3. So the generalisation of attention this project has been looking for is not "more tokens per score" but **attention
+   over learned group representations**: tokens carry elements of a learned matrix group, and the layer reads
+   ordered products over subsets of positions.
+
+**What it does not show.** These are synthetic tasks with an explicit group law. Nothing here says natural data has
+such structure at the scale we can test, and none of it bears on the language results of SEARCH.md and LOCAL.md.
+Products of learned matrices along a sequence are also the core of linear RNNs with matrix-valued state (DeltaNet,
+DeltaProduct, negative-eigenvalue state tracking, unitary RNNs), which track non-abelian groups by composing the
+whole prefix into one state. Holonomy attention differs in summing ordered products over every subset of positions
+(a non-abelian elementary symmetric function), so it answers relational queries ("which k elements compose to the
+identity") rather than carrying one running product; the relation between the two needs to be worked out before
+any claim of novelty.
+
+**Next, cheapest first.**
+
+1. **State tracking**: running products over A5 and S5 (the NC1-complete word problems) with holonomy attention,
+   softmax and a linear RNN with matrix state, one and two layers; the prefix product is the arity-n sector, so the
+   layer should do it in one step where softmax cannot at constant depth.
+2. **Selection with composition**: keyed versions of the group tasks, combining subset attention's query weights
+   with rotations (the non-abelian subset attention).
+3. **Real data**: a holonomy branch in the S6 language-model harness at equal FLOPs under Muon, and on code, where
+   scopes and stacks are non-commutative.

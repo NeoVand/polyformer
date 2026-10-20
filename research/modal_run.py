@@ -562,6 +562,8 @@ GRIDS = {
     "grp_e1_long": grid(["zs4"], ["sa"], [0, 1, 2], steps=20000, layers=2, d=192, pos=0, embed="char"),
     # GROUPS.md experiment 2: every layer on the four groups, holonomy attention at d = 2, 3, 4, 5, 8
     "grp_e2": [r for t in ("g3_z12", "g3_a4", "g3_z60", "g3_a5") for r in grp_arms(t, [0, 1, 2], [2, 3, 4, 5, 8])],
+    # experiment 2, exploratory (after the registered decision): is d = 3 on A5 slow or capped? 20,000 steps
+    "grp_e2_long": grid(["g3_a5"], ["holo"], [0, 1, 2], steps=20000, **holo_args(3)),
 }
 
 
