@@ -55,9 +55,15 @@ in-context operator inference, and rung 3, real ARC-AGI-1 with a TRM-style recur
   Reuse the tested Householder/prefix/convolution implementation from beyond commit `0ea244d`; compare shared
   convolved softmax against the same plus a composition branch, avoiding a Parallax-estimation confound.
   Main-seed selection and all hyperparameters will be frozen after seed-0 pilots, before main results.
-- 2026-10-20 19:28 UTC — Runner budget tests were written and observed failing before implementation, then pass
+- 2026-10-20 19:27 UTC — Runner budget tests were written and observed failing before implementation, then pass
   after adapting the existing bounded runner. Separate caps are enforced at $15/$20 with $35 total; unresolved
   calls retain full reservations and never retry automatically. Pricing checked at https://modal.com/pricing:
   L4 $0.000222/s plus conservative CPU/RAM maxima, startup and idle allowances. Estimates are not invoices.
   Important design caveat recorded before results: invertible ARC primitives form a closed family, so sampled
   depth is not intrinsic operator complexity. We will measure reduced identities/ambiguity and state this limit.
+- 2026-10-20 19:29 UTC — Both generator/layer test suites are written first and observed failing on missing
+  implementation modules. Experiment 1 avoids answer-conditioned rejection: reciprocal transfers preserve the
+  initial owner's counterfactual difference. Decision weighting will mean equal weight per final answer and
+  zero narrative-token weight, explicitly the strongest version of the requested reweighting. Experiment 2
+  consumes only demonstration input/output grids and query input, with output masking and task-reset TTT tests.
+  No paid calls yet. Main comparisons will use fresh seeds 1/2/3, keeping seed 0 for pilots only.
