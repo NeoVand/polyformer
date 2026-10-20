@@ -464,6 +464,17 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   recipe, not saved worker indices; it does not establish document independence or correct
   the reported standard errors. No training, selection or gate change follows.
 
+- 2026-10-20 17:05 UTC — Preserved the reusable read-only checkpoint audit at
+  `analysis/beyond_checkpoint_fingerprint.py` (SHA
+  `a92fcb2d22939e6954595e97fe8e1fed229768e8267fe0560e35c31e2e96298d`).
+  Its syntax and metadata-only CLI checks pass. It embeds the exact original seed-1 inline
+  monitor source, retrospectively fingerprinted as
+  `61ce21983f533b8a8730e2fcc22732b5be0ceb604558499be3f9b0973221d68f`,
+  explicitly marking that preservation as after execution began. The running seed-1 monitor
+  and evidence are unchanged; later invocations record their actual helper/source hashes.
+  This uses Volume reads only, without GPU calls or deserialization. DP4 has reached
+  9,635/10,277 updates; its result is the last prerequisite for closing this seed block.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
