@@ -50,3 +50,14 @@ in-context operator inference, and rung 3, real ARC-AGI-1 with a TRM-style recur
 ## Log
 
 - Plan written by Claude; Astra launched.
+- 2026-10-20 19:26 UTC — Read the plan and required background; delegated independent scientific review and
+  test-first implementations. Worktree is clean at `a18ff25` before new files. No paid jobs launched, $0 spent.
+  Reuse the tested Householder/prefix/convolution implementation from beyond commit `0ea244d`; compare shared
+  convolved softmax against the same plus a composition branch, avoiding a Parallax-estimation confound.
+  Main-seed selection and all hyperparameters will be frozen after seed-0 pilots, before main results.
+- 2026-10-20 19:28 UTC — Runner budget tests were written and observed failing before implementation, then pass
+  after adapting the existing bounded runner. Separate caps are enforced at $15/$20 with $35 total; unresolved
+  calls retain full reservations and never retry automatically. Pricing checked at https://modal.com/pricing:
+  L4 $0.000222/s plus conservative CPU/RAM maxima, startup and idle allowances. Estimates are not invoices.
+  Important design caveat recorded before results: invertible ARC primitives form a closed family, so sampled
+  depth is not intrinsic operator complexity. We will measure reduced identities/ambiguity and state this limit.
