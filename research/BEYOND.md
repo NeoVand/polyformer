@@ -203,6 +203,16 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   and `results/beyond_language_planning/`; all 20 tests and four path-portability checks pass.
   These are offline preparation only: no language quality job has been launched.
 
+
+- 2026-10-20 14:15 UTC — All 13 alternates complete without errors; the integrity audit accepts all
+  59 main tuning runs. Lower rate .002 brings C's one-/two-layer S5, B's two-layer S5, and both S5
+  prefix controls to 100% validation. Every candidate and selected reference now scores 100% in
+  every primary cell. `results/beyond_stage1_selection_strict.json` preserves the original executable
+  selection. Register section 4.1 before **any** confirmation call: reconcile the extra reference-floor
+  condition with the written rule and report both policies. No seed-0 decision, rate or reference
+  changes, and no confirmation outcome has been observed. The matrix RNN word failures remain in
+  the record; they do not imply an expressivity impossibility.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
@@ -488,6 +498,38 @@ candidates is approximately $18.7 plus pilots, but this is not a spending guaran
 report the exact missing cells and unconfirmed status; do not borrow from another stage or silently
 reduce evaluation sizes, steps, seeds or thresholds.
 
+
+
+## 4.1. Written-rule reconciliation before independent confirmation
+
+This amendment is made after all 59 seed-0 primary/alternate results and before any confirmation
+seed 1, 2 or 3 is launched. All three candidates and all six selected references score 100%
+validation after the prescribed alternates. Thus the original executable rule and the written rule
+select exactly the same candidates, rates and reference identities. The discrepancy identified in
+the Log changes **no seed-0 decision**.
+
+For independent confirmation, use the originally written candidate rule explicitly. In every cell
+and each of the three seeds, require a completed finite candidate and reference result, candidate
+accuracy at least 90% for retrieval or 95% for second-half balanced word accuracy, and candidate
+accuracy no more than 3 percentage points below the frozen reference. The reference itself need
+not exceed the candidate's absolute threshold. A missing, failed or nonfinite reference remains
+unconfirmed; it never becomes an easy comparison. All candidate thresholds, margins, selected rates,
+reference identities, compute budgets, evaluation samples, seed counts and execution priority remain
+unchanged. This correction applies uniformly to A, B and C and every primary cell.
+
+Preserve the original sealed selection and its executable outcomes. A separate sealed selection
+records this registration commit, the original selection hash, the reconciliation policy, and the
+unchanged strict-code seed-0 outcomes. Confirmation reports **both** policies: the active written-rule
+candidate outcomes and the original executable outcomes, including its additional reference floor.
+Only candidates passing the active written rule in all 18 independent cells may enter language.
+If a candidate later passes only the reconciled rule, say so adjacent to its result; do not present
+it as passing the original executable rule. This is a disclosed post-seed-0 code/text reconciliation,
+prospectively fixed before independent confirmation, not a retroactive alteration of the original code.
+
+The policy identifier is
+`59e1b83139fbb148de0132005de781486a86aa79cd4a2c5d675ca21416863d46`.
+No model/training source or seed-0 artifact is changed. The original frozen job generator continues
+to produce the same registered confirmation configurations from the separately sealed selection.
 
 ## 5. Main language registration (before quality sweeps)
 
