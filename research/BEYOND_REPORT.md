@@ -1,8 +1,9 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running; the registered headline criterion has already failed.** Evidence snapshot:
-20 October 2026, 16:42 UTC. B's seed-1 final loss is **3.642390 nats/token**, versus **3.612649**
-for convolved softmax, **3.607192** for convolved Parallax and **3.575800** for Gated DeltaNet.
+20 October 2026, 17:09 UTC. B's seed-1 final loss is **3.642390 nats/token**, versus **3.612649**
+for convolved softmax, **3.607192** for convolved Parallax, **3.575800** for Gated DeltaNet
+and **3.564820** for DeltaProduct.
 B misses both the required softmax threshold of **3.576523** and the RNN requirement.
 The remaining runs will complete the planned comparison and quantify
 training-seed variation; they cannot restore the required three-for-three pass.
@@ -18,8 +19,8 @@ All mandatory confirmations are complete and audited. **B is the sole candidate 
 All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete. B's language plan is frozen, and its
 18-trial language rate sweep is complete. All arms select .008, and B trails both softmax controls
-and both recurrent controls at that short tuning budget. Seed-1 DeltaProduct and all seed-2/3
-results remain pending. B demonstrates successful synthetic-task learning in this regime, but
+and both recurrent controls at that short tuning budget. All six seed-1 final runs are complete
+and valid; seed-2/3 results remain pending. B demonstrates successful synthetic-task learning in this regime, but
 its first final language result does not beat the stronger attention controls.
 
 The question is whether one affordable layer can combine content selection, improved local
@@ -291,12 +292,12 @@ and exact, unrounded counts are in the frozen plan. All controls meet or exceed 
 | Convolved softmax | 3.612649 | Pending | Pending |
 | Convolved Parallax | 3.607192 | Pending | Pending |
 | Gated DeltaNet, one update | 3.575800 | Pending | Pending |
-| Gated DeltaProduct, four updates | Pending | Pending | Pending |
+| Gated DeltaProduct, four updates | 3.564820 | Pending | Pending |
 | B | 3.642390 | Pending | Pending |
 
 At seed 1, B is 0.5235% below raw softmax, short of the required 1%, and 0.8232% above convolved
-softmax. Its loss is also 0.035198 nats/token above convolved Parallax and 0.066590 above Gated
-DeltaNet, failing the RNN requirement. The registered three-for-three
+softmax. Its loss is also 0.035198 nats/token above convolved Parallax, 0.066590 above Gated
+DeltaNet and 0.077569 above DeltaProduct, failing the RNN requirement. The registered three-for-three
 headline criterion is therefore rejected even while the remaining seed blocks are pending.
 Those blocks are retained exactly as planned.
 

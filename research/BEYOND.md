@@ -475,6 +475,15 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   This uses Volume reads only, without GPU calls or deserialization. DP4 has reached
   9,635/10,277 updates; its result is the last prerequisite for closing this seed block.
 
+- 2026-10-20 17:09 UTC — The complete seed-1 block is terminal and all six production audits
+  pass; launcher exited successfully and global active calls are zero. DP4 final held-out loss
+  is 3.564820095896721 at 10,277 updates, worker wall 3,860.440s, settled estimate $4.896942.
+  It has all 16 scheduled marks, matching provenance/counters, 1,024 finite final sequence
+  losses and corroborated checkpoint metadata. B loses to both recurrent controls as well as
+  convS/convP. No execution failure or retry occurred. Seed-1 final-run estimates sum to
+  $14.708122; cumulative language is $32.010141 and all-stage total $58.366365.
+  Commit this complete block before exporting seed 2; all later runs remain unchanged.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
