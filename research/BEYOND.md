@@ -380,6 +380,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   plus active reservations total $43.261027 across all stages; this is a conservative estimate,
   not an invoice. Committing the completed-result snapshot while the unchanged grid continues.
 
+- 2026-10-20 15:47 UTC — Language tuning is 15/18 complete, all valid: only the three DP4
+  rates remain active. GDN1 wall times are approximately 559–561 seconds; all rates preserve the
+  exact registered configuration and eight evaluation marks. No rates selected yet. The working
+  report now explicitly evaluates the previously registered descriptive affine target: B reduces
+  MSE relative to softmax by 3.6251% at one layer and 33.9387% at two, missing/clearing the
+  informative 10% target respectively. This was never an advancement gate and changes no decision.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

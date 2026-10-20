@@ -185,6 +185,10 @@ All arms learn the affine regression problem far better than predicting the mean
 | Gated DeltaProduct | 0.014731 | 0.008264 |
 | LLA, optional explicit local-linear control | 0.000664 | 0.001888 |
 
+B's mean MSE is 3.63% below softmax at one layer and 33.94% below it at two layers. It therefore
+misses the registered descriptive 10% improvement target at one layer and clears it at two.
+That target was informative, not an advancement gate.
+
 These are descriptive seed-0 means over 2,048 test examples. The raw results retain standard errors
 of squared error; those measure conditional test uncertainty, not training-seed variation. The
 ranking alone establishes neither statistical superiority nor an isolated effect of composition.
