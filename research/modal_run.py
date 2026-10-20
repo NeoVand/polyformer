@@ -421,6 +421,41 @@ LOC_LRS = (2e-3, 4e-3, 8e-3)
 STEPS_400M = 12207                       # 400M tokens at 64 x 512 per step, as S0
 STEPS_EQF = {"L8": 12613, "P": 13044}    # S's steps at L8's and P's FLOPs (1.0332x, 1.0686x)
 
+def loc_best_rates():
+    """LOCAL.md 4.2: each arm's best rate per optimizer = lowest val_big at 100M in the sweep (diverged = worst)."""
+    import math
+
+    best = {}
+    lines = []
+    for g in ("tok_loc_lr", "tok_loc_lr2"):
+        p = pathlib.Path(__file__).parent / "results" / f"{g}.jsonl"
+        lines += p.read_text().splitlines() if p.exists() else []
+    for line in lines:
+        r = json.loads(line)
+        if r.get("error"):
+            continue
+        v = r.get("val_big", float("inf"))
+        v = float("inf") if v is None or math.isnan(v) else v
+        k = (r["arch"], r["opt"])
+        if k not in best or v < best[k][1]:
+            best[k] = (r["lr"], v)
+    return {k: lr for k, (lr, _) in best.items()}
+
+
+def loc_confirm():
+    """Stage 2: every arm and optimizer at its best rate, three seeds, 400M tokens."""
+    b = loc_best_rates()
+    return [loc_argv("fineweb_edu", a, b[(a, o)], sd, STEPS_400M * 32768, o, chart=r, early=100)
+            for a, r in LOC_ARMS for o in LOC_OPTS if (a, o) in b for sd in (0, 1, 2)]
+
+
+def loc_eqf():
+    """Stage 2: S at its best rate per optimizer, trained to L8's and to P's FLOPs, three seeds."""
+    b = loc_best_rates()
+    return [loc_argv("fineweb_edu", "gpt", b[("gpt", o)], sd, steps * 32768, o, early=100)
+            for o in LOC_OPTS if ("gpt", o) in b for steps in STEPS_EQF.values() for sd in (0, 1, 2)]
+
+
 # S0 architectures: softmax (6 layers), free-field at equal parameters (6), at equal FLOPs (5), softmax + 1 layer
 S0_ARCHS = [("gpt", 6), ("sfa", 6), ("sfa", 5), ("gpt", 7)]
 
@@ -473,6 +508,12 @@ GRIDS = {
     # LOCAL.md Stage 2 sweep: every arm and optimizer at three rates, seed 0, 100M tokens
     "tok_loc_lr": [loc_argv("fineweb_edu", a, lr, 0, 1e8, o, chart=r, early=100) for a, r in LOC_ARMS
                    for o in LOC_OPTS for lr in LOC_LRS],
+    # LOCAL.md amendment 1: one octave beyond the grid edge for the cells whose best rate sat on it
+    "tok_loc_lr2": [loc_argv("fineweb_edu", a, lr, 0, 1e8, o, early=100)
+                    for a, o, lr in (("gpt", "muon", 1.6e-2), ("lla", "muon", 1.6e-2), ("plx", "adamw", 1e-3))],
+    # LOCAL.md Stage 2 confirmation (best rates from the sweep) and S at equal FLOPs
+    "tok_loc_s2": loc_confirm(),
+    "tok_loc_eqf": loc_eqf(),
     # LOCAL.md Stage 1: mechanism diagnostics, S widened to L8's FLOPs, one and two layers, 3 seeds, both optimizers
     "diag_loc_s1": loc_diag(["softmaxl", "plx", "lla"], [1, 2], [0, 1, 2], [3e-3], ["adamw", "muon"]),
 }

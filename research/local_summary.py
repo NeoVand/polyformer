@@ -94,7 +94,7 @@ def s1():
 
 
 def s2():
-    sweep = rows("tok_loc_lr")
+    sweep = rows("tok_loc_lr") + rows("tok_loc_lr2")
     if sweep:
         print("**Stage 2 rate sweep** (FineWeb-Edu, 100M tokens, seed 0; held-out loss on 1,024 sequences, best in bold)\n")
         t = collections.defaultdict(dict)

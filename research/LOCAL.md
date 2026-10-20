@@ -212,6 +212,11 @@ a bug before reading anything else.
 
 1. Sweep: rates {2e-3, 4e-3, 8e-3} for each arm and optimizer, seed 0, 100M tokens (18 runs). S0 showed
    1e-3 worst for every model, so the grid moves up one octave. Best rate = lowest `val_big` at 100M.
+   **Amendment 1 (after the sweep, before any confirmation run).** Three cells had their best rate at an edge
+   of the grid: S and L8 under Muon at 8e-3, P under AdamW at 2e-3 (P diverged at 4e-3 under AdamW). Rule,
+   applied to every cell alike: a cell whose best rate is at an edge gets one more rate an octave beyond it
+   (S and L8 Muon at 1.6e-2, P AdamW at 1e-3; grid `tok_loc_lr2`), and its best rate is then taken over all
+   four. Nothing else changes.
 2. Confirmation: each arm and optimizer at its best rate, seeds 0, 1, 2, 400M tokens (18 runs).
 3. Equal FLOPs: S at its best rate for each optimizer, seeds 0, 1, 2, trained to 413.3M tokens (L8's FLOPs)
    and to 427.4M tokens (P's FLOPs), each with its own full schedule (12 runs). S at 400M is the
