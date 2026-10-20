@@ -492,6 +492,15 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   agree. The official exporter accepts the closed prior block and generates all six seed-2
   jobs with unchanged rates, allocations and timeouts; maximum reservation $20.884170.
 
+- 2026-10-20 17:12 UTC — Seed-2 jobs and first-seed checkpoint evidence were committed in
+  `9e249a7` before launch. Started all six jobs in app `ap-WBhF1QRlk72BhrDgvh6Cil`, manifest
+  `manifests/beyond_language_seed2.json` (seal
+  `beb1b5bce97b2f4c4d586f02dd56e674180926d45ea18128f027cd68a4c9d609`),
+  local log `/tmp/beyond-language-seed2.log`. Six calls are active; no startup errors.
+  The independent result and checkpoint auditors are monitoring the unchanged block.
+  Settled-plus-reserved estimates are $52.894311 language and $79.250535 total. Even adding
+  the entire seed-3 timeout reservation leaves both caps intact.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

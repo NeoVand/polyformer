@@ -396,6 +396,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "133ca7f9e2397c02ab5380bf": {
+      "call_id": "fc-01M5D4PQCH8RH9WFYAF1V950B8",
+      "gpu": "H100",
+      "id": "133ca7f9e2397c02ab5380bf",
+      "launched_at": "2026-10-20T17:10:51.061972+00:00",
+      "manifest": "beyond_language_seed2",
+      "manifest_sha256": "beb1b5bce97b2f4c4d586f02dd56e674180926d45ea18128f027cd68a4c9d609",
+      "reserved_at": "2026-10-20T17:10:50.718954+00:00",
+      "reserved_usd": 3.358651,
+      "stage": "language",
+      "status": "running"
+    },
     "16d1ae11c55e1742023dc673": {
       "call_id": "fc-01M5CWVRRBK8Q9VWVWN523045E",
       "gpu": "L4",
@@ -935,6 +947,18 @@
       "settled_usd": 0.078818,
       "stage": "screen",
       "status": "complete"
+    },
+    "3b968dccc9e46750c2c7c210": {
+      "call_id": "fc-01M5D4PQD44QVSN5JFJ9CSCX39",
+      "gpu": "H100",
+      "id": "3b968dccc9e46750c2c7c210",
+      "launched_at": "2026-10-20T17:10:51.087111+00:00",
+      "manifest": "beyond_language_seed2",
+      "manifest_sha256": "beb1b5bce97b2f4c4d586f02dd56e674180926d45ea18128f027cd68a4c9d609",
+      "reserved_at": "2026-10-20T17:10:50.701318+00:00",
+      "reserved_usd": 2.504343,
+      "stage": "language",
+      "status": "running"
     },
     "3baa01c6c5822fee57550bd8": {
       "call_id": "fc-01M5CY1AR8VBH6NSBG1X53MF10",
@@ -2181,6 +2205,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "9733c873202c36ee726cb2ea": {
+      "call_id": "fc-01M5D4PQDCCNZF1ACKPTQKBBXP",
+      "gpu": "H100",
+      "id": "9733c873202c36ee726cb2ea",
+      "launched_at": "2026-10-20T17:10:51.092633+00:00",
+      "manifest": "beyond_language_seed2",
+      "manifest_sha256": "beb1b5bce97b2f4c4d586f02dd56e674180926d45ea18128f027cd68a4c9d609",
+      "reserved_at": "2026-10-20T17:10:50.727468+00:00",
+      "reserved_usd": 6.409751,
+      "stage": "language",
+      "status": "running"
+    },
     "975c37d63885e22aba3563ec": {
       "call_id": "fc-01M5CWP6DQGX4J791HDRR50AZN",
       "gpu": "L4",
@@ -2541,6 +2577,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "a77a575f3de99e0693e931bd": {
+      "call_id": "fc-01M5D4PQBAXBNMYJ15ZQYK2Y57",
+      "gpu": "H100",
+      "id": "a77a575f3de99e0693e931bd",
+      "launched_at": "2026-10-20T17:10:51.035908+00:00",
+      "manifest": "beyond_language_seed2",
+      "manifest_sha256": "beb1b5bce97b2f4c4d586f02dd56e674180926d45ea18128f027cd68a4c9d609",
+      "reserved_at": "2026-10-20T17:10:50.714083+00:00",
+      "reserved_usd": 2.748431,
+      "stage": "language",
+      "status": "running"
+    },
     "a8a21c533833a80fc32d43fc": {
       "call_id": "fc-01M5CSDQCQVK50E3G2PYWSZZGX",
       "gpu": "L4",
@@ -2675,6 +2723,18 @@
       "settled_usd": 0.088147,
       "stage": "screen",
       "status": "complete"
+    },
+    "affb38cdc7058bd75eb69961": {
+      "call_id": "fc-01M5D4PQCBAS821RB3PXKMCB07",
+      "gpu": "H100",
+      "id": "affb38cdc7058bd75eb69961",
+      "launched_at": "2026-10-20T17:10:51.054611+00:00",
+      "manifest": "beyond_language_seed2",
+      "manifest_sha256": "beb1b5bce97b2f4c4d586f02dd56e674180926d45ea18128f027cd68a4c9d609",
+      "reserved_at": "2026-10-20T17:10:50.708099+00:00",
+      "reserved_usd": 2.138211,
+      "stage": "language",
+      "status": "running"
     },
     "b0ccfa9a864b8d6ded29156c": {
       "call_id": "fc-01M5CVP9MAJCHQM67ZZSTVGR8W",
@@ -3110,6 +3170,18 @@
       "settled_usd": 0.091569,
       "stage": "screen",
       "status": "complete"
+    },
+    "cfd3716f7ecf3407875d311a": {
+      "call_id": "fc-01M5D4PQCYMG6H5JV0Z4PA3Y30",
+      "gpu": "H100",
+      "id": "cfd3716f7ecf3407875d311a",
+      "launched_at": "2026-10-20T17:10:51.077506+00:00",
+      "manifest": "beyond_language_seed2",
+      "manifest_sha256": "beb1b5bce97b2f4c4d586f02dd56e674180926d45ea18128f027cd68a4c9d609",
+      "reserved_at": "2026-10-20T17:10:50.723504+00:00",
+      "reserved_usd": 3.724783,
+      "stage": "language",
+      "status": "running"
     },
     "cfe078aef4079db9074079d8": {
       "call_id": "fc-01M5CWY21PQTBRY0KXHF9QZ6EW",
