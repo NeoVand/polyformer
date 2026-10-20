@@ -123,6 +123,16 @@ The [complete confirmation artifact](results/beyond_stage1_confirmation.json) au
 and reference result. These are learnability and reproducibility failures of the frozen recipes,
 not proofs of insufficient expressivity or isolated causal effects of the coupling choices.
 
+The [saved-curve analysis](results/beyond_stage1_learning_dynamics.json) finds no recorded
+95%-accurate checkpoint in any of the seven failed runs. Six peak at no more than 13.57% late
+validation accuracy. A two-layer seed 3 instead improves from 9.75% to 74.26% to 90.45% over
+its last three evaluations. Final validation and test late accuracies agree within 0.272 percentage
+points. These trajectories support a learning-dynamics explanation rather than an observed collapse
+after success. Training accuracy and validation cross-entropy were not saved, so a formal
+train–validation generalization gap cannot be measured. The
+[word-confirmation figure](results/beyond_stage1_report/confirmation_test_words.png) also separates
+easier all-position accuracy from the registered second-half measure.
+
 A disclosed protocol discrepancy requires reporting both columns. The written gate required
 candidate accuracy of at least 90% on retrieval or 95% on second-half word positions, and no more
 than three percentage points below its reference. The preregistered executable selector additionally
@@ -179,7 +189,9 @@ These are descriptive seed-0 means over 2,048 test examples. The raw results ret
 of squared error; those measure conditional test uncertainty, not training-seed variation. The
 ranking alone establishes neither statistical superiority nor an isolated effect of composition.
 The one-layer LLA result also shows why a learnable precision correction must not be described as
-guaranteed recovery of an affine function after training.
+guaranteed recovery of an affine function after training. The
+[affine-probe figure](results/beyond_stage1_report/descriptive_test_regression.png) displays the
+reported conditional uncertainty.
 
 The frozen [language plan](results/beyond_language_plan.json) tests B against five controls using
 a single FineWeb-Edu shard, GPT-2 tokens, six layers of width

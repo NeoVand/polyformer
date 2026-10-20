@@ -363,6 +363,16 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   create the immutable rate selection only after all 18 trials are terminal. No intermediate
   checkpoint or held-out result selects rates. Worker sources, planner and Section 5 remain frozen.
 
+- 2026-10-20 15:34 UTC — Saved posthoc S5 learning-dynamics analysis at
+  `results/beyond_stage1_learning_dynamics.json` (seal
+  `e2f514c708b5caed8a8804182ced9640f43c777e987b41444a2716a2b6cf23d5`), using only existing
+  curves from 24 runs. None of the seven failing A/C runs reached 95% at a recorded evaluation;
+  six peaks are at most 13.5703%, while A L2 seed 3 improves to 90.4546% at the final update.
+  Final validation/test late accuracies differ by at most .271869 percentage points. No observed
+  success-then-collapse is established, and no formal train/validation gap can be calculated from
+  the saved unequal metrics. This is descriptive interpretation, not checkpoint/rate selection or
+  evidence that coupling alone caused failure. Language first-wave jobs are training without errors.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
