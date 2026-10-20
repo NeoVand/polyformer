@@ -1,0 +1,29 @@
+{
+  "files": [
+    "screen_validation_retrieval.png",
+    "screen_validation_retrieval.pdf",
+    "screen_validation_words.png",
+    "screen_validation_words.pdf",
+    "screen_test_retrieval.png",
+    "screen_test_retrieval.pdf",
+    "screen_test_words.png",
+    "screen_test_words.pdf",
+    "confirmation_test_retrieval.png",
+    "confirmation_test_retrieval.pdf",
+    "confirmation_test_words.png",
+    "confirmation_test_words.pdf",
+    "descriptive_validation_retrieval.png",
+    "descriptive_validation_retrieval.pdf",
+    "descriptive_validation_match3.png",
+    "descriptive_validation_match3.pdf",
+    "descriptive_validation_regression.png",
+    "descriptive_validation_regression.pdf",
+    "descriptive_test_retrieval.png",
+    "descriptive_test_retrieval.pdf",
+    "descriptive_test_match3.png",
+    "descriptive_test_match3.pdf",
+    "descriptive_test_regression.png",
+    "descriptive_test_regression.pdf"
+  ],
+  "matplotlib_version": "3.11.2"
+}

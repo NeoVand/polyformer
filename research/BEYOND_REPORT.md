@@ -1,7 +1,7 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-15:23 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+15:28 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
 seeds. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. C fails the written rule:
@@ -172,10 +172,13 @@ All arms learn the affine regression problem far better than predicting the mean
 | Prefix | 0.066160 | 0.019530 |
 | Gated DeltaNet | 0.004653 | 0.002154 |
 | Gated DeltaProduct | 0.014731 | 0.008264 |
+| LLA, optional explicit local-linear control | 0.000664 | 0.001888 |
 
 These are descriptive seed-0 means over 2,048 test examples. The raw results retain standard errors
 of squared error; those measure conditional test uncertainty, not training-seed variation. The
 ranking alone establishes neither statistical superiority nor an isolated effect of composition.
+The one-layer LLA result also shows why a learnable precision correction must not be described as
+guaranteed recovery of an affine function after training.
 
 Language, if candidates qualify, uses a single FineWeb-Edu shard, GPT-2 tokens, six layers of width
 512, context 512, batch 64, BF16 and Muon. The fixed binaries contain 744.58M training tokens and

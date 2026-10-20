@@ -1,0 +1,4 @@
+arm	seed0_status	strict_code_seed0_status	confirmation_status	confirmation_passed_cells	confirmation_required_cells	strict_code_confirmation_status	budget_deferral	terminal_closure
+B	screen_passed_unconfirmed	screen_passed_unconfirmed	passed	18	18	unconfirmed		
+C	screen_passed_unconfirmed	screen_passed_unconfirmed	rejected	15	18	rejected		
+A	screen_passed_unconfirmed	screen_passed_unconfirmed	rejected	14	18	rejected		

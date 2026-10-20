@@ -335,6 +335,16 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   fits even at its full $0.519542 reservation and launched in `ap-rybRGDHPKwzydAjW8NVdBt`.
   All worker sources remain frozen until that pair closes. B alone will enter language.
 
+- 2026-10-20 15:28 UTC — All Stage-1 calls, including optional LLA, are closed; global active
+  reservations are zero. The final integrity artifact audits all 181 main/confirmation/descriptive/
+  optional results with no execution or numerical errors. Final screen settled estimate is
+  $21.597644. LLA's one-/two-layer affine test MSE is .000663872/.001887549 (example SE
+  .000078596/.000216912); these remain single-seed descriptive controls. Applied the previously
+  committed, tested reporting-only `lm.py` patch after source freeze release. Its exact SHA is
+  `d9cfad64cb8e4697b61549fdbea50efdaecc0f984f94baa0429cc7112a9aebff`; only reporting/evaluation
+  paths changed, with unchanged training established by the saved Stage-0 proof. No language
+  quality jobs have launched.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
