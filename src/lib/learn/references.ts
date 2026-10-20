@@ -145,6 +145,47 @@ export const REFERENCES: Reference[] = [
 		url: 'https://arxiv.org/abs/2301.05217'
 	},
 	{
+		id: 'lla',
+		authors: 'Y. Zuo, Y. Yin, Z. Zeng, A. Li, B. Zhu, Z. Wang',
+		title:
+			'Local Linear Attention: An optimal interpolation of linear and softmax attention for test-time regression',
+		venue: 'arXiv:2510.01450',
+		year: 2025,
+		url: 'https://arxiv.org/abs/2510.01450'
+	},
+	{
+		id: 'parallax',
+		authors: 'Y. Zuo, D. Pai, Z. Zeng, A. Dewulf, S. Hu, Z. Wang',
+		title: 'Parallax: Parameterized local linear attention for language modeling',
+		venue: 'arXiv:2605.29157',
+		year: 2026,
+		url: 'https://arxiv.org/abs/2605.29157'
+	},
+	{
+		id: 'seq2tens',
+		authors: 'C. Toth, P. Bonnier, H. Oberhauser',
+		title: 'Seq2Tens: An efficient representation of sequences by low-rank tensor projections',
+		venue: 'ICLR',
+		year: 2021,
+		url: 'https://arxiv.org/abs/2006.07027'
+	},
+	{
+		id: 'development',
+		authors: 'H. Lou, S. Li, H. Ni',
+		title: 'Path development network with finite-dimensional Lie group representation',
+		venue: 'Transactions on Machine Learning Research',
+		year: 2024,
+		url: 'https://arxiv.org/abs/2204.00740'
+	},
+	{
+		id: 'chughtai',
+		authors: 'B. Chughtai, L. Chan, N. Nanda',
+		title: 'A toy model of universality: reverse engineering how networks learn group operations',
+		venue: 'arXiv:2302.03025',
+		year: 2023,
+		url: 'https://arxiv.org/abs/2302.03025'
+	},
+	{
 		id: 'jaxjs',
 		authors: 'E. Zhang',
 		title: 'jax-js: JAX-style arrays, autodiff and jit in the browser',

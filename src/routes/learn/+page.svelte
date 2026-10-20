@@ -2,6 +2,7 @@
 	import { resolve } from '$app/paths';
 	import Cite from '#lib/learn/Cite.svelte';
 	import LearnFigure from '#lib/learn/LearnFigure.svelte';
+	import CompositionFigure from '#lib/learn/CompositionFigure.svelte';
 	import DiagramSum from '#lib/learn/DiagramSum.svelte';
 	import { REFERENCES } from '#lib/learn/references.ts';
 	import MathTex from '#lib/ui/Math.svelte';
@@ -18,6 +19,7 @@
 		{ id: 'part-new', label: 'New here', icon: Cube, title: 'What this project adds' },
 		{ id: 'part-beyond', label: 'Beyond', icon: Atom, title: 'Letting the data choose the arity' },
 		{ id: 'part-algebra', label: 'Algebra', icon: Matrix, title: 'Arity is algebra' },
+		{ id: 'part-compose', label: 'Compose', icon: Matrix, title: 'Learning to compose' },
 		{ id: 'references', label: 'Sources', icon: Note, title: 'References' }
 	];
 	const CHAPTERS: { id: string; title: string; part: string }[] = [
@@ -33,18 +35,32 @@
 		{ id: 'head', title: 'A head built by hand', part: 'part-new' },
 		{ id: 'binding', title: 'Values as binding', part: 'part-new' },
 		{ id: 'training', title: 'What training shows', part: 'part-new' },
-		{ id: 'arity', title: 'Order k needs a k-way term', part: 'part-new' },
+		{ id: 'arity', title: 'Putting the k-way term in reach', part: 'part-new' },
 		{ id: 'feynman', title: 'Where Feynman diagrams come from', part: 'part-beyond' },
 		{ id: 'dyson', title: 'Summing them all at once', part: 'part-beyond' },
 		{ id: 'diagrams', title: 'Sum over diagrams', part: 'part-beyond' },
 		{ id: 'sectors', title: 'Making it train', part: 'part-beyond' },
 		{ id: 'chase', title: 'What Feynman attention learns', part: 'part-beyond' },
 		{ id: 'composition', title: 'Composing arity does not train', part: 'part-algebra' },
+		{ id: 'groups', title: 'A group is a rule for combining', part: 'part-algebra' },
 		{ id: 'characters', title: 'A relation is agreement of phases', part: 'part-algebra' },
 		{ id: 'newton', title: 'Every arity at once', part: 'part-algebra' },
 		{ id: 'newtonattn', title: 'Newton attention', part: 'part-algebra' },
-		{ id: 'transfer', title: 'Small relations teach large ones', part: 'part-algebra' }
+		{ id: 'transfer', title: 'Small relations teach large ones', part: 'part-algebra' },
+		{ id: 'language', title: 'The language result is negative', part: 'part-compose' },
+		{ id: 'features', title: 'Good coordinates are not enough', part: 'part-compose' },
+		{ id: 'order', title: 'When order changes the answer', part: 'part-compose' },
+		{ id: 'representations', title: 'Representing operations as rotations', part: 'part-compose' },
+		{ id: 'holonomy', title: 'Compose first, then read', part: 'part-compose' },
+		{ id: 'group-results', title: 'What the rotation heads learn', part: 'part-compose' },
+		{ id: 'limits', title: 'What is proved, and under what rules', part: 'part-compose' },
+		{ id: 'programs', title: 'A second test: execute a program', part: 'part-compose' },
+		{ id: 'meaning', title: 'What the result means', part: 'part-compose' }
 	];
+	const COMPOSITION_CHAPTERS = new Set([
+		'groups',
+		...CHAPTERS.filter((c) => c.part === 'part-compose').map((c) => c.id)
+	]);
 	const number = (id: string) => CHAPTERS.findIndex((c) => c.id === id) + 1;
 
 	let section = $state('puzzles');
@@ -56,7 +72,7 @@
 			(entries) => {
 				for (const e of entries) if (e.isIntersecting) section = e.target.id;
 			},
-			{ rootMargin: '-40% 0px -55% 0px' }
+			{ rootMargin: window.innerWidth <= 1100 ? '-50% 0px -45% 0px' : '-40% 0px -55% 0px' }
 		);
 		el.querySelectorAll('section[id]').forEach((s) => io.observe(s));
 		return () => io.disconnect();
@@ -111,21 +127,21 @@
 </script>
 
 <svelte:head>
-	<title>Learn | Polyformer</title>
+	<title>Learn to compose | Polyformer</title>
 </svelte:head>
 
 <PageFrame rail={PARTS.map(({ id, label, icon }) => ({ id, label, icon }))} active={part}>
 	<div class="learn">
 		<article class="text" {@attach watch}>
 			<header class="intro">
-				<h1>From pairs to diagrams</h1>
+				<h1>Learning to compose</h1>
 				<p class="lede">
-					A transformer, the network behind today's language models, compares the pieces of its
-					input two at a time. Many facts only hold for three or more pieces together. This page
-					explains, from the ground up, how attention can be extended to such facts, why the obvious
-					extensions are expensive or hard to train, and the layer this project arrived at, which
-					handles relations of any size at once. It assumes you know what a neural network is and
-					how training works, and nothing else.
+					Attention compares tokens in pairs. Some relations only appear when several tokens meet,
+					and giving a layer those interactions makes a decisive difference on controlled puzzles.
+					On language, that success did not carry over. The useful question became: what should the
+					layer do when tokens meet? Follow the path from pairwise scores to adding clock hands,
+					then to multiplying rotations that preserve the order of a sequence. You need only a
+					working idea of neural networks and training; the mathematics is built here.
 				</p>
 				<p class="lede">
 					The figure beside the text follows the chapter you are reading, and most figures are
@@ -134,10 +150,10 @@
 				<ul class="legend">
 					<li><span class="mark prior"></span>Prior work, with references</li>
 					<li><span class="mark new"></span>New in this project</li>
-					<li><span class="mark measured"></span>Measured with this app's engine</li>
+					<li><span class="mark measured"></span>Measured in the browser or research harness</li>
 				</ul>
 				<nav class="toc" aria-label="Chapters">
-					{#each PARTS.slice(0, 5) as p (p.id)}
+					{#each PARTS.filter((p) => p.id !== 'references') as p (p.id)}
 						<div class="toc-part">
 							<span class="toc-title">{p.title}</span>
 							<ol>
@@ -331,8 +347,8 @@
 					fact about three tokens at once has to be assembled in steps: one layer gathers pairs, a
 					later layer combines them. For some simple three-token tasks, Match3 among them (chapter {number(
 						'cubic'
-					)}), a small transformer provably cannot do this <Cite id={['hahn', 'sanford']} />. The
-					cost is
+					)}), a one-layer transformer with sufficiently restricted width and precision cannot do
+					this <Cite id={['hahn', 'sanford']} />. The cost is
 					<MathTex tex="O(n^2 d)" /> per head for <MathTex tex="n" /> tokens, since every pair of tokens
 					gets a score.
 				</p>
@@ -402,10 +418,10 @@
 						tex="i"
 					/> whether two other entries add up with <MathTex tex="x_i" /> to a multiple of <MathTex
 						tex="M"
-					/>. Pairwise attention cannot do that without growing very wide. Roy et al. made the
-					operator fast enough to train at scale. The Polyformer notebook arrived at the same
-					operator independently in April 2023 under the name cubic polyattention, which this app
-					keeps.
+					/>. Their lower bound requires a one-layer pairwise model to grow in width or precision as
+					the problem grows. Roy et al. made the operator fast enough to train at scale. The
+					Polyformer notebook arrived at the same operator independently in April 2023 under the
+					name cubic polyattention, which this app keeps.
 				</p>
 				<p>
 					The scores fill an <MathTex tex="n \times n \times n" /> tensor, one entry per query and pair.
@@ -734,7 +750,7 @@
 			<section id="arity">
 				<h3>
 					<span class="n">{number('arity')}</span><span
-						>Order <MathTex tex="k" /> needs a <MathTex tex="k" />-way term</span
+						>Putting the <MathTex tex="k" />-way term in reach</span
 					>
 				</h3>
 				<p class="src">
@@ -746,10 +762,10 @@
 					Now ask whether four cards add up to zero, Match-4 from chapter {number('puzzles')}. The
 					argument of chapter {number('set')} moves up one order. Three cards fix the fourth,
 					<MathTex tex="d = -(a + b + c)" />, so in a random group of four that sums to zero, any
-					three are just a random triple: only the fourth card's presence on the table is special.
-					Every score built from triples is blind on average, and cubic attention stalls at chance,
-					as pairwise attention did on SET. A quartic head, the same construction one order up, can
-					learn it:
+					three are just a random triple: only the complete four-card relation supplies the signal.
+					That suggests a learning obstacle for lower-order terms, and in these runs cubic attention
+					stalls at chance, as pairwise attention did on SET. A quartic head, the same construction
+					one order up, can learn it:
 				</p>
 				<MathTex
 					display
@@ -1107,13 +1123,48 @@
 					gradient descent never found it.
 				</p>
 				<p>
-					The leap of chapter {number('set')} says why. In a group of <MathTex tex="k" /> cards that adds
-					up to zero, any fewer than <MathTex tex="k" /> of them look exactly like random cards. So no
-					piece of the computation that involves fewer than <MathTex tex="k" /> cards correlates with
-					the label, and a gradient has nothing to follow until the model already produces a full <MathTex
+					The leap of chapter {number('set')} suggests an explanation. In a group of <MathTex
 						tex="k"
-					/>-way product. Building that product from smaller ones, round by round, means crossing
-					the whole leap of <MathTex tex="k" /> with no signal along the way <Cite id="abbe" />.
+					/> cards that adds up to zero, any fewer than <MathTex tex="k" /> of them look exactly like
+					random cards. This property of an isolated positive tuple helps explain the weak signal for
+					lower-order features. It does not prove that every network gradient vanishes on a whole table.
+					The experiments motivate putting a full <MathTex tex="k" />-way product directly in the
+					layer, instead of asking training to build it from smaller pieces <Cite id="abbe" />.
+				</p>
+			</section>
+
+			<section id="groups">
+				<h3><span class="n">{number('groups')}</span>A group is a rule for combining</h3>
+				<p class="src">
+					<span class="mark prior"></span>Standard group theory; SET arithmetic <Cite id="davis" />
+				</p>
+				<p>
+					A <em>group</em> is a collection of operations with a rule for combining them. Combining
+					two operations gives another in the collection; there is an operation that does nothing,
+					called the <em>identity</em>; and every operation has an <em>inverse</em> that undoes it.
+					Finally, regrouping three operations leaves the answer unchanged. You may compute the
+					first two first, or the last two first. This rule is called <em>associativity</em>.
+				</p>
+				<p>
+					Think of a clock with three positions, 0, 1 and 2. An operation moves its hand forward by
+					zero, one or two ticks, wrapping around after 2. One tick followed by two is zero ticks
+					overall. Zero is the identity; one and two undo each other. This is addition
+					<em>modulo 3</em>, written <MathTex tex={String.raw`\mathbb Z_3`} />. The same idea makes
+					a 12-position clock, <MathTex tex={String.raw`\mathbb Z_{12}`} />.
+				</p>
+				<p>
+					A SET card carries four such clocks, one per attribute. Add cards by adding their four
+					values separately and wrapping each at 3. The notation <MathTex
+						tex={String.raw`\mathbb Z_3^4`}
+					/>
+					means exactly those four clocks. A SET is three cards whose combined move is zero on all four.
+					Here one move then another equals the reverse order: addition <em>commutes</em>. A group
+					with this property is called <em>abelian</em>, or commutative.
+				</p>
+				<p>
+					The next chapter draws the clock hand as a point on a circle. Its angle is its
+					<em>phase</em>. In complex-number notation, multiplying two such points adds their angles.
+					A product of clock hands is therefore a sum of moves in different coordinates.
 				</p>
 			</section>
 
@@ -1121,7 +1172,7 @@
 				<h3><span class="n">{number('characters')}</span>A relation is agreement of phases</h3>
 				<p class="src">
 					<span class="mark prior"></span>Characters of finite abelian groups, classical;
-					<span class="mark new inline"></span>reading attention through them is new here
+					<span class="mark new inline"></span>their use in the Newton layer is studied here
 				</p>
 				<p>
 					Give every card a <em>phase</em>, a point on the unit circle, in a way that turns adding
@@ -1165,24 +1216,28 @@
 					tex={String.raw`\frac{1}{81}\sum_{c} \phi_c(x)\,\phi_c(y)\,\phi_c(z) \;=\; \mathbf 1\big[x + y + z = 0\big]`}
 				/>
 				<p>
-					These <MathTex tex={String.raw`\phi_c`} /> are the <em>characters</em> of the group, its
-					Fourier basis. One of them, <MathTex tex="c = 0" />, sends every card to 1 and carries no
-					information. The other 80 come in pairs <MathTex tex="c" /> and <MathTex tex="-c" /> whose phases
-					are mirror images, so 40 distinct ones are worth learning, a number chapter {number(
-						'newtonattn'
-					)} comes back to. In this basis a <MathTex tex="k" />-way relation is a product of <MathTex
+					These <MathTex tex={String.raw`\phi_c`} /> are the <em>characters</em> of this group: maps
+					that turn a sum into a product of phases. Together they form a <em>Fourier basis</em>, a
+					complete set of wave-like coordinates for functions on the cards. One of them, <MathTex
+						tex="c = 0"
+					/>, sends every card to 1 and carries no information. The other 80 come in pairs <MathTex
+						tex="c"
+					/> and <MathTex tex="-c" /> whose phases are mirror images, so 40 distinct ones are worth learning,
+					a number chapter {number('newtonattn')} comes back to. In this basis a <MathTex
 						tex="k"
-					/> phases, averaged over characters. The figure also shows <MathTex tex="k = 2" />: a card
-					and its complement <MathTex tex="-x" /> always add up to zero. Networks are known to find Fourier
-					features for arithmetic in a group <Cite id="nanda" />; chapter {number('newtonattn')} shows
-					an attention layer finding these.
+					/>-way relation is a product of <MathTex tex="k" /> phases, averaged over characters. The figure
+					also shows <MathTex tex="k = 2" />: a card and its complement <MathTex tex="-x" /> always add
+					up to zero. Networks are known to find Fourier features for arithmetic in a group <Cite
+						id="nanda"
+					/>; chapter {number('newtonattn')} shows an attention layer finding these.
 				</p>
 			</section>
 
 			<section id="newton">
 				<h3><span class="n">{number('newton')}</span>Every arity at once</h3>
 				<p class="src">
-					<span class="mark new"></span>New in this project, built on Newton's identities
+					<span class="mark prior"></span>Classical Newton identities;
+					<span class="mark new inline"></span>their use in this relational layer
 				</p>
 				<p>
 					Counting relations directly means listing groups of cards, and the number of groups of
@@ -1295,16 +1350,305 @@
 					up to it like steps <Cite id="abbe" />.
 				</p>
 				<p>
-					Where it does not help is text. On enwik8 (chapter {number('puzzles')}), a byte-level
-					language model of 3.3M parameters is scored in <em>bits per character</em>, the average
-					number of bits it needs to encode each next byte (lower is better). Adding a Newton
-					attention layer beside the softmax attention in every block leaves that where it was,
-					1.657 against 1.651, and using Newton attention in place of softmax attention is much
-					worse, at 2.50. Without keys and values it cannot fetch one particular earlier token,
-					which language modelling relies on. It is a layer for relations among many tokens, not a
-					replacement for attention. The <a href={resolve('/compare')}>Compare</a> tab's four-card suite
-					trains it in your browser next to cubic attention, Feynman attention and two standard layers;
-					it is the only one that learns.
+					This is a strong result on puzzles built from modular addition. It leaves two questions:
+					does the gain survive on language, and what changes when the operations no longer commute?
+					The answers lead to the final part of the course.
+				</p>
+			</section>
+
+			<!-- ── Part V ─────────────────────────────────────────────────── -->
+			<h2 class="part" id="part-compose">Learning to compose</h2>
+			<p class="part-lede">
+				The road began with more tokens per interaction. It ends with the operation that combines
+				them, and with the information that operation preserves.
+			</p>
+
+			<section id="language">
+				<h3><span class="n">{number('language')}</span>The language result is negative</h3>
+				<p class="src">
+					<span class="mark measured"></span>Research harness, three seeds; SEARCH §8 and LOCAL §0
+				</p>
+				<p>
+					A language model predicts the next token. Its held-out <em>loss</em> measures how much probability
+					it gives the correct next tokens; lower is better. The first searches, S0–S2, found no advantage
+					for our higher-order layers over softmax at the tested scale, including comparisons with equal
+					computation. Success on SET did not imply success on text.
+				</p>
+				<p>
+					The later S6 experiment did find small gains. <em>Local-linear attention</em>
+					<Cite id="lla" /> fits a local linear predictor where softmax takes a weighted average. It improved
+					loss by about 0.4% at equal computation. <em>Parallax</em>
+					<Cite id="parallax" />, a published correction using pairwise terms, improved it by about
+					0.75%. Both fell short of the registered 1% threshold. Parallax also beat the version with
+					more available arities. That comparison changes more than arity, so it suggests, but does
+					not prove, that the small gain came from the correction rather than higher order.
+				</p>
+				<p>
+					The honest conclusion is narrower than “higher order wins”: these layers help on relations
+					we designed them to expose. No benefit from higher arity on language was established at
+					our scale. The <a href={resolve('/report')}>report</a> gives the protocols and full results.
+				</p>
+			</section>
+
+			<section id="features">
+				<h3><span class="n">{number('features')}</span>Good coordinates are not enough</h3>
+				<p class="src">
+					<span class="mark measured"></span>GROUPS §5.1; three seeds, 6,000 steps, balanced
+					accuracy
+				</p>
+				<p>
+					Maybe Newton attention won only because it found the right coordinates. Test that
+					directly: give softmax every nontrivial character of the card group in advance, as fixed
+					input features. It gets the clock hands without having to learn them. Use one or two
+					layers of width 192, and test Match-4 on fresh tables.
+				</p>
+				<p>
+					Both depths finish at <strong>50.0% on all three seeds</strong>, exactly chance. Rotating
+					the feature coordinates before training gives the same result. The Newton reference
+					reaches
+					<strong>100%</strong>. Supplying the useful coordinates did not make these softmax models
+					learn the needed products within this budget.
+				</p>
+				<p>
+					This is a result about learning, not an impossibility theorem about softmax. Transformers
+					can learn modular arithmetic <Cite id="nanda" />, and sufficiently large fixed-length
+					models can represent these tasks. Newton supplies the multiplication directly. The next
+					experiment asks what that multiplication must retain when the sequence order matters.
+				</p>
+			</section>
+
+			<section id="order">
+				<h3><span class="n">{number('order')}</span>When order changes the answer</h3>
+				<p class="src">
+					<span class="mark prior"></span>Standard group theory;
+					<span class="mark new inline"></span>the ordered Match-3 benchmark
+				</p>
+				<p>
+					A triangle gives a different group. Label its corners A, B and C. Turn it one third of a
+					turn, or flip it across its vertical axis. Both moves return the unlabelled triangle to
+					the same outline, so they are <em>symmetries</em>: operations that preserve its shape.
+					There are six such moves, including doing nothing. They obey the group rules from chapter
+					{number('groups')}.
+				</p>
+				<p>
+					Now watch the labels. Turn then flip ends in a different arrangement from flip then turn.
+					These operations do not commute. Their group is <em>nonabelian</em>. Associativity still
+					holds: changing the brackets is harmless; changing the order is not.
+				</p>
+				<p>
+					In <em>ordered Match-3</em>, every token names a group operation. A token is positive when
+					it belongs to three distinct positions whose operations, composed in sequence order, give
+					the identity. “Product” now means this composition, written
+					<MathTex tex="abc=e" />, with <MathTex tex="e" /> denoting the do-nothing operation. For clocks,
+					the task is still addition. For noncommuting operations, swapping two tokens can change which
+					triples work.
+				</p>
+			</section>
+
+			<section id="representations">
+				<h3>
+					<span class="n">{number('representations')}</span>Representing operations as rotations
+				</h3>
+				<p class="src">
+					<span class="mark prior"></span>Standard representation theory; learned group algorithms <Cite
+						id="chughtai"
+					/>
+				</p>
+				<p>
+					A <em>representation</em> assigns a matrix to each group operation so that multiplying the
+					matrices agrees with combining the operations. Write that assignment as
+					<MathTex tex="\rho" />. Its defining rule is
+					<MathTex tex="\rho(ab)=\rho(a)\rho(b)" />. Such a rule-preserving map is also called a
+					<em>homomorphism</em>. A representation is <em>faithful</em> if distinct operations get distinct
+					matrices: it loses none of the group's identity information.
+				</p>
+				<p>
+					The clocks were already representations. A phase is a rotation in a two-dimensional plane.
+					In three dimensions, rotations around different axes need not commute. That creates room
+					to represent operations for which order matters.
+				</p>
+				<p>
+					The experiments use two particularly concrete groups. <MathTex tex="A_4" /> has the 12 rotations
+					of a tetrahedron, the solid with four triangular faces.
+					<MathTex tex="A_5" /> has the 60 rotations of an icosahedron, the solid with 20 triangular faces
+					shown beside the text. Each operation can therefore be stored as a 3 by 3 rotation matrix. These
+					representations are <em>irreducible</em>: no change of coordinates splits them into
+					smaller independent matrix blocks. “Irrep” is simply an abbreviation for this word.
+				</p>
+				<p>
+					The model receives token identities and task labels, not these geometric constructions.
+					The question is whether its learned matrices acquire the same multiplication rule.
+				</p>
+			</section>
+
+			<section id="holonomy">
+				<h3><span class="n">{number('holonomy')}</span>Compose first, then read</h3>
+				<p class="src">
+					<span class="mark prior"></span>Ordered subsequences in Seq2Tens <Cite id="seq2tens" />;
+					learned group products in path development <Cite id="development" />;
+					<span class="mark new inline"></span>the marked matrix readout studied here
+				</p>
+				<p>
+					<em>Holonomy attention</em> gives every token, in every head, a learned rotation matrix and
+					a gate between zero and one. The gate controls how strongly the token participates. To relate
+					a subset of tokens, multiply their gated matrices in the order they appear. To read a token,
+					add up those ordered products over every subset containing it, keeping each subset size separate.
+					A learned readout turns those sums into features for the next stage.
+				</p>
+				<p>
+					For three tokens, the size-three term is their one ordered product. For a longer sequence,
+					the size-three term adds all candidate triples containing the token being read. Running
+					summaries from the left and right reuse partial products, so the layer need not list every
+					subset. The name “holonomy” comes from geometry, where following a path accumulates
+					transformations.
+				</p>
+				<p>
+					In two dimensions, all these rotations commute. This gives the same phase-product
+					construction as Newton attention. In three or more dimensions, they can preserve order.
+					The experiments give these layers no position embeddings: order enters through the
+					products. A scan inside a layer still performs work across the sequence; “one layer” does
+					not mean one arithmetic operation.
+				</p>
+				<p>
+					Neither ordered-subsequence sums nor learned rotation products originated here. Seq2Tens
+					and path development are the closest predecessors. The specific object studied here is the
+					gated matrix version with a separate readout for each token and each subset size.
+				</p>
+			</section>
+
+			<section id="group-results">
+				<h3><span class="n">{number('group-results')}</span>What the rotation heads learn</h3>
+				<p class="src">
+					<span class="mark measured"></span>GROUPS §5.2; three seeds, 6,000 steps; longer runs
+					explicitly exploratory
+				</p>
+				<p>
+					On the 12- and 60-position clock groups, Newton and every tested rotation dimension reach
+					100.0%. On the noncommuting groups, their paths split. Newton reaches 80.7% on
+					<MathTex tex="A_4" /> and 76.1% on <MathTex tex="A_5" />. Two-dimensional holonomy reaches
+					81.1% and 73.1%. These are useful scores, but below the exact limits of what an
+					order-blind model can know. The next chapter explains those limits.
+				</p>
+				<p>
+					Three-dimensional holonomy reaches 100.0% on <MathTex tex="A_4" />. On
+					<MathTex tex="A_5" />, the ladder at 6,000 steps is 73.1%, 94.1%, 99.5%, 100.0%, 100.0%
+					for dimensions 2, 3, 4, 5 and 8. The 100.0% mean at dimension 5 is rounded in the results:
+					its three seeds are 99.97%, 99.96% and 99.98%.
+				</p>
+				<p>
+					Dimension 3 was between the two registered decision thresholds, so that comparison was
+					undecided. Exploratory runs extended to 20,000 steps reach 99.21%, 99.38% and 99.34%. The
+					small representation can learn nearly all of this task; the finite runs do not prove exact
+					convergence.
+				</p>
+				<p>
+					The heads also learn approximate group structure. Their matrices can be checked directly:
+					does the matrix for <MathTex tex="a" /> times the matrix for <MathTex tex="b" /> match the matrix
+					for <MathTex tex="ab" />? The discrepancy is the <em>homomorphism error</em>. The sum of a
+					matrix’s diagonal entries is its <em>trace</em>. Small errors and matching traces identify
+					approximate tetrahedral and icosahedral representations. These diagnostics are evidence,
+					not certificates of exact equality. The
+					<a href={resolve('/explore/groups')}>rotation lab</a> shows an actual trained head.
+				</p>
+			</section>
+
+			<section id="limits">
+				<h3><span class="n">{number('limits')}</span>What is proved, and under what rules</h3>
+				<p class="src">
+					<span class="mark new"></span>Task-specific results in THEORY §§2–4; the definitions and
+					decision principle are standard
+				</p>
+				<p>
+					<strong>Information lost cannot be recovered.</strong> If a layer sees the marked token
+					and the other tokens with their counts, but loses their order, some inputs with different
+					answers become identical to it. Even an unlimited classifier after that layer cannot tell
+					those inputs apart. The best achievable balanced accuracy, called the
+					<em>order-blind ceiling</em>, is exactly <strong>83.0546984493%</strong> on the six-token
+					<MathTex tex="A_4" /> benchmark and <strong>77.2287515874%</strong> on the eleven-token
+					<MathTex tex="A_5" /> benchmark.
+				</p>
+				<p>
+					This bound applies to position-free Newton and commuting holonomy layers with a tokenwise
+					readout. It does not apply once positions, causal masks, or earlier order-aware layers
+					reveal the missing order. The measured scores sit below these ceilings; the proof does not
+					say training must reach them.
+				</p>
+				<p>
+					<strong>A faithful representation is sufficient, with enough selection.</strong> For
+					ordered Match-3, enough heads with token-dependent gates can separate candidate triples by
+					their contents. An <em>orthogonal</em> matrix preserves lengths and angles. A faithful
+					orthogonal representation, together with a sufficiently wide readout that keeps the marked
+					token's identity, then distinguishes successful triples exactly. Our implemented rotations
+					must fit that representation, as <MathTex tex="A_4" /> and <MathTex tex="A_5" />
+					do in dimension 3. For arbitrary Match-<MathTex tex="k" />, the separate construction also
+					requires gates that select positions. Neither construction proves efficient learning.
+				</p>
+				<p>
+					<strong>Faithful is sufficient, not necessary.</strong> Under exact representations, unrestricted
+					token gates and a sufficiently wide readout, the precise Match-3 condition is that every pair
+					of operations that fails to commute is kept noncommuting in at least one head. Several heads
+					can share that job. There is no universal theorem saying the smallest faithful dimension is
+					necessary, or that softmax cannot solve the task.
+				</p>
+			</section>
+
+			<section id="programs">
+				<h3><span class="n">{number('programs')}</span>A second test: execute a program</h3>
+				<p class="src">
+					<span class="mark new"></span>The task; <span class="mark measured inline"></span>GROUPS
+					§7, three seeds
+				</p>
+				<p>
+					Start with four variables holding 0, 1, 2 and 3. An instruction swaps the contents of two
+					variables. Three such instructions form a tiny program. Interleave the instructions of two
+					independent programs, then ask for one variable's final value. The model must select the
+					relevant instructions and compose them in order. It receives instruction tokens, not
+					precomputed permutation matrices.
+				</p>
+				<p>
+					The exact order-blind ceiling is <MathTex tex="67/108" />, or 62.037…%. Newton reaches
+					62.05% and commuting holonomy 62.02%. Noncommuting holonomy at dimensions 3 and 4 reaches
+					100.00% on every seed. But so does a matrix-state recurrent network, which carries a
+					matrix forward through the instructions. Positional softmax reaches 98.95% with one layer
+					and 100.00% with two or three.
+				</p>
+				<p>
+					This second benchmark confirms the loss from discarding order. It shows no advantage over
+					the order-aware baselines, and the models are not matched in parameter count or
+					computation. These are short synthetic programs, not evidence about natural code or long
+					programs.
+				</p>
+				<!-- WORD-PROBLEMS -->
+				<p>
+					A separate word-problem test asks models to compose an entire sequence of group
+					operations; results pending.
+				</p>
+			</section>
+
+			<section id="meaning">
+				<h3><span class="n">{number('meaning')}</span>What the result means</h3>
+				<p class="src">
+					<span class="mark new"></span>Synthesis of this project's evidence;
+					<span class="mark prior inline"></span>composition as a sequence-model principle <Cite
+						id={['seq2tens', 'development']}
+					/>
+				</p>
+				<p>
+					The important design choice is what happens when features meet. Pairwise attention
+					compares and retrieves. Newton multiplies phases, which adds clock moves but loses their
+					order. Holonomy multiplies rotations, which can preserve it. On these controlled tasks,
+					that difference predicts an information limit and points toward a learnable computation.
+				</p>
+				<p>
+					The next questions are practical: can a model select relevant operations among many
+					distractors, keep composing on longer sequences, and improve a real task at equal
+					computation? The language experiments give no permission to assume the last answer is yes.
+					The contribution is a concrete layer, a precise restricted separation, and inspectable
+					evidence of learned symmetry. That is enough to make the next experiments worth doing.
+				</p>
+				<p>
+					<a href={resolve('/explore/groups')}>Inspect the rotations</a> or read the
+					<a href={resolve('/report')}>full report</a>.
 				</p>
 			</section>
 
@@ -1328,7 +1672,11 @@
 		</article>
 
 		<aside class="figure" aria-live="polite">
-			<LearnFigure {section} />
+			{#if COMPOSITION_CHAPTERS.has(section)}
+				<CompositionFigure {section} />
+			{:else}
+				<LearnFigure {section} />
+			{/if}
 		</aside>
 	</div>
 </PageFrame>
@@ -1337,7 +1685,7 @@
 	/* text first: a column of about 80 characters and a figure a little narrower, centred
 	   together and growing with the screen, so neither hugs an edge on a wide display */
 	.learn {
-		--read: clamp(15px, calc(9px + 0.42vw), 19.5px);
+		--read: clamp(14px, calc(10px + 0.28vw), 15px);
 		/* the app's type tokens, scaled with the reading size inside this page */
 		--text-2xs: calc(var(--read) * 0.733);
 		--text-xs: calc(var(--read) * 0.8);
@@ -1405,11 +1753,11 @@
 	}
 	.toc {
 		display: grid;
-		grid-template-columns: repeat(3, auto);
+		grid-template-columns: repeat(2, minmax(0, 1fr));
 		gap: 18px;
 		margin-top: 26px;
 		padding-top: 18px;
-		border-top: 1px solid #1a1a1a;
+		border-top: 1px solid var(--color-rule);
 	}
 	.toc-title {
 		display: block;
@@ -1621,15 +1969,16 @@
 			order: -1;
 			z-index: 5;
 			top: var(--bar-h);
-			height: 42dvh;
+			height: 38dvh;
 			margin: 0 -16px;
 			padding: 10px 16px;
 			background: var(--color-void);
-			border-bottom: 1px solid #1a1a1a;
+			border-bottom: 1px solid var(--color-rule);
 			overflow: hidden;
 		}
-		.figure :global(figcaption) {
-			display: none;
+		section,
+		h2.part {
+			scroll-margin-top: calc(var(--bar-h) + 38dvh + 16px);
 		}
 		.text {
 			padding: 20px 0 80px;
