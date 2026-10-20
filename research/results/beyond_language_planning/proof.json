@@ -1,0 +1,109 @@
+{
+  "files": {
+    "research/analysis/beyond_language_protocol.py": "6200aed52ddb4f4528d34d488b8eb74d1921beed148dc8b263eab16937b9ded1",
+    "research/analysis/test_beyond_language_protocol.py": "d920415330efb7ff035da52afb00818b18b830e0ce17a14bd2a89f6b56373839",
+    "research/results/beyond_language_planning/budget.json": "195c6cf0e213239dd7ad6c4e94b2bc030c2b8a57ea02a483c05f42bc605c489a",
+    "research/results/beyond_language_planning/handoff.md": "4745764673861a62658273eb983e7f5dd9a777a363e4273c24275cee5058af46",
+    "research/results/beyond_language_planning/tables.md": "b10256b83266e21bfb38dc1dd3634f2cbc8e8289a5b6cb1a11b7ed2db3abd3c0"
+  },
+  "git_head_during_validation": "7d7977acb35d9455f08c89eaf2ca534bababba06",
+  "notes": [
+    "No language plan frozen.",
+    "No paid jobs launched.",
+    "All new files are under research/analysis or research/results/beyond_language_planning.",
+    "Draft plans were generated only in a temporary directory for portability checks, then removed.",
+    "Final Stage1 closure and the reporting-only model-source bridge remain prerequisites for freezing."
+  ],
+  "planning_cases": {
+    "A/B/C": {
+      "budget": {
+        "all_timeout_total_usd": 119.605406,
+        "already_spent_usd": 2.326004,
+        "forecast_total_usd": 92.146677,
+        "notes": "15% conv runtime allowance and30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": true,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to100 seconds"
+      },
+      "target_training_flops": 1.2909777933383885e+17
+    },
+    "B/C": {
+      "budget": {
+        "all_timeout_total_usd": 98.355105,
+        "already_spent_usd": 2.326004,
+        "forecast_total_usd": 76.237598,
+        "notes": "15% conv runtime allowance and30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": false,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to100 seconds"
+      },
+      "target_training_flops": 1.214067014230487e+17
+    }
+  },
+  "portability_checks": [
+    {
+      "case": "worktree",
+      "draft_only": true,
+      "status": "passed"
+    },
+    {
+      "case": "research_directory",
+      "draft_only": true,
+      "status": "passed"
+    },
+    {
+      "case": "outside_checkout_explicit_root",
+      "draft_only": true,
+      "status": "passed"
+    },
+    {
+      "case": "outside_checkout_script_fallback",
+      "draft_only": true,
+      "status": "passed"
+    }
+  ],
+  "same_draft_across_working_directories": true,
+  "schema": "language_planner_validation",
+  "schema_version": 1,
+  "status": "passed",
+  "test_command": "python research/analysis/test_beyond_language_protocol.py",
+  "test_output": "test_all_terminal_before_any_selection (__main__.ProtocolTests.test_all_terminal_before_any_selection) ... ok\ntest_all_three_survivors_use_larger_common_budget (__main__.ProtocolTests.test_all_three_survivors_use_larger_common_budget) ... ok\ntest_bridge_only_allows_audited_lm_reporting_change (__main__.ProtocolTests.test_bridge_only_allows_audited_lm_reporting_change) ... ok\ntest_bridge_requires_exact_committed_endpoints_and_diff (__main__.ProtocolTests.test_bridge_requires_exact_committed_endpoints_and_diff) ... ok\ntest_budget_deferral_requires_linked_reason_missing_cells_and_ledger (__main__.ProtocolTests.test_budget_deferral_requires_linked_reason_missing_cells_and_ledger) ... ok\ntest_committed_evidence_and_immutable_outputs (__main__.ProtocolTests.test_committed_evidence_and_immutable_outputs) ... ok\ntest_draft_and_unconfirmed_provenance_cannot_export (__main__.ProtocolTests.test_draft_and_unconfirmed_provenance_cannot_export) ... ok\ntest_exact_tie_chooses_lower_rate (__main__.ProtocolTests.test_exact_tie_chooses_lower_rate) ... ok\ntest_explicit_early_numerical_failure_is_an_invalid_trial (__main__.ProtocolTests.test_explicit_early_numerical_failure_is_an_invalid_trial) ... ok\ntest_final_blocks_both_rnns_and_independent_seeds (__main__.ProtocolTests.test_final_blocks_both_rnns_and_independent_seeds) ... ok\ntest_invalid_rate_reported_and_cannot_win (__main__.ProtocolTests.test_invalid_rate_reported_and_cannot_win) ... ok\ntest_manifest_must_cover_exact_grid (__main__.ProtocolTests.test_manifest_must_cover_exact_grid) ... ok\ntest_no_rounded_intermediate_or_final_score_leakage (__main__.ProtocolTests.test_no_rounded_intermediate_or_final_score_leakage) ... ok\ntest_nonadvancing_stage1_arms_must_have_explicit_closed_status (__main__.ProtocolTests.test_nonadvancing_stage1_arms_must_have_explicit_closed_status) ... ok\ntest_nonfinite_or_missing_raw_never_uses_rounded_fallback (__main__.ProtocolTests.test_nonfinite_or_missing_raw_never_uses_rounded_fallback) ... ok\ntest_registered_compute_and_fresh_schedules (__main__.ProtocolTests.test_registered_compute_and_fresh_schedules) ... ok\ntest_registration_digest_allows_log_updates_but_not_protocol_edits (__main__.ProtocolTests.test_registration_digest_allows_log_updates_but_not_protocol_edits) ... ok\ntest_selection_reassignment_rejected_even_after_rehash (__main__.ProtocolTests.test_selection_reassignment_rejected_even_after_rehash) ... ok\ntest_source_and_config_corruption_fail_closed (__main__.ProtocolTests.test_source_and_config_corruption_fail_closed) ... ok\ntest_stage1_requires_all18_unique_cells_and_all_survivors (__main__.ProtocolTests.test_stage1_requires_all18_unique_cells_and_all_survivors) ... ok\n\n----------------------------------------------------------------------\nRan 20 tests in 1.082s\n\nOK\n",
+  "tests_passed": 20,
+  "top_level_research_source_map": {
+    "beyond_chunk_check.py": "f671fef1033410fc7bbf2d0e07138070304ecd595110797c27242c746d50cdf6",
+    "beyond_diag.py": "ab176f04bdf08a4ebcc650672929f2627c910e53b631fffde8d8ed96696f6a39",
+    "beyond_layers.py": "766d943ed44a21691a4101fd5cb5aca558a12058c8f495ac2fedbc24c4506411",
+    "beyond_modal.py": "9e80de399100fb76889285def14bf3e226a5a56de1e8a81dd5d8ffe4ef705bed",
+    "beyond_protocol.py": "45d36641f286333498bf94f4683e716e3fa5331a8c9d3bbd46cf0e6b16abf763",
+    "beyond_summary.py": "752ff5d12b315a1f73c3dbd4e5c4cdb5fad18c60c65b15f833eccf2b8eb682bc",
+    "charlaw.py": "696097299f79fc5f171b64f65cc28374167164b34bae899dd74c79d5681b009a",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "export_a5_irrep.py": "a656f64b9f223a702489fa1bc8a38da7fde21497d26a05642cb7fb38df117ba2",
+    "export_a5_modal.py": "27cc4eee7347e7842bd0bc1c97116eb198af00cdf9168f069e30f09413777508",
+    "figdata.py": "1ba8912630e4e998058ee99a2bb60220b99126184e19f01b743f47300a115190",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "grp_summary.py": "fd424f8dff0d61accc284a0014c394483d67cbe9c69e6c874f2aa6be76e72d40",
+    "lm.py": "f962a571b97835b4243d8685c39d7830bd3ce7a4ebadc21d45a70936898ebab5",
+    "local_summary.py": "695ae6726b5f4b3df80978d205d18c773f34f9b9a9f38000cf2a90e39cdadf06",
+    "modal_run.py": "5f0cb5babe8702def82fd904f522738078aa21a7ac3652190bd3b1f82bc15203",
+    "polybench.py": "3307ee31daf5d82b831c7ebe90a75bb057ab06022c39b54169c4edf106377b17",
+    "search_summary.py": "2d40635b2f6ab110ea3624ea8f83021d995dc3147c44a7d9a52d02bd902606dc",
+    "summarize.py": "14b3ae880107d4923f433a4e58d5d7693d91d9ab411ed6a8e0c98c437d16168c",
+    "swap_summary.py": "02e3be1148335ec01073321e8441838be45efe296d704117ae9682e8db74826f",
+    "test_beyond.py": "f2774f642c476abe27a7e052c1464cf516d06f1a5d1d56ce16206626822b7fff",
+    "test_beyond_conv.py": "38fb8e88a1ee46276fc9283d4b9d94416ae5ef4a48ec67fdc2c9a0e303cc9ff2",
+    "test_beyond_diag.py": "72bb1a44f14538d7338eaac78200baca286e669a10ed5ef7d3c9bd223829dc59",
+    "test_groups.py": "50b401a7cd202ff2c70e2a5e019799e5c28a7c61a0177cca5c1ef4c8686d6440",
+    "test_local.py": "e5f2cc39d43d99e72e4f55cb514f754a34997af8afaec169a81c7cf209403a17",
+    "test_sfa.py": "df436095a033e5ac9984ac0c21bbc1180b96df03ab01f8b8a6b510c192fb0717",
+    "test_theory.py": "fb140d3e8b97de1210fc29c712a2fc7588412e63df955f5b327bf5038c0b5461",
+    "theory_ceiling.py": "c34e78733b8761476b0710f7b625598fb9551da58ce4b7b5cd38121901b62128",
+    "verify_prior_art.py": "0a230c5d236c4528fd2930ee57ffe9228d9342ce47bd5a3341223950e1ee6c6b",
+    "wp_summary.py": "51a85ef347d3b24c03a72712a3e64e54609daf13d13a8d381fb90ede5511e673"
+  },
+  "top_level_research_sources_unchanged": true
+}

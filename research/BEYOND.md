@@ -195,6 +195,14 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   gate pass. No missing/nonfinite reference may become an easy win, and reference selection, rates,
   candidate thresholds, margins, budgets and confirmation seeds must remain unchanged.
 
+
+- 2026-10-20 14:12 UTC — Thirteen prescribed alternates launched from manifest commit `7d7977a`
+  (prior log/registration `1a275f8`), app `ap-5dAW0tONr50SFioZAgQGVQ`, eight L4 slots,
+  local launch log `/tmp/beyond-stage1-alternate.log`. Architecture/training sources remain frozen.
+  Portable Stage-2 planning tools and budget/provenance documentation are now saved in `analysis/`
+  and `results/beyond_language_planning/`; all 20 tests and four path-portability checks pass.
+  These are offline preparation only: no language quality job has been launched.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
