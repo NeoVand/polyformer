@@ -130,6 +130,9 @@ def baseline_summary(value):
         "task": value["task"], "scope_limit": value["scope_limit"],
         "calibration_seed": value["calibration"]["seed"],
         "calibration_sequences": value["calibration"]["sequences"],
+        "calibration_positive_prevalence": value["calibration"]["global_positive_prevalence_on_scored_positions"],
+        "decision_rules": {rule: value["decision_rules"][rule] for rule in
+                           ("position_balanced_accuracy", "position_accuracy")},
         "validation": {}, "test": {},
     }
     for split in ("validation", "test"):
@@ -139,7 +142,20 @@ def baseline_summary(value):
             "seed_sample_std_balanced_accuracy": section["seed_sample_std_balanced_accuracy"]["position_balanced_accuracy"],
             "sequences_per_seed": section["sequences_per_seed"],
             "by_seed": {},
+            "rules": {},
         }
+        for rule in ("position_balanced_accuracy", "position_accuracy"):
+            result[split]["rules"][rule] = {
+                "mean_balanced_accuracy": section["seed_mean_balanced_accuracy"][rule],
+                "pooled_balanced_accuracy": section["pooled"][rule]["bal_acc"],
+                "seed_sample_std_balanced_accuracy": section["seed_sample_std_balanced_accuracy"][rule],
+                "by_seed": {
+                    str(row["seed"]): {
+                        "balanced_accuracy": row["metrics"][rule]["bal_acc"],
+                        "balanced_accuracy_se_sequences": row["metrics"][rule].get("bal_acc_se_sequences"),
+                    } for row in section["by_seed"]
+                },
+            }
         for row in section["by_seed"]:
             metrics = row["metrics"]["position_balanced_accuracy"]
             result[split]["by_seed"][str(row["seed"])] = {
@@ -159,7 +175,8 @@ def score_row(run, split, baseline=None):
     row = {k: run[k] for k in ("job_id", "manifest", "phase", "status", "task", "layers", "arm",
                               "seed", "lr", "steps", "train_tokens", "flops_per_token", "train_flops")}
     row.update(
-        split=split, metric=run["metric"], score=valid_score, score_standard_error=se,
+        split=split, evaluation_seed=run.get(split + "_seed"), metric=run["metric"],
+        score=valid_score, score_standard_error=se,
         score_uncertainty_kind=se_key if se is not None else "not_reported",
         all_position_accuracy=metrics.get("acc"),
         all_position_acc_se_sequences=metrics.get("acc_se_sequences"),
@@ -173,12 +190,26 @@ def score_row(run, split, baseline=None):
         position_baseline_mean_balanced_accuracy=None, position_baseline_same_seed_balanced_accuracy=None,
         position_baseline_same_seed_se=None,
     )
+    for rule in ("position_balanced_accuracy", "position_accuracy"):
+        row.update({f"{rule}_{field}": None for field in (
+            "threshold_rule", "same_seed_balanced_accuracy", "same_seed_se",
+            "pooled_balanced_accuracy", "seed_mean_balanced_accuracy")})
     if run["task"] == "gmatch_a5_causal" and baseline:
         comparison = baseline[split]
         same_seed = comparison["by_seed"].get(str(run.get(split + "_seed")), {})
         row.update(position_baseline_mean_balanced_accuracy=comparison["mean_balanced_accuracy"],
                    position_baseline_same_seed_balanced_accuracy=same_seed.get("balanced_accuracy"),
                    position_baseline_same_seed_se=same_seed.get("balanced_accuracy_se_sequences"))
+        for rule in ("position_balanced_accuracy", "position_accuracy"):
+            values = comparison["rules"][rule]
+            matched = values["by_seed"].get(str(run.get(split + "_seed")), {})
+            row.update({
+                f"{rule}_threshold_rule": baseline["decision_rules"][rule],
+                f"{rule}_same_seed_balanced_accuracy": matched.get("balanced_accuracy"),
+                f"{rule}_same_seed_se": matched.get("balanced_accuracy_se_sequences"),
+                f"{rule}_pooled_balanced_accuracy": values["pooled_balanced_accuracy"],
+                f"{rule}_seed_mean_balanced_accuracy": values["mean_balanced_accuracy"],
+            })
     return row
 
 
@@ -407,9 +438,18 @@ def make_plots(report, output):
                 else:
                     ax.set_ylim(bottom=0)
                 if name == "match3" and report["match3_position_baseline"]:
-                    base = report["match3_position_baseline"][split]["mean_balanced_accuracy"]
-                    ax.axhline(base, ls="--", color="#303a43", lw=1,
-                               label=f"Position only: {100 * base:.4f}%")
+                    comparison = report["match3_position_baseline"][split]
+                    seeds = sorted({r.get(split + "_seed") for r in rows if r.get(split + "_seed") is not None})
+                    for seed in seeds:
+                        for rule, label, style, color in (
+                            ("position_balanced_accuracy", "BA rule: pₜ > π", "--", "#303a43"),
+                            ("position_accuracy", "Accuracy rule: pₜ > 0.5", ":", "#7a4937"),
+                        ):
+                            matched = comparison["rules"][rule]["by_seed"].get(str(seed))
+                            if matched:
+                                base = matched["balanced_accuracy"]
+                                ax.axhline(base, ls=style, color=color, lw=1,
+                                           label=f"{label} · seed {seed}: {100 * base:.4f}%")
                     ax.legend(loc="lower right", frameon=False)
                 if not rows:
                     ax.text(.5, .5, "No completed result", transform=ax.transAxes, ha="center")
@@ -422,6 +462,14 @@ def make_plots(report, output):
                 fig.legend(handles=[Line2D([], [], marker="o", color="#333333", linestyle="", label="Balanced second half; SE unavailable"),
                                     Line2D([], [], marker="x", color="#777777", linestyle="", label="All-position accuracy")],
                            loc="lower center", ncol=2, frameon=False)
+            elif name == "match3" and report["match3_position_baseline"]:
+                rules = report["match3_position_baseline"][split]["rules"]
+                ba = rules["position_balanced_accuracy"]["pooled_balanced_accuracy"]
+                acc = rules["position_accuracy"]["pooled_balanced_accuracy"]
+                fig.text(.5, .015,
+                         f"Lines use each model's evaluation seed. Pooled four-seed context only: BA rule {100*ba:.4f}%; "
+                         f"accuracy rule {100*acc:.4f}%. Model BA SE unavailable.",
+                         ha="center", fontsize=8)
             else:
                 fig.text(.5, .015, "Each point is one run. Error bars are 1.96 × reported SE where available.",
                          ha="center", fontsize=8)
@@ -493,13 +541,26 @@ def self_test():
     report = {"runs": [low_test, high_test], "selection_supplied": True, "selected_seed0_job_ids": ["selected"]}
     assert [r["job_id"] for r in plot_subset(report, "screen")] == ["selected"]
     assert plot_subset({**report, "runs": [{**low_test, "status": "integrity_invalid"}]}, "screen") == []
+    actual, _ = load_json(RESEARCH / "results/beyond_match3_position_baseline.json")
+    baseline = baseline_summary(actual)
+    match = {**base, "task": "gmatch_a5_causal", "metric": "bal_acc", "test_seed": 20000,
+             "test": {"bal_acc": .7441780254806138}}
+    match_row = score_row(match, "test", baseline)
+    assert match_row["position_balanced_accuracy_same_seed_balanced_accuracy"] == .7478241598730433
+    assert match_row["position_accuracy_same_seed_balanced_accuracy"] == .7441780254806138
+    assert match_row["position_balanced_accuracy_pooled_balanced_accuracy"] == .7484552422577095
+    assert match_row["position_balanced_accuracy_seed_mean_balanced_accuracy"] == .7484598329174176
+    assert "pi" in match_row["position_balanced_accuracy_threshold_rule"]
+    assert "0.5" in match_row["position_accuracy_threshold_rule"]
+    assert match_row["score_standard_error"] is None
     with tempfile.TemporaryDirectory() as tmp:
         path = pathlib.Path(tmp) / "precision.tsv"
         tsv(path, [{"score": .94999999999999}], ["score"])
         assert float(list(csv.DictReader(path.open(), delimiter="\t"))[0]["score"]) == .94999999999999
     return {"passed": True, "checks": ["late/all-position uncertainty separated", "reported MSE uncertainty",
             "gate status never recomputed", "plots follow frozen selection, never test", "invalid runs excluded from plots",
-            "TSV preserves unrounded numeric values", "dual policy outcomes copied without gate reinterpretation"]}
+            "TSV preserves unrounded numeric values", "dual policy outcomes copied without gate reinterpretation",
+            "actual Match3 artifact separates both matched-seed rules, pooled values, and seed means"]}
 
 
 def main():

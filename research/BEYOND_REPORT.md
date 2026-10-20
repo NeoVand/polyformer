@@ -2,7 +2,8 @@
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
 15:01 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
-accuracy in all 18 independent cells**. Its original-code outcome is **unconfirmed** because two
+accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
+seeds. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. A and C's independent
 confirmations are pending; all three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete, and no language quality sweep has begun.
@@ -10,7 +11,8 @@ These results establish successful synthetic-task learning in this regime, not a
 
 The question is whether one affordable layer can combine content selection, improved local
 estimation and order-sensitive composition, then beat both softmax and modern matrix-state RNNs
-at equal nominal training compute. Earlier project studies motivated these capabilities separately;
+under a common candidate compute budget, with controls given at least each candidate's modeled work
+under four declared arithmetic conventions. Earlier project studies motivated these capabilities separately;
 their limits remain relevant. [LOCAL.md](LOCAL.md) found modest language benefits from local
 linear estimation, while [GROUPS.md](GROUPS.md) and [THEORY.md](THEORY.md) distinguished
 noncommuting composition from order-blind alternatives. None establishes that combining the
@@ -25,8 +27,8 @@ during design because convex weights cannot extrapolate outside the keys' convex
 The estimation component follows [Parallax](https://arxiv.org/abs/2605.29157).
 
 Composition uses small, dimension-five orthogonal matrices. Four learned Householder factors form
-each token transition `U_t`; prefix products `P_t = U_t ... U_0` retain order because the factors
-need not commute. The branch exposes the full prefix matrix and short ordered features of arity
+each token transition `U_t`. Prefix products `P_t = U_t ... U_0` can distinguish order when the
+learned transitions do not commute. The branch exposes the full prefix matrix and short ordered features of arity
 one and two, mixed before a shared readout. The main experiments use independent-random factor
 initialization and an initial branch scale of 0.1.
 
@@ -38,7 +40,10 @@ initialization and an initial branch scale of 0.1.
 
 B was favored before the main results for simplicity and cost. These are bounded combination
 claims: [PaTH](https://arxiv.org/abs/2505.16381) already uses accumulated input-dependent
-Householder transformations in attention;
+Householder transformations in attention. Its
+[KV-cache discussion](https://arxiv.org/html/2505.16381v2#S3) also proposes extending the update
+mechanism to value vectors; A explores that direction together with Parallax correction and an
+explicit matrix readout. This is a proposed PaTH direction, not an evaluated extension in that paper.
 [Lie-Algebra Attention](https://arxiv.org/abs/2606.20547) and
 [Non-Commutative Words](https://arxiv.org/abs/2608.29314) also preclude broad claims to invent
 group-valued tokens or ordered matrix representations. Our contribution, if supported, is the
@@ -114,7 +119,7 @@ records both outcomes. The
 [strict selection](results/beyond_stage1_selection_strict.json) remains immutable; the
 [adapter](analysis/beyond_gate_reconciliation.py) checks the registration, original seal and
 unchanged selection identities. Any future result passing only the reconciled rule must be labeled
-accordingly. All 18 independent candidate cells must pass before language.
+accordingly. All 18 candidate confirmation cells must pass before language.
 
 The completed descriptive map separates word tracking from more general composition. On causal
 ordered Match-3, all arms at one or two layers score 73.86–74.42% balanced accuracy. On the same
@@ -159,12 +164,16 @@ the original dataset revision and tokenizer build were not recorded. Every inclu
 rate trials at {.002, .004, .008}. Only final unrounded validation loss selects the rate.
 A candidate with no valid trial remains unconfirmed while other viable candidates continue;
 all five controls are mandatory. Such failures never reduce the frozen compute allowances.
-Fresh seeds 1/2/3 use candidate schedules set by the most expensive surviving candidate's
-approximately 400M-token nominal budget. Before any language quality results, a conservative
+Fresh seeds 1/2/3 use candidate schedules set by the most expensive Stage-1-qualified candidate's
+approximately 400M-token nominal budget when the plan is frozen, even if that candidate later has
+no valid tuning trial. Before any language quality results, a conservative
 allowance gives each control enough complete updates to cover every candidate under four declared
 arithmetic conventions, including dense attention and whole-block recomputation estimates. These
-intentional additions are reported separately from whole-update rounding. Final evaluation uses 1,024 fixed held-out sequences,
-separate from tuning samples but drawn from the same validation corpus.
+intentional additions are reported separately from whole-update rounding. Final evaluation uses a
+fresh fixed draw of 1,024 windows (seed 5678), while rate selection uses seed 1234. Both sample the
+same validation file; windows may overlap within and between draws. This is neither token-disjoint
+nor document-disjoint evaluation. Sequence-level uncertainty is conditional on the trained model
+and may understate uncertainty when windows overlap.
 
 | Arm | Final loss, seed 1 | Seed 2 | Seed 3 | Parameters, tokens, runtime and cost |
 |---|---|---|---|---|

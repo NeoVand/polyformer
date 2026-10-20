@@ -298,6 +298,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   DP4 .008264, prefix .019530; the mean-value baseline is 12.212769. These are descriptive
   single-training-seed results, with per-example uncertainty retained, not additional gate choices.
 
+- 2026-10-20 15:09 UTC — Committed candidate-local tuning failure handling and the completed
+  descriptive results in `2e076e6`, before any language quality trial. C/A's first eight calls remain
+  queued with no worker task IDs after approximately eleven minutes; no retry or replacement was
+  dispatched. A read-only scientific review tightened the working report: 18 confirmation cells
+  are six conditions across three seeds, final/tuning text windows are not token- or document-disjoint,
+  and PaTH's proposed value-update direction is explicitly credited. No experimental rule changed.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
