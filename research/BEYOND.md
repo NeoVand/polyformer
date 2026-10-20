@@ -514,6 +514,15 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   downloaded and fingerprinted. Four runs remain active. Settled-plus-reserved estimates are
   language $51.474516 and total $77.830740; no failures or retries.
 
+- 2026-10-20 17:38 UTC — Seed-2 convP/B final raw losses are 3.5980747267603874 /
+  3.6354847475886345. Both production audits pass, and both checkpoints are fingerprinted.
+  B again fails the softmax gate: it is 0.3762% below raw softmax but 0.7238% above convolved
+  softmax, and 0.037410 nats/token above convP. B's composition/precision ablation deltas are
+  +0.03810285031795502 / +1.9171709343791008, corroborating component sensitivity without
+  demonstrating an architectural benefit over Parallax. GDN1/DP4 remain active. Conservative
+  settled-plus-reserved estimates are language $49.217270 and total $75.573494. No changes
+  to any remaining run.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

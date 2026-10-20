@@ -1,7 +1,7 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running; the registered headline criterion has already failed.** Evidence snapshot:
-20 October 2026, 17:32 UTC. B's seed-1 final loss is **3.642390 nats/token**, versus **3.612649**
+20 October 2026, 17:38 UTC. B's seed-1 final loss is **3.642390 nats/token**, versus **3.612649**
 for convolved softmax, **3.607192** for convolved Parallax, **3.575800** for Gated DeltaNet
 and **3.564820** for DeltaProduct.
 B misses both the required softmax threshold of **3.576523** and the RNN requirement.
@@ -20,7 +20,9 @@ All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete. B's language plan is frozen, and its
 18-trial language rate sweep is complete. All arms select .008, and B trails both softmax controls
 and both recurrent controls at that short tuning budget. All six seed-1 final runs are complete
-and valid; the seed-2 softmax controls are also complete, with the other seed-2/3 results pending.
+and valid; seed-2 attention results are complete, with recurrent results and all of seed 3 pending.
+B also misses the seed-2 softmax gate: **3.635485**, versus **3.609362** for convolved softmax
+and **3.598075** for convolved Parallax.
 B demonstrates successful synthetic-task learning in this regime, but
 its first final language result does not beat the stronger attention controls.
 
@@ -302,16 +304,18 @@ and exact, unrounded counts are in the frozen plan. All controls meet or exceed 
 |---|---|---|---|
 | Raw softmax | 3.661557 | 3.649212 | Pending |
 | Convolved softmax | 3.612649 | 3.609362 | Pending |
-| Convolved Parallax | 3.607192 | Pending | Pending |
+| Convolved Parallax | 3.607192 | 3.598075 | Pending |
 | Gated DeltaNet, one update | 3.575800 | Pending | Pending |
 | Gated DeltaProduct, four updates | 3.564820 | Pending | Pending |
-| B | 3.642390 | Pending | Pending |
+| B | 3.642390 | 3.635485 | Pending |
 
 At seed 1, B is 0.5235% below raw softmax, short of the required 1%, and 0.8232% above convolved
 softmax. Its loss is also 0.035198 nats/token above convolved Parallax, 0.066590 above Gated
 DeltaNet and 0.077569 above DeltaProduct, failing the RNN requirement. The registered three-for-three
 headline criterion is therefore rejected even while the remaining seed blocks are pending.
 Those blocks are retained exactly as planned.
+At seed 2, B is 0.3762% below raw softmax, 0.7238% above convolved softmax and 0.037410
+nats/token above convolved Parallax. It again misses the softmax gate, whose threshold is 3.573268.
 
 For each seed, the headline requires candidate loss at most 99% of the better raw/convolved
 softmax loss, and no higher than the better Gated DeltaNet/DeltaProduct loss. All three seeds and
@@ -337,7 +341,9 @@ yet the full model still loses to convolved Parallax. An entirely unused branch 
 explanation of this checkpoint's result. These interventions do not establish beneficial training
 effects or identify which matrix sector is useful. Across its six layers, the whole-matrix/content
 RMS ratio is 0.077–0.402 and the adjacent commutator norm is 2.943–3.014 on the small activity sample.
-The remaining seeds will test whether these observations recur.
+At seed 2, composition removal raises loss by 0.038103 and precision removal by 1.917171
+nats/token. The same qualitative pattern therefore recurs: both components affect the trained
+network, while the full model loses to convolved Parallax. Seed 3 remains pending.
 
 Equal nominal FLOPs are not equal runtime. The analytic convention counts added projections,
 scans, convolutions and transport, but excludes optimizer and rematerialization work. Attention
