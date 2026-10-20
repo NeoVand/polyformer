@@ -10,8 +10,8 @@ completed measurements. A also fails: one-layer S5 seeds 1 and 3 score **5.46% a
 C's complete record has no other below-floor cells. A also fails two-layer S5 at seeds 2 and 3.
 All mandatory confirmations are complete and audited. **B is the sole candidate eligible for language.**
 All three candidates reached 100% selected seed-0 validation in the
-six primary cells. The descriptive grid is complete. B's language plan is frozen, and no language
-quality sweep has begun.
+six primary cells. The descriptive grid is complete. B's language plan is frozen, and its
+18-trial language rate sweep is running; no language result is yet available.
 These results establish successful synthetic-task learning in this regime, not a language advantage.
 
 The question is whether one affordable layer can combine content selection, improved local

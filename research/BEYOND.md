@@ -356,6 +356,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   Language forecast is $66.657532 including pilots, aggregate timeout maximum $86.258104.
   All source, data, policy and evaluation identities are frozen before any quality launch.
 
+- 2026-10-20 15:30 UTC — Committed the language plan in `d9a40cc` and all 18 tuning jobs in
+  `294d42f` before launch. Started bounded app `ap-cdFQjRkHyLG01MwzArzPgZ` from
+  `manifests/beyond_language_tuning.json`, log `/tmp/beyond-language-tuning.log`, at most eight
+  H100 jobs globally. Root owns the launcher; the harness auditor monitors provenance and will
+  create the immutable rate selection only after all 18 trials are terminal. No intermediate
+  checkpoint or held-out result selects rates. Worker sources, planner and Section 5 remain frozen.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
