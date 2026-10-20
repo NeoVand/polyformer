@@ -60,3 +60,104 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
 ## Log
 
 - Plan written by Claude; Astra launched.
+- 2026-10-20 12:50 UTC — Read the brief and began independent prior-art, diagnostic, and language-harness
+  audits. Working only in this worktree; no paid jobs launched. Baseline commit `99084c7`. Modal authentication
+  and the existing tokenized FineWeb-Edu volume are available. Local test environment is
+  `/tmp/beyond-venv` (JAX 0.12.0, optax 0.2.8).
+- 2026-10-20 12:55 UTC — Designs frozen below before implementation/training. Rejected positive-only
+  exponential tilting as a general linear-precision mechanism: a convex combination cannot extrapolate
+  beyond the keys' convex hull. Existing diagnostic retrieval controls were near chance; existing noncausal
+  group Match-3 cannot be silently reused in a causal language layer. These are design-stage findings,
+  not post-result gate changes. Spend to date: $0.
+
+## 1. Design registration (before training)
+
+This is a test of combinations and how they learn, not a claim to have invented selection, covariance
+correction, or matrix composition. [PaTH](https://arxiv.org/abs/2505.16381) already puts input-dependent
+Householder path products in attention scores. Its value-refinement extension is particularly close to A.
+[CoPE](https://arxiv.org/abs/2405.18719) and
+[stick-breaking attention](https://arxiv.org/abs/2410.17980) provide related content-dependent scalar position
+and survival mechanisms. Neither scalar product supplies noncommuting matrix composition.
+
+[Parallax](https://arxiv.org/abs/2605.29157) supplies the estimation component, with precisely the
+unnormalized learned-probe variant that won the LOCAL.md comparison. For causal weights p, keys k, values v:
+
+    kbar_i = sum_j p_ij k_j
+    w_ij = p_ij [1 - rho_i · (k_j - kbar_i)]
+    z_i = sum_j w_ij v_j,    rho_i = W_r x_i, W_r initialized to zero.
+
+The weights sum to one but may be negative. This is a **learned covariance correction**, not a guarantee
+of exact affine reproduction: exact precision requires rho = Cov(k)^(-1)(kbar-q), when the covariance is
+invertible. We will test that algebraic special case and separately test whether training learns useful
+estimation. Positive tilting cannot satisfy the out-of-hull special case, so it is dropped.
+
+All three candidates use small orthogonal matrix states, dimension 5 per head, with four exact
+Householder factors per token. Four reflections can represent any SO(5) rotation. Factors begin in two
+identical pairs, giving the identity transition while leaving the individual factors independently
+trainable. Let U_t be their product and P_t = U_t ... U_0. The branch exposes the whole matrix P_t,
+not just its product with a single query vector. Arity-1 and arity-2 ordered features provide a short-product
+learning path; a shared matrix-to-vector readout combines the features. The initial branch scale is 0.1.
+Common QKV, output and MLP parameters use exactly the GPT initialization stream; the complete model is
+not identical to GPT at initialization because of the small matrix branch.
+
+| Candidate | Mechanism | Prediction and principal risk |
+|---|---|---|
+| A, transported Parallax | Compute P from x first. In small five-dimensional value blocks, read P_i sum_j w_ij P_j^T v_j; mix with ordinary z, plus direct matrix readout. | Can select a location and transport its content along the intervening word. May interfere with stable retrieval and adds value operations. |
+| B, parallel Parallax + matrix state | Ordinary z plus the independently computed prefix/short-sector matrix branch. | Most likely to pass, simplest and cheapest; separation lets each mechanism learn its task. The branch may add no value on language. |
+| C, attention-conditioned matrix state | Compute z first; generate transitions from x + tanh(context_mix) z; then compose and read matrices. | Selection can condition the subsequent state update. Coupling may make the group representation harder to learn. |
+
+[DeltaProduct](https://arxiv.org/abs/2502.10297) and
+[Gated DeltaNet](https://arxiv.org/abs/2412.06464) are the recurrent precedents and comparators. The new
+language baseline will include a learned forgetting gate, causal short convolution, normalized queries/keys,
+delta updates, head normalization and an output gate. We will distinguish the canonical one-update,
+beta-in-(0,1) Gated DeltaNet configuration from the four-update, beta-in-(0,2) gated DeltaProduct extension.
+This is an implementation in our common backbone, not a reproduction of their complete published
+training recipe. A standalone full-matrix prefix reader is an additional strong diagnostic control:
+matching a delta baseline that itself fails word tracking is insufficient.
+
+Broad group-token novelty claims are also excluded by
+[Lie-Algebra Attention](https://arxiv.org/abs/2606.20547) and
+[All You Need Is Non-Commutative Words](https://arxiv.org/abs/2608.29314).
+The experimental question is whether combining these capabilities improves the measured tradeoff.
+
+## 2. Measurement decisions fixed before pilots
+
+- **Stage 0:** compare matrix scans with literal products, value transport with literal pairwise paths,
+  zero-gate/zero-probe ablations with softmax, identity transitions and prefix-only special cases,
+  future-token perturbations, finite gradients, and affine reproduction with the exact covariance probe.
+  Test the regression labels and causal ordered Match-3 labels independently.
+- **Diagnostic tasks:** preserve the historical MQAR and induction tasks as descriptive checks. Primary
+  retrieval uses MQAR with T=128, 16 pairs and vocabulary 256, and an induction task with T=128,
+  vocabulary 128 and all eight query tokens guaranteed three earlier occurrences. Targets always refer to
+  the latest prior occurrence. Word problems are A5 and S5 length 16, with learned token embeddings and
+  no positional embeddings; report accuracy over every position and over the second half separately.
+  Extrapolation to length 64 is descriptive. Causal ordered Match-3 asks whether the current element
+  completes any earlier ordered pair to the identity, not the historical noncausal marked-position task.
+  A separate affine-regression probe measures estimation on held-out functions and keys.
+- **Development and confirmation split:** seed-0 pilots measure timing and learnability. Any architecture
+  adjustment following a pilot is explicitly logged before the main grid. Main predictions, exact grids,
+  rates, step budgets and numerical gates will be committed in a second registration before that grid.
+  A tuning set may select rates; an independent final test set is evaluated only after training.
+  Use final-epoch results, not best checkpoints.
+- **Diagnostic advancement intent:** two-layer retrieval must learn (at least 90% accuracy) and be within
+  3 percentage points of softmax, rather than merely matching chance. Word tracking must reach at least
+  95% second-half accuracy and be within 3 points of the strong full-matrix reader at both tested depths.
+  One-layer separated-key/value MQAR remains descriptive because binding itself typically requires a
+  second attention layer. Ordered Match-3 and regression explain failures and are reported even if a
+  candidate fails the retrieval/state gate.
+- **Compute:** the headline uses the existing analytic forward-FLOP convention, training = 3x forward,
+  with every added projection, scan, convolution, transport and readout counted. This convention excludes
+  optimizer and rematerialization work; report measured runtime and cost alongside it. Keep width fixed
+  and vary training steps/tokens to match total FLOPs within one step, using a complete cosine schedule
+  for every run. Never interpolate an old baseline loss for the headline.
+- **Language:** retain the original >=1% equal-FLOP loss reduction on 3/3 seeds versus softmax, and no
+  loss increase versus the strongest tuned recurrent baseline. Use the same independent `val_big`
+  sample as LOCAL.md for continuity. All new arms receive the same 3-rate 100M-token tuning opportunity;
+  the main language registration will freeze rates/grid before runs. Existing softmax/Parallax numbers
+  are reference points, with fresh exactly compute-matched softmax runs for the final gate.
+- **Budget:** Stage 1 <=$25, Stage 2 <=$100, total <=$150 including pilots. Reserve jobs at their timeout
+  and explicit GPU/CPU/RAM limits before launch; never launch a batch whose reservation exceeds the
+  remaining stage cap. [Modal prices](https://modal.com/pricing), checked 20 October 2026:
+  H100 $0.001097/s, L4 $0.000222/s, CPU $0.0000131/core/s, RAM $0.00000222/GiB/s.
+  Estimates will be labeled as estimates, with startup allowance; actual invoice totals are not inferred
+  from GPU time alone. Failed runs count against the budget.
