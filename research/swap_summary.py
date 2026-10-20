@@ -1,4 +1,4 @@
-"""Reproduce GROUPS.md section 7 tables and GPU-time estimate from the immutable result rows."""
+"""Reproduce GROUPS.md section 8 tables and GPU-time estimate from the immutable result rows."""
 
 import collections
 import json

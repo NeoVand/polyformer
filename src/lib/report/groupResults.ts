@@ -1,4 +1,4 @@
-/** Display precision is copied verbatim from research/GROUPS.md §5.1, §5.2, §7.3.
+/** Display precision is copied verbatim from research/GROUPS.md §5.1, §5.2, §8.3.
  * Numeric means drive figures only; strings preserve the research tables' rounding.
  * Raw sources: research/results/grp_e1.jsonl, grp_e2.jsonl, grp_swap.jsonl.
  */

@@ -1,0 +1,390 @@
+[
+  {
+    "route": "report",
+    "selector": "#abstract",
+    "size": "desktop",
+    "colorScheme": "light",
+    "captures": [
+      "report-abstract-desktop-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#word-problems",
+    "size": "desktop",
+    "colorScheme": "light",
+    "captures": [
+      "report-word-problems-desktop-light-1.png",
+      "report-word-problems-desktop-light-2.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": [
+        {
+          "width": 680,
+          "container": 680
+        }
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#meaning",
+    "size": "desktop",
+    "colorScheme": "light",
+    "captures": [
+      "report-meaning-desktop-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#programs",
+    "size": "desktop",
+    "colorScheme": "light",
+    "captures": [
+      "learn-programs-desktop-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#word-problems",
+    "size": "desktop",
+    "colorScheme": "light",
+    "captures": [
+      "learn-word-problems-desktop-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "compare",
+    "selector": ".source",
+    "size": "desktop",
+    "colorScheme": "light",
+    "captures": [
+      "compare-source-desktop-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#abstract",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "captures": [
+      "report-abstract-desktop-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#word-problems",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "captures": [
+      "report-word-problems-desktop-dark-1.png",
+      "report-word-problems-desktop-dark-2.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": [
+        {
+          "width": 680,
+          "container": 680
+        }
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#meaning",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "captures": [
+      "report-meaning-desktop-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#programs",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "captures": [
+      "learn-programs-desktop-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#word-problems",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "captures": [
+      "learn-word-problems-desktop-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "compare",
+    "selector": ".source",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "captures": [
+      "compare-source-desktop-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 1440,
+      "viewportWidth": 1440,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#abstract",
+    "size": "mobile",
+    "colorScheme": "light",
+    "captures": [
+      "report-abstract-mobile-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#word-problems",
+    "size": "mobile",
+    "colorScheme": "light",
+    "captures": [
+      "report-word-problems-mobile-light-1.png",
+      "report-word-problems-mobile-light-2.png",
+      "report-word-problems-mobile-light-3.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": [
+        {
+          "width": 350,
+          "container": 350
+        }
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#meaning",
+    "size": "mobile",
+    "colorScheme": "light",
+    "captures": [
+      "report-meaning-mobile-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#programs",
+    "size": "mobile",
+    "colorScheme": "light",
+    "captures": [
+      "learn-programs-mobile-light-1.png",
+      "learn-programs-mobile-light-2.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#word-problems",
+    "size": "mobile",
+    "colorScheme": "light",
+    "captures": [
+      "learn-word-problems-mobile-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "compare",
+    "selector": ".source",
+    "size": "mobile",
+    "colorScheme": "light",
+    "captures": [
+      "compare-source-mobile-light-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#abstract",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "captures": [
+      "report-abstract-mobile-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#word-problems",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "captures": [
+      "report-word-problems-mobile-dark-1.png",
+      "report-word-problems-mobile-dark-2.png",
+      "report-word-problems-mobile-dark-3.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": [
+        {
+          "width": 350,
+          "container": 350
+        }
+      ]
+    },
+    "errors": []
+  },
+  {
+    "route": "report",
+    "selector": "#meaning",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "captures": [
+      "report-meaning-mobile-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#programs",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "captures": [
+      "learn-programs-mobile-dark-1.png",
+      "learn-programs-mobile-dark-2.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "learn",
+    "selector": "#word-problems",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "captures": [
+      "learn-word-problems-mobile-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  },
+  {
+    "route": "compare",
+    "selector": ".source",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "captures": [
+      "compare-source-mobile-dark-1.png"
+    ],
+    "geometry": {
+      "pageWidth": 390,
+      "viewportWidth": 390,
+      "tables": []
+    },
+    "errors": []
+  }
+]

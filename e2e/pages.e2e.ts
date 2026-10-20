@@ -38,9 +38,26 @@ test('holonomy lab opens with a visible model and can inspect the real recording
 	);
 });
 
-test('report preserves the scope and the pending word-problem handoff', async ({ page }) => {
+test('report includes completed word-problem results with their limits', async ({ page }) => {
 	await page.goto('/report');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Learning to compose');
-	await expect(page.locator('main')).toContainText('results pending');
+	const wordProblems = page.locator('#word-problems');
+	await expect(wordProblems).toContainText('294 runs');
+	await expect(
+		wordProblems
+			.getByRole('row')
+			.filter({ has: page.getByRole('rowheader', { name: 'Holonomy', exact: true }) })
+			.getByRole('cell')
+	).toHaveText(['100.0', '100.0', '99.8', '98.4']);
+	await expect(wordProblems).toContainText('20,000-step amendment runs');
+	await expect(wordProblems).toContainText('no demonstrated capacity gain');
+	await expect(wordProblems).toContainText('97.3% (99.7, 96.9, 95.3)');
+	await expect(wordProblems).toContainText('Some predictions failed');
+	await expect(page.locator('main')).not.toContainText('results pending');
 	await expect(page.locator('main')).toContainText('Seq2Tens');
+	await page.goto('/learn');
+	await expect(page.locator('#word-problems')).toContainText('98.4%');
+	await expect(
+		page.locator('#word-problems').getByRole('link', { name: 'full results' })
+	).toHaveAttribute('href', '/report#word-problems');
 });

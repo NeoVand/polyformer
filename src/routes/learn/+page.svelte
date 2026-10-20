@@ -1596,7 +1596,7 @@
 				<h3><span class="n">{number('programs')}</span>A second test: execute a program</h3>
 				<p class="src">
 					<span class="mark new"></span>The task; <span class="mark measured inline"></span>GROUPS
-					§7, three seeds
+					§8, three seeds
 				</p>
 				<p>
 					Start with four variables holding 0, 1, 2 and 3. An instruction swaps the contents of two
@@ -1618,10 +1618,14 @@
 					computation. These are short synthetic programs, not evidence about natural code or long
 					programs.
 				</p>
-				<!-- WORD-PROBLEMS -->
-				<p>
-					A separate word-problem test asks models to compose an entire sequence of group
-					operations; results pending.
+				<p id="word-problems">
+					In the separate running-product test, holonomy reaches 100.0% on A₅ and 98.4% on S₅ at
+					length 64, while softmax and commuting layers lose the product after early positions. Its
+					short-product features help a matrix-state recurrence learn faster within this budget; the
+					prefix-only recurrence reaches similar accuracy in 20,000-step runs, and Householder
+					transitions learn S₅ classes faster still (<a href={`${resolve('/report')}#word-problems`}
+						>full results</a
+					>).
 				</p>
 			</section>
 

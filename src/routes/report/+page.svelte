@@ -56,6 +56,17 @@
 		{ id: 'zs4', label: 'Match-4' },
 		{ id: 'zs5', label: 'Match-5' }
 	];
+	// Three-seed means from wp_main.jsonl, rounded as in research/wp_summary.py.
+	const wordRows = [
+		{ label: 'Holonomy', scores: ['100.0', '100.0', '99.8', '98.4'] },
+		{ label: 'Orthogonal RNN', scores: ['100.0', '100.0', '71.4', '29.3'] },
+		{ label: 'Householder RNN', scores: ['98.9', '100.0', '99.9', '100.0'] },
+		{ label: 'Newton (commuting)', scores: ['17.5', '5.5', '12.3', '4.5'] },
+		{ label: 'Softmax 1L', scores: ['14.0', '4.7', '7.3', '2.8'] },
+		{ label: 'Softmax 2L', scores: ['14.0', '4.8', '7.2', '2.4'] },
+		{ label: 'DeltaProduct', scores: ['14.2', '4.8', '10.4', '3.5'] }
+	];
+	const wordTasks = ['A₅ · 16', 'A₅ · 64', 'S₅ · 16', 'S₅ · 64'];
 	function earlyResult(model: string, task: string) {
 		const rows = model.startsWith('newton') ? newtonE : task === 'set' ? baseline : phaseA;
 		const row = rows.find((entry) => entry.model === model && entry.task === task);
@@ -115,9 +126,11 @@
 				supplies the missing product and solves it. When composition depends on order, commuting products
 				reach at most an exact information ceiling. Holonomy attention instead multiplies learned rotations
 				and acquires approximate group representations, including the icosahedral rotations of A₅. We
-				give qualified constructive theorems and a second benchmark where ordinary order-aware baselines
-				also succeed. The contribution is a specific relational use of established sequence-composition
-				ideas, with measured gains and explicit limits.
+				give qualified constructive theorems and a swap-program benchmark where ordinary order-aware baselines
+				also succeed. On A₅/S₅ running products, short subset products improve learning over the same
+				rotation-based matrix recurrence within the tested budget; they add no demonstrated state-tracking
+				capacity. The contribution is a specific relational use of established sequence-composition ideas,
+				with measured gains and explicit limits.
 			</p>
 			<p class="reading">
 				For the visual introduction, start with <a href={resolve('/learn')}>Learn</a>. For the
@@ -628,7 +641,7 @@
 			<h2><span>7</span> A second test: execute swap programs</h2>
 			<aside class="side">
 				<b>Preregistered confirmation</b>Predictions committed before the three-seed grid. Six
-				instructions, one query; 6,000 steps. <a href={source('research/GROUPS.md')}>GROUPS §7</a>.
+				instructions, one query; 6,000 steps. <a href={source('research/GROUPS.md')}>GROUPS §8</a>.
 			</aside>
 			<p>
 				Start with two independent sets of four variables, each holding values 0, 1, 2, 3.
@@ -662,7 +675,7 @@
 				</table>
 			</div>
 			<p class="caption">
-				<b>Table 6.</b> Mean (seeds 0, 1, 2), copied from GROUPS §7.3.
+				<b>Table 6.</b> Mean (seeds 0, 1, 2), copied from GROUPS §8.3.
 				<a href={source('research/results/grp_swap.jsonl')}>Raw swap-program results</a>. The
 				ceiling concerns population accuracy; finite test scores can be slightly higher. The
 				matrix-state RNN is a generic learned orthogonal recurrence, not a claimed reproduction of a
@@ -685,17 +698,81 @@
 		</section>
 
 		<section id="word-problems">
-			<h3>Word problems · results pending</h3>
-			<!-- WORD-PROBLEMS -->
+			<h3>Word problems · short products help learn the long one</h3>
 			<p>
-				A group's word problem asks whether the product of an entire sequence equals the identity.
-				The A₅/S₅ comparison with softmax and matrix-state recurrence is in progress; <strong
-					>results pending</strong
-				>. No empirical conclusion is included here.
+				Here the model reads A₅ or S₅ operations and predicts their running product at every
+				position: 60 or 120 classes. A binary variant asks whether that product fixes one letter.
+				Predictions were committed before the main grid; 294 runs include pilots, the three-seed
+				grid, registered amendments and exploratory follow-ups.
+			</p>
+			<div class="table-scroll">
+				<table aria-label="Word-problem class accuracy">
+					<thead>
+						<tr>
+							<th scope="col">Arm</th>
+							{#each wordTasks as task (task)}
+								<th scope="col" class="num">{task}</th>
+							{/each}
+						</tr>
+					</thead>
+					<tbody>
+						{#each wordRows as row (row.label)}
+							<tr>
+								<th scope="row">{row.label}</th>
+								{#each wordTasks as task, i (task)}
+									<td class="num">{row.scores[i]}</td>
+								{/each}
+							</tr>
+						{/each}
+					</tbody>
+				</table>
+			</div>
+			<p class="caption">
+				<b>Table 7.</b> Balanced accuracy %, all positions, three-seed means rounded to one decimal.
+				Main-grid runs: width 64, 6,000 steps at length 16; 12,000 at 64. Holonomy uses d = 3 on A₅,
+				d = 5 on S₅; the orthogonal RNN uses d = 5 except A₅ at 64 (d = 3). Householder RNN: d = 5;
+				it and DeltaProduct use two Householder steps per token on A₅, four on S₅. One layer unless
+				shown.
+				<a href={source('research/results/wp_main.jsonl')}>Raw results</a>;
+				<a href={source('research/GROUPS.md')}>GROUPS §7</a>.
+			</p>
+			<p>
+				<strong>The predicted structural limits held.</strong> A₅ class tracking succeeds with three-dimensional
+				rotations; a faithful S₅ representation needs dimension five in one rotation head, or four with
+				reflections. Newton stays below its estimated commuting ceiling. One- and two-layer softmax reach
+				only 0.8–1.7% in the second half of class sequences. Removing holonomy's prefix product leaves
+				positions 1–3 nearly perfect and accuracy at most 10% from position 5 onward. A second layer rescued
+				none of the tested failing arms.
+			</p>
+			<p>
+				<strong>The surprise is learning speed.</strong> The prefix is already an orthogonal matrix-state
+				RNN. We predicted that adding short-product sectors would change accuracy by at most three points;
+				the S₅ gaps above reject that prediction. In the registered 20,000-step amendment runs, the prefix-only
+				RNN reaches 100.0% at length 16 and 99.4% at 64. Short products improve speed and reliability
+				within this budget, with no demonstrated capacity gain. Householder transitions are faster still
+				on S₅ classes: every seed reaches 90% by 1,800 steps at length 16 and 2,400 at 64.
+			</p>
+			<p>
+				<strong>Some predictions failed.</strong> The class-task thresholds hold only after the registered
+				amendments; the binary-task prediction remains false. A₅ holonomy d = 3 reaches just 63.0% at
+				length 16, while exploratory d = 4 runs reach 100.0% on all three seeds: the label depends on
+				a different representation. S₅ binary tracking at 64 also misses its threshold, and DeltaProduct's
+				predicted S₅ binary success at 16 fails on one seed (61.7%). An available group representation
+				does not by itself guarantee learning the readout.
+			</p>
+			<p>
+				<strong>Length generalization was measured.</strong> Trained at 16 and tested at 64, S₅ holonomy
+				d = 5 reaches 97.3% (99.7, 96.9, 95.3); the Householder RNN reaches 98.2%. This rejects the prediction
+				that rotations would fail to extrapolate. A₅ holonomy d = 3 reaches 100.0%, but one Householder
+				seed falls to 77.2%, another miss. These are finite length tests, not arbitrary-length guarantees.
 			</p>
 			<p class="caption">
-				The distinction between fixed-length subset tasks and growing-length word problems is set
-				out in <a href={source('research/THEORY.md')}>THEORY §6</a>.
+				These comparisons are not matched for parameters or FLOPs. DeltaProduct is a minimal
+				width-64 implementation without the published short convolution; its class-task result does
+				not establish a limitation of the method <Cite refs={BIB} id="deltaproduct" />. Softmax uses
+				learned positions, so its untrained positions 17–64 make its extrapolation scores
+				uninterpretable. Full predictions, per-seed results and amendment runs:
+				<a href={source('research/GROUPS.md')}>GROUPS §§7.6–7.8</a>.
 			</p>
 		</section>
 
@@ -755,9 +832,10 @@
 			</p>
 			<p>
 				That is a precise synthetic result. It does not establish a language-model improvement, a
-				universal representation-dimension law, a general optimization barrier, or an advantage over
-				recurrence. Native composition may reduce optimization or sample demands; proving that is
-				still open.
+				universal representation-dimension law, a general optimization barrier, or a universal
+				advantage over recurrence. Short-product features improved learning speed and reliability
+				against the same rotation prefix in these runs; Householder recurrence was faster on S₅
+				classes. Whether those gains survive resource matching and natural data remains open.
 			</p>
 			<ol class="next">
 				<li>

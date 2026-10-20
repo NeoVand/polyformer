@@ -349,7 +349,7 @@
 			</section>
 			<p class="source">
 				Sources: <a href="https://github.com/NeoVand/polyformer/blob/main/research/GROUPS.md"
-					>GROUPS.md §5 and §7</a
+					>GROUPS.md §5 and §8</a
 				>,
 				<a href="https://github.com/NeoVand/polyformer/blob/main/research/THEORY.md">THEORY.md §2</a
 				>, and the
@@ -380,7 +380,7 @@
 			<section class="hero" aria-label="Held-out accuracy">
 				<div class="h-row">
 					<h2>Held-out accuracy</h2>
-					<span class="badge" class:live>
+					<span class={['badge', { live }]}>
 						{live
 							? 'Live in this browser'
 							: recorded
@@ -454,7 +454,7 @@
 					{#if cardSuite}
 						<div class="cards">
 							{#each layout as card, i (i)}
-								<span class="slot" class:in={members[i]}>
+								<span class={['slot', { in: members[i] }]}>
 									<SetCard {card} width={30} dim={!members[i]} />
 								</span>
 							{/each}
@@ -472,7 +472,7 @@
 				</div>
 				<ol class="runs">
 					{#each rows as row (row.spec.id)}
-						<li class="run" class:lead={row.acc !== undefined && row.acc === best && best > 0}>
+						<li class={['run', { lead: row.acc !== undefined && row.acc === best && best > 0 }]}>
 							<div class="r-top">
 								<svg width="22" height="10" aria-hidden="true">
 									<line
@@ -487,7 +487,7 @@
 									/>
 								</svg>
 								<span class="name">{row.spec.label}</span>
-								<span class="acc num" class:rec={row.recordedOnly}
+								<span class={['acc num', { rec: row.recordedOnly }]}
 									>{row.acc === undefined ? '—' : pct(row.acc, 0)}</span
 								>
 							</div>
