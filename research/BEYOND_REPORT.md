@@ -1,7 +1,7 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running; the registered headline criterion has already failed.** Evidence snapshot:
-20 October 2026, 17:09 UTC. B's seed-1 final loss is **3.642390 nats/token**, versus **3.612649**
+20 October 2026, 17:32 UTC. B's seed-1 final loss is **3.642390 nats/token**, versus **3.612649**
 for convolved softmax, **3.607192** for convolved Parallax, **3.575800** for Gated DeltaNet
 and **3.564820** for DeltaProduct.
 B misses both the required softmax threshold of **3.576523** and the RNN requirement.
@@ -20,7 +20,8 @@ All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete. B's language plan is frozen, and its
 18-trial language rate sweep is complete. All arms select .008, and B trails both softmax controls
 and both recurrent controls at that short tuning budget. All six seed-1 final runs are complete
-and valid; seed-2/3 results remain pending. B demonstrates successful synthetic-task learning in this regime, but
+and valid; the seed-2 softmax controls are also complete, with the other seed-2/3 results pending.
+B demonstrates successful synthetic-task learning in this regime, but
 its first final language result does not beat the stronger attention controls.
 
 The question is whether one affordable layer can combine content selection, improved local
@@ -299,8 +300,8 @@ and exact, unrounded counts are in the frozen plan. All controls meet or exceed 
 
 | Arm | Final loss, seed 1 | Seed 2 | Seed 3 |
 |---|---|---|---|
-| Raw softmax | 3.661557 | Pending | Pending |
-| Convolved softmax | 3.612649 | Pending | Pending |
+| Raw softmax | 3.661557 | 3.649212 | Pending |
+| Convolved softmax | 3.612649 | 3.609362 | Pending |
 | Convolved Parallax | 3.607192 | Pending | Pending |
 | Gated DeltaNet, one update | 3.575800 | Pending | Pending |
 | Gated DeltaProduct, four updates | 3.564820 | Pending | Pending |

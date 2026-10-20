@@ -508,6 +508,12 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   controls. Seed 2 remains healthy; both softmax arms have passed halfway. No protocol, source,
   rate, compute budget or training decision changed.
 
+- 2026-10-20 17:32 UTC — Seed-2 raw/convolved softmax final raw losses are
+  3.6492122039198875 / 3.6093617975711823 nats/token. Both production audits pass all
+  provenance, counter, 16-mark and 1,024-sequence checks; both checkpoints are independently
+  downloaded and fingerprinted. Four runs remain active. Settled-plus-reserved estimates are
+  language $51.474516 and total $77.830740; no failures or retries.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
