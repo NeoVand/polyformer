@@ -53,7 +53,8 @@ class GeneratorTests(unittest.TestCase):
             for split in ("train", "test"):
                 for depth in range(1, 5):
                     task = arc.make_task(rng, depth, tier, split)
-                    self.assertEqual(arc.operator_split(task["program"], tier), split)
+                    if tier != "irreversible" or depth != 1:
+                        self.assertEqual(arc.operator_split(task["program"], tier), split)
                     self.assertEqual(len(task["train"]), 3)
                     self.assertEqual(len(task["test"]), 1)
                     features, target = arc.encode_task(task)
@@ -63,6 +64,7 @@ class GeneratorTests(unittest.TestCase):
                     for leave in range(3):
                         adapted, label = arc.encode_task(task, leave_out=leave)
                         self.assertTrue(np.all(adapted[leave * 36:(leave + 1) * 36, 1] == 10))
+                        self.assertTrue(np.all(adapted[leave * 36:(leave + 1) * 36, 0] == 10))
                         np.testing.assert_array_equal(label, np.asarray(task["train"][leave]["output"]).reshape(-1))
                         changed = {**task, "train": [dict(p) for p in task["train"]]}
                         changed["train"][leave]["output"] = np.zeros((6, 6), int).tolist()
@@ -81,6 +83,17 @@ class GeneratorTests(unittest.TestCase):
 
 
 class ModelTests(unittest.TestCase):
+    def test_adaptation_reset_and_query_target_is_not_used(self):
+        import jax
+        rng = np.random.default_rng(7)
+        task = arc.make_task(rng, 1, "invertible", "test")
+        altered = {**task, "test": [{**task["test"][0], "output": np.zeros((6, 6), int).tolist()}]}
+        params = arc.init_model(jax.random.PRNGKey(5), "softmax", width=16, layers=1)
+        result = arc.evaluate(params, [task, altered], "softmax", ttt_steps=1, return_predictions=True)
+        predictions = result["task_predictions"]
+        self.assertEqual(predictions[0]["without_ttt"], predictions[1]["without_ttt"])
+        self.assertEqual(predictions[0]["with_ttt"], predictions[1]["with_ttt"])
+
     def test_shapes_gradients_and_task_adaptation(self):
         import jax
         import jax.numpy as jnp

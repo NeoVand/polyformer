@@ -61,9 +61,18 @@ in-context operator inference, and rung 3, real ARC-AGI-1 with a TRM-style recur
   L4 $0.000222/s plus conservative CPU/RAM maxima, startup and idle allowances. Estimates are not invoices.
   Important design caveat recorded before results: invertible ARC primitives form a closed family, so sampled
   depth is not intrinsic operator complexity. We will measure reduced identities/ambiguity and state this limit.
-- 2026-10-20 19:29 UTC — Both generator/layer test suites are written first and observed failing on missing
+- 2026-10-20 19:28 UTC — Both generator/layer test suites are written first and observed failing on missing
   implementation modules. Experiment 1 avoids answer-conditioned rejection: reciprocal transfers preserve the
   initial owner's counterfactual difference. Decision weighting will mean equal weight per final answer and
   zero narrative-token weight, explicitly the strongest version of the requested reweighting. Experiment 2
   consumes only demonstration input/output grids and query input, with output masking and task-reset TTT tests.
   No paid calls yet. Main comparisons will use fresh seeds 1/2/3, keeping seed 0 for pilots only.
+- 2026-10-20 19:30 UTC — Stage-0 passes: 7 narrative tests (including 4,000 brute-force trajectories), 7 ARC tests
+  (D4 closure, inverse/compound transforms, no-label-leak and task-reset TTT), and 5 runner tests. Both local
+  training/evaluation smoke runs succeed. Freeze seed-0 pilots: four narrative arms, 1,500 updates, batch64,
+  eval seed1234 (reserved main eval73517 untouched); two mixed ARC arms, 1,500 updates, batch32, 16 tasks/cell,
+  plus both architectures on identity/fixed-rotation/random-colour controls, 500 updates, TTT off for controls.
+  Shared widths64/depth2; default rates narrative .002, ARC .001. Mixed ARC TTT16 at .001. Pilot timeouts900s
+  (mixed/narrative) and600s (controls); no main runs yet. Main seeds remain1/2/3. In irreversible depth1 only,
+  use input-heldout primitive controls because crop and gravity are singleton functions; depths2–4 retain
+  program-hash separation. Fixed-canvas crop means crop-to-origin then zero-pad, not variable-size ARC crop.
