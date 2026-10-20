@@ -1,0 +1,66 @@
+[
+  {
+    "size": "desktop",
+    "theme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440
+    },
+    "model": "Recorded default, then Ideal",
+    "motionFrames": "220 ms after selecting element31, then1000 ms later",
+    "orderSteps": [
+      "Start",
+      "First move",
+      "Both moves"
+    ]
+  },
+  {
+    "size": "desktop",
+    "theme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440
+    },
+    "model": "Recorded default, then Ideal",
+    "motionFrames": "220 ms after selecting element31, then1000 ms later",
+    "orderSteps": [
+      "Start",
+      "First move",
+      "Both moves"
+    ]
+  },
+  {
+    "size": "mobile",
+    "theme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390
+    },
+    "model": "Recorded default, then Ideal",
+    "motionFrames": "220 ms after selecting element31, then1000 ms later",
+    "orderSteps": [
+      "Start",
+      "First move",
+      "Both moves"
+    ]
+  },
+  {
+    "size": "mobile",
+    "theme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390
+    },
+    "model": "Recorded default, then Ideal",
+    "motionFrames": "220 ms after selecting element31, then1000 ms later",
+    "orderSteps": [
+      "Start",
+      "First move",
+      "Both moves"
+    ]
+  }
+]

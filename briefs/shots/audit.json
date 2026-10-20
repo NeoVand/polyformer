@@ -1,0 +1,398 @@
+[
+  {
+    "page": "landing",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "compare",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "compare-groups",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 1305
+    }
+  },
+  {
+    "page": "explore-cubic",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "explore-newton",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "explore-diagrams",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "explore-groups",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 1056
+    }
+  },
+  {
+    "page": "learn",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 26616
+    }
+  },
+  {
+    "page": "report",
+    "size": "desktop",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 10558
+    }
+  },
+  {
+    "page": "landing",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "compare",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "compare-groups",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 1305
+    }
+  },
+  {
+    "page": "explore-cubic",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "explore-newton",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "explore-diagrams",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 900
+    }
+  },
+  {
+    "page": "explore-groups",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 1056
+    }
+  },
+  {
+    "page": "learn",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 26616
+    }
+  },
+  {
+    "page": "report",
+    "size": "desktop",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 1440,
+      "scroll": 1440,
+      "height": 10558
+    }
+  },
+  {
+    "page": "landing",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2285
+    }
+  },
+  {
+    "page": "compare",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2041
+    }
+  },
+  {
+    "page": "compare-groups",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2053
+    }
+  },
+  {
+    "page": "explore-cubic",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 1936
+    }
+  },
+  {
+    "page": "explore-newton",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2072
+    }
+  },
+  {
+    "page": "explore-diagrams",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2070
+    }
+  },
+  {
+    "page": "explore-groups",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 1798
+    }
+  },
+  {
+    "page": "learn",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 35617
+    }
+  },
+  {
+    "page": "report",
+    "size": "mobile",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 14555
+    }
+  },
+  {
+    "page": "landing",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2285
+    }
+  },
+  {
+    "page": "compare",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2041
+    }
+  },
+  {
+    "page": "compare-groups",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2053
+    }
+  },
+  {
+    "page": "explore-cubic",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 1936
+    }
+  },
+  {
+    "page": "explore-newton",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2072
+    }
+  },
+  {
+    "page": "explore-diagrams",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 2070
+    }
+  },
+  {
+    "page": "explore-groups",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 1798
+    }
+  },
+  {
+    "page": "learn",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 35617
+    }
+  },
+  {
+    "page": "report",
+    "size": "mobile",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": {
+      "width": 390,
+      "scroll": 390,
+      "height": 14555
+    }
+  }
+]

@@ -1,0 +1,86 @@
+[
+  {
+    "page": "landing-graph",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "landing-composition",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "landing-results",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "compare-runs",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "compare-characters",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "explore-diagrams-expanded",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "explore-newton-inspector",
+    "colorScheme": "dark",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "landing-graph",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "landing-composition",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "landing-results",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "compare-runs",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "compare-characters",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "explore-diagrams-expanded",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "page": "explore-newton-inspector",
+    "colorScheme": "light",
+    "errors": [],
+    "overflow": false
+  }
+]

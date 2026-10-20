@@ -1,0 +1,111 @@
+[
+  {
+    "route": "/",
+    "status": 200,
+    "title": "Learning to compose | Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/learn",
+    "status": 200,
+    "title": "Learn to compose | Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/report",
+    "status": 200,
+    "title": "Learning to compose · Report | Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/compare",
+    "status": 200,
+    "title": "SET bench | Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/explore",
+    "status": 200,
+    "title": "Linked tensor lab | Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/explore/newton",
+    "status": 200,
+    "title": "Explore Newton attention | Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/explore/diagrams",
+    "status": 200,
+    "title": "Diagrams | Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "route": "/explore/groups",
+    "status": 200,
+    "title": "Holonomy · Polyformer",
+    "links": [
+      "/polyformer/learn",
+      "/polyformer/explore",
+      "/polyformer/compare",
+      "/polyformer/report"
+    ],
+    "errors": [],
+    "failed": []
+  },
+  {
+    "asset": "a5-irrep.json",
+    "status": 200,
+    "validJSON": true
+  }
+]

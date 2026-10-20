@@ -1,0 +1,1794 @@
+[
+  {
+    "id": "intro",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 318.9375,
+        "width": 505.171875,
+        "height": 308.125,
+        "top": 318.9375,
+        "right": 1316.421875,
+        "bottom": 627.0625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 870.421875,
+        "y": 574.9375,
+        "width": 386.8125,
+        "height": 52.125,
+        "top": 574.9375,
+        "right": 1257.234375,
+        "bottom": 627.0625,
+        "left": 870.421875
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "groups",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 288.46875,
+        "width": 505.171875,
+        "height": 369.046875,
+        "top": 288.46875,
+        "right": 1316.421875,
+        "bottom": 657.515625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 619.140625,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 619.140625,
+        "right": 1316.421875,
+        "bottom": 657.515625,
+        "left": 811.25
+      },
+      "heading": "One clock · three positionsChange first move"
+    },
+    "errors": []
+  },
+  {
+    "id": "language",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 358.796875,
+        "width": 505.171875,
+        "height": 228.390625,
+        "top": 358.796875,
+        "right": 1316.421875,
+        "bottom": 587.1875,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 548.8125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 548.8125,
+        "right": 1316.421875,
+        "bottom": 587.1875,
+        "left": 811.25
+      },
+      "heading": "Language · smaller loss is better"
+    },
+    "errors": []
+  },
+  {
+    "id": "features",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 351.09375,
+        "width": 505.171875,
+        "height": 243.8125,
+        "top": 351.09375,
+        "right": 1316.421875,
+        "bottom": 594.90625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 556.53125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 556.53125,
+        "right": 1316.421875,
+        "bottom": 594.90625,
+        "left": 811.25
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "order",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 251.46875,
+        "width": 505.171875,
+        "height": 443.0625,
+        "top": 251.46875,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 656.15625,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 656.15625,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "representations",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 238.875,
+        "width": 505.171875,
+        "height": 468.25,
+        "top": 238.875,
+        "right": 1316.421875,
+        "bottom": 707.125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 668.75,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 668.75,
+        "right": 1316.421875,
+        "bottom": 707.125,
+        "left": 811.25
+      },
+      "heading": "The 60 rotations of an icosahedronNext rotation"
+    },
+    "errors": []
+  },
+  {
+    "id": "holonomy",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 309.296875,
+        "width": 505.171875,
+        "height": 327.390625,
+        "top": 309.296875,
+        "right": 1316.421875,
+        "bottom": 636.6875,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 598.3125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 598.3125,
+        "right": 1316.421875,
+        "bottom": 636.6875,
+        "left": 811.25
+      },
+      "heading": "Read token b · keep the sequence order"
+    },
+    "errors": []
+  },
+  {
+    "id": "group-results",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 291.140625,
+        "width": 505.171875,
+        "height": 363.71875,
+        "top": 291.140625,
+        "right": 1316.421875,
+        "bottom": 654.859375,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 616.484375,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 616.484375,
+        "right": 1316.421875,
+        "bottom": 654.859375,
+        "left": 811.25
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "limits",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 251.46875,
+        "width": 505.171875,
+        "height": 443.0625,
+        "top": 251.46875,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 656.15625,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 656.15625,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "programs",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 327.78125,
+        "width": 505.171875,
+        "height": 290.421875,
+        "top": 327.78125,
+        "right": 1316.421875,
+        "bottom": 618.203125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 579.828125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 579.828125,
+        "right": 1316.421875,
+        "bottom": 618.203125,
+        "left": 811.25
+      },
+      "heading": "A small program · inspect variable 0"
+    },
+    "errors": []
+  },
+  {
+    "id": "meaning",
+    "device": "desktop",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 323.828125,
+        "width": 505.171875,
+        "height": 298.328125,
+        "top": 323.828125,
+        "right": 1316.421875,
+        "bottom": 622.15625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 583.78125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 583.78125,
+        "right": 1316.421875,
+        "bottom": 622.15625,
+        "left": 811.25
+      },
+      "heading": "What happens when features meet?"
+    },
+    "errors": []
+  },
+  {
+    "id": "intro",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 318.9375,
+        "width": 505.171875,
+        "height": 308.125,
+        "top": 318.9375,
+        "right": 1316.421875,
+        "bottom": 627.0625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 870.421875,
+        "y": 574.9375,
+        "width": 386.8125,
+        "height": 52.125,
+        "top": 574.9375,
+        "right": 1257.234375,
+        "bottom": 627.0625,
+        "left": 870.421875
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "groups",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 288.46875,
+        "width": 505.171875,
+        "height": 369.046875,
+        "top": 288.46875,
+        "right": 1316.421875,
+        "bottom": 657.515625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 619.140625,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 619.140625,
+        "right": 1316.421875,
+        "bottom": 657.515625,
+        "left": 811.25
+      },
+      "heading": "One clock · three positionsChange first move"
+    },
+    "errors": []
+  },
+  {
+    "id": "language",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 358.796875,
+        "width": 505.171875,
+        "height": 228.390625,
+        "top": 358.796875,
+        "right": 1316.421875,
+        "bottom": 587.1875,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 548.8125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 548.8125,
+        "right": 1316.421875,
+        "bottom": 587.1875,
+        "left": 811.25
+      },
+      "heading": "Language · smaller loss is better"
+    },
+    "errors": []
+  },
+  {
+    "id": "features",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 351.09375,
+        "width": 505.171875,
+        "height": 243.8125,
+        "top": 351.09375,
+        "right": 1316.421875,
+        "bottom": 594.90625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 556.53125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 556.53125,
+        "right": 1316.421875,
+        "bottom": 594.90625,
+        "left": 811.25
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "order",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 251.46875,
+        "width": 505.171875,
+        "height": 443.0625,
+        "top": 251.46875,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 656.15625,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 656.15625,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "representations",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 238.875,
+        "width": 505.171875,
+        "height": 468.25,
+        "top": 238.875,
+        "right": 1316.421875,
+        "bottom": 707.125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 668.75,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 668.75,
+        "right": 1316.421875,
+        "bottom": 707.125,
+        "left": 811.25
+      },
+      "heading": "The 60 rotations of an icosahedronNext rotation"
+    },
+    "errors": []
+  },
+  {
+    "id": "holonomy",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 309.296875,
+        "width": 505.171875,
+        "height": 327.390625,
+        "top": 309.296875,
+        "right": 1316.421875,
+        "bottom": 636.6875,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 598.3125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 598.3125,
+        "right": 1316.421875,
+        "bottom": 636.6875,
+        "left": 811.25
+      },
+      "heading": "Read token b · keep the sequence order"
+    },
+    "errors": []
+  },
+  {
+    "id": "group-results",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 291.140625,
+        "width": 505.171875,
+        "height": 363.71875,
+        "top": 291.140625,
+        "right": 1316.421875,
+        "bottom": 654.859375,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 616.484375,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 616.484375,
+        "right": 1316.421875,
+        "bottom": 654.859375,
+        "left": 811.25
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "limits",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 251.46875,
+        "width": 505.171875,
+        "height": 443.0625,
+        "top": 251.46875,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 656.15625,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 656.15625,
+        "right": 1316.421875,
+        "bottom": 694.53125,
+        "left": 811.25
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "programs",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 327.78125,
+        "width": 505.171875,
+        "height": 290.421875,
+        "top": 327.78125,
+        "right": 1316.421875,
+        "bottom": 618.203125,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 579.828125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 579.828125,
+        "right": 1316.421875,
+        "bottom": 618.203125,
+        "left": 811.25
+      },
+      "heading": "A small program · inspect variable 0"
+    },
+    "errors": []
+  },
+  {
+    "id": "meaning",
+    "device": "desktop",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 1440,
+      "width": 1440,
+      "figure": {
+        "x": 811.25,
+        "y": 66,
+        "width": 505.171875,
+        "height": 814,
+        "top": 66,
+        "right": 1316.421875,
+        "bottom": 880,
+        "left": 811.25
+      },
+      "content": {
+        "x": 811.25,
+        "y": 323.828125,
+        "width": 505.171875,
+        "height": 298.328125,
+        "top": 323.828125,
+        "right": 1316.421875,
+        "bottom": 622.15625,
+        "left": 811.25
+      },
+      "caption": {
+        "x": 811.25,
+        "y": 583.78125,
+        "width": 505.171875,
+        "height": 38.375,
+        "top": 583.78125,
+        "right": 1316.421875,
+        "bottom": 622.15625,
+        "left": 811.25
+      },
+      "heading": "What happens when features meet?"
+    },
+    "errors": []
+  },
+  {
+    "id": "intro",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 56,
+        "width": 358,
+        "height": 308.078125,
+        "top": 56,
+        "right": 374,
+        "bottom": 364.078125,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 312,
+        "width": 358,
+        "height": 52.078125,
+        "top": 312,
+        "right": 374,
+        "bottom": 364.078125,
+        "left": 16
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "groups",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 75.59375,
+        "width": 358,
+        "height": 260.515625,
+        "top": 75.59375,
+        "right": 374,
+        "bottom": 336.109375,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 308.109375,
+        "width": 358,
+        "height": 28,
+        "top": 308.109375,
+        "right": 374,
+        "bottom": 336.109375,
+        "left": 16
+      },
+      "heading": "One clock · three positionsChange first move"
+    },
+    "errors": []
+  },
+  {
+    "id": "language",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 105.578125,
+        "width": 358,
+        "height": 200.5625,
+        "top": 105.578125,
+        "right": 374,
+        "bottom": 306.140625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 264.140625,
+        "width": 358,
+        "height": 42,
+        "top": 264.140625,
+        "right": 374,
+        "bottom": 306.140625,
+        "left": 16
+      },
+      "heading": "Language · smaller loss is better"
+    },
+    "errors": []
+  },
+  {
+    "id": "features",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 92.359375,
+        "width": 358,
+        "height": 227,
+        "top": 92.359375,
+        "right": 374,
+        "bottom": 319.359375,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 277.359375,
+        "width": 358,
+        "height": 42,
+        "top": 277.359375,
+        "right": 374,
+        "bottom": 319.359375,
+        "left": 16
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "order",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 61.390625,
+        "width": 358,
+        "height": 288.9375,
+        "top": 61.390625,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 322.328125,
+        "width": 358,
+        "height": 28,
+        "top": 322.328125,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "representations",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 58.859375,
+        "width": 358,
+        "height": 293.984375,
+        "top": 58.859375,
+        "right": 374,
+        "bottom": 352.84375,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 310.84375,
+        "width": 358,
+        "height": 42,
+        "top": 310.84375,
+        "right": 374,
+        "bottom": 352.84375,
+        "left": 16
+      },
+      "heading": "The 60 rotations of an icosahedronNext rotation"
+    },
+    "errors": []
+  },
+  {
+    "id": "holonomy",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 83.921875,
+        "width": 358,
+        "height": 243.875,
+        "top": 83.921875,
+        "right": 374,
+        "bottom": 327.796875,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 285.796875,
+        "width": 358,
+        "height": 42,
+        "top": 285.796875,
+        "right": 374,
+        "bottom": 327.796875,
+        "left": 16
+      },
+      "heading": "Read token b · keep the sequence order"
+    },
+    "errors": []
+  },
+  {
+    "id": "group-results",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 58.203125,
+        "width": 358,
+        "height": 295.3125,
+        "top": 58.203125,
+        "right": 374,
+        "bottom": 353.515625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 325.515625,
+        "width": 358,
+        "height": 28,
+        "top": 325.515625,
+        "right": 374,
+        "bottom": 353.515625,
+        "left": 16
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "limits",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 61.390625,
+        "width": 358,
+        "height": 288.9375,
+        "top": 61.390625,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 322.328125,
+        "width": 358,
+        "height": 28,
+        "top": 322.328125,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "programs",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 93.8125,
+        "width": 358,
+        "height": 224.09375,
+        "top": 93.8125,
+        "right": 374,
+        "bottom": 317.90625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 275.90625,
+        "width": 358,
+        "height": 42,
+        "top": 275.90625,
+        "right": 374,
+        "bottom": 317.90625,
+        "left": 16
+      },
+      "heading": "A small program · inspect variable 0"
+    },
+    "errors": []
+  },
+  {
+    "id": "meaning",
+    "device": "mobile",
+    "colorScheme": "dark",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 81.6875,
+        "width": 358,
+        "height": 248.328125,
+        "top": 81.6875,
+        "right": 374,
+        "bottom": 330.015625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 302.015625,
+        "width": 358,
+        "height": 28,
+        "top": 302.015625,
+        "right": 374,
+        "bottom": 330.015625,
+        "left": 16
+      },
+      "heading": "What happens when features meet?"
+    },
+    "errors": []
+  },
+  {
+    "id": "intro",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 56,
+        "width": 358,
+        "height": 308.078125,
+        "top": 56,
+        "right": 374,
+        "bottom": 364.078125,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 312,
+        "width": 358,
+        "height": 52.078125,
+        "top": 312,
+        "right": 374,
+        "bottom": 364.078125,
+        "left": 16
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "groups",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 75.59375,
+        "width": 358,
+        "height": 260.515625,
+        "top": 75.59375,
+        "right": 374,
+        "bottom": 336.109375,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 308.109375,
+        "width": 358,
+        "height": 28,
+        "top": 308.109375,
+        "right": 374,
+        "bottom": 336.109375,
+        "left": 16
+      },
+      "heading": "One clock · three positionsChange first move"
+    },
+    "errors": []
+  },
+  {
+    "id": "language",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 105.578125,
+        "width": 358,
+        "height": 200.5625,
+        "top": 105.578125,
+        "right": 374,
+        "bottom": 306.140625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 264.140625,
+        "width": 358,
+        "height": 42,
+        "top": 264.140625,
+        "right": 374,
+        "bottom": 306.140625,
+        "left": 16
+      },
+      "heading": "Language · smaller loss is better"
+    },
+    "errors": []
+  },
+  {
+    "id": "features",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 92.359375,
+        "width": 358,
+        "height": 227,
+        "top": 92.359375,
+        "right": 374,
+        "bottom": 319.359375,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 277.359375,
+        "width": 358,
+        "height": 42,
+        "top": 277.359375,
+        "right": 374,
+        "bottom": 319.359375,
+        "left": 16
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "order",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 61.390625,
+        "width": 358,
+        "height": 288.9375,
+        "top": 61.390625,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 322.328125,
+        "width": 358,
+        "height": 28,
+        "top": 322.328125,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "representations",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 58.859375,
+        "width": 358,
+        "height": 293.984375,
+        "top": 58.859375,
+        "right": 374,
+        "bottom": 352.84375,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 310.84375,
+        "width": 358,
+        "height": 42,
+        "top": 310.84375,
+        "right": 374,
+        "bottom": 352.84375,
+        "left": 16
+      },
+      "heading": "The 60 rotations of an icosahedronNext rotation"
+    },
+    "errors": []
+  },
+  {
+    "id": "holonomy",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 83.921875,
+        "width": 358,
+        "height": 243.875,
+        "top": 83.921875,
+        "right": 374,
+        "bottom": 327.796875,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 285.796875,
+        "width": 358,
+        "height": 42,
+        "top": 285.796875,
+        "right": 374,
+        "bottom": 327.796875,
+        "left": 16
+      },
+      "heading": "Read token b · keep the sequence order"
+    },
+    "errors": []
+  },
+  {
+    "id": "group-results",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 58.203125,
+        "width": 358,
+        "height": 295.3125,
+        "top": 58.203125,
+        "right": 374,
+        "bottom": 353.515625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 325.515625,
+        "width": 358,
+        "height": 28,
+        "top": 325.515625,
+        "right": 374,
+        "bottom": 353.515625,
+        "left": 16
+      }
+    },
+    "errors": []
+  },
+  {
+    "id": "limits",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 61.390625,
+        "width": 358,
+        "height": 288.9375,
+        "top": 61.390625,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 322.328125,
+        "width": 358,
+        "height": 28,
+        "top": 322.328125,
+        "right": 374,
+        "bottom": 350.328125,
+        "left": 16
+      },
+      "heading": "Same operations · different orderRead left to right"
+    },
+    "errors": []
+  },
+  {
+    "id": "programs",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 93.8125,
+        "width": 358,
+        "height": 224.09375,
+        "top": 93.8125,
+        "right": 374,
+        "bottom": 317.90625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 275.90625,
+        "width": 358,
+        "height": 42,
+        "top": 275.90625,
+        "right": 374,
+        "bottom": 317.90625,
+        "left": 16
+      },
+      "heading": "A small program · inspect variable 0"
+    },
+    "errors": []
+  },
+  {
+    "id": "meaning",
+    "device": "mobile",
+    "colorScheme": "light",
+    "geometry": {
+      "scroll": 390,
+      "width": 390,
+      "figure": {
+        "x": 0,
+        "y": 46,
+        "width": 390,
+        "height": 320.71875,
+        "top": 46,
+        "right": 390,
+        "bottom": 366.71875,
+        "left": 0
+      },
+      "content": {
+        "x": 16,
+        "y": 81.6875,
+        "width": 358,
+        "height": 248.328125,
+        "top": 81.6875,
+        "right": 374,
+        "bottom": 330.015625,
+        "left": 16
+      },
+      "caption": {
+        "x": 16,
+        "y": 302.015625,
+        "width": 358,
+        "height": 28,
+        "top": 302.015625,
+        "right": 374,
+        "bottom": 330.015625,
+        "left": 16
+      },
+      "heading": "What happens when features meet?"
+    },
+    "errors": []
+  }
+]

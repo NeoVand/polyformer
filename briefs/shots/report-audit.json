@@ -1,0 +1,154 @@
+[
+  {
+    "size": "desktop",
+    "scheme": "light",
+    "tableWidths": [
+      {
+        "table": 1,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 2,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 3,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 4,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 5,
+        "width": 680,
+        "container": 680
+      },
+      {
+        "table": 6,
+        "width": 680,
+        "container": 680
+      }
+    ],
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "size": "desktop",
+    "scheme": "dark",
+    "tableWidths": [
+      {
+        "table": 1,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 2,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 3,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 4,
+        "width": 932,
+        "container": 932
+      },
+      {
+        "table": 5,
+        "width": 680,
+        "container": 680
+      },
+      {
+        "table": 6,
+        "width": 680,
+        "container": 680
+      }
+    ],
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "size": "mobile",
+    "scheme": "light",
+    "tableWidths": [
+      {
+        "table": 1,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 2,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 3,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 4,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 5,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 6,
+        "width": 350,
+        "container": 350
+      }
+    ],
+    "errors": [],
+    "overflow": false
+  },
+  {
+    "size": "mobile",
+    "scheme": "dark",
+    "tableWidths": [
+      {
+        "table": 1,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 2,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 3,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 4,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 5,
+        "width": 350,
+        "container": 350
+      },
+      {
+        "table": 6,
+        "width": 350,
+        "container": 350
+      }
+    ],
+    "errors": [],
+    "overflow": false
+  }
+]

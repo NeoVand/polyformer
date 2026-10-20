@@ -1,0 +1,91 @@
+{
+  "training": {
+    "backend": "wasm",
+    "viewport": {
+      "width": 1920,
+      "height": 1000
+    },
+    "enabled": [
+      "Standard · 1 layer"
+    ],
+    "pausedAt": "10 / 4,000",
+    "afterWait": "10 / 4,000",
+    "stable": true,
+    "device": "0s\nWebAssembly",
+    "errors": [],
+    "consoleErrors": [],
+    "groupsHasTraining": 0,
+    "afterGroupsHasTraining": 0,
+    "uniqueLossLabels": []
+  },
+  "mobile": [
+    {
+      "theme": "dark",
+      "controls": [
+        {
+          "label": "Reset to step 0",
+          "left": 10,
+          "right": 50
+        },
+        {
+          "label": "Train",
+          "left": 54,
+          "right": 94
+        },
+        {
+          "label": "Previous seed",
+          "left": 265.15625,
+          "right": 289.15625
+        },
+        {
+          "label": "Next seed",
+          "left": 307.15625,
+          "right": 331.15625
+        },
+        {
+          "label": "Export",
+          "left": 339.15625,
+          "right": 380
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scroll": 390
+      }
+    },
+    {
+      "theme": "light",
+      "controls": [
+        {
+          "label": "Reset to step 0",
+          "left": 10,
+          "right": 50
+        },
+        {
+          "label": "Train",
+          "left": 54,
+          "right": 94
+        },
+        {
+          "label": "Previous seed",
+          "left": 265.15625,
+          "right": 289.15625
+        },
+        {
+          "label": "Next seed",
+          "left": 307.15625,
+          "right": 331.15625
+        },
+        {
+          "label": "Export",
+          "left": 339.15625,
+          "right": 380
+        }
+      ],
+      "overflow": {
+        "viewport": 390,
+        "scroll": 390
+      }
+    }
+  ]
+}
