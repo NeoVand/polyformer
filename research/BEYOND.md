@@ -445,6 +445,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   useful noncommutativity. ConvP/B wall times are 1,309.290s/1,519.875s. Both checkpoints are
   downloaded and fingerprinted. GDN1/DP4 remain active without errors; later seeds remain required.
 
+- 2026-10-20 16:42 UTC — Seed-1 GDN1 completed and passed the full audit: final held-out
+  raw loss 3.575799696147442, 13,105 updates, 16 scheduled marks and 1,024 final sequence
+  losses. Worker wall time 2,107.770s; settled estimate $2.757914. Checkpoint bytes are
+  downloaded and fingerprinted. B therefore also fails this seed's RNN requirement, independently
+  of the still-running DP4 result. Five of six final seed-1 results are valid; no execution failures.
+  The later complete seed blocks remain mandatory.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
