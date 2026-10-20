@@ -177,6 +177,24 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   The patch is **not applied** to the frozen diagnostic worker sources; apply and record its source
   bridge only after Stage 1 finishes. No language quality sweep has begun.
 
+
+- 2026-10-20 14:08 UTC — All 46 primary jobs complete with no execution errors; integrity checks
+  pass. A scores 100% validation in all six cells. B scores 100% except two-layer S5 (0.807%);
+  C scores 100% except one-/two-layer S5 (64.70%/3.531%). Thirteen word-cell alternates at .002
+  are mechanically required; no retrieval alternate is triggered. Screen settled estimate is $8.319
+  including pilots; total settled estimate $15.403. The first-rate results do not establish confirmation.
+- 2026-10-20 14:08 UTC — Audit found a written-rule/executable discrepancy, missed in the earlier
+  review: section 4 requires the **candidate** to reach 90%/95% and be within 3 points below its
+  selected reference. The frozen selector additionally requires the **reference** to reach 90%/95%,
+  yielding `no_positive_control` otherwise. This extra restriction exists in preregistered code but
+  not in the written gate or original brief. The absolute candidate threshold already prevents a
+  chance-level match from passing. Finish every prescribed alternate unchanged before deciding
+  whether this discrepancy is material. Preserve the original executable outcome. Any reconciliation
+  must be explicit, uniform across A/B/C and all cells, committed before untouched confirmation
+  seeds, and reported alongside the original-code outcome; it cannot retroactively make that code's
+  gate pass. No missing/nonfinite reference may become an easy win, and reference selection, rates,
+  candidate thresholds, margins, budgets and confirmation seeds must remain unchanged.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

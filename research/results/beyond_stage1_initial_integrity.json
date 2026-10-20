@@ -1,0 +1,478 @@
+{
+  "invalid_measurements": 0,
+  "model_source_hashes": {
+    "beyond_diag.py": "ab176f04bdf08a4ebcc650672929f2627c910e53b631fffde8d8ed96696f6a39",
+    "beyond_layers.py": "766d943ed44a21691a4101fd5cb5aca558a12058c8f495ac2fedbc24c4506411",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "lm.py": "f962a571b97835b4243d8685c39d7830bd3ce7a4ebadc21d45a70936898ebab5"
+  },
+  "ok": true,
+  "pending": 0,
+  "protocol_id": "829e3a8f2bbdce4b2a2b1fdd602f0565704750cb3ce6e69b1fa96bbe408fab63",
+  "records": [
+    {
+      "actual_steps": 7253,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 431284.0,
+      "job_id": "07d5481c20f3e7c129a7cd6a",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 7253,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6668,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 469152.0,
+      "job_id": "f614853b8939db07002a17d5",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6668,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5562,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 562412.2352941176,
+      "job_id": "50e977941dbd3f3a84e376c7",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5562,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6000,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 521420.23529411765,
+      "job_id": "f518e130e00f4fc0471a685a",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6000,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5995,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 521804.23529411765,
+      "job_id": "64fa323154848493217e3809",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5995,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 9057,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 345388.23529411765,
+      "job_id": "f4a4a2109d4e8c37c8e14c03",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 9057,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5853,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 534496.0,
+      "job_id": "62568ed74d1d99a419826721",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5853,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 3757,
+      "errors": [],
+      "expected_reference_train_flops": 10211493888000.002,
+      "flops_per_token": 832624.0,
+      "job_id": "e6cf3d65c465abc80021d612",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 3757,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 7300,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 415924.0,
+      "job_id": "708dba10a0c30bd40303a958",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 7300,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6691,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 453792.0,
+      "job_id": "8631d68aa1016111b50352ed",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6691,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5550,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 547052.2352941176,
+      "job_id": "36947105dc8effca0ca2819e",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5550,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6000,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 506060.23529411765,
+      "job_id": "2bce8e9629a8b85bf6dffcf7",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6000,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5995,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 506444.23529411765,
+      "job_id": "dc910fb0deb25c79b1201112",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5995,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 9200,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 330028.23529411765,
+      "job_id": "7879c78efc82802e344c76ee",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 9200,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5848,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 519136.0,
+      "job_id": "6220203a8f387770db770fd0",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5848,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 3715,
+      "errors": [],
+      "expected_reference_train_flops": 9910683648000.002,
+      "flops_per_token": 817264.0,
+      "job_id": "9a847a420122924dba77a7a5",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 3715,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 7550,
+      "errors": [],
+      "expected_reference_train_flops": 171686467584000.0,
+      "flops_per_token": 925204.0,
+      "job_id": "4af21e5db59be10d838244b5",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 7550,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6596,
+      "errors": [],
+      "expected_reference_train_flops": 171686467584000.0,
+      "flops_per_token": 1059104.0,
+      "job_id": "a10b3823fc6e1424b669c58e",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6596,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5339,
+      "errors": [],
+      "expected_reference_train_flops": 171686467584000.0,
+      "flops_per_token": 1308467.375,
+      "job_id": "4873c9e433d5ee3b7985e77e",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5339,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6000,
+      "errors": [],
+      "expected_reference_train_flops": 171686467584000.0,
+      "flops_per_token": 1164323.375,
+      "job_id": "e6a7ea52a94acb0cda3dfca9",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6000,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5996,
+      "errors": [],
+      "expected_reference_train_flops": 171686467584000.0,
+      "flops_per_token": 1165091.375,
+      "job_id": "a8a21c533833a80fc32d43fc",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5996,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6513,
+      "errors": [],
+      "expected_reference_train_flops": 171686467584000.0,
+      "flops_per_token": 1072576.0,
+      "job_id": "1788a40ad8e6a0b432472d4a",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6513,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 4186,
+      "errors": [],
+      "expected_reference_train_flops": 171686467584000.0,
+      "flops_per_token": 1668832.0,
+      "job_id": "4a349215b5048e259948689f",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 4186,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 7607,
+      "errors": [],
+      "expected_reference_train_flops": 166854629376000.0,
+      "flops_per_token": 892436.0,
+      "job_id": "27147466f5eb7b406397446b",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 7607,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6615,
+      "errors": [],
+      "expected_reference_train_flops": 166854629376000.0,
+      "flops_per_token": 1026336.0,
+      "job_id": "6ce2de2f1bd1c7c7eebd9f56",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6615,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5322,
+      "errors": [],
+      "expected_reference_train_flops": 166854629376000.0,
+      "flops_per_token": 1275699.375,
+      "job_id": "e6f3a2ed9453544725067ca8",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5322,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6000,
+      "errors": [],
+      "expected_reference_train_flops": 166854629376000.0,
+      "flops_per_token": 1131555.375,
+      "job_id": "aeba07aa2cd367805e5b8a42",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6000,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5995,
+      "errors": [],
+      "expected_reference_train_flops": 166854629376000.0,
+      "flops_per_token": 1132323.375,
+      "job_id": "a4cb9a7ca056597c8249fd13",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5995,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6529,
+      "errors": [],
+      "expected_reference_train_flops": 166854629376000.0,
+      "flops_per_token": 1039808.0,
+      "job_id": "a442548e757b1ceab2a01aa8",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6529,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 4149,
+      "errors": [],
+      "expected_reference_train_flops": 166854629376000.0,
+      "flops_per_token": 1636064.0,
+      "job_id": "95bc993ea26de710cd6ffdf6",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 4149,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 7300,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 831592.0,
+      "job_id": "24ab728fef44d91d01cffa45",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 7300,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6691,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 907328.0,
+      "job_id": "1136e78d2dac6579855ee94c",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6691,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5550,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 1093848.4705882352,
+      "job_id": "fdb6481d5b258fb6a57671b5",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5550,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6000,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 1011864.4705882353,
+      "job_id": "a3148384eb962add038199c8",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6000,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5995,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 1012632.4705882353,
+      "job_id": "9f920f5114d0ad1f4b3a40ef",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5995,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 9201,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 659800.4705882353,
+      "job_id": "174efd1b7c7494093af60587",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 9201,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5848,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 1038016.0,
+      "job_id": "89a70f4da812018b1b235b6c",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5848,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 3714,
+      "errors": [],
+      "expected_reference_train_flops": 19816353792000.004,
+      "flops_per_token": 1634272.0,
+      "job_id": "3f4ebdc6f25a7eb831323cde",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 3714,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 7325,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 816232.0,
+      "job_id": "ac6b6ba87dad4cec35803423",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 7325,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6703,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 891968.0,
+      "job_id": "22a35db3d0c920192f9f25b3",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6703,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5543,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 1078488.4705882352,
+      "job_id": "1a4e1b4e6627b6d1701e0b76",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5543,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 6000,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 996504.4705882353,
+      "job_id": "dd21f01fcc676c978f8f0135",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 6000,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5995,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 997272.4705882353,
+      "job_id": "e926d50415492a573b538eba",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5995,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 9277,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 644440.4705882353,
+      "job_id": "0c81e8ab13987f34bbd923ef",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 9277,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 5846,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 1022656.0,
+      "job_id": "f6afd15c756fc54ec95e3a3d",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 5846,
+      "status": "complete"
+    },
+    {
+      "actual_steps": 3693,
+      "errors": [],
+      "expected_reference_train_flops": 19515543552000.004,
+      "flops_per_token": 1618912.0,
+      "job_id": "d788484fd847fce10be934fd",
+      "manifest": "beyond_stage1_initial",
+      "planned_steps": 3693,
+      "status": "complete"
+    }
+  ],
+  "schema": "stage1_initial_audit",
+  "schema_version": 1,
+  "sha256": "3c26796e9cec0030ef19941268ac871e16334da01bb9eb4ec53607a8cdcf8f1c"
+}
