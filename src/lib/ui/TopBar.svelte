@@ -17,9 +17,11 @@
 	];
 
 	const titles: Record<string, string> = {
-		'/learn': 'From pairs to diagrams',
+		'/learn': 'From pairs to composition',
 		'/explore': 'Cubic attention',
 		'/explore/diagrams': 'Feynman attention, a sum over diagrams',
+		'/explore/newton': 'Newton attention',
+		'/explore/groups': 'Learned rotations',
 		'/compare': 'Bench',
 		'/report': 'Working paper'
 	};

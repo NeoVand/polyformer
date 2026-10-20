@@ -1,5 +1,6 @@
 <script lang="ts">
-	import { asset } from '$app/paths';
+	import { onMount } from 'svelte';
+	import { asset, resolve } from '$app/paths';
 	import type { ChaseInstance } from '#lib/chase/chase.ts';
 	import { BATCH, EVAL_LAYOUTS, getBench, TOTAL_STEPS } from '#lib/engine/bench.svelte.ts';
 	import { firstExampleOfBatch } from '#lib/engine/data.ts';
@@ -26,7 +27,17 @@
 		Workflow
 	} from '#lib/ui/icons.ts';
 
+	import GroupLadder from '#lib/report/GroupLadder.svelte';
+	import CharactersResult from '#lib/report/CharactersResult.svelte';
+	let groups = $state(false);
 	let suite = $state<SuiteId>('set');
+	function selectSuite(id: string) {
+		groups = id === 'groups';
+		if (!groups) {
+			suite = id as SuiteId;
+			loadRecording();
+		}
+	}
 	const bench = $derived(getBench(suite));
 
 	type Axis = 'steps' | 'compute';
@@ -57,18 +68,21 @@
 		match4: asset('recorded/match4.json')
 	};
 	let recorded = $state.raw<Recorded | null>(null);
-	$effect(() => {
-		const url = RECORDINGS[suite];
-		let cancelled = false;
+	let recordingRequest = 0;
+	function loadRecording() {
+		const request = ++recordingRequest;
 		recorded = null;
-		fetch(url)
+		fetch(RECORDINGS[suite])
 			.then((r) => (r.ok ? r.json() : null))
 			.then((j: Recorded | null) => {
-				if (!cancelled && j?.runs) recorded = j;
+				if (request === recordingRequest && j?.runs) recorded = j;
 			})
 			.catch(() => {});
+	}
+	onMount(() => {
+		loadRecording();
 		return () => {
-			cancelled = true;
+			recordingRequest++;
 		};
 	});
 
@@ -105,6 +119,12 @@
 			const h = bench.history[r.id];
 			const rec = recorded?.runs[r.id];
 			const base = { id: r.id, label: r.label, tone: r.tone, dash: r.dash, emphasis: r.tone === 1 };
+			const [currentSteps, currentValues] =
+				which === 'acc'
+					? [h.evalSteps, h.evalAccuracy]
+					: which === 'layout'
+						? [h.evalSteps, h.evalLayout]
+						: [h.steps, h.loss];
 			if (rec) {
 				const [st, ys] =
 					which === 'acc'
@@ -112,15 +132,20 @@
 						: which === 'layout'
 							? [rec.evalSteps, rec.evalLayout]
 							: [rec.steps, rec.loss];
-				out.push({ ...base, ghost: true, xs: xs(r.id, st), ys: pick({ steps: st, ys }) });
+				out.push({
+					...base,
+					ghost: currentSteps.length > 0,
+					xs: xs(r.id, st),
+					ys: pick({ steps: st, ys })
+				});
 			}
-			const [st, ys] =
-				which === 'acc'
-					? [h.evalSteps, h.evalAccuracy]
-					: which === 'layout'
-						? [h.evalSteps, h.evalLayout]
-						: [h.steps, h.loss];
-			out.push({ ...base, xs: xs(r.id, st), ys: pick({ steps: st, ys }) });
+			if (currentSteps.length) {
+				out.push({
+					...base,
+					xs: xs(r.id, currentSteps),
+					ys: pick({ steps: currentSteps, ys: currentValues })
+				});
+			}
 		}
 		return out;
 	}
@@ -235,7 +260,7 @@
 			question: 'Follow the list from the ringed start node. What payload is at its end?'
 		},
 		match4: {
-			lede: 'Nine cards. A card is positive when it and three others sum to zero, attribute by attribute. Every operator of order below four stays at chance; Newton attention offers every arity at once, in time linear in the table.',
+			lede: 'Nine cards. A card is positive when it and three others sum to zero, attribute by attribute. The tested lower-order models stay near chance within this training budget; Newton attention offers every arity at once, in time linear in the table.',
 			question: 'For each card: does it complete a zero sum with three others?'
 		}
 	};
@@ -243,8 +268,13 @@
 
 <svelte:head>
 	<title
-		>{suite === 'set' ? 'SET bench' : suite === 'chase' ? 'Pointer-chase bench' : 'Four-card bench'} |
-		Polyformer</title
+		>{groups
+			? 'Group composition results'
+			: suite === 'set'
+				? 'SET bench'
+				: suite === 'chase'
+					? 'Pointer-chase bench'
+					: 'Four-card bench'} | Polyformer</title
 	>
 </svelte:head>
 
@@ -252,254 +282,385 @@
 	rail={[
 		{ id: 'set', label: 'SET', icon: Cards },
 		{ id: 'chase', label: 'Pointer chase', icon: Workflow },
-		{ id: 'match4', label: 'Four cards', icon: Matrix }
+		{ id: 'match4', label: 'Four cards', icon: Matrix },
+		{ id: 'groups', label: 'Groups', icon: Workflow }
 	]}
-	active={suite}
-	onselect={(id) => (suite = id as SuiteId)}
+	active={groups ? 'groups' : suite}
+	onselect={selectSuite}
 >
-	<div class="bench">
-		<header class="head">
-			<div class="title-row">
-				<h1>One task, many mechanisms</h1>
-				<div class="seg" role="group" aria-label="Task">
-					<button aria-pressed={suite === 'set'} onclick={() => (suite = 'set')}>SET</button>
-					<button aria-pressed={suite === 'chase'} onclick={() => (suite = 'chase')}
-						>Pointer chase</button
-					>
-					<button aria-pressed={suite === 'match4'} onclick={() => (suite = 'match4')}
-						>Four cards</button
-					>
+	{#if groups}
+		<div class="group-results">
+			<header>
+				<div class="title-row">
+					<h1>What composition changes</h1>
+					<div class="seg" role="group" aria-label="Task">
+						<button onclick={() => selectSuite('set')}>SET</button>
+						<button onclick={() => selectSuite('chase')}>Pointer chase</button>
+						<button onclick={() => selectSuite('match4')}>Four cards</button>
+						<button aria-pressed="true" onclick={() => selectSuite('groups')}>Groups</button>
+					</div>
 				</div>
+				<p class="sub">
+					Recorded research runs, three seeds. For the binary tasks plotted below, balanced accuracy
+					weights positives and negatives equally, so chance is 50%. The dashed lines mark exact
+					population limits for a model that cannot distinguish reorderings.
+				</p>
+			</header>
+			<GroupLadder />
+			<div class="group-reading">
+				<section>
+					<h2>A dimension ladder, with a qualification</h2>
+					<p>
+						In two dimensions rotations commute: their order makes no difference. Three-dimensional
+						rotations can retain order, and the A₄ and A₅ tasks reward that distinction. A₄ and A₅
+						are the rotation groups of the tetrahedron and icosahedron.
+					</p>
+					<p>
+						The ladder shows learning after 6,000 steps, not a minimum dimension theorem. With
+						20,000 steps, A₅ at d = 3 reaches 99.21%, 99.38%, 99.34% for seeds 0, 1, 2.
+					</p>
+					<p>
+						<a href={resolve('/explore/groups')}>Inspect the learned rotations</a> or
+						<a href={resolve('/report') + '#groups'}>read the protocol and full tables</a>.
+					</p>
+				</section>
+				<section>
+					<h2>The boundary on the claim</h2>
+					<p>
+						On interleaved swap programs, holonomy d = 3/4, the matrix-state RNN and two- and
+						three-layer positional softmax all reach 100.00%. One-layer positional softmax reaches
+						98.95%. This second task supports the value of order; it shows no holonomy advantage
+						over the order-aware baselines.
+					</p>
+					<p>
+						These are synthetic tasks. The language search found no higher-order gain meeting its 1%
+						threshold. Holonomy training is recorded here and runs in the research harness.
+					</p>
+				</section>
 			</div>
-			<p class="sub">{COPY[suite].lede}</p>
-		</header>
-
-		<section class="hero" aria-label="Held-out accuracy">
-			<div class="h-row">
-				<h2>Held-out accuracy</h2>
-				<span class="badge" class:live>
-					{live
-						? 'Live in this browser'
-						: recorded
-							? `Recorded ${recorded.recordedAt} on ${recorded.device === 'webgpu' ? 'WebGPU' : recorded.device}`
-							: 'Press Train to start'}
-				</span>
-				<div class="seg" role="group" aria-label="Horizontal axis">
-					<button aria-pressed={axis === 'steps'} onclick={() => (axis = 'steps')}>Steps</button>
-					<button aria-pressed={axis === 'compute'} onclick={() => (axis = 'compute')}
-						>Compute</button
-					>
+			<section class="character-check">
+				<h2>Give softmax the coordinates</h2>
+				<p>
+					Characters are clock-hand features whose phases add under the group law. Supplying every
+					character still leaves the measured softmax models at chance on Match-4 and Match-5.
+					Newton attention explicitly multiplies those features.
+				</p>
+				<CharactersResult />
+			</section>
+			<p class="source">
+				Sources: <a href="https://github.com/NeoVand/polyformer/blob/main/research/GROUPS.md"
+					>GROUPS.md §5 and §7</a
+				>,
+				<a href="https://github.com/NeoVand/polyformer/blob/main/research/THEORY.md">THEORY.md §2</a
+				>, and the
+				<a href="https://github.com/NeoVand/polyformer/blob/main/research/results/grp_e2_long.jsonl"
+					>20,000-step rows</a
+				>. Model sizes and compute are not matched in the group comparison.
+			</p>
+		</div>
+	{:else}
+		<div class="bench">
+			<header class="head">
+				<div class="title-row">
+					<h1>One task, many mechanisms</h1>
+					<div class="seg" role="group" aria-label="Task">
+						<button aria-pressed={suite === 'set'} onclick={() => selectSuite('set')}>SET</button>
+						<button aria-pressed={suite === 'chase'} onclick={() => selectSuite('chase')}
+							>Pointer chase</button
+						>
+						<button aria-pressed={suite === 'match4'} onclick={() => selectSuite('match4')}
+							>Four cards</button
+						>
+						<button aria-pressed="false" onclick={() => selectSuite('groups')}>Groups</button>
+					</div>
 				</div>
-			</div>
-			<div class="chart-fill" bind:clientHeight={heroHeight}>
-				<LineChart
-					label="Held-out token accuracy"
-					series={accuracySeries}
-					version={bench.version}
-					{xMax}
-					{xLabel}
-					{formatX}
-					yMin={cardSuite ? 0.4 : 0}
-					yMax={1}
-					yTicks={cardSuite ? [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] : [0, 0.2, 0.4, 0.6, 0.8, 1]}
-					formatY={(v) => pct(v, 0)}
-					reference={{ y: majority, label: `Majority class ${pct(majority, 0)}` }}
-					height={Math.max(220, heroHeight)}
-				/>
-			</div>
-		</section>
+				<p class="sub">{COPY[suite].lede}</p>
+			</header>
 
-		<section class="lower" aria-label="Loss and input">
-			<div class="mini">
-				<h3>Training loss <small>smoothed, log scale</small></h3>
-				<LineChart
-					label="Training loss"
-					series={lossSeries}
-					version={bench.version}
-					{xMax}
-					{xLabel}
-					{formatX}
-					log
-					yMin={1e-4}
-					yMax={cardSuite ? 1 : 3}
-					yTicks={[1e-4, 1e-3, 1e-2, 1e-1, 1]}
-					formatY={(v) => (v >= 0.01 ? v.toFixed(2) : v.toExponential(0))}
-					height={160}
-				/>
-			</div>
-			{#if suite === 'set'}
-				<div class="mini">
-					<h3>Tables fully right <small>all twelve cards</small></h3>
+			<section class="hero" aria-label="Held-out accuracy">
+				<div class="h-row">
+					<h2>Held-out accuracy</h2>
+					<span class="badge" class:live>
+						{live
+							? 'Live in this browser'
+							: recorded
+								? `Recorded ${recorded.recordedAt} on ${recorded.device === 'webgpu' ? 'WebGPU' : recorded.device}`
+								: 'Press Train to start'}
+					</span>
+					<div class="seg" role="group" aria-label="Horizontal axis">
+						<button aria-pressed={axis === 'steps'} onclick={() => (axis = 'steps')}>Steps</button>
+						<button aria-pressed={axis === 'compute'} onclick={() => (axis = 'compute')}
+							>Compute</button
+						>
+					</div>
+				</div>
+				<div class="chart-fill" bind:clientHeight={heroHeight}>
 					<LineChart
-						label="Share of held-out tables with every card right"
-						series={layoutSeries}
+						label="Held-out token accuracy"
+						series={accuracySeries}
 						version={bench.version}
 						{xMax}
 						{xLabel}
 						{formatX}
-						yMin={0}
+						yMin={cardSuite ? 0.4 : 0}
 						yMax={1}
-						yTicks={[0, 0.25, 0.5, 0.75, 1]}
+						yTicks={cardSuite ? [0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1] : [0, 0.2, 0.4, 0.6, 0.8, 1]}
 						formatY={(v) => pct(v, 0)}
+						reference={{ y: majority, label: `Majority class ${pct(majority, 0)}` }}
+						height={Math.max(220, heroHeight)}
+					/>
+				</div>
+			</section>
+
+			<section class="lower" aria-label="Loss and input">
+				<div class="mini">
+					<h3>Training loss <small>smoothed, log scale</small></h3>
+					<LineChart
+						label="Training loss"
+						series={lossSeries}
+						version={bench.version}
+						{xMax}
+						{xLabel}
+						{formatX}
+						log
+						yMin={1e-4}
+						yMax={cardSuite ? 1 : 3}
+						yTicks={[1e-4, 1e-3, 1e-2, 1e-1, 1]}
+						formatY={(v) => (v >= 0.01 ? v.toFixed(2) : v.toExponential(0))}
 						height={160}
 					/>
 				</div>
-			{/if}
-			<div class="input">
-				<h3>Shared input <small class="num">batch {shownStep.toLocaleString('en-US')}</small></h3>
-				<p class="q">{COPY[suite].question}</p>
-				{#if cardSuite}
-					<div class="cards">
-						{#each layout as card, i (i)}
-							<span class="slot" class:in={members[i]}>
-								<SetCard {card} width={30} dim={!members[i]} />
-							</span>
-						{/each}
+				{#if suite === 'set'}
+					<div class="mini">
+						<h3>Tables fully right <small>all twelve cards</small></h3>
+						<LineChart
+							label="Share of held-out tables with every card right"
+							series={layoutSeries}
+							version={bench.version}
+							{xMax}
+							{xLabel}
+							{formatX}
+							yMin={0}
+							yMax={1}
+							yTicks={[0, 0.25, 0.5, 0.75, 1]}
+							formatY={(v) => pct(v, 0)}
+							height={160}
+						/>
 					</div>
-				{:else}
-					<ChaseLists instance={example as ChaseInstance} compact />
 				{/if}
-			</div>
-		</section>
+				<div class="input">
+					<h3>Shared input <small class="num">batch {shownStep.toLocaleString('en-US')}</small></h3>
+					<p class="q">{COPY[suite].question}</p>
+					{#if cardSuite}
+						<div class="cards">
+							{#each layout as card, i (i)}
+								<span class="slot" class:in={members[i]}>
+									<SetCard {card} width={30} dim={!members[i]} />
+								</span>
+							{/each}
+						</div>
+					{:else}
+						<ChaseLists instance={example as ChaseInstance} compact />
+					{/if}
+				</div>
+			</section>
 
-		<aside class="board" aria-label="Runs">
-			<div class="b-head">
-				<h2>Runs</h2>
-				<span class="hint">d = 64, 4 heads, one block unless noted</span>
-			</div>
-			<ol class="runs">
-				{#each rows as row (row.spec.id)}
-					<li class="run" class:lead={row.acc !== undefined && row.acc === best && best > 0}>
-						<div class="r-top">
-							<svg width="22" height="10" aria-hidden="true">
-								<line
-									x1="0"
-									y1="5"
-									x2="22"
-									y2="5"
-									stroke="rgb({70 + row.spec.tone * 175} {70 + row.spec.tone * 175} {70 +
-										row.spec.tone * 175})"
-									stroke-width={row.spec.tone === 1 ? 2.25 : 1.5}
-									stroke-dasharray={row.spec.dash}
-								/>
-							</svg>
-							<span class="name">{row.spec.label}</span>
-							<span class="acc num" class:rec={row.recordedOnly}
-								>{row.acc === undefined ? '—' : pct(row.acc, 0)}</span
-							>
-						</div>
-						<div class="formula"><MathTex tex={row.op.logitTex} /></div>
-						<div class="meta num">
-							<span>{row.params ? `${compact(row.params)} params` : '—'}</span>
-							<span>{row.flops ? `${flops(row.flops)} / step` : ''}</span>
-							<span>{row.ms ? ms(row.ms) : ''}</span>
-						</div>
-						<div class="r-foot">
-							<span class="hint num"
-								>{row.reached !== undefined
-									? `95% at step ${row.reached.toLocaleString('en-US')}`
-									: row.acc !== undefined
-										? 'Not at 95% yet'
-										: 'Not trained'}{row.recordedOnly ? ' · recorded' : ''}</span
-							>
-							<label class="switch">
-								<input
-									type="checkbox"
-									bind:checked={bench.enabled[row.spec.id]}
-									disabled={running}
-								/>
-								<span>Train</span>
-							</label>
-						</div>
-					</li>
-				{/each}
-			</ol>
-			<dl class="spec">
-				<div>
-					<dt>Batch</dt>
-					<dd class="num">{BATCH}</dd>
+			<aside class="board" aria-label="Runs">
+				<div class="b-head">
+					<h2>Runs</h2>
+					<span class="hint">d = 64, 4 heads, one block unless noted</span>
 				</div>
-				<div>
-					<dt>Steps</dt>
-					<dd class="num">{TOTAL_STEPS.toLocaleString('en-US')}</dd>
-				</div>
-				<div>
-					<dt>Optimizer</dt>
-					<dd>AdamW, cosine</dd>
-				</div>
-				<div>
-					<dt>Held out</dt>
-					<dd class="num">{EVAL_LAYOUTS.toLocaleString('en-US')}</dd>
-				</div>
-			</dl>
-		</aside>
-
-		<footer class="transport" aria-label="Training controls">
-			<div class="group">
-				<button
-					class="key"
-					onclick={() => bench.reset()}
-					disabled={bench.status === 'booting' || running}
-					aria-label="Reset to step 0"><Icon icon={Reset} size={17} /><span>Reset</span></button
-				>
-				<button
-					class="key play"
-					onclick={toggle}
-					disabled={bench.status === 'booting' ||
-						bench.status === 'pausing' ||
-						(finished && !running)}
-					><Icon icon={running ? Pause : Play} size={17} /><span>{primaryLabel}</span></button
-				>
-			</div>
-			<div class="group grow">
-				<div class="progress" aria-label="Training progress">
-					<div class="bar">
-						<div class="fill" style:width="{(bench.step / TOTAL_STEPS) * 100}%"></div>
+				<ol class="runs">
+					{#each rows as row (row.spec.id)}
+						<li class="run" class:lead={row.acc !== undefined && row.acc === best && best > 0}>
+							<div class="r-top">
+								<svg width="22" height="10" aria-hidden="true">
+									<line
+										x1="0"
+										y1="5"
+										x2="22"
+										y2="5"
+										stroke="rgb({70 + row.spec.tone * 175} {70 + row.spec.tone * 175} {70 +
+											row.spec.tone * 175})"
+										stroke-width={row.spec.tone === 1 ? 2.25 : 1.5}
+										stroke-dasharray={row.spec.dash}
+									/>
+								</svg>
+								<span class="name">{row.spec.label}</span>
+								<span class="acc num" class:rec={row.recordedOnly}
+									>{row.acc === undefined ? '—' : pct(row.acc, 0)}</span
+								>
+							</div>
+							<div class="formula"><MathTex tex={row.op.logitTex} /></div>
+							<div class="meta num">
+								<span>{row.params ? `${compact(row.params)} params` : '—'}</span>
+								<span>{row.flops ? `${flops(row.flops)} / step` : ''}</span>
+								<span>{row.ms ? ms(row.ms) : ''}</span>
+							</div>
+							<div class="r-foot">
+								<span class="hint num"
+									>{row.reached !== undefined
+										? `95% at step ${row.reached.toLocaleString('en-US')}`
+										: row.acc !== undefined
+											? 'Not at 95% yet'
+											: 'Not trained'}{row.recordedOnly ? ' · recorded' : ''}</span
+								>
+								<label class="switch">
+									<input
+										type="checkbox"
+										bind:checked={bench.enabled[row.spec.id]}
+										disabled={running}
+									/>
+									<span>Train</span>
+								</label>
+							</div>
+						</li>
+					{/each}
+				</ol>
+				<dl class="spec">
+					<div>
+						<dt>Batch</dt>
+						<dd class="num">{BATCH}</dd>
 					</div>
-					<span class="num"
-						>{bench.step.toLocaleString('en-US')} / {TOTAL_STEPS.toLocaleString('en-US')}</span
+					<div>
+						<dt>Steps</dt>
+						<dd class="num">{TOTAL_STEPS.toLocaleString('en-US')}</dd>
+					</div>
+					<div>
+						<dt>Optimizer</dt>
+						<dd>AdamW, cosine</dd>
+					</div>
+					<div>
+						<dt>Held out</dt>
+						<dd class="num">{EVAL_LAYOUTS.toLocaleString('en-US')}</dd>
+					</div>
+				</dl>
+			</aside>
+
+			<footer class="transport" aria-label="Training controls">
+				<div class="group">
+					<button
+						class="key"
+						onclick={() => bench.reset()}
+						disabled={bench.status === 'booting' || running}
+						aria-label="Reset to step 0"><Icon icon={Reset} size={17} /><span>Reset</span></button
+					>
+					<button
+						class="key play"
+						onclick={toggle}
+						disabled={bench.status === 'booting' ||
+							bench.status === 'pausing' ||
+							(finished && !running)}
+						><Icon icon={running ? Pause : Play} size={17} /><span>{primaryLabel}</span></button
 					>
 				</div>
-			</div>
-			<div class="group">
-				<span class="t-label">Seed</span>
-				<div class="stepper">
-					<button
-						onclick={() => bench.reset(Math.max(0, bench.seed - 1))}
-						disabled={running || bench.seed === 0}
-						aria-label="Previous seed">−</button
+				<div class="group grow">
+					<div class="progress" aria-label="Training progress">
+						<div class="bar">
+							<div class="fill" style:width="{(bench.step / TOTAL_STEPS) * 100}%"></div>
+						</div>
+						<span class="num"
+							>{bench.step.toLocaleString('en-US')} / {TOTAL_STEPS.toLocaleString('en-US')}</span
+						>
+					</div>
+				</div>
+				<div class="group seed-controls">
+					<span class="t-label">Seed</span>
+					<div class="stepper">
+						<button
+							onclick={() => bench.reset(Math.max(0, bench.seed - 1))}
+							disabled={running || bench.seed === 0}
+							aria-label="Previous seed">−</button
+						>
+						<span class="num">{bench.seed}</span>
+						<button
+							onclick={() => bench.reset(bench.seed + 1)}
+							disabled={running}
+							aria-label="Next seed">+</button
+						>
+					</div>
+				</div>
+				<div class="group telemetry">
+					<span class="t-label num"><Icon icon={Timer} size={16} />{duration(bench.elapsedMs)}</span
 					>
-					<span class="num">{bench.seed}</span>
-					<button
-						onclick={() => bench.reset(bench.seed + 1)}
-						disabled={running}
-						aria-label="Next seed">+</button
+					<span class="t-label"
+						><Icon icon={Chip} size={16} />{bench.device === 'webgpu'
+							? 'WebGPU'
+							: bench.device === 'wasm'
+								? 'WebAssembly'
+								: 'Starts on first run'}</span
 					>
 				</div>
-			</div>
-			<div class="group">
-				<span class="t-label num"><Icon icon={Timer} size={16} />{duration(bench.elapsedMs)}</span>
-				<span class="t-label"
-					><Icon icon={Chip} size={16} />{bench.device === 'webgpu'
-						? 'WebGPU'
-						: bench.device === 'wasm'
-							? 'WebAssembly'
-							: 'Starts on first run'}</span
-				>
-			</div>
-			<div class="group right">
-				<button class="key" onclick={exportRuns} disabled={!live}
-					><Icon icon={Download} size={17} /><span>Export</span></button
-				>
-			</div>
-			{#if bench.error}
-				<span class="error" role="alert">{bench.error}</span>
-			{/if}
-		</footer>
-	</div>
+				<div class="group right">
+					<button class="key" onclick={exportRuns} disabled={!live}
+						><Icon icon={Download} size={17} /><span>Export</span></button
+					>
+				</div>
+				{#if bench.error}
+					<span class="error" role="alert">{bench.error}</span>
+				{/if}
+			</footer>
+		</div>
+	{/if}
 </PageFrame>
 
 <style>
+	.group-results {
+		max-width: 960px;
+		margin: 0 auto;
+		padding: 26px 32px 60px;
+	}
+	.group-results > header {
+		margin-bottom: 24px;
+	}
+	.group-results .title-row {
+		justify-content: space-between;
+		flex-wrap: wrap;
+	}
+	.group-results .sub {
+		max-width: 92ch;
+	}
+	.group-reading {
+		display: grid;
+		grid-template-columns: 1fr 1fr;
+		gap: 40px;
+		margin: 28px 0 36px;
+	}
+	.group-results p {
+		font-size: 13px;
+		line-height: 1.65;
+		color: var(--color-ink-2);
+		margin-top: 10px;
+	}
+	.group-results a {
+		color: var(--color-ink);
+		text-underline-offset: 3px;
+	}
+	.character-check {
+		max-width: 820px;
+	}
+	.character-check > p {
+		margin-bottom: 20px;
+		max-width: 78ch;
+	}
+	.group-results .source {
+		margin-top: 28px;
+		font-size: 12px;
+		color: var(--color-ink-3);
+	}
+	@media (max-width: 640px) {
+		.group-results {
+			padding: 24px 18px 44px;
+		}
+		.group-reading {
+			grid-template-columns: 1fr;
+			gap: 24px;
+		}
+		.group-results .seg {
+			flex-wrap: wrap;
+		}
+	}
+
 	.bench {
 		--transport-h: 60px;
 		display: grid;
@@ -642,7 +803,7 @@
 		color: var(--color-ink-2);
 	}
 	.acc.rec {
-		opacity: 0.6;
+		opacity: 0.9;
 	}
 	.run.lead .acc {
 		color: var(--color-ink);
@@ -829,6 +990,52 @@
 		.title-row {
 			flex-wrap: wrap;
 			gap: 10px;
+		}
+		.transport {
+			gap: 8px;
+			padding: 0 10px;
+			overflow-x: visible;
+		}
+		.transport .telemetry {
+			display: none;
+		}
+		.transport .group {
+			gap: 4px;
+		}
+		.transport .key {
+			min-width: 40px;
+		}
+		.transport .grow {
+			min-width: 0;
+		}
+		.transport .progress {
+			flex-direction: column;
+			gap: 6px;
+			min-width: 0;
+			font-size: 10px;
+			white-space: nowrap;
+		}
+		.transport .bar {
+			flex: none;
+			width: 100%;
+			height: 2px;
+		}
+		.transport .seed-controls {
+			flex-direction: column;
+			gap: 1px;
+		}
+		.seed-controls .t-label {
+			font-size: 9px;
+			line-height: 1;
+		}
+		.stepper {
+			height: 26px;
+		}
+		.stepper button {
+			width: 24px;
+		}
+		.stepper span {
+			min-width: 18px;
 		}
 	}
 </style>

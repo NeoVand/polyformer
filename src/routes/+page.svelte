@@ -1,21 +1,16 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { asset, resolve } from '$app/paths';
-	import { CHASE_QUERY_POS, type ChaseInstance } from '#lib/chase/chase.ts';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
-	import type { DiagramResult } from '#lib/engine/protocol.ts';
 	import { SUITES, type SuiteId } from '#lib/engine/runs.ts';
 	import { dealTable, strongestEdges, tourStops } from '#lib/explore/deal.ts';
 	import { LAYOUT_SIZE } from '#lib/set/cards.ts';
 	import LineChart, { type Series } from '#lib/ui/LineChart.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
-	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
-	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
-	import FlowLegend from '#lib/viz/FlowLegend.svelte';
 	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
 	import TensorCube from '#lib/viz/TensorCube.svelte';
+	import A5Rotation from '#lib/viz/A5Rotation.svelte';
 
 	const C = LAYOUT_SIZE;
 	/** The tiles fall to the page's black where the figures sit; the 3D canvases match it. */
@@ -36,7 +31,7 @@
 	const STEP_MS = 3600;
 	let touring = $state(false);
 	let stop = $state(0);
-	let chaseStop = $state(0);
+	let rotation = $state(1);
 	function goTo(n: number) {
 		stop = (n + STOPS.length) % STOPS.length;
 		query = STOPS[stop].i;
@@ -59,16 +54,15 @@
 		goTo(0);
 		reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
 		touring = !reduced;
-		return () => clearTimeout(resume);
-	});
-	$effect(() => {
-		if (!touring) return;
 		const id = setInterval(() => {
-			if (document.hidden) return;
+			if (!touring || document.hidden) return;
 			goTo(stop + 1);
-			chaseStop += 1;
+			rotation = (rotation + 7) % 60;
 		}, STEP_MS);
-		return () => clearInterval(id);
+		return () => {
+			clearTimeout(resume);
+			clearInterval(id);
+		};
 	});
 
 	// ── recordings: bench curves and two trained Feynman attention diagrams ──────────────
@@ -77,25 +71,13 @@
 		evalAccuracy: number[];
 		params: number;
 	}
-	interface ChaseRecording {
-		accuracy: number;
-		instance: ChaseInstance;
-		diagram: DiagramResult;
-	}
-	interface SetRecording {
-		accuracy: number;
-		diagram: DiagramResult;
-	}
 	let suite = $state<SuiteId>('set');
-	let flowTask = $state<SuiteId>('set');
 	const recordings: Record<SuiteId, Record<string, RecordedRun> | null> = $state({
 		set: null,
 		chase: null,
 		match4: null
 	});
-	let chaseRec = $state.raw<ChaseRecording | null>(null);
-	let setRec = $state.raw<SetRecording | null>(null);
-	$effect(() => {
+	onMount(() => {
 		const get = (path: Parameters<typeof asset>[0]) =>
 			fetch(asset(path)).then((r) => (r.ok ? r.json() : null));
 		get('recorded/set.json').then(
@@ -106,34 +88,6 @@
 			(j) => j?.runs && (recordings.chase = j.runs),
 			() => {}
 		);
-		get('recorded/chase-diagram.json').then(
-			(j) => j?.diagram && (chaseRec = j),
-			() => {}
-		);
-		get('recorded/set-diagram.json').then(
-			(j) => j?.diagram && (setRec = j),
-			() => {}
-		);
-	});
-	const chaseGroups = $derived(chaseRec ? flowGroups(chaseRec.instance) : []);
-	/** On the chase tab the tour visits the query and the head of every other list. */
-	const chaseRoots = $derived(chaseGroups.map((g) => g[0]));
-	const chaseRoot = $derived(
-		chaseRoots.length ? chaseRoots[chaseStop % chaseRoots.length] : CHASE_QUERY_POS
-	);
-	const chaseHeld = $derived(
-		chaseRec
-			? heldPayloads(
-					chaseRec.diagram.perHead[0],
-					chaseRec.diagram.n,
-					chaseRec.diagram.rounds,
-					chaseRec.instance
-				)
-			: null
-	);
-	const chaseAnswer = $derived.by(() => {
-		const p = chaseRec?.diagram.probs;
-		return p ? p.indexOf(Math.max(...p)) : null;
 	});
 
 	const runs = $derived(SUITES[suite].runs.filter((r) => recordings[suite]?.[r.id]));
@@ -162,40 +116,37 @@
 		return `rgb(${v} ${v} ${v})`;
 	};
 	let chartH = $state(0);
-	const CARD_ROWS = [Array.from({ length: C }, (_, i) => i + 1)];
 </script>
 
 <svelte:head>
-	<title>Polyformer | Higher-order attention</title>
+	<title>Learning to compose | Polyformer</title>
 	<meta
 		name="description"
-		content="Higher-order attention: cubic heads that read triples and Feynman attention, which learns how many tokens to combine. See the tensor, the hypergraph, a trained model and the bench, all computed in your browser."
+		content="From higher-order attention to learned group representations. Explore the experiments, the limits, and the rotations a neural network learns from relational labels."
 	/>
 </svelte:head>
 
 <main class="deck">
 	<!-- ── the idea ─────────────────────────────────────────────────────── -->
 	<section class="intro">
-		<h1>Higher-order attention</h1>
-		<p class="lede">
-			You can tell whether a photo shows an animal in about 150 milliseconds, time for only a dozen
-			or so neural stages in a row. The brain manages with few layers because each one does a lot: a
-			single neuron combines its inputs more like a small network than a weighted sum.
+		<h1>Learning to compose</h1>
+		<p class="lede">What should one layer be able to do?</p>
+		<p>
+			Attention compares tokens in pairs. Some relations only appear when several tokens come
+			together. Higher-order attention gives a layer that operation directly—and wins on puzzles
+			built around it.
 		</p>
 		<p>
-			Transformers go the other way. A head compares tokens two at a time, so anything that depends
-			on three tokens at once has to be assembled over many layers. Polyformer looks for layers that
-			do more per step: attention that relates whole groups of tokens at once, and learns how large
-			those groups should be.
+			Language did not reward more order at our scale. The useful turn was composition: learning how
+			small operations combine. Clock hands add without caring about order. Rotations can remember
+			it.
 		</p>
 		<p>
-			Hints of this run from the 2-simplicial transformer to proofs that attention over triples
-			beats pairs and kernels that train it at scale. Our two ideas, cubic attention and Feynman
-			attention, solve SET in one layer and pointer chasing with 40% of the parameters of the
-			deepest baseline.
+			Given only answers to a relational task, a layer learns rotations that nearly obey the
+			symmetries of an icosahedron. The route from token pairs to those rotations is the story here.
 		</p>
 		<p class="small">
-			Every model on this page was trained in a browser with jax-js. There is no server.
+			A course, working paper and experiments. Browser-trained baselines; recorded group results.
 		</p>
 		<div class="ctas">
 			<a class="cta primary" href={resolve('/learn')}>Read how it works</a>
@@ -268,90 +219,22 @@
 		</div>
 	</section>
 
-	<!-- ── what a trained Feynman attention model does ──────────────────────────────── -->
+	<!-- The composition learned by the group models. -->
 	<section class="tile flow">
 		<header class="row">
-			<div class="head-line">
-				<h2>Letting the data choose the arity</h2>
-				<div class="seg" role="group" aria-label="Task">
-					<button
-						class:on={flowTask === 'set'}
-						aria-pressed={flowTask === 'set'}
-						onclick={() => (flowTask = 'set')}>SET</button
-					>
-					<button
-						class:on={flowTask === 'chase'}
-						aria-pressed={flowTask === 'chase'}
-						onclick={() => (flowTask = 'chase')}>Chase</button
-					>
-				</div>
-			</div>
+			<h2>Relations as composition</h2>
 			<p>
-				How many tokens should one step relate? Feynman attention leaves it to learning: each round,
-				every token reads its own value, one token, two at once or a learned summary. Unrolled, that
-				is a sum over diagrams, and this is the one a trained model drew.
-				{#if flowTask === 'set'}
-					Asked to find matching triples, it chose triples.
-				{:else}
-					Asked to follow pointers, it chose chains of single hops.
-				{/if}
+				A token becomes a rotation. A layer multiplies rotations in sequence order, then reads
+				relations among subsets. The learned heads approximate the symmetries shown here.
 			</p>
 		</header>
-		<div class="t-math pad">
-			<MathTex
-				tex={'\\Phi^{r}_t = \\pi_{\\text{leaf}}\\, v_t + \\sum_j \\pi_j\\, \\Phi^{r-1}_j + \\sum_{jk} \\pi_{jk}\\, \\Phi^{r-1}_j \\odot \\Phi^{r-1}_k + \\cdots'}
-			/>
+		<div class="stage rotation-stage">
+			<A5Rotation element={rotation} model="ideal" background={TILE} />
 		</div>
-		<div class="stage flow-stage">
-			{#if flowTask === 'set' && setRec}
-				{@const d = setRec.diagram}
-				<DiagramFlow
-					head={d.perHead[0]}
-					n={d.n}
-					rounds={d.rounds}
-					rows={CARD_ROWS}
-					root={query + 1}
-					onroot={(t) => choose(t - 1)}
-					pitch={17}
-					column={120}
-					fit
-					output="\hat y"
-					note={STOPS.some((s) => s.i === query && s.pair) ? 'in a SET' : 'no SET'}
-				>
-					{#snippet label(t)}<SetCard card={layout[t - 1]} width={14} />{/snippet}
-				</DiagramFlow>
-			{:else if flowTask === 'chase' && chaseRec}
-				{@const d = chaseRec.diagram}
-				{@const inst = chaseRec.instance}
-				<DiagramFlow
-					head={d.perHead[0]}
-					n={d.n}
-					rounds={d.rounds}
-					rows={chaseGroups}
-					root={chaseRoot}
-					onroot={(t) => {
-						takeOver();
-						chaseStop = Math.max(0, chaseRoots.indexOf(t));
-					}}
-					pitch={16}
-					column={78}
-					fit
-					annotate={(r, t) => {
-						const v = chaseHeld?.[r]?.[t];
-						return v === null || v === undefined ? null : String(v);
-					}}
-					output={chaseRoot === CHASE_QUERY_POS
-						? `\\hat y = ${chaseAnswer ?? ''}`
-						: `\\Phi^{${d.rounds}}`}
-					note={chaseRoot === CHASE_QUERY_POS ? pct(d.probs[chaseAnswer ?? 0] ?? 0, 1) : undefined}
-				>
-					{#snippet label(t)}
-						{#if t === CHASE_QUERY_POS}<MathTex tex="q" />{:else}{inst.nodes[t - 1].id}{/if}
-					{/snippet}
-				</DiagramFlow>
-			{/if}
-		</div>
-		<footer><FlowLegend compact /></footer>
+		<footer>
+			<span>Ideal icosahedral symmetry</span>
+			<a href={resolve('/explore/groups')}>Inspect the learned rotations</a>
+		</footer>
 	</section>
 
 	<!-- ── the bench ────────────────────────────────────────────────────── -->
@@ -374,11 +257,11 @@
 			</div>
 			<p>
 				{#if suite === 'set'}
-					On a task built from three-way relations, one higher-order layer is exact, and stacking
-					pairwise layers does not catch up.
+					On these three-way relations, cubic attention reaches 100.0% held-out accuracy. The
+					softmax baselines stay behind within this training budget.
 				{:else}
-					On following chains, a layer that chooses its arity matches a deeper pairwise model with
-					40% of its parameters.
+					Following a chain needs repeated composition. The recorded Feynman model learns chains of
+					single hops.
 				{/if}
 				Held-out accuracy, trained in the browser.
 			</p>
@@ -445,7 +328,7 @@
 	}
 	h1 {
 		margin: 0;
-		font-size: clamp(34px, 6vh, 58px);
+		font-size: clamp(30px, 3.8vh, 38px);
 		font-weight: 500;
 		line-height: 1.02;
 		letter-spacing: -0.028em;
@@ -553,10 +436,6 @@
 		overflow-x: auto;
 		overflow-y: hidden;
 	}
-	.t-math.pad {
-		margin: 6px 0 0;
-		padding: 0 16px;
-	}
 	.stage {
 		position: relative;
 		flex: 1;
@@ -585,8 +464,16 @@
 	.flow {
 		grid-area: flow;
 	}
-	.flow-stage {
-		padding: 2px 14px 0 8px;
+	.rotation-stage {
+		min-height: 190px;
+	}
+	.tile footer {
+		justify-content: space-between;
+		flex-wrap: wrap;
+	}
+	.tile footer a {
+		color: var(--color-ink-2);
+		text-underline-offset: 3px;
 	}
 
 	/* ── the bench ─────────────────────────────────────────────────────── */
@@ -674,14 +561,19 @@
 		}
 	}
 	@media (max-width: 700px) {
+		.board {
+			grid-template-columns: minmax(0, 1fr);
+		}
+		.b-name {
+			white-space: normal;
+			overflow: visible;
+			text-overflow: clip;
+		}
 		.deck {
 			grid-template-columns: minmax(0, 1fr);
-			grid-template-rows: auto 440px 440px auto 460px;
+			grid-template-rows: auto 390px 390px 360px 480px;
 			grid-template-areas: 'intro' 'cube' 'graph' 'flow' 'chart';
 			padding: 8px 12px 16px;
-		}
-		.flow-stage {
-			padding-bottom: 8px;
 		}
 	}
 </style>
