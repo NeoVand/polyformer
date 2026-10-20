@@ -2,8 +2,9 @@
 Run research/polybench.py configurations on Modal GPUs and append the results to
 research/results/<name>.jsonl. Each configuration is one argv list for polybench.
 
-    uvx modal run research/modal_run.py --grid smoke
-    uvx modal run research/modal_run.py --grid <name> --gpu H100
+    uvx modal run research/modal_run.py::main --grid smoke
+    uvx modal run research/modal_run.py::main --grid <name> --gpu H100
+    uvx modal run research/modal_run.py::prep        # tokenise the language-model corpora once
 
 Grids live in GRIDS below; every run records its argv, so a results file is its
 own provenance. The browser app never imports anything from here.
@@ -64,6 +65,85 @@ def run_h100(argv: list[str]) -> dict:
 @app.function(image=lm_image, gpu="H100", timeout=3 * 3600)
 def run_lm(argv: list[str]) -> dict:
     return _run(argv, "/root/lm.py")
+
+
+# token-level language models (SEARCH.md S0-S2): GPT-2 ids written once into a Volume as uint16
+data_vol = modal.Volume.from_name("polyformer-data", create_if_missing=True)
+tok_image = modal.Image.debian_slim(python_version="3.12").pip_install(
+    "tiktoken", "numpy", "pyarrow", "huggingface_hub[hf_transfer]"
+).env({"HF_HUB_ENABLE_HF_TRANSFER": "1"})
+
+
+@app.function(image=tok_image, volumes={"/data": data_vol}, cpu=16, memory=65536, timeout=3 * 3600)
+def tokenize(name: str) -> dict:
+    """GPT-2 tokens with <|endoftext|> between documents: /data/<name>/{train,val}.bin (uint16)."""
+    import os
+
+    import numpy as np
+    import tiktoken
+    from huggingface_hub import hf_hub_download
+
+    enc = tiktoken.get_encoding("gpt2")
+    eot = enc.eot_token
+    out = f"/data/{name}"
+    os.makedirs(out, exist_ok=True)
+    counts = {}
+
+    def write(docs_iter, path):
+        n = 0
+        with open(path, "wb") as fh:
+            for docs in docs_iter:
+                ids = enc.encode_ordinary_batch(docs, num_threads=16)
+                arr = np.fromiter((t for d in ids for t in (*d, eot)), dtype=np.uint16)
+                fh.write(arr.tobytes())
+                n += len(arr)
+        return n
+
+    def chunks(seq, k=20000):
+        for i in range(0, len(seq), k):
+            yield seq[i : i + k]
+
+    if name == "tinystories":
+        for split, fn in (("train", "TinyStoriesV2-GPT4-train.txt"), ("val", "TinyStoriesV2-GPT4-valid.txt")):
+            p = hf_hub_download("roneneldan/TinyStories", fn, repo_type="dataset", cache_dir="/tmp/hf")
+            docs = [d.strip() for d in open(p, encoding="utf-8").read().split("<|endoftext|>") if d.strip()]
+            counts[split] = write(chunks(docs), f"{out}/{split}.bin")
+    elif name == "fineweb_edu":
+        import pyarrow.parquet as pq
+
+        p = hf_hub_download("HuggingFaceFW/fineweb-edu", "sample/10BT/000_00000.parquet", repo_type="dataset", cache_dir="/tmp/hf")
+        pf = pq.ParquetFile(p)
+        held = []
+
+        def train_docs():
+            i = 0
+            for b in pf.iter_batches(batch_size=20000, columns=["text"]):
+                docs = b.column(0).to_pylist()
+                keep = []
+                for d in docs:
+                    (held if i % 100 == 0 else keep).append(d)  # every hundredth document is held out
+                    i += 1
+                yield keep
+
+        counts["train"] = write(train_docs(), f"{out}/train.bin")
+        counts["val"] = write(chunks(held), f"{out}/val.bin")
+    data_vol.commit()
+    return {"name": name, **counts}
+
+
+@app.function(image=lm_image, gpu="H100", volumes={"/data": data_vol}, timeout=6 * 3600)
+def run_tok(argv: list[str]) -> dict:
+    return _run(argv, "/root/lm.py")
+
+
+diag_image = image.add_local_file(pathlib.Path(__file__).parent / "lm.py", "/root/lm.py").add_local_file(
+    pathlib.Path(__file__).parent / "diag.py", "/root/diag.py"
+)
+
+
+@app.function(image=diag_image, gpu="L4", timeout=2 * 3600)
+def run_diag(argv: list[str]) -> dict:
+    return _run(argv, "/root/diag.py")
 
 
 def grid(task: list[str], model: list[str], seed: list[int], **fixed) -> list[list[str]]:
@@ -297,6 +377,33 @@ def lm_sfa_b() -> list[list[str]]:
     return runs
 
 
+def diag_grid(tasks, models, layers, seeds, lrs, steps=4000):
+    runs = []
+    for t, m, L, sd, lr in itertools.product(tasks, models, layers, seeds, lrs):
+        runs.append(["--task", t, "--model", m, "--layers", str(L), "--seed", str(sd), "--lr", str(lr), "--steps", str(steps)])
+    return runs
+
+
+DIAG_TASKS = ["mqar", "mqar2", "selcopy", "indist", "phop4", "phop8", "phop16", "dyck2", "add", "match3"]
+DIAG_MODELS = ["softmax", "ff", "softmaxw", "lookback", "ffw"]
+
+
+def tok_argv(data, arch, layers, lr, seed, tokens, **kw):
+    """One token-level LM run at the S0 scale: width 512, 8 heads, context 512, batch 64 x 512 tokens."""
+    argv = ["--data", f"/data/{data}", "--vocab", "50304", "--ctx", "512", "--d", "512", "--heads", "8",
+            "--batch", "64", "--micro", "2", "--bf16", "1", "--remat", "1", "--vseqs", "128", "--evals", "24",
+            "--probe", "1", "--arch", arch, "--layers", str(layers), "--lr", str(lr), "--seed", str(seed),
+            "--tokens", str(int(tokens))]
+    if arch == "sfa":
+        argv += ["--order", "4", "--rank", "32", "--vac", "0.05", "--alpha0", "1", "--fscale", "1"]
+    for k, v in kw.items():
+        argv += [f"--{k}", str(v)]
+    return argv
+
+
+# S0 architectures: softmax (6 layers), free-field at equal parameters (6), at equal FLOPs (5), softmax + 1 layer
+S0_ARCHS = [("gpt", 6), ("sfa", 6), ("sfa", 5), ("gpt", 7)]
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
     "baseline": baseline(),
@@ -314,13 +421,35 @@ GRIDS = {
     "lm_sfa": lm_sfa(),
     "sfa_b": sfa_b(),
     "lm_sfa_b": lm_sfa_b(),
+    # timing: a few hundred steps of each S0 architecture, and two S1 configurations
+    "tok_time": [tok_argv("tinystories", a, L, 1.5e-3, 0, 64 * 512 * 200, evals=2) for a, L in S0_ARCHS],
+    "diag_time": diag_grid(["mqar", "phop4"], ["softmax", "ffw"], [2], [0], [1e-3], steps=1000),
+    # S0 learning-rate sweep: every architecture, three rates, one seed, 100M tokens, both corpora
+    "tok_s0_lr": [tok_argv(d, a, L, lr, 0, 1e8, early=50) for d in ("tinystories", "fineweb_edu")
+                  for a, L in S0_ARCHS for lr in (1e-3, 2e-3, 4e-3)],
+    # S1 pilot: are the tasks learnable in 3,000 steps at one rate?
+    "diag_pilot": diag_grid(DIAG_TASKS, ["softmax", "ffw"], [2], [0], [3e-3], steps=3000),
+    # S0 confirmation on FineWeb-Edu at 400M tokens, three seeds, each architecture at its best rate;
+    # plus free-field with every arity off at initialisation (the S1 amendment) at the equal-FLOPs depth
+    "tok_s0": [tok_argv("fineweb_edu", a, L, lr, sd, 4e8, early=100) for sd in (0, 1, 2)
+               for a, L, lr in (("gpt", 6, 4e-3), ("gpt", 7, 2e-3), ("sfa", 5, 4e-3), ("sfa", 6, 4e-3))]
+              + [tok_argv("fineweb_edu", "sfa", 5, 4e-3, sd, 4e8, early=100, alpha0=2) for sd in (0, 1, 2)],
+    # S2: induction through training, 100M tokens, evaluations every 50 steps up to step 1,600
+    "tok_s2": [tok_argv(d, a, 6, lr, sd, 1e8, early=50, early_until=1600, **kw) for d, lr in (("fineweb_edu", 4e-3), ("tinystories", 2e-3))
+               for sd in (0, 1, 2)
+               for a, kw in (("gpt", {}), ("gpt", {"lookback": 1}), ("sfa", {}), ("sfa", {"lookback": 1, "hops": 2}))],
+    # S2 follow-up: the look-back variants are unstable at 4e-3 on FineWeb-Edu; give them their own rates
+    "tok_s2b": [tok_argv("fineweb_edu", a, 6, lr, sd, 1e8, early=50, early_until=1600, **kw) for lr in (1e-3, 2e-3)
+                for sd in (0, 1, 2) for a, kw in (("gpt", {"lookback": 1}), ("sfa", {"lookback": 1, "hops": 2}))],
+    # S1: every task, model and depth, three seeds, one rate for all
+    "diag_s1": diag_grid(DIAG_TASKS, DIAG_MODELS, [1, 2], [0, 1, 2], [3e-3], steps=3000),
 }
 
 
 @app.local_entrypoint()
 def main(grid: str = "smoke", gpu: str = "L4"):
     runs = GRIDS[grid]
-    fn = run_lm if grid.startswith("lm_") else run_h100 if gpu.upper() == "H100" else run_l4
+    fn = run_diag if grid.startswith("diag_") else run_tok if grid.startswith("tok_") else run_lm if grid.startswith("lm_") else run_h100 if gpu.upper() == "H100" else run_l4
     out = pathlib.Path(__file__).parent / "results" / f"{grid}.jsonl"
     t0 = time.time()
     with out.open("a") as f:
@@ -330,3 +459,11 @@ def main(grid: str = "smoke", gpu: str = "L4"):
             brief = {k: r.get(k) for k in ("task", "model", "arch", "seed", "tok_acc", "val_bpc", "secs", "error")}
             print(json.dumps(brief))
     print(f"{len(runs)} runs in {time.time() - t0:.0f}s -> {out}")
+
+
+@app.local_entrypoint()
+def prep(name: str = "all"):
+    """uvx modal run research/modal_run.py::prep -- tokenise TinyStories and the FineWeb-Edu shard."""
+    names = ["tinystories", "fineweb_edu"] if name == "all" else [name]
+    for r in tokenize.map(names):
+        print(json.dumps(r))
