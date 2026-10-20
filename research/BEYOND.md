@@ -256,6 +256,18 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   quality results have been observed. The final language reporter passes 26 tests, preserves both
   Stage-1 policies, and distinguishes training-seed variation from conditional sequence uncertainty.
 
+
+- 2026-10-20 14:41 UTC — All 36 shared-reference/B confirmations complete without execution
+  errors. B scores **100% final test in all 18 primary cells** and passes the prospectively reconciled
+  written rule. Its original-code outcome is **unconfirmed**, because the prefix reference scores
+  6.624% on S5 L1 seed 1 and 1.523% on S5 L2 seed 3; all other references score 100%.
+  Both outcomes are sealed in `results/beyond_stage1_b_confirmation.json`. No rates or recipes
+  change. These confirmations cost $3.449 conservatively; settled screen total is $12.978.
+  The 48 descriptive runs launched from the previously frozen `dc6029a` manifest, app
+  `ap-trSobOtETv1B8a00KYVTME`, log `/tmp/beyond-stage1-descriptive.log`, eight L4 slots.
+  C/A confirmations remain queued afterward. Language accounting amendment is committed at
+  `cfcd1bb`; all top-level diagnostic worker sources remain unchanged.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
