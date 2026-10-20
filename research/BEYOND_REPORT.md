@@ -104,6 +104,9 @@ layers, finite gradients, and the exact affine-reproduction special case. The ma
 configuration is width 128, batch 64 and Muon, with task-specific one- or two-layer models.
 Each task/depth receives B's nominal compute at 6,000 updates; other arms receive proportionate
 updates and complete schedules. Final validation uses 1,024 sequences and final test 2,048.
+Retrieval uses context 128: MQAR contains 16 key/value pairs with vocabulary 256; induction uses
+vocabulary 128 and eight queries, each with three earlier occurrences. Success at these settings
+does not establish long-context retrieval.
 
 The six primary cells are two-layer MQAR and induction, plus A5/S5 word tracking at both depths.
 Word inputs contain a BOS token and 16 uniform group elements; the target at each position is
@@ -116,6 +119,11 @@ completed. Every candidate and selected reference reached 100% validation in eve
 C needed .002 on both S5 depths; B needed .002 on two-layer S5. References selected by validation
 are convolved softmax for retrieval and the full-matrix prefix reader for all word cells.
 These are selected seed-0 results, not independent confirmation.
+The recurrent controls do not learn the word tasks in this screen: their best seed-0 validation
+scores across the tested depths range from 1.59–1.77% on A5 and 0.90–1.67% on S5. The successful
+tracking comparison therefore uses the full-matrix prefix reader. Gated DeltaNet and DeltaProduct
+supply strong retrieval and language controls, but their word-task failures remain failures of
+learning under this recipe, not evidence of insufficient expressivity.
 
 | Candidate | Selected seed-0 validation | Independent seeds 1/2/3: written rule | Independent seeds 1/2/3: original code | Language eligibility |
 |---|---|---|---|---|
@@ -189,6 +197,9 @@ from the other summed terms. BOS and causal boundaries also reveal position desp
 
 All arms learn the affine regression problem far better than predicting the mean context value
 (MSE 12.21277). At the registered compute budget, the combined layers do not lead this probe:
+each sequence supplies 16 noiseless examples from a fresh affine function on two-dimensional
+Gaussian keys, with an independent query drawn at scale 2.5. This is a specific extrapolation
+probe, not a general estimation guarantee.
 
 | Arm | One-layer test MSE | Two-layer test MSE |
 |---|---:|---:|

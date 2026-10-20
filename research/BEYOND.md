@@ -501,6 +501,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   Settled-plus-reserved estimates are $52.894311 language and $79.250535 total. Even adding
   the entire seed-3 timeout reservation leaves both caps intact.
 
+- 2026-10-20 17:24 UTC — A read-only scientific review tightened the working report's scope:
+  retrieval is context 128, the affine probe has 16 noiseless two-dimensional examples with
+  query scale 2.5, and the successful word-tracking comparator is the full-matrix prefix reader.
+  GDN1/DP4's word-task learning failures are now quantified beside their roles as retrieval/language
+  controls. Seed 2 remains healthy; both softmax arms have passed halfway. No protocol, source,
+  rate, compute budget or training decision changed.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
