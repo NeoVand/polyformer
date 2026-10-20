@@ -564,6 +564,18 @@ GRIDS = {
                     + [r + ["--d", "128"] for r in wp_runs(["wp_s5_16"], [("dp", 0, 4)], [0], [1])],
     # GROUPS.md section 7 main grid (registered in section 7.6 before it ran): 3 seeds; length-64 cells 12,000 steps
     "wp_main": wp_main(),
+    # 7.6 amendment (registered): 20,000 steps on the W1 cells that failed in wp_main
+    "wp_amend": wp_runs(["wp_a5_16"], [("hh", 5, 2)], [0, 1, 2], [1], steps=20000)
+                + wp_runs(["wp_s5_16"], [("orth", 5, 0)], [0, 1, 2], [1], steps=20000)
+                + wp_runs(["ws_a5_16"], [("holo", 3, 0), ("hh", 5, 2)], [0, 1, 2], [1], steps=20000)
+                + wp_runs(["ws_s5_16"], [("hh", 5, 4)], [0, 1, 2], [1], steps=20000)
+                + wp_runs(["ws_a5_64"], [("holo", 3, 0), ("hh", 5, 2)], [0, 1, 2], [1], steps=20000)
+                + wp_runs(["ws_s5_64"], [("hh", 5, 4)], [0, 1, 2], [1], steps=20000),
+    # the same amendment for the length-64 cell W6 reads (the orthogonal RNN on S5 snapped on 1 of 3 seeds)
+    "wp_amend2": wp_runs(["wp_s5_64"], [("orth", 5, 0)], [0, 1, 2], [1], steps=20000),
+    # exploratory, after the results (not registered): the A5 stabiliser's indicator lives on the irreps 1 + 4,
+    # which d = 3 rotations and n_h = 2 Householders cannot hold; d = 4 rotations and n_h = 4 Householders can
+    "wp_explore": wp_runs(["ws_a5_16"], [("holo", 4, 0), ("hh", 5, 4)], [0, 1, 2], [1]),
     # third round: DeltaProduct's transitions with the full matrix-state read-out (is it the read-out?)
     "wp_pilot_hh": wp_runs(["wp_a5_16"], [("hh", 5, 1), ("hh", 5, 2)], [0], [1])
                    + wp_runs(["wp_s5_16"], [("hh", 5, 2), ("hh", 5, 4), ("hh", 4, 4)], [0], [1])

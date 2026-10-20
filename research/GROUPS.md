@@ -4,7 +4,8 @@ Working note, 20 October 2026. Companion to `SEARCH.md`, `LOCAL.md` (the searche
 language; both no-go) and `FORMALISM.md` (subset attention). Code: `research/groups.py` (groups, character tables,
 the ordered Match-k task, representation content), `research/polybench.py --model holo` (holonomy attention) and
 `--embed char|charrot` (frozen characters), brute-force checks in `research/test_groups.py`, grids `grp_*` in
-`research/modal_run.py`, raw rows in `research/results/grp_*.jsonl`.
+`research/modal_run.py`, raw rows in `research/results/grp_*.jsonl`. Section 7 (word problems over A5 and S5): grids
+`wp_*`, rows in `research/results/wp_*.jsonl`, tables from `research/wp_summary.py`.
 
 ## 0. The idea being tested
 
@@ -289,7 +290,7 @@ any claim of novelty.
 
 1. **State tracking**: running products over A5 and S5 (the NC1-complete word problems) with holonomy attention,
    softmax and a linear RNN with matrix state, one and two layers; the prefix product is the arity-n sector, so the
-   layer should do it in one step where softmax cannot at constant depth.
+   layer should do it in one step where softmax cannot at constant depth. (Done: section 7.)
 2. **Selection with composition**: keyed versions of the group tasks, combining subset attention's query weights
    with rotations (the non-abelian subset attention).
 3. **Real data**: a holonomy branch in the S6 language-model harness at equal FLOPs under Muon, and on code, where
@@ -297,9 +298,10 @@ any claim of novelty.
 
 ## 7. State tracking: the word problem over A5 and S5
 
-Next step 1 of section 6, registered before its main runs (20 October 2026). Code: `groups.task_word`, `groups.word_commuting_ceiling`,
-`groups.irrep_det`, `groups.householders_needed`, `polybench.holonomy_causal` and `--model deltaprod`; checks in
-section 7 of `test_groups.py`; grids `wp_*` in `modal_run.py`; tables from `research/wp_summary.py`.
+Next step 1 of section 6, registered before its main runs (20 October 2026). Code: `groups.task_word`,
+`groups.word_commuting_ceiling`, `groups.irrep_det`, `groups.householders_needed`, `polybench.holonomy_causal`,
+`--model deltaprod` and `--hh`; checks in section 7 of `test_groups.py`; grids `wp_*` in `modal_run.py`; tables
+from `research/wp_summary.py`.
 
 ### 7.1 Question and tasks
 
@@ -524,3 +526,183 @@ allowed: 20,000 steps on the failing cells) before reading W6.
 
 Pilot 51 runs; main grid `wp_main` 210 runs (48 + 54 class runs at length 16, 42 at length 64, 42 stabiliser runs at
 16 and 24 at 64), estimated 12 GPU-hours on L4, about $10; cap $20.
+
+### 7.8 Results (20 October 2026)
+
+294 runs on L4 (pilot 51, main grid 210, amendment 27, exploratory 6), about 19 container-hours, roughly $15 of
+the $20 cap. Tables from `python3 research/wp_summary.py wp_main`; every cell is balanced accuracy %, mean (seeds
+0, 1, 2). Chance is 1.7% (A5) and 0.8% (S5) on the class tasks, 50% on the stabiliser tasks.
+
+**Word problem, |G| classes, every position** (one layer unless marked 2L):
+
+| Arm | A5, 16 | A5, 64 | S5, 16 | S5, 64 |
+|---|---|---|---|---|
+| holonomy d = 3 | 100 (100, 100, 100) | 100 (100, 100, 100) | 22.9 (22.6, 23.7, 22.4) | |
+| holonomy d = 4 | 100 (100, 100, 100) | | 38.3 (40.6, 38.8, 35.5) | |
+| holonomy d = 5 | 100 (100, 100, 100) | | **99.8** (100.0, 99.7, 99.8) | **98.4** (97.3, 97.9, 100.0) |
+| orthogonal RNN d = 3 | | 100 (100, 100, 100) | | |
+| orthogonal RNN d = 5 | 100 (100, 100, 100) | | 71.4 (99.6, 100.0, 14.5) | 29.3 (78.5, 4.7, 4.8) |
+| holonomy d = 5 without prefix | 20.6 (20.3, 20.8, 20.8) | | 19.6 (19.7, 19.5, 19.6) | |
+| Householder RNN d = 5, n_h = 1 | 17.0 (17.0, 16.7, 17.2) | | | |
+| Householder RNN d = 5, n_h = 2 | 98.9 (100.0, 100.0, 96.6) | 100 (100, 100, 100) | 20.4 (24.5, 20.3, 16.3) | |
+| Householder RNN d = 5, n_h = 4 | | | **99.9** (99.8, 100.0, 100.0) | **100** (100, 100, 100) |
+| Householder RNN d = 4, n_h = 4 | | | 99.9 (99.8, 100.0, 100.0) | |
+| Newton (d = 2) | 17.5 (17.2, 17.3, 17.9) | 5.5 (5.4, 5.4, 5.8) | 12.3 (11.9, 12.6, 12.3) | 4.5 (4.5, 4.7, 4.3) |
+| softmax | 14.0 (13.9, 14.0, 14.0) | 4.7 (4.8, 4.7, 4.8) | 7.3 (7.2, 7.4, 7.2) | 2.8 (3.0, 2.8, 2.7) |
+| DeltaProduct n_h = 1 | 13.2 (13.7, 13.1, 13.0) | | 8.6 (8.7, 8.6, 8.6) | |
+| DeltaProduct n_h = 2 | 14.2 (14.2, 14.1, 14.2) | 4.8 (4.8, 4.8, 4.8) | 9.4 (9.6, 9.1, 9.4) | |
+| DeltaProduct n_h = 4 | 14.2 (14.2, 14.1, 14.2) | | 10.4 (10.5, 10.2, 10.6) | 3.5 (3.5, 3.5, 3.6) |
+| holonomy d = 3, 2L | | | 13.3 (13.3, 13.3, 13.3) | |
+| Householder RNN n_h = 1 / n_h = 2, 2L | 14.6 (14.4, 14.7, 14.5) | | 13.6 (13.5, 14.1, 13.1) | |
+| Newton, 2L | 14.3 (14.3, 14.3, 14.3) | | 13.6 (13.9, 13.1, 13.8) | |
+| softmax, 2L | 14.0 (14.0, 14.0, 14.0) | 4.8 (4.8, 4.8, 4.7) | 7.2 (7.1, 7.2, 7.3) | 2.4 (2.4, 2.4, 2.4) |
+| DeltaProduct n_h = 1 / n_h = 2, 2L | 14.1 (14.1, 14.2, 14.0) | | 12.1 (12.4, 11.8, 12.1) | |
+
+Every arm below 25% is right only at the first few positions (one to three) and at chance after: the second-half balanced
+accuracy of every such cell is 0.8-2.2% (table in `wp_summary.py`), except holonomy d = 4 on S5 (7.7%; accuracy by
+position 100 100 98 85 65 47 33 23 17 12 9 7 6 4 4 3, an approximate tracker that loses the product as it grows).
+
+**Stabiliser membership (binary), every position:**
+
+| Arm | A5, 16 | A5, 64 | S5, 16 | S5, 64 |
+|---|---|---|---|---|
+| holonomy d = 3 | 63.0 (63.4, 62.5, 63.1) | 53.5 (53.5, 53.4, 53.4) | 60.2 (60.3, 59.7, 60.4) | |
+| holonomy d = 5 | | | **99.2** (99.8, 99.5, 98.4) | 92.3 (93.8, 84.1, 99.0) |
+| Householder RNN n_h = 2 | 62.2 (62.0, 61.7, 62.9) | 55.3 (55.7, 56.6, 53.7) | | |
+| Householder RNN n_h = 4 | | | 95.4 (92.4, 95.9, 98.1) | 72.5 (73.5, 74.2, 69.7) |
+| Newton (d = 2) | 57.7 (58.0, 57.4, 57.8) | | 56.9 (56.9, 56.8, 57.0) | |
+| softmax 1L / 2L | 59.2 / 60.6 | 52.3 | 57.1 / 58.3 | 52.2 |
+| DeltaProduct n_h = 2 | 59.4 (60.9, 59.2, 58.0) | 53.7 (53.5, 54.3, 53.4) | | |
+| DeltaProduct n_h = 4 | **96.2** (96.7, 97.9, 94.0) | | 84.5 (95.2, 96.5, 61.7) | 83.0 (100.0, 78.8, 70.1) |
+
+**Length generalisation** (trained at 16, scored at 64; every position / positions 33-64):
+
+| Arm | A5 classes | S5 classes | S5 stabiliser |
+|---|---|---|---|
+| holonomy d = 3, 4, 5 (A5); d = 5 (S5) | 100 / 100 (all nine runs) | 97.3 (99.7, 96.9, 95.3) / 95.3 | 90.0 (94.1, 92.6, 83.3) / 83.3 |
+| orthogonal RNN d = 5 | 100 / 100 | 61.2 (80.0, 98.7, 4.9) / 54.5 | |
+| Householder RNN n_h = 2 (A5); n_h = 4 (S5) | 92.4 (100.0, 100.0, 77.2) / 87.9 | 98.2 (96.8, 97.9, 100.0) / 96.9 | 69.9 (65.9, 69.2, 74.7) / 55.0 |
+| Householder RNN d = 4, n_h = 4 | | 95.1 (96.9, 91.6, 96.8) / 90.7 | |
+| Newton, softmax, DeltaProduct, holonomy without the right representation | 2.4-6.4 / chance | 2.4-10.7 / chance | 51.7-63.9 / 50-53 |
+
+**Steps to 90%** (first evaluation at or above 90%; evaluations every 600 steps at length 16, 1,200 at 64):
+
+| Arm | A5, 16 | A5, 64 | S5, 16 | S5, 64 |
+|---|---|---|---|---|
+| holonomy (d = 3 for A5, d = 5 for S5) | 1,200 (x3) | 2,400, 1,200, 1,200 | 2,400, 2,400, 3,000 | 3,600, 4,800, 4,800 |
+| orthogonal RNN, same d | 1,200, 1,800, 1,200 (d = 5) | 3,600, 4,800, 3,600 | 4,200, 4,200, never | never (x3) |
+| Householder RNN (n_h = 2 for A5, 4 for S5) | 1,200, 1,200, 1,800 | 2,400 (x3) | 1,800 (x3) | 2,400 (x3) |
+
+**Amendment** (registered in 7.6: 20,000 steps on the W1 cells that failed, three seeds; grids `wp_amend`,
+`wp_amend2`). The holonomy d = 5 cell on the S5 stabiliser at 64 (93.8, 84.1, 99.0) was left unamended to stay
+inside the budget.
+
+| Cell | 6,000 steps (12,000 at 64) | 20,000 steps |
+|---|---|---|
+| orthogonal RNN d = 5, S5 classes, 16 | 99.6, 100.0, 14.5 | **100, 100, 100** |
+| orthogonal RNN d = 5, S5 classes, 64 | 78.5, 4.7, 4.8 | **98.2, 100, 100** (90% at 8,000, 12,000, 8,000 steps) |
+| Householder RNN n_h = 2, A5 classes, 16 | 100, 100, 96.6 | **100, 100, 99.1** |
+| Householder RNN n_h = 4, S5 stabiliser, 16 | 92.4, 95.9, 98.1 | **99.2, 98.9, 98.5** |
+| Householder RNN n_h = 4, S5 stabiliser, 64 | 73.5, 74.2, 69.7 | 80.9, 71.1, 66.8 |
+| holonomy d = 3, A5 stabiliser, 16 | 63.4, 62.5, 63.1 | 65.5, 65.2, 65.3 |
+| holonomy d = 3, A5 stabiliser, 64 | 53.5, 53.4, 53.4 | 53.9, 53.6, 53.7 |
+| Householder RNN n_h = 2, A5 stabiliser, 16 | 62.0, 61.7, 62.9 | 78.8, 78.1, 77.1 |
+| Householder RNN n_h = 2, A5 stabiliser, 64 | 55.7, 56.6, 53.7 | 57.0, 56.9, 54.3 |
+
+**Irreps held by the first layer** (multiplicity >= 1/2 in a head with homomorphism error < 0.5; best head's error
+in brackets):
+
+| Task | Arm | Seed 0 | Seed 1 | Seed 2 |
+|---|---|---|---|---|
+| A5 classes, 16 | holonomy d = 3 | 3, 3' (0.00) | 3' (0.00) | 3 (0.04) |
+| A5 classes, 16 | holonomy d = 4 | 3, 4 (0.01) | 3, 3' (0.08) | 3, 4 (0.03) |
+| A5 classes, 64 | holonomy d = 3; orthogonal RNN d = 3 | 3'; 3 | 3'; 3' | 3; 3 |
+| A5 classes, 16 | Householder RNN n_h = 2 | 3' (0.10) | 3 (0.08) | 3 (0.12) |
+| S5 classes, 16 | holonomy d = 5 | sign, 4' (0.13) | sign, 4 (0.10) | sign, 4 (0.10) |
+| S5 classes, 64 | holonomy d = 5 | sign, 4' (0.06) | sign, 4 (0.06) | 5 (0.03) |
+| S5 classes, 16 | orthogonal RNN d = 5 | sign, 4' (0.21) | 5 (0.13) | none (0.93) |
+| S5 classes, 16 | Householder RNN d = 4, n_h = 4 | 4 (0.11) | 4 (0.15) | 4 (0.15) |
+| S5 classes, 16 and 64 | Newton (d = 2) | sign | sign | sign |
+| S5 stabiliser, 16 and 64 | holonomy d = 5 | sign, 4 | sign, 4 | sign, 4 |
+| S5 classes, 16 | holonomy d = 3, d = 4 | none (0.84-0.89, 0.71-0.74) | | |
+
+Every exact cell holds what section 7.2 says it must: A5 one of its 3-dimensional irreps (or the 4); S5 in SO(5)
+the 4 or 4' together with the sign, or the 5; S5 with reflections the standard 4 in four dimensions; the commuting
+layer the sign of S5, which is all of S5 that commutes. The stabiliser runs hold the 4 (not the 4'), the irrep the
+label reads (below).
+
+**Exploratory, after the results (not registered):** the A5 stabiliser's indicator 1_A4 has Fourier support on the
+irreps 1 and 4 only (its multiplicities are those of the permutation action on the five letters, 1 + 4; computed).
+A head that holds only a 3-dimensional irrep sees nothing of the label to first order, however exact its
+representation. Holonomy at d = 4, which can hold the 4, solves the A5 stabiliser on **100, 100, 100** (the heads
+that pass the error test hold the 4; 99.8-99.9 at length 64), and the Householder RNN at n_h = 4 (the 4 of A5
+needs four reflections for its 5-cycles) on 98.8, 95.6, 92.1. DeltaProduct's 96.2 at n_h = 4 against 59.4 at n_h = 2
+is the same split.
+
+| Prediction | Registered criterion | Outcome |
+|---|---|---|
+| W1 | exact representation solves the task in one layer | **fails as registered, holds on the class tasks after the amendment** (every class cell >= its threshold on 3 of 3 seeds); fails on the stabiliser tasks at A5 with d = 3 / n_h = 2 (63, 62 at 16; 65, 78 at 20,000 steps: a wrong prediction, explained above) and at S5 length 64 (holonomy one seed 84.1; Householder 81, 71, 67 at 20,000 steps) |
+| W2 | no exact representation, no tracking (second half <= 20%) | **holds** (S5 at d = 3: 2.0, d = 4: 7.7; Householder n_h = 2 on S5: 2.2, n_h = 1 on A5: 1.7) |
+| W3 | Newton at or below the commuting ceiling + 2 | **holds** (17.5, 5.5, 12.3, 4.5; stabilisers 57.7, 56.9) |
+| W4 | softmax second half <= 5% (classes), <= 60% (stabiliser) | **holds** (0.8-1.7; 50.0 everywhere) |
+| W5 | without the prefix: exact at positions 1-3, <= 10% from 5 | **holds** (A5 100 100 100 9 3 2 ...; S5 100 100 100 3 2 1 ...) |
+| W6 | holonomy within 3 points of the orthogonal RNN | **fails, in holonomy's favour** at S5 16 (99.8 vs 71.4) and S5 64 (98.4 vs 29.3); equal on A5 (100, 100) |
+| W7 | two layers do not help | **holds** (holonomy d = 3: 13.3; DeltaProduct: 12.1; Newton and softmax: second half <= 1.7) |
+| W8 | DeltaProduct: classes fail, S5 stabiliser at n_h = 4 >= 95%, A5 stabiliser at n_h = 2 <= 70% | **fails on one seed** (S5 stabiliser 95.2, 96.5, 61.7); the class and A5 parts hold |
+| W9 | length generalisation: A5 >= 95%; S5 Householder >= 95%, rotations < 95% | **fails**: holonomy d = 5 extrapolates on S5 (99.7, 96.9, 95.3), and the Householder seed that was 96.6 at 16 on A5 is 77.2 at 64 |
+
+**What the numbers say.**
+
+- **The word problem separates the layers by the group their features compose in**, as Match-3 did in section 5.
+  Softmax with one or two layers gets the first one or two positions (a lookup of g_1 g_2) and nothing after; the
+  commuting layer stays under its order-blind ceiling and holds only the sign of S5, which is all of S5 that
+  commutes; every layer that holds an exact representation of the group tracks it at every position and both
+  lengths.
+- **Representation theory predicted every capacity outcome.** SO(d) heads track A5 from d = 3 and S5 only from
+  d = 5 (at d = 4 accuracy decays position by position: an approximate tracker); Householder transitions need two
+  per token for A5 and four for S5, and fail at one and two; with reflections S5 fits in d = 4. The one wrong
+  prediction (the A5 stabiliser at d = 3) is a representation-theory fact the registration missed: a binary label
+  reads only the irreps in its Fourier support, and the icosahedral 3s are not in the support of the A4 indicator.
+  Which representation must be learned is set by the read-out, not by the group alone.
+- **Arity is literal.** Without the prefix sector holonomy attention is exact on the first three positions and at
+  chance after: the subset sectors compose at most K = 3 elements, and the running product has to come from the
+  top-arity sector.
+- **The subset sectors buy learning speed, not capacity.** At the same d and heads, holonomy attention (prefix plus
+  arity 1-3 sectors) reaches 90% sooner than the prefix alone (A5 at 64: 1,200-2,400 steps against 3,600-4,800; S5
+  at 16: 2,400-3,000 against 4,200, 4,200 and never; S5 at 64: 3,600-4,800 against never on all three seeds in
+  12,000 steps). Given 20,000 steps the orthogonal RNN gets there too (100 on S5 at 16; 98.2, 100, 100 at 64, but
+  reaching 90% only at 8,000-12,000 steps), so the capacity is the same. A plausible mechanism: the short-product
+  sectors give the rotations a gradient from products of one to three elements at every position, a built-in
+  curriculum that the single running product lacks.
+- **Reflections are fastest on S5 classes, not everywhere.** The Householder RNN, with no subset sectors at all,
+  reaches 90% first on both S5 class cells (1,800 steps at 16 and 2,400 at 64 on every seed; on A5 holonomy is as
+  fast or faster: 1,200 against 1,200-1,800 at 16, 1,200-2,400 against 2,400 at 64), holds S5 in d = 4
+  where rotations cannot, and extrapolates from 16 to 64 as well as holonomy (98.2 against 97.3). On the S5
+  stabiliser it is worse than holonomy d = 5 (95.4 against 99.2 at 16; 72.5, and 72.9 after 20,000 steps, against
+  92.3 at 64), so which parametrisation is better is not settled. Its transitions are DeltaProduct's; what
+  DeltaProduct lacks here is the read-out (S_t q_t, 16 numbers per head), which tracks one letter (the stabiliser
+  at n_h = 4) but not the whole permutation at width 64.
+- **A second layer rescued no arm that failed with one.** The semidirect route of 7.2 (sign in layer 1, A5 in
+  layer 2) exists for holonomy d = 3 and for Householders with n_h = 2, and neither found it.
+
+**Decision, by the registered rules.** W1 (on the class tasks, after the amendment) and W5 hold and W6 fails in
+holonomy's favour, so the registered reading is: the composition view pays on state tracking through its top-arity
+sector, a linear RNN with matrix state, and the subset sectors help; the help measured here is learning speed and
+reliability, not capacity. W9 failed, so the registered conclusion that reflections are the better parametrisation
+does not follow; unregistered, they are faster on S5 classes and fit S5 in d = 4, and worse on the S5 stabiliser.
+
+**What this means for the project.** On state tracking, holonomy attention is a matrix-state RNN plus a curriculum:
+it solves what softmax and commuting layers provably cannot, and it does so the way DeltaProduct-style and
+orthogonal RNNs do, by carrying one running product. Novelty here is not "a layer that can track state"; it is one
+layer that reads both the running product (state tracking) and every short ordered product (the relational queries
+of section 2), with the short products speeding up the long one. Two things to do next, cheapest first:
+
+1. **Householder holonomy attention**: replace exp(A) by n_h generalised Householders in the holonomy layer (the
+   `--hh` flag already does it for the prefix-only arm) and test whether it keeps both the Householder speed and the
+   subset curriculum, on the word problems and on ordered Match-3 of section 2.
+2. **Selection with composition** (section 6, step 2): keyed group tasks where a query must pick which positions to
+   compose, which neither a running product nor unweighted subset sums can do alone.
+
+The DeltaProduct comparison is limited by this implementation (width 64, no short convolution, 6,000-20,000 steps):
+with the published architecture at its own scale it solves S5 classes (Siems et al.), so "DeltaProduct fails the
+class task" is a statement about its read-out at this width, not about the method.
