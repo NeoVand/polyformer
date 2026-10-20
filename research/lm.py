@@ -8,6 +8,14 @@ Language models for the arity question: bytes (enwik8) or GPT-2 tokens (TinyStor
             arity up to K reads distinct subsets of the tokens the query selects (MLP narrowed); with
             --hops R it also reads walks A^l V (l = 2..R) along the same causal attention, and with
             --lookback each key first looks back along a learned causal hop (see walk_sector below)
+    lla     ridge local-linear attention in a learned r-dimensional chart per head (--chart r): each query
+            fits v ~ b0 + b1 (c_j - c_i) by weighted ridge least squares under its softmax weights and
+            reads b0; a per-head gate starts at zero, so the layer starts as softmax (LOCAL.md)
+    plx     Parallax (Zuo et al. 2026): softmax weights times (1 - rho_i.(k_j - kbar_i)), probe rho = W_R x,
+            W_R = 0 at init
+
+--opt muon trains the hidden matrices with Muon (Newton-Schulz, Moonlight's RMS matching) and everything
+else with the same AdamW as --opt adamw.
 
 Causal Newton attention: position t sees the tokens before it. Power sums are exclusive prefix
 sums, P_j(t) = sum_{s<t} phi_s^j; Newton's identities give e_m(t), the sum over m-subsets of
@@ -82,7 +90,7 @@ def init(key, cfg):
          "lnf": ln_init(D), "layers": []}
     for _ in range(L):
         lyr = {"ln1": ln_init(D), "ln2": ln_init(D)}
-        if cfg.arch in ("gpt", "hybrid", "sfa"):
+        if cfg.arch in ("gpt", "hybrid", "sfa", "lla", "plx"):
             lyr["qkv"] = dense(next(ks), D, 3 * D)
             lyr["o"] = dense(next(ks), D, D, scale=1 / math.sqrt(2 * L))
         if cfg.arch == "sfa":
@@ -113,6 +121,24 @@ def init(key, cfg):
         lyr["fc1"] = dense(next(ks), D, cfg.mlp)
         lyr["fc2"] = dense(next(ks), cfg.mlp, D, scale=1 / math.sqrt(2 * L))
         p["layers"].append(lyr)
+    # local-regression parameters come from their own key stream, so every weight the layer shares with
+    # softmax attention is initialised exactly as in the gpt model at the same seed
+    xk = iter(jax.random.split(jax.random.fold_in(key, 7), L))
+    for lyr in p["layers"]:
+        H, dh = cfg.heads, D // cfg.heads
+        if cfg.arch == "plx" and getattr(cfg, "plx_norm", 0):
+            # as published: random W_R and an RMSNorm on rho over the head dimension (Qwen-3 style, one gain
+            # vector shared by the heads); the gain starts at zero so the layer starts as softmax
+            lyr["wr"] = dense(next(xk), D, D)
+            lyr["rho_g"] = jnp.zeros(dh)
+        elif cfg.arch == "plx":
+            lyr["wr"] = {"w": jnp.zeros((D, D)), "b": jnp.zeros(D)}
+        if cfg.arch == "lla":
+            # chart R (r x dh per head): small and random, never zero (R = 0 is a saddle: the correction is
+            # quadratic in R); ridge lambda per head through softplus; gate g per head at zero
+            lyr["chart"] = jax.random.normal(next(xk), (H, cfg.chart, dh)) * cfg.chart_init / math.sqrt(dh)
+            lyr["lam"] = jnp.full((H,), math.log(math.expm1(cfg.lam0)))
+            lyr["gate"] = jnp.zeros((H,))
     return p
 
 
@@ -130,6 +156,109 @@ def softmax_attention(cfg, lyr, x):
     A = jax.nn.softmax(s, -1)
     y = lin(lyr["o"], mm(A, v, "bhts,bhsc->bhtc").transpose(0, 2, 1, 3).reshape(B, T, D))
     return y + walk_sector(cfg, lyr, A, v)
+
+
+LAM_MIN = 1e-3  # floor on the ridge, in chart units: keeps C + lambda I safely positive definite in float32
+
+
+def packed_index(r):
+    """Positions of the entries (i, j), i <= j, of a symmetric r x r matrix stored as its upper triangle."""
+    idx, n = {}, 0
+    for i in range(r):
+        for j in range(i, r):
+            idx[i, j] = idx[j, i] = n
+            n += 1
+    return idx
+
+
+def ridge_probe(m1, m2, lam, rhs):
+    """
+    Solve (C + lam I) x = rhs per query, C = M2 - m1 m1^T the chart covariance under the query's weights, by
+    an unrolled float32 Cholesky factorisation (r is small, so XLA fuses it into a few elementwise kernels).
+    m1 [..., r], m2 [..., r(r+1)/2] packed upper triangle of M2, lam broadcastable to [...], rhs [..., r].
+    """
+    r = m1.shape[-1]
+    idx = packed_index(r)
+    a = lambda i, j: m2[..., idx[i, j]] - m1[..., i] * m1[..., j] + (lam if i == j else 0.0)
+    L = {}
+    for j in range(r):
+        L[j, j] = jnp.sqrt(jnp.maximum(a(j, j) - sum(L[j, t] ** 2 for t in range(j)), 0.5 * LAM_MIN))
+        for i in range(j + 1, r):
+            L[i, j] = (a(i, j) - sum(L[i, t] * L[j, t] for t in range(j))) / L[j, j]
+    y = []
+    for i in range(r):
+        y.append((rhs[..., i] - sum(L[i, t] * y[t] for t in range(i))) / L[i, i])
+    x = [None] * r
+    for i in reversed(range(r)):
+        x[i] = (y[i] - sum(L[t, i] * x[t] for t in range(i + 1, r))) / L[i, i]
+    return jnp.stack(x, -1)
+
+
+def lla_correction(lyr, q, k, p):
+    """
+    Ridge local-linear attention in a learned chart. Per head, c_j = R k_j (keys) and c_i = R q_i (query).
+    Query i fits v_j ~ b0 + b1 (c_j - c_i) by least squares with weights p_ij and ridge lambda on b1 only,
+    and reads b0. Its weights on the values are exactly
+
+        p_ij (1 - (c_j - m1_i) . rho_i),   rho_i = (C_i + lambda I)^{-1} (m1_i - c_i),
+
+    with m1_i = sum_j p_ij c_j and C_i = sum_j p_ij c_j c_j^T - m1_i m1_i^T (the closed form
+    p_ij (1 - (c_j - c_i).rho~_i) / (1 - mu_i.rho~_i), rho~_i = (Sigma_i + lambda)^{-1} mu_i on moments centred at
+    the query, is the same thing by Sherman-Morrison and needs no denominator in this form). Returns
+    d_ij = (c_j - m1_i) . rho_i, so the local-linear weights are p (1 - d). One moment pass (values [c, cc^T]),
+    one r x r solve per query, one score pass rho_i . c_j.
+    """
+    R = lyr["chart"]
+    ck = jnp.einsum("bhtd,hrd->bhtr", k, R, precision=HI)
+    cq = jnp.einsum("bhtd,hrd->bhtr", q, R, precision=HI)
+    # shift the chart by the first key, which every query sees: the fit is translation invariant, so this is
+    # exact, and it removes any offset shared by all keys before the moments (less cancellation in float32)
+    ref = ck[:, :, :1]
+    ck, cq = ck - ref, cq - ref
+    r = ck.shape[-1]
+    iu = np.triu_indices(r)
+    vals = jnp.concatenate([ck, ck[..., iu[0]] * ck[..., iu[1]]], -1)
+    mom = jnp.einsum("bhqt,bhtc->bhqc", p, vals, precision=HI)
+    m1, m2 = mom[..., :r], mom[..., r:]
+    lam = (jax.nn.softplus(lyr["lam"]) + LAM_MIN)[None, :, None]
+    rho = ridge_probe(m1, m2, lam, m1 - cq)
+    t = jnp.einsum("bhqr,bhtr->bhqt", rho, ck, precision=HI)
+    return t - (rho * m1).sum(-1, keepdims=True)
+
+
+def plx_correction(cfg, lyr, x, k, p):
+    """Parallax (Zuo et al. 2026, eq. 8): weights p_ij (1 - t_ij + tbar_i), t_ij = rho_i . k_j, rho_i = W_R x_i;
+    returns t - tbar."""
+    B, T, D = x.shape
+    rho = lin(lyr["wr"], x).reshape(B, T, cfg.heads, -1).transpose(0, 2, 1, 3)
+    if "rho_g" in lyr:
+        rho = rho / jnp.sqrt((rho ** 2).mean(-1, keepdims=True) + 1e-6) * lyr["rho_g"]
+    t = mm(rho, k, "bhtc,bhsc->bhts")
+    return t - (p * t).sum(-1, keepdims=True)
+
+
+def local_attention(cfg, lyr, x, stats=None):
+    """Causal softmax attention whose weights are corrected by local-linear regression (lla) or Parallax (plx).
+    The corrected weights still sum to one and stay on the causal past; one A V product as in softmax."""
+    B, T, D = x.shape
+    H = cfg.heads
+    q, k, v = jnp.split(lin(lyr["qkv"], x), 3, -1)
+    sh = lambda t: t.reshape(B, T, H, D // H).transpose(0, 2, 1, 3)
+    q, k, v = sh(q), sh(k), sh(v)
+    s = jnp.where(jnp.tril(jnp.ones((T, T), bool)), capped_scores(cfg, q, k), -1e9)
+    A = jax.nn.softmax(s, -1)
+    if cfg.arch == "lla":
+        # gated: softmax + g (LLA - softmax), g per head, zero at init
+        W = A * (1 - lyr["gate"][None, :, None, None] * lla_correction(lyr, q, k, A))
+    else:
+        W = A * (1 - plx_correction(cfg, lyr, x, k, A))
+    o = mm(W, v, "bhts,bhsc->bhtc")
+    if stats is not None:
+        # correction-to-output ratio (Parallax's COR), per layer: |o - o_SA| / |o_SA|, and the weight range
+        o_sa = mm(A, v, "bhts,bhsc->bhtc")
+        stats.append({"cor": jnp.mean(jnp.linalg.norm(o - o_sa, axis=-1) / (jnp.linalg.norm(o_sa, axis=-1) + 1e-6)),
+                      "wmin": W.min(), "wmax": W.max()})
+    return lin(lyr["o"], o.transpose(0, 2, 1, 3).reshape(B, T, D))
 
 
 def lookback_keys(cfg, lyr, x, k):
@@ -274,24 +403,68 @@ def newton_attention(cfg, lyr, x):
     return sum(feats)
 
 
-def block(cfg, lyr, x):
+def block(cfg, lyr, x, stats=None):
     if cfg.arch == "sfa":
         x = x + sfa_attention(cfg, lyr, ln(lyr["ln1"], x))
     if cfg.arch in ("gpt", "hybrid"):
         x = x + softmax_attention(cfg, lyr, ln(lyr["ln1"], x))
+    if cfg.arch in ("lla", "plx"):
+        x = x + local_attention(cfg, lyr, ln(lyr["ln1"], x), stats)
     if cfg.arch in ("hybrid", "newton"):
         x = x + newton_attention(cfg, lyr, ln(lyr["lnn"], x))
     return x + lin(lyr["fc2"], jax.nn.gelu(lin(lyr["fc1"], ln(lyr["ln2"], x))))
 
 
-def forward(cfg, p, idx):
+def forward(cfg, p, idx, stats=None):
     T = idx.shape[1]
     x = p["emb"][idx] + p["pos"][None, :T]
     f = jax.checkpoint(lambda lyr, x: block(cfg, lyr, x)) if getattr(cfg, "remat", 0) else (lambda lyr, x: block(cfg, lyr, x))
     for lyr in p["layers"]:
-        x = f(lyr, x)
+        x = f(lyr, x) if stats is None else block(cfg, lyr, x, stats)
     x = ln(p["lnf"], x)
     return mm(x, p["emb"].T)
+
+
+def make_opt(name, sched, wd=0.1):
+    """
+    adamw: the S0 optimizer (clip 1.0, AdamW with weight decay 0.1 on every parameter).
+    muon:  the hidden matrices (qkv, o, fc1, fc2, W_R; the chart R per head) take Muon updates: Nesterov
+           momentum 0.95, five Newton-Schulz steps, Moonlight's RMS matching (update RMS 0.2 x rate, so the
+           rates sit on AdamW's scale), decoupled weight decay 0.1. Embeddings (tied with the head), positions,
+           norms, biases, gates and lambda take the same AdamW as above, at the same rate.
+    """
+    clip = optax.clip_by_global_norm(1.0)
+    if name == "adamw":
+        return optax.chain(clip, optax.adamw(sched, weight_decay=wd))
+    from optax.contrib import _muon as mu
+
+    def dims(params):
+        def spec(path, x):
+            keys = [getattr(k, "key", None) for k in path]
+            if keys[-1] == "chart":
+                return mu.MuonDimensionNumbers(reduction_axis=2, output_axis=1)  # each head's r x dh map
+            if keys[0] == "layers" and keys[-1] == "w" and x.ndim == 2:
+                return mu.MuonDimensionNumbers(reduction_axis=0, output_axis=1)
+            return None
+        return jax.tree_util.tree_map_with_path(spec, params)
+
+    leaf = lambda x: x is None or mu._is_weight_dim_nums(x) or isinstance(x, mu._masking.MaskedNode)
+
+    def labels(params):
+        return jax.tree.map(lambda d, x: "muon" if d is not None else "adam", dims(params), params, is_leaf=leaf)
+
+    def masked_dims(params):
+        # the muon branch sees a masked tree: MaskedNode where a parameter belongs to the AdamW branch
+        return jax.tree.map(lambda d, lab: d if lab == "muon" else mu._masking.MaskedNode(), dims(params),
+                            labels(params), is_leaf=leaf)
+
+    muon = optax.chain(
+        mu.scale_by_muon(beta=0.95, nesterov=True, weight_dimension_numbers=masked_dims),
+        mu.scale_by_shape(weight_dimension_numbers=masked_dims, consistent_rms=0.2),
+        optax.add_decayed_weights(wd),
+        optax.scale_by_learning_rate(sched),
+    )
+    return optax.chain(clip, optax.partition({"muon": muon, "adam": optax.adamw(sched, weight_decay=wd)}, labels))
 
 
 def flops_per_token(cfg, T):
@@ -320,6 +493,20 @@ def flops_per_token(cfg, T):
     if getattr(cfg, "lookback", 0):
         lb = cfg.lbdim * H
         lyr += 2 * 2 * D * lb + 2 * ta * lb + 5 * ta * H + 2 * ta * D              # look-back scores and key mixing
+    if cfg.arch == "plx":
+        # Parallax's one-pass kernel (Algorithm 1): rho projection, S2 = rho K^T, P2 = P1 * S2, its row sum,
+        # O2 = P2 V, and the epilogue
+        lyr += 2 * D * D + 2 * ta * D + 3 * ta * H + 2 * ta * D + 3 * D
+        lyr += 4 * D if getattr(cfg, "plx_norm", 0) else 0                          # RMSNorm on rho
+    if cfg.arch == "lla":
+        r = cfg.chart
+        w = r + r * (r + 1) // 2                                                   # moment values [c, cc^T]
+        lyr += 2 * 2 * D * r + H * r * (r + 1) // 2                                 # chart c_q, c_k; outer products
+        lyr += 2 * ta * w * H                                                       # pass 1: moments under p
+        lyr += H * (r * (r + 1) + r ** 3 / 3 + 2 * r * r + 4 * r)                   # covariance, Cholesky, solves
+        # pass 2 of a fused kernel recomputes the scores and softmax, then rho.c, the weights, one A V (counted
+        # above as softmax's)
+        lyr += 2 * ta * D + 5 * ta * H + 2 * ta * r * H + 3 * ta * H
     return L * lyr + 2 * D * V
 
 
@@ -344,6 +531,12 @@ def main():
     ap.add_argument("--hops", type=int, default=1)
     ap.add_argument("--lookback", type=int, default=0)
     ap.add_argument("--lbdim", type=int, default=16)
+    # local-regression attention: chart dimension r, chart init scale (std of c_j at init), initial ridge
+    ap.add_argument("--chart", type=int, default=8)
+    ap.add_argument("--chart_init", type=float, default=0.5)
+    ap.add_argument("--lam0", type=float, default=1.0)
+    ap.add_argument("--opt", default="adamw", help="adamw | muon")
+    ap.add_argument("--plx_norm", type=int, default=0, help="Parallax with RMSNorm on rho (gain 0 at init, W_R random)")
     ap.add_argument("--ctx", type=int, default=256)
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--micro", type=int, default=1, help="split each batch into this many accumulated micro-batches")
@@ -357,6 +550,7 @@ def main():
     ap.add_argument("--bf16", type=int, default=0)
     ap.add_argument("--remat", type=int, default=0)
     ap.add_argument("--vseqs", type=int, default=512, help="held-out sequences")
+    ap.add_argument("--vbig", type=int, default=0, help="also score this many other held-out sequences at the end")
     ap.add_argument("--evals", type=int, default=16, help="evenly spaced evaluations")
     ap.add_argument("--early", type=int, default=0, help="also evaluate every this many steps early in training")
     ap.add_argument("--early_until", type=int, default=0, help="last step of the early evaluations (default: a fifth)")
@@ -370,7 +564,7 @@ def main():
         newton = 2 * D * H * r + 2 * H * r * D
         attn = 4 * D * D
         per_layer = attn + 8 * D * D
-        if cfg.arch == "gpt":
+        if cfg.arch in ("gpt", "lla", "plx"):
             cfg.mlp = 4 * D
         elif cfg.arch in ("hybrid", "sfa"):
             if cfg.arch == "sfa":
@@ -396,7 +590,7 @@ def main():
     nembed = int(params["emb"].size + params["pos"].size)
     warm = cfg.warmup or min(400, cfg.steps // 10)
     sched = optax.warmup_cosine_decay_schedule(0.0, cfg.lr, warm, cfg.steps, cfg.lr * 0.1)
-    opt = optax.chain(optax.clip_by_global_norm(1.0), optax.adamw(sched, weight_decay=0.1))
+    opt = make_opt(cfg.opt, sched)
     st = opt.init(params)
     fpt = flops_per_token(cfg, T)
 
@@ -468,12 +662,36 @@ def main():
             row["secs"] = round(time.time() - t0, 1)
             curve.append(row)
     last = curve[-1]
-    out = {"arch": cfg.arch, "seed": cfg.seed, "params": nparams, "nonembed": nparams - nembed, "mlp": cfg.mlp,
+    extra = {}
+    if cfg.vbig:
+        # a larger held-out set drawn with its own generator, scored once at the end (LOCAL.md's gate metric)
+        bx, by = batch(val, np.random.default_rng(5678), cfg.vbig)
+        tot = 0.0
+        for i in range(0, len(bx), vb):
+            tot += float(np.asarray(poslosses(params, bx[i : i + vb], by[i : i + vb])).sum())
+        extra["val_big"] = round(tot / (len(bx) * T), 5)
+    if cfg.arch in ("lla", "plx"):
+        # what the trained layers use: gates, ridges and chart scale (lla), probe weight norm (plx), and the
+        # correction-to-output ratio and weight range on one held-out batch
+        stats = []
+        forward(cfg, params, jnp.asarray(vx[:8]), stats)
+        extra["cor"] = [round(float(s_["cor"]), 4) for s_ in stats]
+        extra["wrange"] = [[round(float(s_["wmin"]), 3), round(float(s_["wmax"]), 3)] for s_ in stats]
+        if cfg.arch == "lla":
+            extra["gate"] = [[round(float(g), 4) for g in l["gate"]] for l in params["layers"]]
+            extra["lam"] = [[round(float(jax.nn.softplus(a) + LAM_MIN), 4) for a in l["lam"]] for l in params["layers"]]
+            extra["chart_norm"] = [round(float(jnp.linalg.norm(l["chart"])), 4) for l in params["layers"]]
+        else:
+            extra["wr_norm"] = [round(float(jnp.linalg.norm(l["wr"]["w"])), 4) for l in params["layers"]]
+            if "rho_g" in params["layers"][0]:
+                extra["rho_gain"] = [round(float(jnp.sqrt((l["rho_g"] ** 2).mean())), 4) for l in params["layers"]]
+    out = {"arch": cfg.arch, "opt": cfg.opt, "plx_norm": cfg.plx_norm if cfg.arch == "plx" else None, "chart": cfg.chart if cfg.arch == "lla" else None,
+           "chart_init": cfg.chart_init if cfg.arch == "lla" else None, "lam0": cfg.lam0 if cfg.arch == "lla" else None, "seed": cfg.seed, "params": nparams, "nonembed": nparams - nembed, "mlp": cfg.mlp,
            "layers": cfg.layers, "d": cfg.d, "rank": cfg.rank, "order": cfg.order, "vac": cfg.vac, "alpha0": cfg.alpha0,
            "cap": cfg.cap, "fscale": cfg.fscale, "hops": cfg.hops, "lookback": cfg.lookback, "lr": cfg.lr, "steps": cfg.steps,
            "tokens": cfg.steps * cfg.batch * T, "flops_per_token": fpt, "train_flops": 3 * fpt * cfg.steps * cfg.batch * T,
            "data": cfg.data, "val_loss": last["val"], "curve": curve, "secs": round(time.time() - t0, 1),
-           "backend": jax.default_backend()}
+           "backend": jax.default_backend(), "versions": [jax.__version__, optax.__version__], **extra}
     if cfg.vocab == 256:
         out["val_bpc"] = round(last["val"] / math.log(2), 4)
     print(json.dumps(out))

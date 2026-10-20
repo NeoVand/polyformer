@@ -11,6 +11,9 @@ Models (lm.py architectures), all at width 128 unless widened to match FLOPs:
     softmax   gpt, widened until its FLOPs per token match ff's at this task's length and vocab
     softmaxw  gpt, widened to match ffw's FLOPs
     lookback  gpt with look-back keys, widened to match ffw's FLOPs (the control for the walk sector)
+    lla       ridge local-linear attention, chart r = 8 (--chart), gate at zero (LOCAL.md)
+    plx       Parallax, W_R = 0 at init
+    softmaxl  gpt, widened until its FLOPs per token match lla's (the S arm of LOCAL.md Stage 1)
 
 Tasks (see the generators): mqar, mqar2 (composite keys), selcopy, indist, phop4/8/16, dyck2, add,
 match3. Prints one JSON line: accuracy on the answer positions (balanced for match3, exact sums for
@@ -171,10 +174,13 @@ TASKS = {
 # ----------------------------------------------------------------------------- models
 
 
-def config(model, layers, T, V, d_ff=128, heads=4):
+def config(model, layers, T, V, d_ff=128, heads=4, chart=8):
     c = argparse.Namespace(arch="gpt", d=d_ff, layers=layers, heads=heads, nheads=heads, rank=d_ff // heads // 2,
                            order=4, phase=2.0, vac=0.05, alpha0=2, cap=0.0, fscale=1, hops=1, lookback=0, lbdim=8,
-                           ctx=T, vocab=V, remat=0, mlp=4 * d_ff)
+                           ctx=T, vocab=V, remat=0, mlp=4 * d_ff, chart=chart, chart_init=0.5, lam0=1.0)
+    if model in ("lla", "plx"):
+        c.arch = model
+        return c
     if model in ("ff", "ffw"):
         c.arch = "sfa"
         D, H, r = c.d, c.heads, c.rank
@@ -183,9 +189,10 @@ def config(model, layers, T, V, d_ff=128, heads=4):
             c.hops, c.lookback = 4, 1
         return c
     # softmax baselines: widen until the FLOPs per token match the free-field model they are compared with
-    target = lm.flops_per_token(config("ff" if model == "softmax" else "ffw", layers, T, V, d_ff, heads), T)
+    ref = {"softmax": "ff", "softmaxl": "lla"}.get(model, "ffw")
+    target = lm.flops_per_token(config(ref, layers, T, V, d_ff, heads, chart), T)
     best = None
-    for d in range(heads * 8, 8 * d_ff, heads * 2):
+    for d in range(heads * 8, 8 * d_ff, heads if model == "softmaxl" else heads * 2):
         cc = argparse.Namespace(**{**vars(c), "d": d, "mlp": 4 * d, "lookback": int(model == "lookback")})
         f = lm.flops_per_token(cc, T)
         if best is None or abs(f - target) < abs(best[0] - target):
@@ -199,14 +206,15 @@ def main():
     ap.add_argument("--layers", type=int, default=1); ap.add_argument("--seed", type=int, default=0)
     ap.add_argument("--steps", type=int, default=4000); ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--lr", type=float, default=1e-3); ap.add_argument("--d", type=int, default=128)
+    ap.add_argument("--opt", default="adamw"); ap.add_argument("--chart", type=int, default=8)
     a = ap.parse_args()
     gen, T, V = TASKS[a.task]
-    cfg = config(a.model, a.layers, T, V, a.d)
+    cfg = config(a.model, a.layers, T, V, a.d, chart=a.chart)
     rng = np.random.default_rng(a.seed)
     params = lm.init(jax.random.PRNGKey(a.seed), cfg)
     nparams = sum(int(t.size) for t in jax.tree_util.tree_leaves(params))
     sched = optax.warmup_cosine_decay_schedule(0.0, a.lr, a.steps // 20, a.steps, a.lr * 0.05)
-    opt = optax.chain(optax.clip_by_global_norm(1.0), optax.adamw(sched, weight_decay=0.1))
+    opt = lm.make_opt(a.opt, sched)
     st = opt.init(params)
 
     def loss_fn(p, x, y, m):
@@ -241,7 +249,7 @@ def main():
         params, st, l = step(params, st, jnp.asarray(x, jnp.int32), jnp.asarray(y, jnp.int32), jnp.asarray(m, jnp.float32))
         if (it + 1) % (a.steps // 10) == 0:
             curve.append((it + 1, round(float(l), 4), round(evaluate(params), 4)))
-    print(json.dumps({"task": a.task, "model": a.model, "layers": a.layers, "seed": a.seed, "lr": a.lr,
+    print(json.dumps({"task": a.task, "model": a.model, "layers": a.layers, "seed": a.seed, "lr": a.lr, "opt": a.opt,
                       "acc": curve[-1][2], "best": max(c[2] for c in curve), "d": cfg.d, "params": nparams,
                       "flops_per_token": lm.flops_per_token(cfg, T), "curve": curve, "secs": round(time.time() - t0, 1)}))
 

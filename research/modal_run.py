@@ -401,6 +401,26 @@ def tok_argv(data, arch, layers, lr, seed, tokens, **kw):
     return argv
 
 
+def loc_argv(data, arch, lr, seed, tokens, opt, chart=8, **kw):
+    """LOCAL.md: one token-level run at the S0 scale and protocol (6 layers), softmax (gpt), Parallax (plx) or
+    ridge local-linear attention (lla, chart r), with AdamW or Muon."""
+    argv = tok_argv(data, arch, 6, lr, seed, tokens, opt=opt, vbig=1024, **kw)
+    if arch == "lla":
+        argv += ["--chart", str(chart)]
+    return argv
+
+
+def loc_diag(models, layers, seeds, lrs, opts, tasks=("mqar", "mqar2", "indist", "match3"), steps=3000):
+    return [argv + ["--opt", o] for o in opts for argv in diag_grid(list(tasks), models, layers, seeds, lrs, steps)]
+
+
+# LOCAL.md arms: S (softmax), P (Parallax), L8 (ridge local-linear, r = 8); the Stage 3 ladder adds r = 1, 2, 4, 16
+LOC_ARMS = [("gpt", 8), ("plx", 8), ("lla", 8)]
+LOC_OPTS = ("adamw", "muon")
+LOC_LRS = (2e-3, 4e-3, 8e-3)
+STEPS_400M = 12207                       # 400M tokens at 64 x 512 per step, as S0
+STEPS_EQF = {"L8": 12613, "P": 13044}    # S's steps at L8's and P's FLOPs (1.0332x, 1.0686x)
+
 # S0 architectures: softmax (6 layers), free-field at equal parameters (6), at equal FLOPs (5), softmax + 1 layer
 S0_ARCHS = [("gpt", 6), ("sfa", 6), ("sfa", 5), ("gpt", 7)]
 
@@ -443,6 +463,18 @@ GRIDS = {
                 for sd in (0, 1, 2) for a, kw in (("gpt", {"lookback": 1}), ("sfa", {"lookback": 1, "hops": 2}))],
     # S1: every task, model and depth, three seeds, one rate for all
     "diag_s1": diag_grid(DIAG_TASKS, DIAG_MODELS, [1, 2], [0, 1, 2], [3e-3], steps=3000),
+    # LOCAL.md timing: 200 steps of each arm (and r = 16) under both optimizers on H100
+    "tok_loc_time": [loc_argv("fineweb_edu", a, 4e-3, 0, 64 * 512 * 200, o, chart=r, evals=2)
+                     for a, r in LOC_ARMS + [("lla", 16)] for o in ("adamw", "muon")],
+    # LOCAL.md design pilot (before the pre-registration was frozen): is Parallax stable without RMSNorm on rho?
+    "tok_loc_pilot": [loc_argv("fineweb_edu", a, 4e-3, 0, 64 * 512 * 1500, o, evals=6, **kw)
+                      for a, kw in (("gpt", {}), ("plx", {"plx_norm": 0}), ("plx", {"plx_norm": 1}), ("lla", {}))
+                      for o in ("adamw", "muon")],
+    # LOCAL.md Stage 2 sweep: every arm and optimizer at three rates, seed 0, 100M tokens
+    "tok_loc_lr": [loc_argv("fineweb_edu", a, lr, 0, 1e8, o, chart=r, early=100) for a, r in LOC_ARMS
+                   for o in LOC_OPTS for lr in LOC_LRS],
+    # LOCAL.md Stage 1: mechanism diagnostics, S widened to L8's FLOPs, one and two layers, 3 seeds, both optimizers
+    "diag_loc_s1": loc_diag(["softmaxl", "plx", "lla"], [1, 2], [0, 1, 2], [3e-3], ["adamw", "muon"]),
 }
 
 
