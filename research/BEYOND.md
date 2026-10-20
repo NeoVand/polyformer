@@ -150,6 +150,16 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   checked. JSON reporting now preserves diagnostic component parameters and the full language config;
   these additions do not change training. No main diagnostic result has been observed.
 
+
+- 2026-10-20 13:54 UTC — Main diagnostic primary grid launched from manifest commit `62fd24d`,
+  registration/source commit `c65001b`, app `ap-OSAE6blVW7QHUfKKdJntWb`, eight concurrent L4 jobs;
+  launch log `/tmp/beyond-stage1-initial.log`. First completed results show schedule sensitivity:
+  A now reaches 100% one-layer S5 validation under its matched-compute schedule, while C reaches
+  64.70% and the longer-budget prefix control 9.73%. These trigger only the registered decisions;
+  no architecture changes follow. All six cells and needed alternate rates remain required.
+  Language registration below is written before any quality sweep: independent seeds 1/2/3,
+  three fresh rates for every arm, both raw/convolved softmax and both modern RNN controls.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
@@ -434,3 +444,106 @@ Expected mandatory cost with three saturating
 candidates is approximately $18.7 plus pilots, but this is not a spending guarantee. If the cap binds,
 report the exact missing cells and unconfirmed status; do not borrow from another stage or silently
 reduce evaluation sizes, steps, seeds or thresholds.
+
+
+## 5. Main language registration (before quality sweeps)
+
+Only candidates passing every registered independent Stage-1 confirmation gate enter language.
+The architecture stays as frozen in Stage 1. Carry both modern recurrent variants through the full
+language comparison; the exact chunk-32 implementation is selected only by its numerical proof and
+runtime experiment. A reporting-only amendment before language will preserve unrounded validation
+and final losses plus per-sequence final losses. Audit and commit its diff as a source-hash bridge:
+no model, optimizer, data, initialization or training-step behavior may change.
+
+**Common recipe and arms.** FineWeb-Edu, existing GPT-2-tokenized volume, vocabulary 50,304,
+context 512, six layers, width 512, eight attention heads, MLP 2,048, batch 64, two accumulated
+microbatches, BF16, rematerialization, Muon and the existing S6 optimizer recipe. Use learned
+positional embeddings. Every arm starts fresh from its initialization and shared seed/data streams.
+Controls are raw softmax, width-3-convolved softmax, width-3-convolved Parallax, GDN1 and DP4.
+A/B/C use the same width-3 convolution, dimension-5 matrix states, four Householders, short order 2,
+independent-random initialization and branch scale .1 as the diagnostic screen, with eight matrix
+heads. GDN1/DP4 retain their native width-4 convolution, key width .75D and value width 1.5D;
+chunk size 32 counts microsteps. Historical LOCAL.md results are context, not substitutes for any
+fresh comparator in the headline.
+
+**Rate tuning, then independent seeds.** Every included arm, including raw softmax, receives exactly
+three fresh 3,051-update runs (99,975,168 tokens), seed 0, rates {.002, .004, .008}, warmup 305 updates,
+eight evaluation marks, `vseqs=1024`, `vbig=0`. Select the smallest finite **final unrounded** validation
+loss on the fixed seed-1234 validation sample; ties select the lower rate. Require all three jobs
+terminal before selection. A failed/nonfinite run is reported and cannot win. If all three fail,
+that arm is invalid and the full headline cannot be evaluated. Do not extend the rate grid at its
+edges or select intermediate checkpoints. Freeze selected rates in a committed artifact.
+
+Final runs use new initialization/data-order seeds **1, 2 and 3**, a complete fresh schedule with
+400 warmup updates and 16 evaluation marks. The independent final sample is LOCAL.md's fixed
+seed-5678 sample of 1,024 held-out sequences. Evaluate it once per trained model; report the exact
+mean in nats/token and retain the individual sequence losses. It comes from the same validation
+corpus as the tuning sample, so this is sample separation, not a new-corpus generalization test.
+Save final checkpoints before extra diagnostics. No main run continues a tuning checkpoint.
+
+**One shared training-compute budget.** Amend the literal per-candidate 400M-token recipe to one
+common budget equal to the most expensive surviving candidate trained for 12,207 updates
+(399,998,976 tokens). This avoids repeatedly training nearly identical controls at slightly different
+budgets. For every other arm use `ceil(F_target / (32768 * training_flops_per_token))` updates;
+the resulting excess is strictly below one update and is reported. Thus controls never receive less
+nominal compute than the target candidate. Match training FLOPs, including the chunk solve's extra
+backward cost; do not silently use 3x-forward for chunked recurrence.
+
+| Arm | Forward FLOPs/token | Training FLOPs/token |
+|---|---:|---:|
+| Raw softmax | 92,473,464 | 277,420,392 |
+| Convolved softmax | 92,528,760 | 277,586,280 |
+| Convolved Parallax | 98,872,512 | 296,617,536 |
+| A | 107,581,758.1875 | 322,745,274.5625 |
+| B | 101,163,294.1875 | 303,489,882.5625 |
+| C | 101,172,510.1875 | 303,517,530.5625 |
+| GDN1, chunk 32 | 98,067,262.5 | 294,429,883.5 |
+| DP4, chunk 32 | 123,706,314 | 372,031,326 |
+
+If B/C survive and A does not, the target is 1.214067014230487e17 training FLOPs/run.
+Updates for raw S / convolved S / convolved P / B / C / GDN1 / DP4 are respectively
+13,356 / 13,348 / 12,491 / 12,209 / 12,207 / 12,584 / 9,959. If A survives, the target becomes
+1.2909777933383885e17; corresponding updates including A are
+14,202 / 14,193 / 13,283 / A 12,207 / B 12,982 / C 12,981 / GDN1 13,381 / DP4 10,590.
+Other survivor subsets use the same formula. The immutable executable plan records the exact case.
+Report parameter counts, tokens, measured runtime and estimated cost alongside nominal FLOPs;
+optimizer and rematerialization arithmetic remain outside this analytic convention.
+
+**Headline and interpretation.** For each seed s in {1,2,3}, an advancing candidate X must satisfy
+
+    loss_X(s) <= 0.99 * min(loss_raw_softmax(s), loss_convolved_softmax(s))
+    loss_X(s) <= min(loss_GDN1(s), loss_DP4(s)).
+
+All six inequalities across the three seeds and the Stage-1 gates are required. Missing/invalid
+comparators make the result unconfirmed, not passed. This is a preregistered observed gate; three
+wins alone are not conventional statistical significance. Report seed-level differences and paired
+sequence-level uncertainty conditional on each trained model. Sequence uncertainty does not replace
+training-seed variation; overlapping text windows may also limit independence.
+
+Convolved Parallax is a separate mechanism comparator. Report its per-seed difference from each
+candidate. A candidate that beats softmax and the RNNs but does not beat convolved Parallax has not
+shown a useful extra composition contribution. On each candidate checkpoint also score zeroed
+composition and precision components, plus coupling for A/C, on the same final sequences.
+These are inference interventions in the trained model, not retrained controls; they show sensitivity
+to removing a component and do not prove that noncommutativity caused a gain. Report matrix-state
+usage, probe correction, coupling gates and commutator statistics without equating nonzero activity
+with useful computation.
+
+**Predictions.** B remains the favored design on simplicity and nominal cost. It should preserve most
+of Parallax's estimation benefit, but a full 1% advantage over convolved softmax is uncertain:
+previous language evidence suggests that high-order composition contributes little at this scale.
+C may match B or lose slightly through additional coupling; A, if it advances, has the largest
+compute/learnability risk. Convolved softmax may improve substantially over the historical raw
+baseline, making the gate harder. The recurrent comparison is open; no winner is assumed from
+synthetic retrieval or group-word performance. No zeroed-component or final-test result will select
+architectures, rates or additional confirmatory runs.
+
+**Budget.** Stage 2 remains capped at $100 including the $2.326 language timing pilots. With B/C,
+all fresh three-rate sweeps and all seven arms at three final seeds forecast $76.24, including a 15%
+convolution runtime allowance; the sum of full timeout reservations is $98.36. If A also advances,
+the forecast is $92.15 and the aggregate timeout maximum $119.61, so only rolling reservations
+backed by actual settlement can fit; the ledger still refuses any over-cap launch. Tune all included
+arms, then execute complete seed blocks in seed order, keeping paired comparisons together. If the
+cap prevents completion, report the exact absent runs and no three-seed headline. No funds transfer
+from another stage. Timeouts and all failures count. Final timeouts are recorded in the executable
+plan and are not silently increased after a failed job.
