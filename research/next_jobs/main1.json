@@ -1,0 +1,242 @@
+[
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--objective",
+      "token",
+      "--seed",
+      "1",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--objective",
+      "decision",
+      "--seed",
+      "1",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--objective",
+      "token",
+      "--seed",
+      "1",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--objective",
+      "decision",
+      "--seed",
+      "1",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--objective",
+      "token",
+      "--seed",
+      "2",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--objective",
+      "decision",
+      "--seed",
+      "2",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--objective",
+      "token",
+      "--seed",
+      "2",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--objective",
+      "decision",
+      "--seed",
+      "2",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--objective",
+      "token",
+      "--seed",
+      "3",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--objective",
+      "decision",
+      "--seed",
+      "3",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--objective",
+      "token",
+      "--seed",
+      "3",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "dilution.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--objective",
+      "decision",
+      "--seed",
+      "3",
+      "--steps",
+      "1500",
+      "--batch",
+      "64",
+      "--eval-pairs",
+      "256",
+      "--eval-seed",
+      "73517"
+    ],
+    "max_seconds": 900
+  }
+]
