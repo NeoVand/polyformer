@@ -69,6 +69,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   beyond the keys' convex hull. Existing diagnostic retrieval controls were near chance; existing noncausal
   group Match-3 cannot be silently reused in a causal language layer. These are design-stage findings,
   not post-result gate changes. Spend to date: $0.
+- 2026-10-20 13:02 UTC — Stage-0 implementation and task checks pass. Before any paid experiment,
+  moved sector mixing before the shared matrix readout, reducing its three projections to one. Tightened
+  the recurrent control to the reference implementation's rectangular state (key width 0.75D,
+  value width 1.5D), learned exponential/softplus decay with published timescale initialization,
+  causal convolution and output gate. Timescales are excluded from weight decay. Independent audits
+  caught and corrected a triangular-versus-dense attention FLOP mismatch before any comparison.
+  Existing LOCAL.md tests still pass. No paid jobs launched.
 
 ## 1. Design registration (before training)
 
@@ -96,7 +103,8 @@ Householder factors per token. Four reflections can represent any SO(5) rotation
 identical pairs, giving the identity transition while leaving the individual factors independently
 trainable. Let U_t be their product and P_t = U_t ... U_0. The branch exposes the whole matrix P_t,
 not just its product with a single query vector. Arity-1 and arity-2 ordered features provide a short-product
-learning path; a shared matrix-to-vector readout combines the features. The initial branch scale is 0.1.
+learning path; learned feature-side sector scales combine them before one matrix-to-vector projection.
+The initial branch scale is 0.1.
 Common QKV, output and MLP parameters use exactly the GPT initialization stream; the complete model is
 not identical to GPT at initialization because of the small matrix branch.
 
@@ -161,3 +169,27 @@ The experimental question is whether combining these capabilities improves the m
   H100 $0.001097/s, L4 $0.000222/s, CPU $0.0000131/core/s, RAM $0.00000222/GiB/s.
   Estimates will be labeled as estimates, with startup allowance; actual invoice totals are not inferred
   from GPU time alone. Failed runs count against the budget.
+
+## 3. Pilot registration (before pilot results)
+
+The executable manifests are `research/manifests/beyond_pilot_diag.json` and
+`research/manifests/beyond_pilot_lm.json`; their source hashes, arguments, resource reservations and
+prediction commit are authoritative. These are development runs, not confirmatory evidence.
+
+- **Diagnostic pilot:** eight configurations (S, Parallax, A, B, C, standalone prefix, Gated DeltaNet
+  nh=1/beta_max=1, gated DeltaProduct nh=4/beta_max=2); each on small MQAR at 2 layers and A5/S5 words at
+  1 layer. Width 128, four heads, Muon 0.004, seed 0, 1,000 updates, batch 64. Validation 256 sequences,
+  test 512, five evaluations. Fixed updates here measure speed and obvious learnability problems;
+  equal-compute and three-seed claims are reserved for the main grid. L4, 300-second subprocess timeout,
+  maximum reservation about $3.75, charged to the $25 diagnostic cap.
+- **Language timing pilot:** S, Parallax, A, B, C and the two recurrent configurations, each 100 updates
+  at the exact S6 model/batch shape (6x512, context 512, batch 64, two microbatches, bf16, rematerialization),
+  Muon 0.004, 10-update warmup. Only 32 validation sequences, no `val_big` selection. H100,
+  420-second subprocess timeout; maximum reservation about $4.89, charged to the $100 language cap.
+  This estimates feasibility and numerical stability; it is not a language-quality or rate-selection test.
+- **Predictions:** B is the fastest candidate; A incurs extra value passes; C has near-B FLOPs but may
+  learn state tracking more slowly. Prefix and all three candidates should show word-learning signals
+  before softmax; the 1,000-update pilot is too short to demand the final 95% gate. Neither recurrent
+  configuration is assumed to solve class-word tracking just because its transition algebra permits it.
+  A candidate-specific numerical failure is investigated before freezing the main grid. We will not
+  delete failed or timed-out results.

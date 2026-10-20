@@ -34,12 +34,15 @@ import argparse
 import json
 import math
 import os
+import sys
 import time
 
 import jax
 import jax.numpy as jnp
 import numpy as np
 import optax
+
+BEYOND_ARCHS = ("beyond_a", "beyond_b", "beyond_c", "gated_delta", "prefix")
 
 
 def load(path="/root/enwik8"):
@@ -90,7 +93,7 @@ def init(key, cfg):
          "lnf": ln_init(D), "layers": []}
     for _ in range(L):
         lyr = {"ln1": ln_init(D), "ln2": ln_init(D)}
-        if cfg.arch in ("gpt", "hybrid", "sfa", "lla", "plx"):
+        if cfg.arch in ("gpt", "hybrid", "sfa", "lla", "plx") + BEYOND_ARCHS:
             lyr["qkv"] = dense(next(ks), D, 3 * D)
             lyr["o"] = dense(next(ks), D, D, scale=1 / math.sqrt(2 * L))
         if cfg.arch == "sfa":
@@ -139,6 +142,17 @@ def init(key, cfg):
             lyr["chart"] = jax.random.normal(next(xk), (H, cfg.chart, dh)) * cfg.chart_init / math.sqrt(dh)
             lyr["lam"] = jnp.full((H,), math.log(math.expm1(cfg.lam0)))
             lyr["gate"] = jnp.zeros((H,))
+    if cfg.arch in BEYOND_ARCHS:
+        import beyond_layers
+        extra_keys = jax.random.split(jax.random.fold_in(key, 701), L)
+        for lyr, ek in zip(p["layers"], extra_keys):
+            extra = beyond_layers.init_layer(ek, cfg)
+            # Keep the common QKV/output and MLP draw stream exactly matched to GPT.
+            lyr.update({k: v for k, v in extra.items() if k not in ("qkv", "o")})
+            if cfg.arch in ("gated_delta", "prefix"):
+                lyr.pop("qkv")
+                lyr.pop("o")
+                lyr.update({k: v for k, v in extra.items() if k in ("qkv", "o")})
     return p
 
 
@@ -404,6 +418,23 @@ def newton_attention(cfg, lyr, x):
 
 
 def block(cfg, lyr, x, stats=None):
+    if cfg.arch in BEYOND_ARCHS:
+        import beyond_layers
+        normed = ln(lyr["ln1"], x)
+        update = beyond_layers.apply_layer(cfg, lyr, normed)
+        if stats is not None:
+            rms = lambda y: jnp.sqrt(jnp.mean(y * y) + 1e-12)
+            record = {"update_rms": rms(update)}
+            if cfg.arch.startswith("beyond_"):
+                content, _, _ = beyond_layers.content_attention(cfg, lyr, normed)
+                no_precision_cfg = argparse.Namespace(**{**vars(cfg), "ablate": "precision"})
+                local_constant, _, _ = beyond_layers.content_attention(no_precision_cfg, lyr, normed)
+                record.update({
+                    "composition_over_content": rms(update - content) / rms(content),
+                    "precision_over_content": rms(content - local_constant) / rms(content),
+                })
+            stats.append(record)
+        x = x + update
     if cfg.arch == "sfa":
         x = x + sfa_attention(cfg, lyr, ln(lyr["ln1"], x))
     if cfg.arch in ("gpt", "hybrid"):
@@ -417,7 +448,9 @@ def block(cfg, lyr, x, stats=None):
 
 def forward(cfg, p, idx, stats=None):
     T = idx.shape[1]
-    x = p["emb"][idx] + p["pos"][None, :T]
+    x = p["emb"][idx]
+    if getattr(cfg, "pos", 1):
+        x = x + p["pos"][None, :T]
     f = jax.checkpoint(lambda lyr, x: block(cfg, lyr, x)) if getattr(cfg, "remat", 0) else (lambda lyr, x: block(cfg, lyr, x))
     for lyr in p["layers"]:
         x = f(lyr, x) if stats is None else block(cfg, lyr, x, stats)
@@ -434,8 +467,15 @@ def make_opt(name, sched, wd=0.1):
            norms, biases, gates and lambda take the same AdamW as above, at the same rate.
     """
     clip = optax.clip_by_global_norm(1.0)
+    # Gated DeltaNet's timescale parameters retain the published no-decay
+    # convention. All pre-existing architecture parameter masks remain unchanged.
+    def decay_mask(params):
+        return jax.tree_util.tree_map_with_path(
+            lambda path, _: getattr(path[-1], "key", None) not in ("A_log", "dt_bias"), params
+        )
+
     if name == "adamw":
-        return optax.chain(clip, optax.adamw(sched, weight_decay=wd))
+        return optax.chain(clip, optax.adamw(sched, weight_decay=wd, mask=decay_mask))
     from optax.contrib import _muon as mu
 
     def dims(params):
@@ -464,7 +504,9 @@ def make_opt(name, sched, wd=0.1):
         optax.add_decayed_weights(wd),
         optax.scale_by_learning_rate(sched),
     )
-    return optax.chain(clip, optax.partition({"muon": muon, "adam": optax.adamw(sched, weight_decay=wd)}, labels))
+    return optax.chain(clip, optax.partition(
+        {"muon": muon, "adam": optax.adamw(sched, weight_decay=wd, mask=decay_mask)}, labels
+    ))
 
 
 def flops_per_token(cfg, T):
@@ -474,6 +516,9 @@ def flops_per_token(cfg, T):
     Every power-sum pass, Newton recursion, read-out, look-back and walk pass is included.
     """
     D, L, V, H = cfg.d, cfg.layers, cfg.vocab, cfg.heads
+    if cfg.arch in BEYOND_ARCHS:
+        import beyond_layers
+        return L * (beyond_layers.forward_flops(cfg, cfg.arch, T) + 4 * D * cfg.mlp) + 2 * D * V
     ta = (T + 1) / 2
     lyr = 2 * (4 * D * D + 2 * D * cfg.mlp) + 2 * 2 * ta * D + 5 * ta * H        # projections, MLP, QK, AV, softmax
     if cfg.arch == "sfa":
@@ -537,6 +582,13 @@ def main():
     ap.add_argument("--lam0", type=float, default=1.0)
     ap.add_argument("--opt", default="adamw", help="adamw | muon")
     ap.add_argument("--plx_norm", type=int, default=0, help="Parallax with RMSNorm on rho (gain 0 at init, W_R random)")
+    ap.add_argument("--pos", type=int, default=1, help="learned positions; disabled for position-free word diagnostics")
+    ap.add_argument("--gdim", type=int, default=5, help="BEYOND small orthogonal matrix dimension")
+    ap.add_argument("--nh", type=int, default=4, help="matrix transition / DeltaProduct microsteps")
+    ap.add_argument("--beta_max", type=float, default=2.0, help="delta update range; 1 for canonical Gated DeltaNet")
+    ap.add_argument("--delta_key_ratio", type=float, default=0.75, help="Gated DeltaNet key width / model width")
+    ap.add_argument("--delta_v_expand", type=float, default=2.0, help="Gated DeltaNet value width / key width")
+    ap.add_argument("--ablate", default="none", help="BEYOND component ablation")
     ap.add_argument("--ctx", type=int, default=256)
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--micro", type=int, default=1, help="split each batch into this many accumulated micro-batches")
@@ -555,6 +607,7 @@ def main():
     ap.add_argument("--early", type=int, default=0, help="also evaluate every this many steps early in training")
     ap.add_argument("--early_until", type=int, default=0, help="last step of the early evaluations (default: a fifth)")
     ap.add_argument("--probe", type=int, default=0, help="repeated-random-token induction probe")
+    ap.add_argument("--progress", type=int, default=0, help="emit evaluation progress to stderr for durable run logs")
     cfg = ap.parse_args()
     if cfg.bf16:
         MM = jnp.bfloat16
@@ -564,7 +617,7 @@ def main():
         newton = 2 * D * H * r + 2 * H * r * D
         attn = 4 * D * D
         per_layer = attn + 8 * D * D
-        if cfg.arch in ("gpt", "lla", "plx"):
+        if cfg.arch in ("gpt", "lla", "plx") + BEYOND_ARCHS:
             cfg.mlp = 4 * D
         elif cfg.arch in ("hybrid", "sfa"):
             if cfg.arch == "sfa":
@@ -661,6 +714,10 @@ def main():
             row.update(evaluate(params))
             row["secs"] = round(time.time() - t0, 1)
             curve.append(row)
+            if cfg.progress:
+                print(json.dumps({"progress": row, "arch": cfg.arch, "seed": cfg.seed}), file=sys.stderr, flush=True)
+            if not math.isfinite(float(l)) or not math.isfinite(row["val"]):
+                raise FloatingPointError(f"nonfinite training/evaluation loss at step {it + 1}")
     last = curve[-1]
     extra = {}
     if cfg.vbig:
@@ -685,13 +742,31 @@ def main():
             extra["wr_norm"] = [round(float(jnp.linalg.norm(l["wr"]["w"])), 4) for l in params["layers"]]
             if "rho_g" in params["layers"][0]:
                 extra["rho_gain"] = [round(float(jnp.sqrt((l["rho_g"] ** 2).mean())), 4) for l in params["layers"]]
+    if cfg.arch in BEYOND_ARCHS:
+        usage = []
+        forward(cfg, params, jnp.asarray(vx[:4]), usage)
+        extra["component_usage"] = [{k: float(v) for k, v in row.items()} for row in usage]
+        extra["component_parameters"] = [
+            {
+                name: np.asarray(layer[name]).tolist()
+                for name in ("group_mix", "path_mix", "context_mix", "A_log", "dt_bias")
+                if name in layer
+            }
+            for layer in params["layers"]
+        ]
     out = {"arch": cfg.arch, "opt": cfg.opt, "plx_norm": cfg.plx_norm if cfg.arch == "plx" else None, "chart": cfg.chart if cfg.arch == "lla" else None,
            "chart_init": cfg.chart_init if cfg.arch == "lla" else None, "lam0": cfg.lam0 if cfg.arch == "lla" else None, "seed": cfg.seed, "params": nparams, "nonembed": nparams - nembed, "mlp": cfg.mlp,
            "layers": cfg.layers, "d": cfg.d, "rank": cfg.rank, "order": cfg.order, "vac": cfg.vac, "alpha0": cfg.alpha0,
            "cap": cfg.cap, "fscale": cfg.fscale, "hops": cfg.hops, "lookback": cfg.lookback, "lr": cfg.lr, "steps": cfg.steps,
            "tokens": cfg.steps * cfg.batch * T, "flops_per_token": fpt, "train_flops": 3 * fpt * cfg.steps * cfg.batch * T,
            "data": cfg.data, "val_loss": last["val"], "curve": curve, "secs": round(time.time() - t0, 1),
-           "backend": jax.default_backend(), "versions": [jax.__version__, optax.__version__], **extra}
+           "backend": jax.default_backend(), "versions": [jax.__version__, optax.__version__],
+           "pos": cfg.pos, "gdim": cfg.gdim if cfg.arch in BEYOND_ARCHS else None,
+           "nh": cfg.nh if cfg.arch in BEYOND_ARCHS else None,
+           "beta_max": cfg.beta_max if cfg.arch == "gated_delta" else None,
+           "delta_key_ratio": cfg.delta_key_ratio if cfg.arch == "gated_delta" else None,
+           "delta_v_expand": cfg.delta_v_expand if cfg.arch == "gated_delta" else None,
+           "ablate": cfg.ablate, **extra}
     if cfg.vocab == 256:
         out["val_bpc"] = round(last["val"] / math.log(2), 4)
     print(json.dumps(out))
