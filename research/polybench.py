@@ -1,8 +1,11 @@
 # Quick separation experiments: pairwise attention vs Columbia tree/Strassen vs cubic polyattention.
-import argparse, json, math, time
+import argparse, itertools, json, math, pathlib, sys, time
 import numpy as np
 import jax, jax.numpy as jnp
 import optax
+
+sys.path.insert(0, str(pathlib.Path(__file__).parent))
+import groups  # noqa: E402
 
 # ----------------------------------------------------------------------------- tasks
 # Each generator returns fields [B,T,F] (int), targets [B,T] (int), loss mask [B,T] (float).
@@ -366,6 +369,12 @@ TASKS = {
     "compose2": (lambda r, B: task_compose(r, B, 8, 2), [18, 9], 8, False),
     "compose3": (lambda r, B: task_compose(r, B, 8, 3), [26, 9], 8, False),
     "triangle": (task_triangle, [9, 9], 2, "shared"),
+    # GROUPS.md: ordered Match-3 over a group (does element i lie in positions i1 < i2 < i3 whose product
+    # g_i1 g_i2 g_i3 is the identity?), two group sizes, one abelian and one non-abelian group at each
+    "g3_z12": (lambda r, B: groups.task_gmatch(r, B, "Z12", 6, 3), [13], 2, False),
+    "g3_a4": (lambda r, B: groups.task_gmatch(r, B, "A4", 6, 3), [13], 2, False),
+    "g3_z60": (lambda r, B: groups.task_gmatch(r, B, "Z60", 11, 3), [61], 2, False),
+    "g3_a5": (lambda r, B: groups.task_gmatch(r, B, "A5", 11, 3), [61], 2, False),
 }
 
 # ----------------------------------------------------------------------------- model
@@ -436,6 +445,12 @@ def init(key, cfg, vocabs, C, T):
                 a["alpha"] = jnp.ones((K, D))
             else:
                 a["o"] = dense(next(ks), H * K * r * 2, D)
+        if cfg.model == "holo":
+            # holonomy attention: every token gets one d x d rotation per head and a gate; the layer reads
+            # ordered products over subsets of positions, every arity 1..K, through one shared projection
+            d, K = cfg.gdim, cfg.order
+            a = {"s": dense(next(ks), D, H * d * d), "g": dense(next(ks), D, H),
+                 "o": dense(next(ks), H * d * d, D), "alpha": jnp.ones((K, D))}
         if cfg.model == "sfa":
             # subset attention: one softmax per head selects, Newton's identities read every arity from it
             r, K = cfg.rank, cfg.order
@@ -605,6 +620,36 @@ def newton_parts(cfg, a, feats, H, K, r, D):
     W = a["o"]["w"].reshape(H, K, 2 * r, D)
     return jnp.einsum("bthkc,hkcd->btkd", feats, W)
 
+def holonomy_sectors(M, K):
+    """
+    M: [B, T, H, d, d], one matrix per token and head. Returns K arrays [B, T, H, d, d]: entry m at position i
+    is the sum over the (m+1)-subsets of positions that contain i of their products taken in position order,
+    F_m(i) = sum_{a+b=m} L_a(i) M_i R_b(i), where L_a(i) sums the ordered a-products of positions before i and
+    R_b(i) those after i. Commuting matrices give Newton attention's phi_i e_m(others); non-commuting ones
+    see order. O(T K^2 d^3) per head.
+    """
+    B, T, H, d, _ = M.shape
+    eye = jnp.broadcast_to(jnp.eye(d, dtype=M.dtype), (B, H, d, d))
+    zero = jnp.zeros_like(eye)
+    run, Ls = [eye] + [zero] * (K - 1), []
+    for i in range(T):
+        Ls.append(run)
+        run = [eye] + [run[m] + run[m - 1] @ M[:, i] for m in range(1, K)]
+    run, Rs = [eye] + [zero] * (K - 1), [None] * T
+    for i in reversed(range(T)):
+        Rs[i] = run
+        run = [eye] + [run[m] + M[:, i] @ run[m - 1] for m in range(1, K)]
+    return [jnp.stack([sum(Ls[i][b] @ M[:, i] @ Rs[i][m - b] for b in range(m + 1)) for i in range(T)], 1)
+            for m in range(K)]
+
+
+def holo_mats(cfg, a, x):
+    """The rotations U = exp(A), A skew-symmetric and linear in the token, [..., H, d, d]."""
+    d = cfg.gdim
+    S = lin(a["s"], x).reshape(x.shape[:-1] + (cfg.heads, d, d))
+    return jax.scipy.linalg.expm((S - jnp.swapaxes(S, -1, -2)) * (cfg.phase / 2))
+
+
 def attention(cfg, a, x):
     B, T, D = x.shape
     H = cfg.heads; dh = getattr(cfg, "dh", 0) or D // H
@@ -636,6 +681,19 @@ def attention(cfg, a, x):
         parts = newton_parts(cfg, a, feats, H, K, r, D)
         if getattr(cfg, "knock", -1) >= 0:
             parts = parts * (jnp.arange(K) != cfg.knock)[None, None, :, None]
+        if getattr(cfg, "want_parts", False):
+            return parts
+        return parts.sum(2) + a["o"]["b"]
+    if cfg.model == "holo":
+        # holonomy attention (GROUPS.md): ordered products of gated per-token rotations over every subset
+        # of positions, arity 1..K, normalised per arity like Newton attention and read by one projection
+        d, K = cfg.gdim, cfg.order
+        M = jax.nn.sigmoid(lin(a["g"], x))[..., None, None] * holo_mats(cfg, a, x)
+        F = holonomy_sectors(M, K)
+        feats = jnp.stack([F[m] / math.comb(max(T - 1, m), m) for m in range(K)], 3).reshape(B, T, H, K, d * d)
+        if cfg.fnorm:
+            feats = feats / jnp.sqrt((feats ** 2).mean((2, 4), keepdims=True) + 1e-6)
+        parts = jnp.einsum("bthkc,hcd->btkd", feats, a["o"]["w"].reshape(H, d * d, D)) * a["alpha"][None, None]
         if getattr(cfg, "want_parts", False):
             return parts
         return parts.sum(2) + a["o"]["b"]
@@ -891,8 +949,33 @@ def fourier(x, M):
     a = 2 * jnp.pi / M * x[..., None]
     return jnp.concatenate([jnp.cos(a * jnp.arange(1, M // 2 + 1)), jnp.sin(a * jnp.arange(1, (M - 1) // 2 + 1))], -1)
 
+# the 40 characters of Z_3^4 up to conjugation (first nonzero coordinate 1), and a fixed rotation of them
+CHAR_REPS = np.array([a for a in itertools.product(range(3), repeat=4) if any(a) and a[next(i for i, v in enumerate(a) if v)] == 1], float)
+CHAR_ROT = np.linalg.qr(np.random.default_rng(1234).normal(size=(80, 80)))[0]
+
+
+def char_embed(cfg, tok):
+    """
+    GROUPS.md experiment 1: a frozen embedding of Z_3^4 cards by their characters, [X, -X, bos, 0...] with
+    X = (cos, sin)(2 pi a.c / 3) over the 40 conjugate pairs a, so every card has zero mean and the same norm
+    and LayerNorm is a constant scale. 'charrot' rotates X by a fixed orthogonal matrix: the same Gram
+    matrix (the same geometry as one-hot) in other coordinates.
+    """
+    f = tok[..., :4]
+    bos = f[..., 0] == 3
+    ang = (2 * jnp.pi / 3) * (jnp.where(bos[..., None], 0, f).astype(jnp.float32) @ jnp.asarray(CHAR_REPS.T, jnp.float32))
+    X = jnp.concatenate([jnp.cos(ang), jnp.sin(ang)], -1) * (~bos)[..., None]
+    if cfg.embed == "charrot":
+        X = X @ jnp.asarray(CHAR_ROT, jnp.float32)
+    assert cfg.d >= 161, "--embed char needs --d >= 161"
+    pad = jnp.zeros(X.shape[:-1] + (cfg.d - 161,), X.dtype)
+    return jnp.concatenate([X, -X, 4.0 * bos[..., None].astype(X.dtype), pad], -1)
+
+
 def embed(cfg, p, tok):
-    if cfg.embed == "fourier":
+    if cfg.embed in ("char", "charrot"):
+        x = char_embed(cfg, tok)
+    elif cfg.embed == "fourier":
         x = lin(p["emb"], fourier(tok[..., 0], p["emb"]["w"].shape[0] + 1))
     else:
         x = sum(p["emb"][f][tok[..., f]] for f in range(tok.shape[-1]))
@@ -915,7 +998,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--task", default="match3"); ap.add_argument("--model", default="cubic")
     ap.add_argument("--layers", type=int, default=1); ap.add_argument("--d", type=int, default=64)
-    ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0); ap.add_argument("--readout", default="full"); ap.add_argument("--fnorm", type=int, default=0); ap.add_argument("--diag", type=int, default=1)
+    ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0); ap.add_argument("--readout", default="full"); ap.add_argument("--fnorm", type=int, default=0); ap.add_argument("--diag", type=int, default=1); ap.add_argument("--gdim", type=int, default=3)
     # subset attention (--model sfa): Poisson vacuum, optional logit cap, zero-initialised queries, statistics, linear-value path
     ap.add_argument("--vac", type=float, default=0.2); ap.add_argument("--cap", type=float, default=0.0); ap.add_argument("--qzero", type=int, default=1); ap.add_argument("--stats", default="fermi"); ap.add_argument("--vpath", type=int, default=1); ap.add_argument("--hops", type=int, default=0)
     ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--batch", type=int, default=128)
@@ -1004,7 +1087,11 @@ def main():
             curve.append((it + 1, round(float(l), 4), round(float(ta), 4), round(float(sa), 4), round(float(ba), 4)))
     ta, sa, ba = evaluate(params, etok, etgt, emsk)
     tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") + ("_shared" if cfg.readout == "shared" else "") + ("_fnorm" if cfg.fnorm else "") if cfg.model == "newton" else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_bose" if cfg.stats == "bose" else "") + ("" if cfg.vpath else "_novp") + ("" if cfg.qzero else "_qrand") + (f"_v{cfg.vac:g}" if cfg.vac != 0.2 else "") + (f"_c{cfg.cap:g}" if cfg.cap else "") + (f"_w{cfg.hops}" if cfg.hops else "") if cfg.model == "sfa" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
-    out = {"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed,
+    if cfg.model == "holo":
+        tag = f"holo_d{cfg.gdim}_h{cfg.heads}_K{cfg.order}" + ("_fnorm" if cfg.fnorm else "")
+    if cfg.embed != "table":
+        tag += f"_{cfg.embed}"
+    out = {"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed, "d": cfg.d, "pos": cfg.pos,
            "params": int(nparams), "tok_acc": round(float(ta), 4), "seq_acc": round(float(sa), 4),
            "bal_acc": round(float(ba), 4), "backend": jax.default_backend(),
            "pos_rate": round(base, 3), "secs": round(time.time() - t0, 1), "steps": cfg.steps, "curve": curve}
@@ -1020,9 +1107,22 @@ def main():
         for dd in (0, 3, 7):
             dtok, dtgt, dmsk = task_keydist(np.random.default_rng(30_000 + cfg.seed + dd), 2048, 9, 7, 4, fixed=dd)
             out["per_d"][str(dd)] = round(float(evaluate(params, dtok, dtgt, dmsk)[2]), 4)
+    if cfg.model == "holo" and cfg.task.startswith("g3_") and not cfg.pos and cfg.layers == 1:
+        out["rep"] = holo_rep_content(cfg, params)
     if cfg.model in ("newton", "sfa") and cfg.diag and cfg.layers == 1 and cfg.recur == 1 and not multilabel:
         out["diag"] = newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with)
     print(json.dumps(out))
+
+def holo_rep_content(cfg, params):
+    """Which irreps of the task's group the trained layer's rotations hold (groups.rep_content)."""
+    G = groups.get({"g3_z12": "Z12", "g3_a4": "A4", "g3_z60": "Z60", "g3_a5": "A5"}[cfg.task])
+    L = params["layers"][0]
+    x = ln(L["ln1"], params["emb"][0][: G.n])                       # every element, no positions
+    U = holo_mats(cfg, L["attn"], x).transpose(1, 0, 2, 3)           # [H, |G|, d, d]
+    out = groups.rep_content(G, U)
+    out["reachable_mass"] = round(groups.plancherel(G, groups.reachable(G, cfg.gdim)), 3)
+    return out
+
 
 def newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with):
     """

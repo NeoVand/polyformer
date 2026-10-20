@@ -22,6 +22,7 @@ image = (
     modal.Image.debian_slim(python_version="3.12")
     .pip_install("jax[cuda12]", "optax", "numpy")
     .add_local_file(pathlib.Path(__file__).parent / "polybench.py", "/root/polybench.py")
+    .add_local_file(pathlib.Path(__file__).parent / "groups.py", "/root/groups.py")
 )
 
 
@@ -459,6 +460,37 @@ def loc_eqf():
 # S0 architectures: softmax (6 layers), free-field at equal parameters (6), at equal FLOPs (5), softmax + 1 layer
 S0_ARCHS = [("gpt", 6), ("sfa", 6), ("sfa", 5), ("gpt", 7)]
 
+# GROUPS.md: is higher order a property of the representation? Holonomy attention at head dimension d with
+# heads x d about 256; Newton attention with 4 x 64 = 256 phase channels; softmax with positions.
+HOLO = {2: 128, 3: 85, 4: 64, 5: 51, 8: 32}
+
+
+def holo_args(d: int) -> dict:
+    return {"gdim": d, "heads": HOLO[d], "order": 3, "fnorm": 1, "pos": 0}
+
+
+NEWTON_G = {"rank": 64, "heads": 4, "order": 3, "readout": "shared", "fnorm": 1, "pos": 0}
+
+
+def grp_arms(task: str, seeds: list[int], dims: list[int], steps: int = 6000) -> list[list[str]]:
+    runs = []
+    for d in dims:
+        runs += grid([task], ["holo"], seeds, steps=steps, **holo_args(d))
+    runs += grid([task], ["newton"], seeds, steps=steps, **NEWTON_G)
+    for L in (1, 3):
+        runs += grid([task], ["sa"], seeds, steps=steps, layers=L)
+    return runs
+
+
+def grp_e1(seeds: list[int], tasks: list[str], steps: int = 6000) -> list[list[str]]:
+    """Experiment 1: softmax on frozen characters (and the same geometry rotated) against learned tables."""
+    runs = []
+    for emb in ("char", "charrot", "table"):
+        for L in (1, 2):
+            runs += grid(tasks, ["sa"], seeds, steps=steps, layers=L, d=192, pos=0, embed=emb)
+    return runs
+
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
     "baseline": baseline(),
@@ -519,6 +551,17 @@ GRIDS = {
                                 chart=r, early=100) for o in ("muon",) for r in (1, 2, 4, 16)],
     # LOCAL.md Stage 1: mechanism diagnostics, S widened to L8's FLOPs, one and two layers, 3 seeds, both optimizers
     "diag_loc_s1": loc_diag(["softmaxl", "plx", "lla"], [1, 2], [0, 1, 2], [3e-3], ["adamw", "muon"]),
+    # GROUPS.md pilot (before the pre-registration is frozen): learnability and speed, seed 0
+    "grp_pilot": [r for t in ("g3_z12", "g3_a5") for r in grp_arms(t, [0], [2, 5]) if not ("sa" in r and "3" in r[r.index("--layers") + 1:r.index("--layers") + 2])]
+                 + grid(["zs4"], ["sa"], [0], steps=6000, layers=1, d=192, pos=0, embed="char")
+                 + grid(["zs4"], ["sa"], [0], steps=6000, layers=1, d=192, pos=0, embed="charrot")
+                 + grid(["zs4"], ["sa"], [0], steps=6000, layers=1, d=192, pos=0, embed="table"),
+    # GROUPS.md experiment 1: softmax on frozen characters, rotated characters and learned tables, Match-3/4/5
+    "grp_e1": grp_e1([0, 1, 2], ["zs3", "zs4", "zs5"]),
+    # experiment 1, exploratory: is the frozen-character softmax only slow? 2 layers, 20,000 steps, Match-4
+    "grp_e1_long": grid(["zs4"], ["sa"], [0, 1, 2], steps=20000, layers=2, d=192, pos=0, embed="char"),
+    # GROUPS.md experiment 2: every layer on the four groups, holonomy attention at d = 2, 3, 4, 5, 8
+    "grp_e2": [r for t in ("g3_z12", "g3_a4", "g3_z60", "g3_a5") for r in grp_arms(t, [0, 1, 2], [2, 3, 4, 5, 8])],
 }
 
 
