@@ -1,0 +1,1903 @@
+[
+  {
+    "arxiv_id": "2204.00740",
+    "expected_title_fragment": "Path Development Network",
+    "status": "VERIFIED",
+    "title": "Path Development Network with Finite-dimensional Lie Group Representation",
+    "authors": [
+      "Lou, Hang",
+      "Li, Siran",
+      "Ni, Hao"
+    ],
+    "citation_date": [
+      "2022/04/02"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Path Development Network with Finite-dimensional Lie Group Representation"
+      ],
+      "citation_author": [
+        "Lou, Hang",
+        "Li, Siran",
+        "Ni, Hao"
+      ],
+      "citation_date": [
+        "2022/04/02"
+      ],
+      "citation_online_date": [
+        "2024/09/08"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2204.00740"
+      ],
+      "citation_arxiv_id": [
+        "2204.00740"
+      ]
+    },
+    "comments": null,
+    "journal_reference": "Transactions on Machine Learning Research (08/2024)",
+    "submission_history": "Submission history From: Hang Lou [ view email ] [v1] Sat, 2 Apr 2022 02:01:00 UTC (11,442 KB) [v2] Sun, 8 Sep 2024 12:56:04 UTC (19,315 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2204.00740",
+        "effective_url": "https://export.arxiv.org/abs/2204.00740",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "e5f7fbb3b4fa727fb29f59bb95e8063678d72e18255d0e5743ea69f1ee38b2f5"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.627553+00:00"
+  },
+  {
+    "arxiv_id": "2012.04597",
+    "expected_title_fragment": "Generalized iterated-sums signatures",
+    "status": "VERIFIED",
+    "title": "Generalized iterated-sums signatures",
+    "authors": [
+      "Diehl, Joscha",
+      "Ebrahimi-Fard, Kurusch",
+      "Tapia, Nikolas"
+    ],
+    "citation_date": [
+      "2020/12/08"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Generalized iterated-sums signatures"
+      ],
+      "citation_author": [
+        "Diehl, Joscha",
+        "Ebrahimi-Fard, Kurusch",
+        "Tapia, Nikolas"
+      ],
+      "citation_doi": [
+        "10.1016/j.jalgebra.2023.06.007"
+      ],
+      "citation_date": [
+        "2020/12/08"
+      ],
+      "citation_online_date": [
+        "2023/07/03"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2012.04597"
+      ],
+      "citation_arxiv_id": [
+        "2012.04597"
+      ]
+    },
+    "comments": "17 pages",
+    "journal_reference": "J. Algebra 623 (2023) 801-824",
+    "submission_history": "Submission history From: Nikolas Tapia [ view email ] [v1] Tue, 8 Dec 2020 17:59:29 UTC (24 KB) [v2] Mon, 14 Nov 2022 16:29:57 UTC (31 KB) [v3] Mon, 3 Jul 2023 15:24:56 UTC (30 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2012.04597",
+        "effective_url": "https://export.arxiv.org/abs/2012.04597",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "32dd8fc3bc903c71b87b9b84869d1cde7ae94760dffeb053c5593ed337647801"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.677636+00:00"
+  },
+  {
+    "arxiv_id": "2009.08443",
+    "expected_title_fragment": "Tropical time series",
+    "status": "VERIFIED",
+    "title": "Tropical time series, iterated-sums signatures and quasisymmetric functions",
+    "authors": [
+      "Diehl, Joscha",
+      "Ebrahimi-Fard, Kurusch",
+      "Tapia, Nikolas"
+    ],
+    "citation_date": [
+      "2020/09/17"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Tropical time series, iterated-sums signatures and quasisymmetric functions"
+      ],
+      "citation_author": [
+        "Diehl, Joscha",
+        "Ebrahimi-Fard, Kurusch",
+        "Tapia, Nikolas"
+      ],
+      "citation_doi": [
+        "10.1137/20M1380041"
+      ],
+      "citation_date": [
+        "2020/09/17"
+      ],
+      "citation_online_date": [
+        "2022/04/02"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2009.08443"
+      ],
+      "citation_arxiv_id": [
+        "2009.08443"
+      ]
+    },
+    "comments": "fix notational errors, clarify certain proofs",
+    "journal_reference": "SIAM Journal on Applied Algebra and Geometry, Vol 6, Issue 4, (2022), 563-599",
+    "submission_history": "Submission history From: Nikolas Tapia [ view email ] [v1] Thu, 17 Sep 2020 17:51:43 UTC (54 KB) [v2] Mon, 9 Nov 2020 21:36:52 UTC (54 KB) [v3] Sat, 2 Apr 2022 14:53:19 UTC (229 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2009.08443",
+        "effective_url": "https://export.arxiv.org/abs/2009.08443",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "b2a1f7939c027ab869a9730bdd9041a63d6f8c1e19fdd02db42420d6ec1a1726"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.724788+00:00"
+  },
+  {
+    "arxiv_id": "1905.08494",
+    "expected_title_fragment": "Deep Signature Transforms",
+    "status": "VERIFIED",
+    "title": "Deep Signature Transforms",
+    "authors": [
+      "Bonnier, Patric",
+      "Kidger, Patrick",
+      "Arribas, Imanol Perez",
+      "Salvi, Cristopher",
+      "Lyons, Terry"
+    ],
+    "citation_date": [
+      "2019/05/21"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Deep Signature Transforms"
+      ],
+      "citation_author": [
+        "Bonnier, Patric",
+        "Kidger, Patrick",
+        "Arribas, Imanol Perez",
+        "Salvi, Cristopher",
+        "Lyons, Terry"
+      ],
+      "citation_date": [
+        "2019/05/21"
+      ],
+      "citation_online_date": [
+        "2019/10/26"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1905.08494"
+      ],
+      "citation_arxiv_id": [
+        "1905.08494"
+      ]
+    },
+    "comments": "Published at NeurIPS 2019",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Patrick Kidger [ view email ] [v1] Tue, 21 May 2019 08:39:55 UTC (487 KB) [v2] Sat, 26 Oct 2019 20:51:43 UTC (984 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1905.08494",
+        "effective_url": "https://export.arxiv.org/abs/1905.08494",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "10df4f10ae3074ac029acc4cf1107fcf2ce27cdafc74f4319cf1032d94959b84"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.772735+00:00"
+  },
+  {
+    "arxiv_id": "1511.06464",
+    "expected_title_fragment": "Unitary Evolution Recurrent Neural Networks",
+    "status": "VERIFIED",
+    "title": "Unitary Evolution Recurrent Neural Networks",
+    "authors": [
+      "Arjovsky, Martin",
+      "Shah, Amar",
+      "Bengio, Yoshua"
+    ],
+    "citation_date": [
+      "2015/11/20"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Unitary Evolution Recurrent Neural Networks"
+      ],
+      "citation_author": [
+        "Arjovsky, Martin",
+        "Shah, Amar",
+        "Bengio, Yoshua"
+      ],
+      "citation_date": [
+        "2015/11/20"
+      ],
+      "citation_online_date": [
+        "2016/05/25"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1511.06464"
+      ],
+      "citation_arxiv_id": [
+        "1511.06464"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Martin Arjovsky [ view email ] [v1] Fri, 20 Nov 2015 00:37:33 UTC (802 KB) [v2] Sat, 28 Nov 2015 18:42:08 UTC (854 KB) [v3] Thu, 18 Feb 2016 00:52:28 UTC (914 KB) [v4] Wed, 25 May 2016 23:34:38 UTC (919 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1511.06464",
+        "effective_url": "https://export.arxiv.org/abs/1511.06464",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "08722f4e1b96acf26afc45f62c973ea88fafb075b001586211099798ada14a34"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.820766+00:00"
+  },
+  {
+    "arxiv_id": "1611.00035",
+    "expected_title_fragment": "Full-Capacity Unitary Recurrent Neural Networks",
+    "status": "VERIFIED",
+    "title": "Full-Capacity Unitary Recurrent Neural Networks",
+    "authors": [
+      "Wisdom, Scott",
+      "Powers, Thomas",
+      "Hershey, John R.",
+      "Roux, Jonathan Le",
+      "Atlas, Les"
+    ],
+    "citation_date": [
+      "2016/10/31"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Full-Capacity Unitary Recurrent Neural Networks"
+      ],
+      "citation_author": [
+        "Wisdom, Scott",
+        "Powers, Thomas",
+        "Hershey, John R.",
+        "Roux, Jonathan Le",
+        "Atlas, Les"
+      ],
+      "citation_date": [
+        "2016/10/31"
+      ],
+      "citation_online_date": [
+        "2016/10/31"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1611.00035"
+      ],
+      "citation_arxiv_id": [
+        "1611.00035"
+      ]
+    },
+    "comments": "9 pages, to appear in NIPS",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Thomas Powers [ view email ] [v1] Mon, 31 Oct 2016 20:43:21 UTC (804 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1611.00035",
+        "effective_url": "https://export.arxiv.org/abs/1611.00035",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "aec5ef659882f5823750e2503e650d997e2eaff9f14a0204d51661e925c150e6"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.868294+00:00"
+  },
+  {
+    "arxiv_id": "2210.10749",
+    "expected_title_fragment": "Transformers Learn Shortcuts to Automata",
+    "status": "VERIFIED",
+    "title": "Transformers Learn Shortcuts to Automata",
+    "authors": [
+      "Liu, Bingbin",
+      "Ash, Jordan T.",
+      "Goel, Surbhi",
+      "Krishnamurthy, Akshay",
+      "Zhang, Cyril"
+    ],
+    "citation_date": [
+      "2022/10/19"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Transformers Learn Shortcuts to Automata"
+      ],
+      "citation_author": [
+        "Liu, Bingbin",
+        "Ash, Jordan T.",
+        "Goel, Surbhi",
+        "Krishnamurthy, Akshay",
+        "Zhang, Cyril"
+      ],
+      "citation_date": [
+        "2022/10/19"
+      ],
+      "citation_online_date": [
+        "2023/05/02"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2210.10749"
+      ],
+      "citation_arxiv_id": [
+        "2210.10749"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Cyril Zhang [ view email ] [v1] Wed, 19 Oct 2022 17:45:48 UTC (7,535 KB) [v2] Tue, 2 May 2023 14:16:15 UTC (7,924 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2210.10749",
+        "effective_url": "https://export.arxiv.org/abs/2210.10749",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "02a5e50af94e58bf509359f9f220b809f2cfd82fe12285f037c1c6d5b8c1669f"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.911580+00:00"
+  },
+  {
+    "arxiv_id": "2404.08819",
+    "expected_title_fragment": "The Illusion of State in State-Space Models",
+    "status": "VERIFIED",
+    "title": "The Illusion of State in State-Space Models",
+    "authors": [
+      "Merrill, William",
+      "Petty, Jackson",
+      "Sabharwal, Ashish"
+    ],
+    "citation_date": [
+      "2024/04/12"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "The Illusion of State in State-Space Models"
+      ],
+      "citation_author": [
+        "Merrill, William",
+        "Petty, Jackson",
+        "Sabharwal, Ashish"
+      ],
+      "citation_date": [
+        "2024/04/12"
+      ],
+      "citation_online_date": [
+        "2025/03/05"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2404.08819"
+      ],
+      "citation_arxiv_id": [
+        "2404.08819"
+      ]
+    },
+    "comments": "To appear at ICML 2024. 9 pages + appendices",
+    "journal_reference": null,
+    "submission_history": "Submission history From: William Merrill [ view email ] [v1] Fri, 12 Apr 2024 21:30:06 UTC (69 KB) [v2] Tue, 4 Jun 2024 22:05:45 UTC (76 KB) [v3] Wed, 5 Mar 2025 23:00:57 UTC (86 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2404.08819",
+        "effective_url": "https://export.arxiv.org/abs/2404.08819",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "27d7079f7fd60262966fa094caf776d45398b3486fb1e35d7404c94af232e2d0"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.955515+00:00"
+  },
+  {
+    "arxiv_id": "2411.12537",
+    "expected_title_fragment": "Unlocking State-Tracking",
+    "status": "VERIFIED",
+    "title": "Unlocking State-Tracking in Linear RNNs Through Negative Eigenvalues",
+    "authors": [
+      "Grazzi, Riccardo",
+      "Siems, Julien",
+      "Zela, Arber",
+      "Franke, Jörg K. H.",
+      "Hutter, Frank",
+      "Pontil, Massimiliano"
+    ],
+    "citation_date": [
+      "2024/11/19"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Unlocking State-Tracking in Linear RNNs Through Negative Eigenvalues"
+      ],
+      "citation_author": [
+        "Grazzi, Riccardo",
+        "Siems, Julien",
+        "Zela, Arber",
+        "Franke, Jörg K. H.",
+        "Hutter, Frank",
+        "Pontil, Massimiliano"
+      ],
+      "citation_date": [
+        "2024/11/19"
+      ],
+      "citation_online_date": [
+        "2025/03/18"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2411.12537"
+      ],
+      "citation_arxiv_id": [
+        "2411.12537"
+      ]
+    },
+    "comments": "V2: Correction to Theorem 1 and 2 and to point 3 of Proposition 1. V3: ICLR Camera Ready, V4: ICLR Camera Ready, added figures to theory section, updated modular arithmetic with brackets results because previous results did not contain multiplication",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Julien Siems [ view email ] [v1] Tue, 19 Nov 2024 14:35:38 UTC (640 KB) [v2] Fri, 6 Dec 2024 16:22:21 UTC (1,200 KB) [v3] Fri, 28 Feb 2025 09:17:14 UTC (600 KB) [v4] Sun, 16 Mar 2025 14:35:24 UTC (604 KB) [v5] Tue, 18 Mar 2025 13:13:18 UTC (604 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2411.12537",
+        "effective_url": "https://export.arxiv.org/abs/2411.12537",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "4b1bdbfc114600082bbe7623f8491be69fb8ebb56869980162dbe40077088d6f"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:48.997071+00:00"
+  },
+  {
+    "arxiv_id": "2406.06484",
+    "expected_title_fragment": "Parallelizing Linear Transformers",
+    "status": "VERIFIED",
+    "title": "Parallelizing Linear Transformers with the Delta Rule over Sequence Length",
+    "authors": [
+      "Yang, Songlin",
+      "Wang, Bailin",
+      "Zhang, Yu",
+      "Shen, Yikang",
+      "Kim, Yoon"
+    ],
+    "citation_date": [
+      "2024/06/10"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Parallelizing Linear Transformers with the Delta Rule over Sequence Length"
+      ],
+      "citation_author": [
+        "Yang, Songlin",
+        "Wang, Bailin",
+        "Zhang, Yu",
+        "Shen, Yikang",
+        "Kim, Yoon"
+      ],
+      "citation_date": [
+        "2024/06/10"
+      ],
+      "citation_online_date": [
+        "2025/01/15"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2406.06484"
+      ],
+      "citation_arxiv_id": [
+        "2406.06484"
+      ]
+    },
+    "comments": "Final camera ready",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Songlin Yang [ view email ] [v1] Mon, 10 Jun 2024 17:24:42 UTC (124 KB) [v2] Mon, 26 Aug 2024 19:50:37 UTC (123 KB) [v3] Thu, 31 Oct 2024 19:35:47 UTC (140 KB) [v4] Tue, 5 Nov 2024 16:48:53 UTC (140 KB) [v5] Mon, 25 Nov 2024 19:36:01 UTC (136 KB) [v6] Wed, 15 Jan 2025 10:41:40 UTC (137 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2406.06484",
+        "effective_url": "https://export.arxiv.org/abs/2406.06484",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "7bf15614a5286012b996a725f5b99a0f57ac13ce8d848721fe762086331cc9f6"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.046339+00:00"
+  },
+  {
+    "arxiv_id": "2412.06464",
+    "expected_title_fragment": "Gated Delta Networks",
+    "status": "VERIFIED",
+    "title": "Gated Delta Networks: Improving Mamba2 with Delta Rule",
+    "authors": [
+      "Yang, Songlin",
+      "Kautz, Jan",
+      "Hatamizadeh, Ali"
+    ],
+    "citation_date": [
+      "2024/12/09"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Gated Delta Networks: Improving Mamba2 with Delta Rule"
+      ],
+      "citation_author": [
+        "Yang, Songlin",
+        "Kautz, Jan",
+        "Hatamizadeh, Ali"
+      ],
+      "citation_date": [
+        "2024/12/09"
+      ],
+      "citation_online_date": [
+        "2025/03/06"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2412.06464"
+      ],
+      "citation_arxiv_id": [
+        "2412.06464"
+      ]
+    },
+    "comments": "ICLR 2025 camera ready",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Songlin Yang [ view email ] [v1] Mon, 9 Dec 2024 13:09:04 UTC (261 KB) [v2] Wed, 5 Mar 2025 08:47:27 UTC (266 KB) [v3] Thu, 6 Mar 2025 06:57:34 UTC (130 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2412.06464",
+        "effective_url": "https://export.arxiv.org/abs/2412.06464",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "d0a92ce36f5e29dabab54be7beda8e5305c921257a90625a68db7c212a7bda5e"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.177655+00:00"
+  },
+  {
+    "arxiv_id": "2502.10297",
+    "expected_title_fragment": "DeltaProduct",
+    "status": "VERIFIED",
+    "title": "DeltaProduct: Improving State-Tracking in Linear RNNs via Householder Products",
+    "authors": [
+      "Siems, Julien",
+      "Carstensen, Timur",
+      "Zela, Arber",
+      "Hutter, Frank",
+      "Pontil, Massimiliano",
+      "Grazzi, Riccardo"
+    ],
+    "citation_date": [
+      "2025/02/14"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "DeltaProduct: Improving State-Tracking in Linear RNNs via Householder Products"
+      ],
+      "citation_author": [
+        "Siems, Julien",
+        "Carstensen, Timur",
+        "Zela, Arber",
+        "Hutter, Frank",
+        "Pontil, Massimiliano",
+        "Grazzi, Riccardo"
+      ],
+      "citation_date": [
+        "2025/02/14"
+      ],
+      "citation_online_date": [
+        "2025/10/22"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2502.10297"
+      ],
+      "citation_arxiv_id": [
+        "2502.10297"
+      ]
+    },
+    "comments": "v5: Characterization of DeltaProduct's state-tracking ability. Analysis of hidden state's effective rank. Improved scaling analysis. v6: Added analysis for products of RWKV-7 matrices, v6: Accepted at NeurIPS 2025",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Julien Siems [ view email ] [v1] Fri, 14 Feb 2025 16:59:05 UTC (575 KB) [v2] Fri, 7 Mar 2025 18:31:55 UTC (776 KB) [v3] Fri, 28 Mar 2025 13:16:24 UTC (782 KB) [v4] Mon, 7 Apr 2025 13:39:44 UTC (792 KB) [v5] Sun, 8 Jun 2025 18:56:49 UTC (6,956 KB) [v6] Thu, 19 Jun 2025 09:21:12 UTC (6,957 KB) [v7] Wed, 22 Oct 2025 21:10:28 UTC (6,961 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2502.10297",
+        "effective_url": "https://export.arxiv.org/abs/2502.10297",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "01109507a43f92a15d7e2696170f96a6e7648434b89b2833ffd838a955bf87f4"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.225726+00:00"
+  },
+  {
+    "arxiv_id": "2302.03025",
+    "expected_title_fragment": "A Toy Model of Universality",
+    "status": "VERIFIED",
+    "title": "A Toy Model of Universality: Reverse Engineering How Networks Learn Group Operations",
+    "authors": [
+      "Chughtai, Bilal",
+      "Chan, Lawrence",
+      "Nanda, Neel"
+    ],
+    "citation_date": [
+      "2023/02/06"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "A Toy Model of Universality: Reverse Engineering How Networks Learn Group Operations"
+      ],
+      "citation_author": [
+        "Chughtai, Bilal",
+        "Chan, Lawrence",
+        "Nanda, Neel"
+      ],
+      "citation_date": [
+        "2023/02/06"
+      ],
+      "citation_online_date": [
+        "2023/05/24"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2302.03025"
+      ],
+      "citation_arxiv_id": [
+        "2302.03025"
+      ]
+    },
+    "comments": "9 page main body, 1 page references, 12 page appendix",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Bilal Chughtai [ view email ] [v1] Mon, 6 Feb 2023 18:59:20 UTC (1,053 KB) [v2] Wed, 24 May 2023 22:13:13 UTC (1,033 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2302.03025",
+        "effective_url": "https://export.arxiv.org/abs/2302.03025",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "db810b7332c251810a86f2594129b14fca160a5a76e7b82625fcea8e48c379b6"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.270435+00:00"
+  },
+  {
+    "arxiv_id": "2301.05217",
+    "expected_title_fragment": "Progress measures for grokking",
+    "status": "VERIFIED",
+    "title": "Progress measures for grokking via mechanistic interpretability",
+    "authors": [
+      "Nanda, Neel",
+      "Chan, Lawrence",
+      "Lieberum, Tom",
+      "Smith, Jess",
+      "Steinhardt, Jacob"
+    ],
+    "citation_date": [
+      "2023/01/12"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Progress measures for grokking via mechanistic interpretability"
+      ],
+      "citation_author": [
+        "Nanda, Neel",
+        "Chan, Lawrence",
+        "Lieberum, Tom",
+        "Smith, Jess",
+        "Steinhardt, Jacob"
+      ],
+      "citation_date": [
+        "2023/01/12"
+      ],
+      "citation_online_date": [
+        "2023/10/19"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2301.05217"
+      ],
+      "citation_arxiv_id": [
+        "2301.05217"
+      ]
+    },
+    "comments": "10 page main body, 2 page references, 24 page appendix",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Lawrence Chan [ view email ] [v1] Thu, 12 Jan 2023 18:56:49 UTC (20,310 KB) [v2] Fri, 13 Jan 2023 18:28:41 UTC (20,310 KB) [v3] Thu, 19 Oct 2023 21:25:32 UTC (20,310 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2301.05217",
+        "effective_url": "https://export.arxiv.org/abs/2301.05217",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "4dde7f60ff5797d5f79568a0b805d192786b566846ab15fdbc2e9d77b5b804c9"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.318407+00:00"
+  },
+  {
+    "arxiv_id": "1909.00668",
+    "expected_title_fragment": "Simplicial Transformer",
+    "status": "VERIFIED",
+    "title": "Logic and the $2$-Simplicial Transformer",
+    "authors": [
+      "Clift, James",
+      "Doryn, Dmitry",
+      "Murfet, Daniel",
+      "Wallbridge, James"
+    ],
+    "citation_date": [
+      "2019/09/02"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Logic and the $2$-Simplicial Transformer"
+      ],
+      "citation_author": [
+        "Clift, James",
+        "Doryn, Dmitry",
+        "Murfet, Daniel",
+        "Wallbridge, James"
+      ],
+      "citation_date": [
+        "2019/09/02"
+      ],
+      "citation_online_date": [
+        "2019/09/02"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1909.00668"
+      ],
+      "citation_arxiv_id": [
+        "1909.00668"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Daniel Murfet [ view email ] [v1] Mon, 2 Sep 2019 11:11:35 UTC (767 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1909.00668",
+        "effective_url": "https://export.arxiv.org/abs/1909.00668",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "6b19bcbe5b6b9b666aa49ca3f02cb074c38ff96b6a04948aca53229b3cdc278f"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.364723+00:00"
+  },
+  {
+    "arxiv_id": "2306.02896",
+    "expected_title_fragment": "Representational Strengths and Limitations",
+    "status": "VERIFIED",
+    "title": "Representational Strengths and Limitations of Transformers",
+    "authors": [
+      "Sanford, Clayton",
+      "Hsu, Daniel",
+      "Telgarsky, Matus"
+    ],
+    "citation_date": [
+      "2023/06/05"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Representational Strengths and Limitations of Transformers"
+      ],
+      "citation_author": [
+        "Sanford, Clayton",
+        "Hsu, Daniel",
+        "Telgarsky, Matus"
+      ],
+      "citation_date": [
+        "2023/06/05"
+      ],
+      "citation_online_date": [
+        "2023/11/16"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2306.02896"
+      ],
+      "citation_arxiv_id": [
+        "2306.02896"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Daniel Hsu [ view email ] [v1] Mon, 5 Jun 2023 14:05:04 UTC (145 KB) [v2] Thu, 16 Nov 2023 14:48:16 UTC (130 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2306.02896",
+        "effective_url": "https://export.arxiv.org/abs/2306.02896",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "5fb30264f71494884084125936deb800d4a98f89f159580689637977cf9fe3fe"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.415856+00:00"
+  },
+  {
+    "arxiv_id": "2507.02754",
+    "expected_title_fragment": "Fast and Simplex",
+    "status": "VERIFIED",
+    "title": "Fast and Simplex: 2-Simplicial Attention in Triton",
+    "authors": [
+      "Roy, Aurko",
+      "Chou, Timothy",
+      "Duvvuri, Sai Surya",
+      "Chen, Sijia",
+      "Yu, Jiecao",
+      "Wang, Xiaodong",
+      "Zaheer, Manzil",
+      "Anil, Rohan"
+    ],
+    "citation_date": [
+      "2025/07/03"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Fast and Simplex: 2-Simplicial Attention in Triton"
+      ],
+      "citation_author": [
+        "Roy, Aurko",
+        "Chou, Timothy",
+        "Duvvuri, Sai Surya",
+        "Chen, Sijia",
+        "Yu, Jiecao",
+        "Wang, Xiaodong",
+        "Zaheer, Manzil",
+        "Anil, Rohan"
+      ],
+      "citation_date": [
+        "2025/07/03"
+      ],
+      "citation_online_date": [
+        "2025/07/03"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2507.02754"
+      ],
+      "citation_arxiv_id": [
+        "2507.02754"
+      ]
+    },
+    "comments": "10 pages, with appendix 25 pages",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Aurko Roy [ view email ] [v1] Thu, 3 Jul 2025 16:16:34 UTC (762 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2507.02754",
+        "effective_url": "https://export.arxiv.org/abs/2507.02754",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "765ec3e089004b40e6f7712a52f67586fd2f449ce68fa7a720fdc90e1bc9b6c0"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.464002+00:00"
+  },
+  {
+    "arxiv_id": "2510.27258",
+    "expected_title_fragment": "Higher-order Linear Attention",
+    "status": "VERIFIED",
+    "title": "Higher-order Linear Attention",
+    "authors": [
+      "Zhang, Yifan",
+      "Qin, Zhen",
+      "Wang, Mengdi",
+      "Gu, Quanquan"
+    ],
+    "citation_date": [
+      "2025/10/31"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Higher-order Linear Attention"
+      ],
+      "citation_author": [
+        "Zhang, Yifan",
+        "Qin, Zhen",
+        "Wang, Mengdi",
+        "Gu, Quanquan"
+      ],
+      "citation_date": [
+        "2025/10/31"
+      ],
+      "citation_online_date": [
+        "2026/05/14"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2510.27258"
+      ],
+      "citation_arxiv_id": [
+        "2510.27258"
+      ]
+    },
+    "comments": "Project Page: this https URL",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Yifan Zhang [ view email ] [v1] Fri, 31 Oct 2025 07:54:37 UTC (62 KB) [v2] Wed, 13 May 2026 02:22:47 UTC (71 KB) [v3] Thu, 14 May 2026 15:35:59 UTC (71 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2510.27258",
+        "effective_url": "https://export.arxiv.org/abs/2510.27258",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "9724d870d6f658ef225ea80d0ab1671f76fad82b3e6209a3bae328f1af712bfe"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.499467+00:00"
+  },
+  {
+    "arxiv_id": "2603.11133",
+    "expected_title_fragment": "Beyond Pairwise Attention",
+    "status": "VERIFIED",
+    "title": "Beyond Pairwise Attention: Higher-Order Modular Attention for Efficient Sequence Learning",
+    "authors": [
+      "Amiraslani, Shirin",
+      "Gao, Xin"
+    ],
+    "citation_date": [
+      "2026/03/11"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Beyond Pairwise Attention: Higher-Order Modular Attention for Efficient Sequence Learning"
+      ],
+      "citation_author": [
+        "Amiraslani, Shirin",
+        "Gao, Xin"
+      ],
+      "citation_date": [
+        "2026/03/11"
+      ],
+      "citation_online_date": [
+        "2026/09/24"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2603.11133"
+      ],
+      "citation_arxiv_id": [
+        "2603.11133"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Shirin Amiraslani [ view email ] [v1] Wed, 11 Mar 2026 16:07:56 UTC (1,538 KB) [v2] Thu, 24 Sep 2026 07:13:51 UTC (285 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2603.11133",
+        "effective_url": "https://export.arxiv.org/abs/2603.11133",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "9dccbddc4049d407da3cfabbce9910def9d8117833d3464b0841116f1022f4f1"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.541088+00:00"
+  },
+  {
+    "arxiv_id": "2602.02422",
+    "expected_title_fragment": "Poly-attention",
+    "status": "VERIFIED",
+    "title": "Poly-attention: a general scheme for higher-order self-attention",
+    "authors": [
+      "Chakrabarti, Sayak",
+      "Pitassi, Toniann",
+      "Alman, Josh"
+    ],
+    "citation_date": [
+      "2026/02/02"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Poly-attention: a general scheme for higher-order self-attention"
+      ],
+      "citation_author": [
+        "Chakrabarti, Sayak",
+        "Pitassi, Toniann",
+        "Alman, Josh"
+      ],
+      "citation_date": [
+        "2026/02/02"
+      ],
+      "citation_online_date": [
+        "2026/09/28"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2602.02422"
+      ],
+      "citation_arxiv_id": [
+        "2602.02422"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Sayak Chakrabarti [ view email ] [v1] Mon, 2 Feb 2026 18:24:53 UTC (746 KB) [v2] Mon, 28 Sep 2026 14:10:21 UTC (746 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2602.02422",
+        "effective_url": "https://export.arxiv.org/abs/2602.02422",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "4361bf457c9ec38c65999ac95b71534de3325b2c28d2096b00209f20d900788b"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.675170+00:00"
+  },
+  {
+    "arxiv_id": "1811.01900",
+    "expected_title_fragment": "Janossy Pooling",
+    "status": "VERIFIED",
+    "title": "Janossy Pooling: Learning Deep Permutation-Invariant Functions for Variable-Size Inputs",
+    "authors": [
+      "Murphy, Ryan L.",
+      "Srinivasan, Balasubramaniam",
+      "Rao, Vinayak",
+      "Ribeiro, Bruno"
+    ],
+    "citation_date": [
+      "2018/11/05"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Janossy Pooling: Learning Deep Permutation-Invariant Functions for Variable-Size Inputs"
+      ],
+      "citation_author": [
+        "Murphy, Ryan L.",
+        "Srinivasan, Balasubramaniam",
+        "Rao, Vinayak",
+        "Ribeiro, Bruno"
+      ],
+      "citation_date": [
+        "2018/11/05"
+      ],
+      "citation_online_date": [
+        "2019/02/25"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1811.01900"
+      ],
+      "citation_arxiv_id": [
+        "1811.01900"
+      ]
+    },
+    "comments": "This version clarifies and adds detail to some of the arguments",
+    "journal_reference": "ICLR 2019",
+    "submission_history": "Submission history From: Ryan Murphy [ view email ] [v1] Mon, 5 Nov 2018 18:26:41 UTC (213 KB) [v2] Mon, 26 Nov 2018 14:35:49 UTC (254 KB) [v3] Mon, 25 Feb 2019 21:13:26 UTC (291 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1811.01900",
+        "effective_url": "https://export.arxiv.org/abs/1811.01900",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "1c919143c1c8752da76d53e46dce5eca4a3391162d829df929884e74f81581bf"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.726661+00:00"
+  },
+  {
+    "arxiv_id": "1703.06114",
+    "expected_title_fragment": "Deep Sets",
+    "status": "VERIFIED",
+    "title": "Deep Sets",
+    "authors": [
+      "Zaheer, Manzil",
+      "Kottur, Satwik",
+      "Ravanbakhsh, Siamak",
+      "Poczos, Barnabas",
+      "Salakhutdinov, Ruslan",
+      "Smola, Alexander"
+    ],
+    "citation_date": [
+      "2017/03/10"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Deep Sets"
+      ],
+      "citation_author": [
+        "Zaheer, Manzil",
+        "Kottur, Satwik",
+        "Ravanbakhsh, Siamak",
+        "Poczos, Barnabas",
+        "Salakhutdinov, Ruslan",
+        "Smola, Alexander"
+      ],
+      "citation_date": [
+        "2017/03/10"
+      ],
+      "citation_online_date": [
+        "2018/04/14"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1703.06114"
+      ],
+      "citation_arxiv_id": [
+        "1703.06114"
+      ]
+    },
+    "comments": "NIPS 2017",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Manzil Zaheer [ view email ] [v1] Fri, 10 Mar 2017 21:02:53 UTC (5,740 KB) [v2] Mon, 20 Mar 2017 16:04:56 UTC (5,740 KB) [v3] Sat, 14 Apr 2018 18:54:19 UTC (6,831 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1703.06114",
+        "effective_url": "https://export.arxiv.org/abs/1703.06114",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "c7c62c25b2cbac61859689561439f3ac4c787df21987290b4c1a08caabcbdc80"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.774680+00:00"
+  },
+  {
+    "arxiv_id": "1602.07576",
+    "expected_title_fragment": "Group Equivariant Convolutional Networks",
+    "status": "VERIFIED",
+    "title": "Group Equivariant Convolutional Networks",
+    "authors": [
+      "Cohen, Taco S.",
+      "Welling, Max"
+    ],
+    "citation_date": [
+      "2016/02/24"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Group Equivariant Convolutional Networks"
+      ],
+      "citation_author": [
+        "Cohen, Taco S.",
+        "Welling, Max"
+      ],
+      "citation_date": [
+        "2016/02/24"
+      ],
+      "citation_online_date": [
+        "2016/06/03"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1602.07576"
+      ],
+      "citation_arxiv_id": [
+        "1602.07576"
+      ]
+    },
+    "comments": null,
+    "journal_reference": "Proceedings of the International Conference on Machine Learning (ICML), 2016",
+    "submission_history": "Submission history From: Taco Cohen [ view email ] [v1] Wed, 24 Feb 2016 16:17:15 UTC (105 KB) [v2] Fri, 11 Mar 2016 18:26:26 UTC (106 KB) [v3] Fri, 3 Jun 2016 10:54:16 UTC (454 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1602.07576",
+        "effective_url": "https://export.arxiv.org/abs/1602.07576",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "770eead9ea7913f3210164436e3d7132148e60499cba4656573639272cda071a"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.823187+00:00"
+  },
+  {
+    "arxiv_id": "1802.03690",
+    "expected_title_fragment": "On the Generalization of Equivariance",
+    "status": "VERIFIED",
+    "title": "On the Generalization of Equivariance and Convolution in Neural Networks to the Action of Compact Groups",
+    "authors": [
+      "Kondor, Risi",
+      "Trivedi, Shubhendu"
+    ],
+    "citation_date": [
+      "2018/02/11"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "On the Generalization of Equivariance and Convolution in Neural Networks to the Action of Compact Groups"
+      ],
+      "citation_author": [
+        "Kondor, Risi",
+        "Trivedi, Shubhendu"
+      ],
+      "citation_date": [
+        "2018/02/11"
+      ],
+      "citation_online_date": [
+        "2018/11/10"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1802.03690"
+      ],
+      "citation_arxiv_id": [
+        "1802.03690"
+      ]
+    },
+    "comments": "Final version that appeared in the proceedings of the 35th International Conference on Machine Learning (ICML 2018), Stockholm, Sweden",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Shubhendu Trivedi [ view email ] [v1] Sun, 11 Feb 2018 04:32:33 UTC (64 KB) [v2] Sun, 10 Jun 2018 06:22:57 UTC (65 KB) [v3] Sat, 10 Nov 2018 23:20:43 UTC (65 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1802.03690",
+        "effective_url": "https://export.arxiv.org/abs/1802.03690",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "69846bf3f3a989105884ba38459a887c0cae2d37121757bb60657e66ff321870"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.874146+00:00"
+  },
+  {
+    "arxiv_id": "2510.01450",
+    "expected_title_fragment": "Local Linear Attention",
+    "status": "VERIFIED",
+    "title": "Local Linear Attention: An Optimal Interpolation of Linear and Softmax Attention For Test-Time Regression",
+    "authors": [
+      "Zuo, Yifei",
+      "Yin, Yutong",
+      "Zeng, Zhichen",
+      "Li, Ang",
+      "Zhu, Banghua",
+      "Wang, Zhaoran"
+    ],
+    "citation_date": [
+      "2025/10/01"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Local Linear Attention: An Optimal Interpolation of Linear and Softmax Attention For Test-Time Regression"
+      ],
+      "citation_author": [
+        "Zuo, Yifei",
+        "Yin, Yutong",
+        "Zeng, Zhichen",
+        "Li, Ang",
+        "Zhu, Banghua",
+        "Wang, Zhaoran"
+      ],
+      "citation_date": [
+        "2025/10/01"
+      ],
+      "citation_online_date": [
+        "2025/10/01"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2510.01450"
+      ],
+      "citation_arxiv_id": [
+        "2510.01450"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Yifei Zuo [ view email ] [v1] Wed, 1 Oct 2025 20:42:21 UTC (2,652 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2510.01450",
+        "effective_url": "https://export.arxiv.org/abs/2510.01450",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "4103b19f47acbcd2370ad52a6b40ac11c5ad40b0d6380ecb7ddcb263fa879b50"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.920042+00:00"
+  },
+  {
+    "arxiv_id": "2605.29157",
+    "expected_title_fragment": "Parallax",
+    "status": "VERIFIED",
+    "title": "Parallax: Parameterized Local Linear Attention for Language Modeling",
+    "authors": [
+      "Zuo, Yifei",
+      "Pai, Dhruv",
+      "Zeng, Zhichen",
+      "Dewulf, Alec",
+      "Hu, Shuming",
+      "Wang, Zhaoran"
+    ],
+    "citation_date": [
+      "2026/05/27"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Parallax: Parameterized Local Linear Attention for Language Modeling"
+      ],
+      "citation_author": [
+        "Zuo, Yifei",
+        "Pai, Dhruv",
+        "Zeng, Zhichen",
+        "Dewulf, Alec",
+        "Hu, Shuming",
+        "Wang, Zhaoran"
+      ],
+      "citation_date": [
+        "2026/05/27"
+      ],
+      "citation_online_date": [
+        "2026/05/27"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2605.29157"
+      ],
+      "citation_arxiv_id": [
+        "2605.29157"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Yifei Zuo [ view email ] [v1] Wed, 27 May 2026 22:50:44 UTC (3,752 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2605.29157",
+        "effective_url": "https://export.arxiv.org/abs/2605.29157",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "8ae64b14e4ec89905096b42e7e5f9168e3595ad675f80d68446771ff82a8d528"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:49.965068+00:00"
+  },
+  {
+    "arxiv_id": "2506.05233",
+    "expected_title_fragment": "MesaNet",
+    "status": "VERIFIED",
+    "title": "MesaNet: Sequence Modeling by Locally Optimal Test-Time Training",
+    "authors": [
+      "von Oswald, Johannes",
+      "Scherrer, Nino",
+      "Kobayashi, Seijin",
+      "Versari, Luca",
+      "Yang, Songlin",
+      "Mittal, Sarthak",
+      "Schlegel, Maximilian",
+      "Maile, Kaitlin",
+      "Schimpf, Yanick",
+      "Sieberling, Oliver",
+      "Meulemans, Alexander",
+      "Saurous, Rif A.",
+      "Lajoie, Guillaume",
+      "Frenkel, Charlotte",
+      "Pascanu, Razvan",
+      "Arcas, Blaise Agüera y",
+      "Sacramento, João"
+    ],
+    "citation_date": [
+      "2025/06/05"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "MesaNet: Sequence Modeling by Locally Optimal Test-Time Training"
+      ],
+      "citation_author": [
+        "von Oswald, Johannes",
+        "Scherrer, Nino",
+        "Kobayashi, Seijin",
+        "Versari, Luca",
+        "Yang, Songlin",
+        "Mittal, Sarthak",
+        "Schlegel, Maximilian",
+        "Maile, Kaitlin",
+        "Schimpf, Yanick",
+        "Sieberling, Oliver",
+        "Meulemans, Alexander",
+        "Saurous, Rif A.",
+        "Lajoie, Guillaume",
+        "Frenkel, Charlotte",
+        "Pascanu, Razvan",
+        "Arcas, Blaise Agüera y",
+        "Sacramento, João"
+      ],
+      "citation_date": [
+        "2025/06/05"
+      ],
+      "citation_online_date": [
+        "2026/06/03"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2506.05233"
+      ],
+      "citation_arxiv_id": [
+        "2506.05233"
+      ]
+    },
+    "comments": "Published at ICLR 2026",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Nino Scherrer [ view email ] [v1] Thu, 5 Jun 2025 16:50:23 UTC (13,949 KB) [v2] Wed, 3 Jun 2026 16:16:54 UTC (3,916 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2506.05233",
+        "effective_url": "https://export.arxiv.org/abs/2506.05233",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "13795625cb3e0efed4853b27893dc6bb926a9ab40d4613f6f1eb0a6806df690b"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.006840+00:00"
+  },
+  {
+    "arxiv_id": "2506.06041",
+    "expected_title_fragment": "Tensor-to-Tensor Models",
+    "status": "VERIFIED",
+    "title": "Tensor-to-Tensor Models with Fast Iterated Sum Features",
+    "authors": [
+      "Diehl, Joscha",
+      "Ibraheem, Rasheed",
+      "Schmitz, Leonard",
+      "Wu, Yue"
+    ],
+    "citation_date": [
+      "2025/06/06"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Tensor-to-Tensor Models with Fast Iterated Sum Features"
+      ],
+      "citation_author": [
+        "Diehl, Joscha",
+        "Ibraheem, Rasheed",
+        "Schmitz, Leonard",
+        "Wu, Yue"
+      ],
+      "citation_date": [
+        "2025/06/06"
+      ],
+      "citation_online_date": [
+        "2025/06/06"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2506.06041"
+      ],
+      "citation_arxiv_id": [
+        "2506.06041"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Leonard Schmitz [ view email ] [v1] Fri, 6 Jun 2025 12:44:36 UTC (5,363 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2506.06041",
+        "effective_url": "https://export.arxiv.org/abs/2506.06041",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "284142012716e6023db4e363bb839b082193b4318488c9a8d87a6f91930b9360"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.051910+00:00"
+  },
+  {
+    "arxiv_id": "2207.00729",
+    "expected_title_fragment": "Parallelism Tradeoff",
+    "status": "VERIFIED",
+    "title": "The Parallelism Tradeoff: Limitations of Log-Precision Transformers",
+    "authors": [
+      "Merrill, William",
+      "Sabharwal, Ashish"
+    ],
+    "citation_date": [
+      "2022/07/02"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "The Parallelism Tradeoff: Limitations of Log-Precision Transformers"
+      ],
+      "citation_author": [
+        "Merrill, William",
+        "Sabharwal, Ashish"
+      ],
+      "citation_date": [
+        "2022/07/02"
+      ],
+      "citation_online_date": [
+        "2023/04/26"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2207.00729"
+      ],
+      "citation_arxiv_id": [
+        "2207.00729"
+      ]
+    },
+    "comments": "Accepted at TACL. Formerly entitled \"Log-Precision Transformers are Constant-Depth Threshold Circuits\". Updated with minor corrections in Section 2 (Implications) on March 6, 2023. Update with minor edits to the proof of Lemma 3 on April 26, 2023",
+    "journal_reference": null,
+    "submission_history": "Submission history From: William Merrill [ view email ] [v1] Sat, 2 Jul 2022 03:49:34 UTC (51 KB) [v2] Tue, 21 Feb 2023 05:45:52 UTC (369 KB) [v3] Tue, 7 Mar 2023 23:07:38 UTC (369 KB) [v4] Wed, 26 Apr 2023 22:34:12 UTC (369 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2207.00729",
+        "effective_url": "https://export.arxiv.org/abs/2207.00729",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "9cb3de179c1a697f8fdf8d5f272504f002683a14ada8820214c51440acb7b59f"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.099346+00:00"
+  },
+  {
+    "arxiv_id": "2210.02671",
+    "expected_title_fragment": "A Logic for Expressing",
+    "status": "VERIFIED",
+    "title": "A Logic for Expressing Log-Precision Transformers",
+    "authors": [
+      "Merrill, William",
+      "Sabharwal, Ashish"
+    ],
+    "citation_date": [
+      "2022/10/06"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "A Logic for Expressing Log-Precision Transformers"
+      ],
+      "citation_author": [
+        "Merrill, William",
+        "Sabharwal, Ashish"
+      ],
+      "citation_date": [
+        "2022/10/06"
+      ],
+      "citation_online_date": [
+        "2025/09/10"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2210.02671"
+      ],
+      "citation_arxiv_id": [
+        "2210.02671"
+      ]
+    },
+    "comments": "May 24, 2023: Restructured version of old preprint. Oct 12, 2023: To appear at NeurIPS. Sept 10, 2025: minor technical corrections",
+    "journal_reference": null,
+    "submission_history": "Submission history From: William Merrill [ view email ] [v1] Thu, 6 Oct 2022 04:18:09 UTC (74 KB) [v2] Tue, 29 Nov 2022 04:54:05 UTC (74 KB) [v3] Sat, 28 Jan 2023 04:12:54 UTC (104 KB) [v4] Wed, 24 May 2023 18:20:44 UTC (120 KB) [v5] Thu, 12 Oct 2023 19:53:04 UTC (117 KB) [v6] Mon, 6 Nov 2023 21:24:57 UTC (117 KB) [v7] Wed, 10 Sep 2025 19:48:04 UTC (65 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2210.02671",
+        "effective_url": "https://export.arxiv.org/abs/2210.02671",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "c79431a0b704ae0271be9e193a3de166c7d4d406671c19658ef2f4236b7dc293"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.227549+00:00"
+  },
+  {
+    "arxiv_id": "1906.05823",
+    "expected_title_fragment": "Time-warping invariants",
+    "status": "VERIFIED",
+    "title": "Time-warping invariants of multidimensional time series",
+    "authors": [
+      "Diehl, Joscha",
+      "Ebrahimi-Fard, Kurusch",
+      "Tapia, Nikolas"
+    ],
+    "citation_date": [
+      "2019/06/13"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Time-warping invariants of multidimensional time series"
+      ],
+      "citation_author": [
+        "Diehl, Joscha",
+        "Ebrahimi-Fard, Kurusch",
+        "Tapia, Nikolas"
+      ],
+      "citation_doi": [
+        "10.1007/s10440-020-00333-x"
+      ],
+      "citation_date": [
+        "2019/06/13"
+      ],
+      "citation_online_date": [
+        "2020/03/11"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1906.05823"
+      ],
+      "citation_arxiv_id": [
+        "1906.05823"
+      ]
+    },
+    "comments": "18 pages, 1 figure",
+    "journal_reference": "Acta Applicandae Mathematicae 170(1) (2020), 265--290",
+    "submission_history": "Submission history From: Nikolas Tapia [ view email ] [v1] Thu, 13 Jun 2019 17:09:19 UTC (75 KB) [v2] Wed, 11 Mar 2020 10:55:59 UTC (48 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1906.05823",
+        "effective_url": "https://export.arxiv.org/abs/1906.05823",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "86ed62faaf68a8a2c5e944594b8e204108bcfa4e6f9ffad4dd7d0d5d178bdcf4"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.275305+00:00"
+  },
+  {
+    "arxiv_id": "2006.07027",
+    "expected_title_fragment": "Seq2Tens",
+    "status": "VERIFIED",
+    "title": "Seq2Tens: An Efficient Representation of Sequences by Low-Rank Tensor Projections",
+    "authors": [
+      "Toth, Csaba",
+      "Bonnier, Patric",
+      "Oberhauser, Harald"
+    ],
+    "citation_date": [
+      "2020/06/12"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Seq2Tens: An Efficient Representation of Sequences by Low-Rank Tensor Projections"
+      ],
+      "citation_author": [
+        "Toth, Csaba",
+        "Bonnier, Patric",
+        "Oberhauser, Harald"
+      ],
+      "citation_date": [
+        "2020/06/12"
+      ],
+      "citation_online_date": [
+        "2021/07/30"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2006.07027"
+      ],
+      "citation_arxiv_id": [
+        "2006.07027"
+      ]
+    },
+    "comments": "37 pages, 6 figures, 8 tables",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Patric Bonnier [ view email ] [v1] Fri, 12 Jun 2020 09:24:35 UTC (1,253 KB) [v2] Fri, 30 Jul 2021 10:46:29 UTC (5,200 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2006.07027",
+        "effective_url": "https://export.arxiv.org/abs/2006.07027",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "a7a732dcbe50bdd0a5c3b7b7c2308f1ecb41efa822bb80ccd14b072ac21e031b"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.321680+00:00"
+  },
+  {
+    "arxiv_id": "2405.20799",
+    "expected_title_fragment": "Rough Transformers",
+    "status": "VERIFIED",
+    "title": "Rough Transformers: Lightweight and Continuous Time Series Modelling through Signature Patching",
+    "authors": [
+      "Moreno-Pino, Fernando",
+      "Arroyo, Álvaro",
+      "Waldon, Harrison",
+      "Dong, Xiaowen",
+      "Cartea, Álvaro"
+    ],
+    "citation_date": [
+      "2024/05/31"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Rough Transformers: Lightweight and Continuous Time Series Modelling through Signature Patching"
+      ],
+      "citation_author": [
+        "Moreno-Pino, Fernando",
+        "Arroyo, Álvaro",
+        "Waldon, Harrison",
+        "Dong, Xiaowen",
+        "Cartea, Álvaro"
+      ],
+      "citation_date": [
+        "2024/05/31"
+      ],
+      "citation_online_date": [
+        "2025/01/11"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2405.20799"
+      ],
+      "citation_arxiv_id": [
+        "2405.20799"
+      ]
+    },
+    "comments": "NeurIPS 2024 Conference (Camera Ready Version)",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Fernando Moreno-Pino [ view email ] [v1] Fri, 31 May 2024 14:00:44 UTC (1,304 KB) [v2] Mon, 28 Oct 2024 16:22:24 UTC (2,072 KB) [v3] Sat, 11 Jan 2025 12:46:55 UTC (2,070 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2405.20799",
+        "effective_url": "https://export.arxiv.org/abs/2405.20799",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "0c869aa78e739dc31ec92ecc479393e4509bbca008b31fb4f31ec8d03474aa01"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.365898+00:00"
+  },
+  {
+    "arxiv_id": "2102.11174",
+    "expected_title_fragment": "Linear Transformers Are Secretly Fast Weight Programmers",
+    "status": "VERIFIED",
+    "title": "Linear Transformers Are Secretly Fast Weight Programmers",
+    "authors": [
+      "Schlag, Imanol",
+      "Irie, Kazuki",
+      "Schmidhuber, Jürgen"
+    ],
+    "citation_date": [
+      "2021/02/22"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Linear Transformers Are Secretly Fast Weight Programmers"
+      ],
+      "citation_author": [
+        "Schlag, Imanol",
+        "Irie, Kazuki",
+        "Schmidhuber, Jürgen"
+      ],
+      "citation_date": [
+        "2021/02/22"
+      ],
+      "citation_online_date": [
+        "2021/06/09"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2102.11174"
+      ],
+      "citation_arxiv_id": [
+        "2102.11174"
+      ]
+    },
+    "comments": null,
+    "journal_reference": null,
+    "submission_history": "Submission history From: Imanol Schlag [ view email ] [v1] Mon, 22 Feb 2021 16:51:38 UTC (1,548 KB) [v2] Tue, 23 Feb 2021 10:25:13 UTC (1,548 KB) [v3] Wed, 9 Jun 2021 14:47:46 UTC (1,561 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2102.11174",
+        "effective_url": "https://export.arxiv.org/abs/2102.11174",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "1f4f64fcc4497ca2f5385eeecf9fb03e110f32122bbf6e717f9e17640b6f2f02"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.454749+00:00"
+  },
+  {
+    "arxiv_id": "1901.08428",
+    "expected_title_fragment": "Cheap Orthogonal Constraints",
+    "status": "VERIFIED",
+    "title": "Cheap Orthogonal Constraints in Neural Networks: A Simple Parametrization of the Orthogonal and Unitary Group",
+    "authors": [
+      "Lezcano-Casado, Mario",
+      "Martínez-Rubio, David"
+    ],
+    "citation_date": [
+      "2019/01/24"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Cheap Orthogonal Constraints in Neural Networks: A Simple Parametrization of the Orthogonal and Unitary Group"
+      ],
+      "citation_author": [
+        "Lezcano-Casado, Mario",
+        "Martínez-Rubio, David"
+      ],
+      "citation_date": [
+        "2019/01/24"
+      ],
+      "citation_online_date": [
+        "2019/05/30"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/1901.08428"
+      ],
+      "citation_arxiv_id": [
+        "1901.08428"
+      ]
+    },
+    "comments": null,
+    "journal_reference": "PMLR 97:3794-3803",
+    "submission_history": "Submission history From: Mario Lezcano-Casado [ view email ] [v1] Thu, 24 Jan 2019 14:31:48 UTC (429 KB) [v2] Fri, 25 Jan 2019 16:21:22 UTC (429 KB) [v3] Thu, 30 May 2019 16:01:01 UTC (429 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/1901.08428",
+        "effective_url": "https://export.arxiv.org/abs/1901.08428",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "31b29cb40b20796e9cd670d4a7c0d76c0c62853a47419d2a172c23738ac525dc"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.534233+00:00"
+  },
+  {
+    "arxiv_id": "2402.19047",
+    "expected_title_fragment": "Theoretical Foundations",
+    "status": "VERIFIED",
+    "title": "Theoretical Foundations of Deep Selective State-Space Models",
+    "authors": [
+      "Cirone, Nicola Muca",
+      "Orvieto, Antonio",
+      "Walker, Benjamin",
+      "Salvi, Cristopher",
+      "Lyons, Terry"
+    ],
+    "citation_date": [
+      "2024/02/29"
+    ],
+    "citation_metadata": {
+      "citation_title": [
+        "Theoretical Foundations of Deep Selective State-Space Models"
+      ],
+      "citation_author": [
+        "Cirone, Nicola Muca",
+        "Orvieto, Antonio",
+        "Walker, Benjamin",
+        "Salvi, Cristopher",
+        "Lyons, Terry"
+      ],
+      "citation_date": [
+        "2024/02/29"
+      ],
+      "citation_online_date": [
+        "2025/01/06"
+      ],
+      "citation_pdf_url": [
+        "https://arxiv.org/pdf/2402.19047"
+      ],
+      "citation_arxiv_id": [
+        "2402.19047"
+      ]
+    },
+    "comments": "Fina NeurIPS Camera Ready Version w/ minor edits",
+    "journal_reference": null,
+    "submission_history": "Submission history From: Nicola Muça Cirone [ view email ] [v1] Thu, 29 Feb 2024 11:20:16 UTC (397 KB) [v2] Mon, 4 Mar 2024 11:09:49 UTC (398 KB) [v3] Fri, 1 Nov 2024 13:28:59 UTC (1,563 KB) [v4] Mon, 6 Jan 2025 14:43:25 UTC (1,605 KB)",
+    "attempts": [
+      {
+        "requested_url": "https://export.arxiv.org/abs/2402.19047",
+        "effective_url": "https://export.arxiv.org/abs/2402.19047",
+        "http_status": "200",
+        "curl_returncode": 0,
+        "stderr": "",
+        "sha256": "2919f06507527d53a2bf69d07969fc0592623f3ffdf56410cf32d56fa2681fe2"
+      }
+    ],
+    "verified_at_utc": "2026-10-20T06:57:50.588100+00:00"
+  }
+]
