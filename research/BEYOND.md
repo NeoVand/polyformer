@@ -409,6 +409,15 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   conditional only on terminal completion of this block and the fixed budget checks, not its losses.
   Current settled-plus-reserved estimate is $64.542413 total, including $38.186189 language.
 
+- 2026-10-20 16:12 UTC — Before any final language result, specified an additional descriptive
+  visualization of existing periodic evaluations: raw validation loss against tokens and nominal
+  cumulative training FLOPs for all six arms and three final seeds, with across-seed means/SD at
+  each arm's own scheduled marks. This reads only completed, audited final runs; it adds no jobs,
+  checkpoints, tuning decisions or gate changes. Periodic validation uses seed 1234, whereas
+  final headline evaluation uses seed 5678. The plots will not interpolate an equal-compute
+  headline or replace the frozen final-result comparison. Interpretation notes now explicitly
+  distinguish whole-branch activity/removal from isolated noncommuting-prefix utility.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
