@@ -55,6 +55,10 @@ explicit matrix readout. This is a proposed PaTH direction, not an evaluated ext
 group-valued tokens or ordered matrix representations. Our contribution, if supported, is the
 measured behavior of these particular combinations.
 
+Relative to convolved Parallax, B adds 1,113,552 parameters: 2.393% of total parameters or 5.427%
+of non-embedding parameters. Its nominal arithmetic per token increases by 2.317%. It is a small
+addition to that baseline, but neither free nor guaranteed to learn a useful computation.
+
 The recurrent controls are canonical one-update Gated DeltaNet, with update strength in `(0,1)`,
 and a four-update gated DeltaProduct extension with strength in `(0,2)`. Both include short
 convolution, learned decay, normalized queries/keys and an output gate. They implement the
@@ -280,6 +284,17 @@ the diagnostic gates are required. Convolved Parallax tests whether composition 
 the estimation component. Component-removal evaluations use identical final samples; they measure
 sensitivity in a trained model, not the causal effect of retraining without that component.
 Three successful seeds alone are not conventional statistical significance.
+
+For B, composition ablation removes all three matrix sectors together, including their readout
+bias. It does not isolate full-prefix memory or noncommutativity. The reported
+`composition_over_content` and `matrix_over_content` are identical ratios of whole-branch RMS
+to projected content RMS; `precision_over_content` measures the projected correction's RMS
+relative to the corrected content output. They are activation measurements, not importance scores
+or estimation accuracy. The separate convP `cor` statistic uses a different normalization and is
+not directly comparable. Transition and adjacent-commutator statistics are unnormalized Frobenius
+norms; random initialization already gives nonidentity, noncommuting transitions. Activity uses
+only four validation sequences, with no uncertainty estimate. Learned sector coefficients are
+signed and unconstrained; their magnitudes are affected by readout rescaling and cancellation.
 
 Equal nominal FLOPs are not equal runtime. The analytic convention counts added projections,
 scans, convolutions and transport, but excludes optimizer and rematerialization work. Attention
