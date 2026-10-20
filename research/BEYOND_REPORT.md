@@ -1,7 +1,7 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-16:04 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+16:25 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
 seeds. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. C fails the written rule:
@@ -12,7 +12,8 @@ All mandatory confirmations are complete and audited. **B is the sole candidate 
 All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete. B's language plan is frozen, and its
 18-trial language rate sweep is complete. All arms select .008, and B trails both softmax controls
-and both recurrent controls at that short tuning budget. No final-seed language result is yet available.
+and both recurrent controls at that short tuning budget. The first seed's raw/convolved softmax
+final losses are 3.661557/3.612649 nats/token; all candidate final results remain pending.
 These results establish successful synthetic-task learning in this regime, not a language advantage.
 
 The question is whether one affordable layer can combine content selection, improved local
@@ -99,8 +100,9 @@ updates and complete schedules. Final validation uses 1,024 sequences and final 
 
 The six primary cells are two-layer MQAR and induction, plus A5/S5 word tracking at both depths.
 Word inputs contain a BOS token and 16 uniform group elements; the target at each position is
-the running product, classified among 60 or 120 group elements. The gate averages class recall
-over positions 9–16, avoiding the easier short prefixes.
+the running product, classified among 60 or 120 group elements. The BOS position is unscored.
+The gate pools positions 9–16, then averages recall across the 60 or 120 group classes, avoiding
+the easier short prefixes.
 The registered tuning rule starts at rate .004 and allows one alternate only below 97% final
 validation: .002 for words, .008 for retrieval. All 46 first-rate runs and 13 triggered alternates
 completed. Every candidate and selected reference reached 100% validation in every cell.
@@ -274,8 +276,8 @@ and exact, unrounded counts are in the frozen plan. All controls meet or exceed 
 
 | Arm | Final loss, seed 1 | Seed 2 | Seed 3 |
 |---|---|---|---|
-| Raw softmax | Pending | Pending | Pending |
-| Convolved softmax | Pending | Pending | Pending |
+| Raw softmax | 3.661557 | Pending | Pending |
+| Convolved softmax | 3.612649 | Pending | Pending |
 | Convolved Parallax | Pending | Pending | Pending |
 | Gated DeltaNet, one update | Pending | Pending | Pending |
 | Gated DeltaProduct, four updates | Pending | Pending | Pending |

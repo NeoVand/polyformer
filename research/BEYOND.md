@@ -426,6 +426,14 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   provenance before creating real-data plots. No experimental curves were inspected during
   development. B and both softmax controls have passed halfway; all six seed-1 jobs remain healthy.
 
+- 2026-10-20 16:25 UTC — First final seed-1 results audited: rawS loss
+  3.6615567803382874 nats/token at 13,540 updates; convS 3.6126492470502853 at 13,531.
+  Both have exactly 16 scheduled evaluations, correct configuration/source/accounting, and
+  1,024 final raw sequence losses from sample seed 5678 agreeing with the reported scalar.
+  Worker wall times are 1,167.623s / 1,174.493s; settled estimates $1.610521 / $1.618905.
+  Both saved checkpoints have been independently downloaded and byte-fingerprinted without
+  deserialization. B and the other three arms remain active; no final candidate decision yet.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
