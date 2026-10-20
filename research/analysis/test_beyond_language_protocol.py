@@ -200,6 +200,123 @@ class ProtocolTests(unittest.TestCase):
         with self.assertRaises(p.ProtocolError):
             p.final_jobs(self.plan, chosen, 1)
 
+    def invalidate_arm(self, arm):
+        for entry in self.plan["tuning_jobs"]:
+            if entry["arm"] == arm:
+                row = self.results[entry["job"]["id"]]
+                row["failure"] = "synthetic terminal numerical failure"
+                row["steps"] = 100
+                row["curve"][-1]["step"] = 100
+
+    def test_candidate_only_invalid_trials_allow_every_other_viable_candidate(self):
+        original = copy.deepcopy(self.plan)
+        self.invalidate_arm("B")
+        selected = self.select()
+        self.assertEqual(selected["status"], "selected")
+        self.assertEqual(selected["tuning_invalid_candidates"], ["B"])
+        self.assertEqual(selected["viable_candidates"], ["C"])
+        self.assertEqual(selected["invalid_controls"], [])
+        self.assertEqual(selected["stop_reasons"], [])
+        order = ["rawS", "convS", "convP", "C", "GDN1", "DP4"]
+        self.assertEqual(p.verify_rate_selection(self.plan, selected), order)
+        for seed in p.FINAL_SEEDS:
+            jobs = p.final_jobs(self.plan, selected, seed)
+            self.assertEqual(jobs, [p.make_job(self.plan, a, "final", .004, seed) for a in order])
+        self.assertEqual(self.plan, original)
+        self.assertEqual(len(selected["rows"]), 21)
+        self.assertEqual(len([r for r in selected["rows"] if r["arm"] == "B" and r["status"] == "invalid"]), 3)
+
+    def test_each_mandatory_control_invalid_stops_finals_even_with_viable_candidates(self):
+        for arm in p.CONTROL_ARMS:
+            with self.subTest(arm=arm):
+                self.results = results_for(self.plan, self.manifest)
+                self.invalidate_arm(arm)
+                selected = self.select()
+                self.assertEqual(selected["status"], "invalid")
+                self.assertEqual(selected["invalid_controls"], [arm])
+                self.assertEqual(selected["viable_candidates"], ["B", "C"])
+                self.assertEqual(selected["stop_reasons"], ["mandatory_control_tuning_invalid"])
+                self.assertEqual(p.verify_rate_selection(self.plan, selected, allow_invalid=True), [])
+                with self.assertRaises(p.ProtocolError):
+                    p.final_jobs(self.plan, selected, 1)
+
+    def test_no_viable_candidate_stops_finals_and_pending_grid_cannot_close(self):
+        self.invalidate_arm("B")
+        self.invalidate_arm("C")
+        selected = self.select()
+        self.assertEqual(selected["status"], "invalid")
+        self.assertEqual(selected["stop_reasons"], ["no_viable_candidate"])
+        self.assertEqual(selected["tuning_invalid_candidates"], ["B", "C"])
+        self.assertEqual(p.verify_rate_selection(self.plan, selected, allow_invalid=True), [])
+        with self.assertRaises(p.ProtocolError):
+            p.final_jobs(self.plan, selected, 1)
+        self.results.pop(self.plan["tuning_jobs"][-1]["job"]["id"])
+        pending = self.select()
+        self.assertEqual(pending["status"], "pending")
+        self.assertEqual(pending["selected"], {})
+        self.assertEqual(pending["final_arm_order"], [])
+        with self.assertRaises(p.ProtocolError):
+            p.verify_rate_selection(self.plan, pending, allow_invalid=True)
+
+    def test_selection_eligibility_cannot_drop_valid_arm_or_forge_terminal_grid(self):
+        selected = self.select()
+        for mode in ("order", "viable", "invalid", "selected", "policy", "missing_row",
+                     "duplicate_row", "nonfinite_valid", "invalid_without_reason"):
+            bad = copy.deepcopy(selected)
+            if mode == "order":
+                bad["final_arm_order"].remove("B")
+            elif mode == "viable":
+                bad["viable_candidates"].remove("B")
+            elif mode == "invalid":
+                bad["tuning_invalid_candidates"] = ["B"]
+            elif mode == "selected":
+                del bad["selected"]["B"]
+            elif mode == "policy":
+                bad["tuning_failure_policy_id"] = "a" * 64
+            elif mode == "missing_row":
+                bad["rows"].pop()
+            elif mode == "duplicate_row":
+                bad["rows"][-1] = bad["rows"][0]
+            elif mode == "nonfinite_valid":
+                bad["rows"][0]["validation_loss_raw"] = None
+            else:
+                bad["rows"][0].update(status="invalid", validation_loss_raw=None)
+            with self.subTest(mode=mode), self.assertRaises(p.ProtocolError):
+                p.verify_rate_selection(self.plan, p.seal(bad), allow_invalid=True)
+
+    def test_partial_final_blocks_use_active_arm_identity_and_original_steps(self):
+        self.invalidate_arm("B")
+        selection = self.select()
+        prior = {r["job_id"]: r for arm in selection["final_arm_order"]
+                 for r in [result_for(self.plan, arm, "final", .004, 1)]}
+        p.require_prior_seed_blocks(self.plan, selection, 2, prior)
+        c_job = p.make_job(self.plan, "C", "final", .004, 1)
+        del prior[c_job["id"]]
+        with self.assertRaises(p.ProtocolError):
+            p.require_prior_seed_blocks(self.plan, selection, 2, prior)
+
+    def test_expensive_invalid_candidate_does_not_reduce_original_control_allowances(self):
+        self.plan = p.build_plan(ROOT, ["A", "B", "C"], BUDGET,
+                                 dataset=DATASET, dataset_path=DATASET_PATH)
+        base = fixture_plan()
+        self.plan = p.seal({**self.plan, **{key: base[key] for key in (
+            "status", "evidence_commit", "stage1_confirmation_sha256", "stage1_gate_reconciliation",
+            "stage1_active_gate_policy", "stage1_strict_code_candidates",
+            "stage1_strict_code_passed_candidates", "stage1_strict_code_seed0_survivors")}})
+        original_allowance = copy.deepcopy(self.plan["control_allowance"])
+        self.manifest = manifest_for(self.plan)
+        self.results = results_for(self.plan, self.manifest)
+        self.invalidate_arm("A")
+        selection = self.select()
+        self.assertEqual(selection["viable_candidates"], ["B", "C"])
+        self.assertEqual(self.plan["target_arm"], "A")
+        self.assertEqual(self.plan["control_allowance"], original_allowance)
+        jobs = p.final_jobs(self.plan, selection, 1)
+        for arm, job in zip(selection["final_arm_order"], jobs):
+            self.assertEqual(job, p.make_job(self.plan, arm, "final", .004, 1))
+        self.assertEqual(self.plan["arms"]["rawS"]["main_steps"], 14902)
+        self.assertEqual(self.plan["arms"]["DP4"]["main_steps"], 11217)
+
     def test_source_and_config_corruption_fail_closed(self):
         key = next(iter(self.results))
         for field in ("source_hashes", "config", "argv", "job_id", "installed_versions",
@@ -215,13 +332,54 @@ class ProtocolTests(unittest.TestCase):
                 bad[key][field]["jax"] = "wrong"
             elif field == "train_flops_per_token":
                 bad[key][field] = 1
-                selected = p.select_rates(self.plan, [self.manifest], bad)
-                self.assertTrue(any(r["status"] == "invalid" for r in selected["rows"]))
-                continue
             else:
                 bad[key][field] = "wrong"
             with self.subTest(field=field), self.assertRaises(p.ProtocolError):
                 p.select_rates(self.plan, [self.manifest], bad)
+
+    def test_accounting_corruption_cannot_become_candidate_local_failure(self):
+        for field in ("flops_per_token", "train_flops_per_token", "train_flops", "tokens"):
+            for mutation in ("missing", "nonfinite", "contradictory"):
+                bad = copy.deepcopy(self.results)
+                for entry in self.plan["tuning_jobs"]:
+                    if entry["arm"] != "B":
+                        continue
+                    row = bad[entry["job"]["id"]]
+                    if mutation == "missing":
+                        del row[field]
+                    elif mutation == "nonfinite":
+                        row[field] = None
+                    else:
+                        row[field] += 1024  # larger than one float64 ULP of total training work
+                with self.subTest(field=field, mutation=mutation), self.assertRaises(p.ProtocolError):
+                    p.select_rates(self.plan, [self.manifest], bad)
+        entry = next(e for e in self.plan["tuning_jobs"] if e["arm"] == "B")
+        row = self.results[entry["job"]["id"]]
+        row["failure"] = "synthetic worker error"
+        row["flops_per_token"] += 1
+        with self.assertRaises(p.ProtocolError):
+            self.select()
+        for impossible in (-1, self.plan["arms"]["B"]["training_fpt"] * p.SWEEP_STEPS * p.BATCH_TOKENS * 2):
+            bad = results_for(self.plan, self.manifest)
+            row = bad[entry["job"]["id"]]
+            row["error"] = "synthetic worker error with partial fields"
+            row.pop("tokens")
+            row["train_flops"] = impossible
+            with self.subTest(impossible=impossible), self.assertRaises(p.ProtocolError):
+                p.select_rates(self.plan, [self.manifest], bad)
+
+    def test_explicit_worker_errors_may_lack_config_and_counters(self):
+        for entry in self.plan["tuning_jobs"]:
+            if entry["arm"] == "B":
+                row = self.results[entry["job"]["id"]]
+                row["error"] = "synthetic bounded timeout"
+                for field in ("config", "installed_versions", "steps", "tokens", "flops_per_token",
+                              "train_flops_per_token", "train_flops", "val_loss_raw", "curve"):
+                    row.pop(field, None)
+        selected = self.select()
+        self.assertEqual(selected["status"], "selected")
+        self.assertEqual(selected["tuning_invalid_candidates"], ["B"])
+        self.assertEqual(selected["viable_candidates"], ["C"])
 
     def test_manifest_must_cover_exact_grid(self):
         for mutate in ("missing", "duplicate", "source", "timeout"):
@@ -443,7 +601,8 @@ class ProtocolTests(unittest.TestCase):
             p.verify_confirmation(p.seal(c), ["B", "C"], self.plan["model_source_hashes"])
 
     def test_frozen_plan_preserves_policy_and_analysis_source_identity(self):
-        for field in ("stage1_active_gate_policy", "planner_sha256", "gate_policy_adapter_sha256"):
+        for field in ("stage1_active_gate_policy", "planner_sha256", "gate_policy_adapter_sha256",
+                      "tuning_failure_policy_id"):
             bad = p.seal({**self.plan, field: "f" * 64})
             with self.subTest(field=field), self.assertRaises(p.ProtocolError):
                 p.verify_plan(bad)

@@ -1,10 +1,10 @@
 {
   "status": "pass",
-  "tests_run": 26,
+  "tests_run": 32,
   "failures": 0,
   "errors": 0,
   "command": "python research/analysis/test_beyond_language_report.py -q",
-  "test_runtime_seconds": 7.09,
+  "test_runtime_seconds": 8.617,
   "scope": "Synthetic in-memory fixtures and temporary exports only; no real language experiment result generated.",
   "checks": [
     "Exact unrounded three-seed gates against both softmax and both RNN controls",
@@ -17,12 +17,19 @@
     "Ablation pairing and missing diagnostic reporting without adding headline gates",
     "Frozen control allowance copied and per-arm allocation audited",
     "Ledger identity, reproducible JSON/TSV, immutable outputs and portable CLI",
-    "Standalone PNG/PDF plots generated; synthetic previews visually inspected"
+    "Standalone PNG/PDF plots generated; synthetic previews visually inspected",
+    "Candidate-only all-invalid tuning retains explicit unconfirmed rows and three invalid-trial records while valid candidates proceed",
+    "Any all-invalid mandatory control or zero viable candidates stops all final jobs without fabricated loss-based rejection",
+    "Shared full-grid selection verifier prevents dropping valid candidates and rejects excluded final jobs",
+    "Original candidate set, expensive failed-candidate target, all per-arm allocations and control allowances remain unchanged",
+    "Full dataset fingerprint evidence, path and seals are retained beside final sample provenance"
   ],
   "source_sha256": {
-    "analysis/beyond_language_report.py": "3778d516ef888de789c7be836808860c3676c20f4102c80c4ce55657fbb90add",
-    "analysis/test_beyond_language_report.py": "4b640c4f020a1cca99b47f96596741879cbf8ab2c5798978dbf0eeb5bd86071c",
-    "analysis/beyond_language_protocol.py": "95dcc71a2281f6414139d63fa02d513aef454b52f11fef91607d1704f636309c"
+    "analysis/beyond_language_report.py": "c97fe2f9d8322af51b4cace4b4a4d3b8419afe6281828b62cafd46bb1efed830",
+    "analysis/test_beyond_language_report.py": "2c8844e00295be75796be0482265621e093cd00d79f42101ec5da5e0dc658883",
+    "analysis/beyond_language_protocol.py": "bd1589a3499464a305efcebfd068f85fec0d11cf9dd8b9f7160135e946f87f0b"
   },
-  "control_allowance_policy_id": "3a340829e3fa07d6808280c240992af63283088ac92a3d68d7935cb7822d0991"
+  "control_allowance_policy_id": "3a340829e3fa07d6808280c240992af63283088ac92a3d68d7935cb7822d0991",
+  "tuning_failure_policy_id": "5a2058cda5ad1d84b8bb9d8a6843514b641e81390dcee1c5a28fca4da4cb27e9",
+  "dataset_evidence_sha256": "234bfccad2d94c2cacfa837dc4435e49fe03024954ba0ac8b7a3304c1615ba32"
 }

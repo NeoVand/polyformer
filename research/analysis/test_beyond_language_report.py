@@ -57,7 +57,7 @@ class ReportTests(unittest.TestCase):
                                "runtime_versions": cls.plan["runtime_versions"], "jobs": jobs,
                                "prediction_commit": "synthetic-unit-test-only"})
             cls.manifests.append(manifest)
-            for arm, job in zip(cls.plan["arm_order"], jobs):
+            for arm, job in zip(cls.selection["final_arm_order"], jobs):
                 row = fixtures.result_for(cls.plan, arm, "final", .004, seed, manifest)
                 row.update(
                     prediction_commit=manifest["prediction_commit"], params=1000, nonembed=500,
@@ -85,11 +85,37 @@ class ReportTests(unittest.TestCase):
     def report_row(self, report, arm, seed=1):
         return next(x for x in report["runs"] if x["arm"] == arm and x["seed"] == seed)
 
+    def invalidate_tuning(self, arms):
+        tuning_manifest = fixtures.manifest_for(self.plan)
+        tuning_results = fixtures.results_for(self.plan, tuning_manifest)
+        for entry in self.plan["tuning_jobs"]:
+            if entry["arm"] in arms:
+                tuning_results[entry["job"]["id"]]["error"] = "synthetic bounded timeout"
+        self.selection = p.select_rates(self.plan, [tuning_manifest], tuning_results)
+        allowed = set()
+        if self.selection["status"] == "selected":
+            for seed in (1, 2, 3):
+                allowed.update(job["id"] for job in p.final_jobs(self.plan, self.selection, seed))
+        manifests, results = [], {}
+        for old in self.manifests:
+            jobs = [job for job in old["jobs"] if job["id"] in allowed]
+            if not jobs:
+                continue
+            manifest = p.seal({**old, "jobs": jobs})
+            manifests.append(manifest)
+            for job in jobs:
+                row = copy.deepcopy(self.results[job["id"]])
+                row["manifest_sha256"] = manifest["sha256"]
+                results[job["id"]] = row
+        self.manifests, self.results = manifests, results
+
     def test_exact_three_seed_gate_and_mechanism_comparator(self):
         report = self.report()
         self.assertEqual(report["passed_candidates"], ["B"])
         self.assertEqual(report["candidate_gates"]["C"]["status"], "rejected")
-        self.assertEqual(report["coverage"], {"expected_runs": 21, "complete": 21, "pending": 0, "invalid": 0})
+        self.assertEqual(report["coverage"], {"expected_runs": 21, "original_arm_seed_cells": 21,
+                                             "complete": 21, "pending": 0, "invalid": 0,
+                                             "tuning_invalid": 0, "tuning_blocked": 0})
         self.assertTrue(report["composition_comparison"]["B"]["lower_than_convP_all_three_seeds"])
         self.assertEqual(report["gate_numeric_tolerance"], 0)
 
@@ -311,6 +337,81 @@ class ReportTests(unittest.TestCase):
             self.assertEqual(row["tokens"], allocation["main_tokens"])
             self.assertEqual(row["training_flops"], allocation["main_training_flops"])
         self.assertIn("not executed GPU FLOP equality", report["accounting"]["note"])
+
+    def test_invalid_candidate_is_retained_and_other_candidate_proceeds(self):
+        original_plan = copy.deepcopy(self.plan)
+        self.invalidate_tuning({"C"})
+        report = self.report()
+        self.assertEqual(report["final_arm_order"], ["rawS", "convS", "convP", "B", "GDN1", "DP4"])
+        self.assertEqual(report["passed_candidates"], ["B"])
+        self.assertEqual(report["candidate_gates"]["C"]["status"], "unconfirmed")
+        self.assertEqual(report["candidate_gates"]["C"]["language_tuning_status"], "tuning_invalid")
+        self.assertEqual(report["strict_code_candidate_gates"]["C"]["status"], "unconfirmed")
+        for seed in (1, 2, 3):
+            excluded = self.report_row(report, "C", seed)
+            self.assertEqual(excluded["status"], "tuning_invalid")
+            self.assertIsNone(excluded["loss_raw"])
+            self.assertIsNone(excluded["job_id"])
+            self.assertEqual(len(excluded["tuning_trials"]), 3)
+            self.assertTrue(all(t["status"] == "invalid" for t in excluded["tuning_trials"]))
+            self.assertEqual(self.report_row(report, "GDN1", seed)["status"], "complete")
+        self.assertEqual(report["coverage"]["expected_runs"], 18)
+        self.assertEqual(report["coverage"]["tuning_invalid"], 3)
+        self.assertEqual(self.plan, original_plan)
+        self.assertEqual(self.plan["target_arm"], "C")
+        self.assertEqual(report["accounting"]["arm_plan"], original_plan["arms"])
+        self.assertEqual(report["accounting"]["control_allowance"], original_plan["control_allowance"])
+
+    def test_all_invalid_control_stops_grid_without_loss_rejection(self):
+        self.invalidate_tuning({"DP4"})
+        report = self.report()
+        self.assertEqual(report["final_arm_order"], [])
+        self.assertEqual(report["tuning"]["invalid_controls"], ["DP4"])
+        self.assertTrue(report["tuning"]["stop_reasons"])
+        self.assertEqual(report["coverage"]["expected_runs"], 0)
+        self.assertEqual(report["coverage"]["tuning_invalid"], 3)
+        self.assertEqual(report["coverage"]["tuning_blocked"], 18)
+        self.assertEqual(report["passed_candidates"], [])
+        for candidate in ("B", "C"):
+            self.assertEqual(report["candidate_gates"][candidate]["status"], "unconfirmed")
+            self.assertEqual(report["candidate_gates"][candidate]["language_tuning_status"], "tuning_blocked")
+        self.assertTrue(all(row["loss_raw"] is None for row in report["runs"]))
+
+    def test_no_viable_candidates_stops_grid_with_controls_retained(self):
+        self.invalidate_tuning({"B", "C"})
+        report = self.report()
+        self.assertEqual(report["final_arm_order"], [])
+        self.assertEqual(report["tuning"]["viable_candidates"], [])
+        self.assertEqual(report["tuning"]["invalid_controls"], [])
+        self.assertEqual(report["coverage"]["tuning_invalid"], 6)
+        self.assertEqual(report["coverage"]["tuning_blocked"], 15)
+        self.assertEqual(len(report["accounting"]["arm_plan"]), 7)
+        self.assertTrue(all(g["status"] == "unconfirmed" for g in report["candidate_gates"].values()))
+
+    def test_valid_candidate_cannot_be_silently_dropped(self):
+        self.selection["final_arm_order"].remove("C")
+        self.selection["viable_candidates"].remove("C")
+        self.selection["tuning_invalid_candidates"].append("C")
+        self.selection["invalid_arms"].append("C")
+        self.selection["selected"].pop("C")
+        self.selection = p.seal(self.selection)
+        with self.assertRaises(p.ProtocolError):
+            self.report()
+
+    def test_excluded_candidate_final_manifest_is_rejected(self):
+        original_manifests = copy.deepcopy(self.manifests)
+        self.invalidate_tuning({"C"})
+        self.manifests = original_manifests
+        with self.assertRaises(p.ProtocolError):
+            self.report()
+
+    def test_full_dataset_evidence_is_preserved(self):
+        report = self.report()
+        for field in ("dataset_evidence", "dataset_evidence_sha256",
+                      "dataset_evidence_file_sha256", "dataset_evidence_path"):
+            self.assertEqual(report[field], self.plan[field])
+        self.assertIn("fingerprinted", report["pairing_basis"])
+        self.assertIn("do not rehash", report["pairing_basis"])
 
     def test_report_reproducibility_tsv_and_no_overwrite(self):
         first = self.report()

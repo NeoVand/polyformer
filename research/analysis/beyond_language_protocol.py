@@ -94,6 +94,18 @@ CONTROL_ALLOWANCE_POLICY = {
     "rounding": "Exact rational ratios; smallest whole update count satisfying every declared convention.",
     "limitation": "Conservative allowance for four specified arithmetic conventions; not a measurement or guarantee of equal hardware-executed GPU FLOPs.",
 }
+TUNING_FAILURE_POLICY = {
+    "name": "beyond-language-candidate-local-tuning-failure-v1",
+    "terminal_rule": "All three registered trials of every original arm must be terminal before any rate selection.",
+    "candidate_rule": "A candidate with no valid trial is tuning_invalid and unconfirmed; every candidate with a valid trial must enter finals.",
+    "control_rule": "All five controls rawS, convS, convP, GDN1 and DP4 require a valid selected rate.",
+    "stop_rule": "Stop the entire final grid if any mandatory control has no valid trial or no candidate has a valid trial.",
+    "allocation_rule": "Retain the original plan, survivors, all candidate schedules and control allowances, including allowances for a tuning-invalid candidate.",
+    "interpretation": "Invalid trials are numerical, operational or incomplete measurements; exclusion is not a measured quality loss.",
+    "unchanged": ["three registered rates", "seed 0 tuning", "independent final seeds",
+                  "complete fresh schedules", "no extra attempts", "no rate extensions",
+                  "no intermediate or held-out selection", "budget caps"],
+}
 
 
 class ProtocolError(ValueError):
@@ -119,6 +131,7 @@ def check_seal(value):
 
 
 CONTROL_ALLOWANCE_POLICY_ID = digest(CONTROL_ALLOWANCE_POLICY)
+TUNING_FAILURE_POLICY_ID = digest(TUNING_FAILURE_POLICY)
 
 
 def write_immutable(path, value):
@@ -643,6 +656,8 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
             raise ProtocolError("apply and audit the unrounded reporting amendment before freezing")
         if CONTROL_ALLOWANCE_POLICY_ID not in language_registration((root / "BEYOND.md").read_text()).decode():
             raise ProtocolError("commit the conservative control-allowance registration before freezing")
+        if TUNING_FAILURE_POLICY_ID not in language_registration((root / "BEYOND.md").read_text()).decode():
+            raise ProtocolError("commit the candidate-local tuning-failure registration before freezing")
     allowance = control_allowance(survivors, counts, configs)
     target_arm = allowance["nominal_target_arm"]
     target = Fraction(*allowance["nominal_target_training_flops_fraction"])
@@ -678,6 +693,8 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
         "rates": list(RATES), "tuning_seed": 0, "final_seeds": list(FINAL_SEEDS),
         "selection_metric": "val_loss_raw", "selection_curve_metric": "val_raw",
         "selection_rule": "minimum finite final validation loss; exact ties choose lower rate; all jobs terminal",
+        "tuning_failure_policy": copy.deepcopy(TUNING_FAILURE_POLICY),
+        "tuning_failure_policy_id": TUNING_FAILURE_POLICY_ID,
         "selection_sample": {"seed": 1234, "sequences": 1024, "tokens_per_sequence": 512},
         "final_sample": {"seed": 5678, "sequences": 1024, "tokens_per_sequence": 512},
         "headline_rule": {
@@ -793,6 +810,9 @@ def verify_plan(plan, *, research_root=None):
             raise ProtocolError(f"frozen plan lacks valid {key}")
     if plan["rates"] != list(RATES) or plan["final_seeds"] != list(FINAL_SEEDS):
         raise ProtocolError("rates/seeds differ from the registered protocol")
+    if (plan.get("tuning_failure_policy") != TUNING_FAILURE_POLICY
+            or plan.get("tuning_failure_policy_id") != TUNING_FAILURE_POLICY_ID):
+        raise ProtocolError("candidate-local tuning-failure policy differs from registration")
     if plan.get("model_source_hashes") != model_sources(plan["source_hashes"]):
         raise ProtocolError("frozen model source subset differs from full source map")
     order = ["rawS", "convS", "convP", *sorted(plan["survivors"]), "GDN1", "DP4"]
@@ -854,6 +874,35 @@ def validate_result_identity(plan, job, result, config):
                 raise ProtocolError(f"{job['id']}: duplicated {key} disagrees with config")
 
 
+def validate_tuning_accounting(plan, arm, result, config):
+    """Accounting contradictions are integrity errors, never candidate failures."""
+    info = plan["arms"][arm]
+    expected_tokens = config["steps"] * config["batch"] * config["ctx"]
+    expected = {"flops_per_token": info["forward_fpt"],
+                "train_flops_per_token": info["training_fpt"],
+                "tokens": expected_tokens,
+                "train_flops": info["training_fpt"] * expected_tokens}
+    if not is_failure(result):
+        for key, value in expected.items():
+            if not finite_number(result.get(key)) or result[key] != value:
+                raise ProtocolError(f"{arm}: completed tuning result lacks matching required {key}")
+        return
+    # An explicit worker error may contain only identity and error provenance.
+    # When it does report counters, present finite contradictions still stop all
+    # selection. Partial token totals can legitimately accompany an early failure.
+    for key in ("flops_per_token", "train_flops_per_token"):
+        if finite_number(result.get(key)) and result[key] != expected[key]:
+            raise ProtocolError(f"{arm}: failed tuning result contradicts frozen {key}")
+    tokens, total = result.get("tokens"), result.get("train_flops")
+    if finite_number(total) and not 0 <= total <= expected["train_flops"]:
+        raise ProtocolError(f"{arm}: failed tuning result has impossible total FLOPs")
+    if finite_number(tokens):
+        if tokens < 0 or tokens > expected_tokens or tokens != int(tokens):
+            raise ProtocolError(f"{arm}: failed tuning result has impossible token accounting")
+        if finite_number(total) and total != info["training_fpt"] * tokens:
+            raise ProtocolError(f"{arm}: failed tuning result has contradictory total FLOPs")
+
+
 def verify_manifests(plan, manifests):
     expected = {entry["job"]["id"]: entry["job"] for entry in plan["tuning_jobs"]}
     seen = {}
@@ -872,20 +921,92 @@ def verify_manifests(plan, manifests):
     return seen
 
 
+def selection_outcome(plan, rows):
+    """Recompute winners and final eligibility from the entire original grid."""
+    expected = [(e["arm"], e["lr"], e["job"]["id"]) for e in plan["tuning_jobs"]]
+    if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+        raise ProtocolError("selection must retain its full tuning rows")
+    actual = [(r.get("arm"), r.get("lr"), r.get("job_id")) for r in rows]
+    if actual != expected:
+        raise ProtocolError("selection rows differ from the complete original tuning grid")
+    pending = []
+    for row in rows:
+        status, value = row.get("status"), row.get("validation_loss_raw")
+        if status == "valid":
+            if not finite_number(value) or value < 0:
+                raise ProtocolError("valid tuning row lacks a finite nonnegative validation loss")
+        elif status in ("pending", "invalid"):
+            if value is not None:
+                raise ProtocolError("invalid/pending tuning rows cannot carry selection scores")
+            if status == "pending":
+                pending.append(row["job_id"])
+            elif not isinstance(row.get("reason"), str) or not row["reason"]:
+                raise ProtocolError("invalid tuning row lacks its failure reason")
+        else:
+            raise ProtocolError("unknown tuning row status")
+    selected, invalid = {}, []
+    if not pending:
+        for arm in plan["arm_order"]:
+            valid = [r for r in rows if r["arm"] == arm and r["status"] == "valid"]
+            if not valid:
+                invalid.append(arm)
+                continue
+            winner = min(valid, key=lambda r: (r["validation_loss_raw"], r["lr"]))
+            selected[arm] = {k: winner[k] for k in ("lr", "job_id", "validation_loss_raw")}
+    invalid_controls = [a for a in CONTROL_ARMS if a in invalid]
+    invalid_candidates = [a for a in plan["survivors"] if a in invalid]
+    viable = [a for a in plan["survivors"] if a in selected]
+    reasons = []
+    if not pending:
+        if invalid_controls:
+            reasons.append("mandatory_control_tuning_invalid")
+        if not viable:
+            reasons.append("no_viable_candidate")
+    status = "pending" if pending else ("invalid" if reasons else "selected")
+    final_order = [a for a in plan["arm_order"] if a in selected] if status == "selected" else []
+    return {
+        "status": status, "selected": selected, "pending_job_ids": pending,
+        "invalid_arms": invalid, "invalid_controls": invalid_controls,
+        "tuning_invalid_candidates": invalid_candidates, "viable_candidates": viable,
+        "final_arm_order": final_order, "stop_reasons": reasons,
+    }
+
+
+def verify_rate_selection(plan, selection, *, allow_invalid=False):
+    """Return the exact final arm order; optionally accept a stopped terminal grid."""
+    verify_plan(plan)
+    check_seal(selection)
+    if (selection.get("schema"), selection.get("schema_version")) != ("beyond_language_rate_selection", 1):
+        raise ProtocolError("unsupported rate-selection artifact")
+    if (selection.get("plan_sha256") != plan["sha256"]
+            or selection.get("source_hashes") != plan["source_hashes"]
+            or selection.get("selection_metric") != "val_loss_raw"
+            or selection.get("tuning_failure_policy_id") != TUNING_FAILURE_POLICY_ID):
+        raise ProtocolError("selection belongs to another source/protocol or tuning policy")
+    outcome = selection_outcome(plan, selection.get("rows"))
+    if any(selection.get(key) != value for key, value in outcome.items()):
+        raise ProtocolError("selection eligibility/winners disagree with the complete terminal tuning rows")
+    if outcome["status"] == "pending":
+        raise ProtocolError("all original tuning trials must be terminal before final reporting or export")
+    if outcome["status"] == "invalid" and not allow_invalid:
+        raise ProtocolError("mandatory controls or all candidates lack a valid rate; final grid is stopped")
+    return outcome["final_arm_order"]
+
+
 def select_rates(plan, manifests, results):
     verify_plan(plan)
     membership = verify_manifests(plan, manifests)
-    rows, pending = [], []
+    rows = []
     for entry in plan["tuning_jobs"]:
         arm, lr, job = entry["arm"], entry["lr"], entry["job"]
         result = results.get(job["id"])
         row = {"arm": arm, "lr": lr, "job_id": job["id"], "validation_loss_raw": None}
         if result is None:
-            pending.append(job["id"])
             rows.append({**row, "status": "pending"})
             continue
         cfg = expected_config(plan, arm, "tuning", lr, 0)
         validate_result_identity(plan, job, result, cfg)
+        validate_tuning_accounting(plan, arm, result, cfg)
         manifest = membership[job["id"]]
         if result.get("manifest_sha256") != manifest["sha256"] or result.get("manifest") != manifest["name"]:
             raise ProtocolError("result manifest provenance mismatch")
@@ -906,52 +1027,34 @@ def select_rates(plan, manifests, results):
         )
         if not valid:
             rows.append({**row, "status": "invalid",
-                         "reason": "missing/nonfinite unrounded final validation or incomplete/counter-mismatched run"})
+                         "reason": "missing/nonfinite unrounded final validation or incomplete evaluation record"})
             continue
         rows.append({**row, "status": "valid", "validation_loss_raw": value})
-    selected, invalid = {}, []
-    if not pending:
-        for arm in plan["arm_order"]:
-            valid = [r for r in rows if r["arm"] == arm and r["status"] == "valid"]
-            if not valid:
-                invalid.append(arm)
-                continue
-            winner = min(valid, key=lambda r: (r["validation_loss_raw"], r["lr"]))
-            selected[arm] = {k: winner[k] for k in ("lr", "job_id", "validation_loss_raw")}
+    outcome = selection_outcome(plan, rows)
     return seal({
         "schema": "beyond_language_rate_selection", "schema_version": 1,
         "plan_sha256": plan["sha256"], "source_hashes": plan["source_hashes"],
         "manifest_sha256s": sorted(m["sha256"] for m in manifests),
-        "status": "pending" if pending else ("invalid" if invalid else "selected"),
-        "selection_metric": "val_loss_raw", "rows": rows, "selected": selected,
-        "pending_job_ids": pending, "invalid_arms": invalid,
+        "selection_metric": "val_loss_raw", "rows": rows, **outcome,
+        "tuning_failure_policy_id": TUNING_FAILURE_POLICY_ID,
         "note": "Only training-seed-0 final validation on sample seed 1234 selects rates; final/test/ablation fields are never read.",
     })
 
 
 def final_jobs(plan, selection, seed):
-    verify_plan(plan)
-    check_seal(selection)
-    if selection.get("schema") != "beyond_language_rate_selection" or selection.get("status") != "selected":
-        raise ProtocolError("a complete valid rate-selection artifact is required")
-    if selection.get("plan_sha256") != plan["sha256"] or selection.get("source_hashes") != plan["source_hashes"]:
-        raise ProtocolError("selection belongs to another source/protocol")
-    if set(selection["selected"]) != set(plan["arm_order"]) or seed not in FINAL_SEEDS:
-        raise ProtocolError("selection arms or final seed differ from protocol")
-    for arm, selected in selection["selected"].items():
-        valid = [r for r in selection["rows"] if r["arm"] == arm and r["status"] == "valid"]
-        expected = min(valid, key=lambda r: (r["validation_loss_raw"], r["lr"]))
-        if selected != {k: expected[k] for k in ("lr", "job_id", "validation_loss_raw")}:
-            raise ProtocolError("selected rates disagree with the recorded validation-only rule")
+    final_order = verify_rate_selection(plan, selection)
+    if seed not in FINAL_SEEDS:
+        raise ProtocolError("final seed differs from protocol")
     return [make_job(plan, arm, "final", selection["selected"][arm]["lr"], seed)
-            for arm in plan["arm_order"]]
+            for arm in final_order]
 
 
 def require_prior_seed_blocks(plan, selection, seed, results):
+    final_order = verify_rate_selection(plan, selection)
     for earlier in FINAL_SEEDS:
         if earlier >= seed:
             break
-        for arm, job in zip(plan["arm_order"], final_jobs(plan, selection, earlier)):
+        for arm, job in zip(final_order, final_jobs(plan, selection, earlier)):
             result = results.get(job["id"])
             if result is None:
                 raise ProtocolError(f"seed {earlier} block is not terminal: missing {job['id']}")
@@ -1074,7 +1177,9 @@ def main():
             verify_manifest_registration(root, plan, manifest)
         result = select_rates(plan, manifests, read_results(args.results_dir))
         print(json.dumps({"status": result["status"], "selected": result["selected"],
-                          "pending": result["pending_job_ids"], "invalid": result["invalid_arms"]}, indent=2))
+                          "pending": result["pending_job_ids"], "invalid": result["invalid_arms"],
+                          "final_arm_order": result["final_arm_order"],
+                          "stop_reasons": result["stop_reasons"]}, indent=2))
         if result["status"] == "pending":
             raise SystemExit(2)  # Do not occupy the immutable selection path prematurely.
         write_immutable(args.out, result)

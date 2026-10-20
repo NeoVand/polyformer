@@ -8,7 +8,7 @@ The planner lives below `research/analysis/`, so it does not change the frozen t
 Paths below are relative to the worktree:
 
 - `research/analysis/beyond_language_protocol.py`: planner, validation-only rate selector, final-block exporter.
-- `research/analysis/test_beyond_language_protocol.py`: 30 CPU tests, including all seven survivor subsets and dataset integrity.
+- `research/analysis/test_beyond_language_protocol.py`: 38 CPU tests, including all seven survivor subsets, dataset integrity, and candidate-local tuning failures.
 - `research/analysis/beyond_dataset_fingerprint.py`: replayable streaming token-file fingerprint.
 - `research/results/beyond_language_planning/dataset.json`: pre-quality corpus fingerprint and provenance limits.
 - `research/results/beyond_language_planning/proof.json`: artifact hashes, test output and portability checks.
@@ -29,6 +29,34 @@ vbig0, warmup305 and 8 evaluation marks. Every trial must be terminal before sel
 `val_loss_raw` at the final configured update selects a rate; `curve[-1].val_raw` must match.
 Exact ties choose the smaller rate. Failed/nonfinite trials remain in the artifact and cannot win.
 No rounded loss, intermediate validation, final held-out loss, test field, or ablation selects rates.
+
+All three trials of every original arm must be terminal. A candidate with no valid trial is retained
+as `tuning_invalid`/unconfirmed and receives no final jobs. Every candidate with a valid trial must
+enter finals. If any of the five mandatory controls has no valid trial, or no candidate has a valid
+trial, the entire final grid stops. Invalid trials do not count as measured quality losses. No extra
+attempts, replacement rates or intermediate-checkpoint selection are generated.
+
+Source, configuration, identity and accounting contradictions are global integrity errors, not
+candidate-local failures. An otherwise successful result must contain matching finite token/FLOP
+counters. Explicit worker failures may lack optional configuration/counter fields, but present finite
+contradictory counters still stop selection. This prevents corrupted accounting from silently
+excluding a candidate.
+
+The original plan, survivor list, schedules, forecasts and control allowances are retained even when
+an expensive candidate cannot advance. Final eligibility is represented separately in the selection:
+`viable_candidates`, `tuning_invalid_candidates`, `invalid_controls`, `final_arm_order`, and
+`stop_reasons`. A candidate-only partial selection has status `selected`; a stopped grid has status
+`invalid` and an empty final arm order. All original tuning rows and any valid-rate winners remain
+present in either case.
+
+The shared `verify_rate_selection(plan, selection)` recomputes this eligibility and all winners from
+the complete original grid before exporting. `allow_invalid=True` permits a reporter to explain a
+stopped terminal grid and returns an empty arm list; it never accepts pending trials. Reporters retain
+all original candidates with explicit unconfirmed reasons. They do not mistake a tuning-invalid
+candidate for a missing planned final run or a failed quality gate.
+
+Prospective policy ID: `5a2058cda5ad1d84b8bb9d8a6843514b641e81390dcee1c5a28fca4da4cb27e9`.
+The full policy is frozen in the plan, and Section5 must contain this ID before production freeze.
 
 Final seeds are 1/2/3, each with a fresh complete schedule, warmup400, 16 evaluation marks,
 vseqs1024/vbig1024 and final checkpoint saving. Candidates additionally run inference ablations.
@@ -130,6 +158,7 @@ Commit the planner, the dataset helper/evidence, the reporting amendment, the St
 the Section5 registration before freezing. Keep the planner in its nested analysis location.
 It hashes all top-level research Python files and separately records its own source hash.
 Section5 must contain the control-allowance policy ID above before freezing is permitted.
+It must also contain the candidate-local tuning-failure policy ID above.
 
 The source bridge is a canonical JSON object sealed with the planner's `seal()` function. It contains:
 
@@ -207,7 +236,9 @@ python research/analysis/beyond_language_protocol.py export \
 ```
 
 Repeat with seed2 and seed3 only after the prior complete block is terminal. Exports include every
-registered arm. No rerun, larger timeout, rate extension or dropped comparator is silently generated.
+eligible candidate and all five mandatory controls. The committed selection identifies any
+tuning-invalid original candidates. No rerun, larger timeout, rate extension, dropped valid candidate,
+or dropped comparator is silently generated.
 
 ## Budget
 

@@ -1,11 +1,11 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-14:51 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+15:01 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 independent cells**. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. A and C's independent
 confirmations are pending; all three candidates reached 100% selected seed-0 validation in the
-six primary cells. The descriptive grid is running, and no language quality sweep has begun.
+six primary cells. The descriptive grid is complete, and no language quality sweep has begun.
 These results establish successful synthetic-task learning in this regime, not a language advantage.
 
 The question is whether one affordable layer can combine content selection, improved local
@@ -116,12 +116,40 @@ records both outcomes. The
 unchanged selection identities. Any future result passing only the reconciled rule must be labeled
 accordingly. All 18 independent candidate cells must pass before language.
 
-The descriptive map also measures causal ordered Match-3 and held-out affine regression, including
-failed candidates. These are explanations rather than alternative advancement gates. Position alone
-achieves 74.85% balanced Match-3 test accuracy under a separately calibrated fixed classifier
-([artifact](results/beyond_match3_position_baseline.json)); a similar model score would not establish
-useful composition. Regression must distinguish the calibrated algebraic capability from what a
-trained probe actually learns.
+The completed descriptive map separates word tracking from more general composition. On causal
+ordered Match-3, all arms at one or two layers score 73.86–74.42% balanced accuracy. On the same
+test seed, the independently calibrated position-only rule optimized for balanced accuracy scores
+74.78%; the rule optimized for ordinary accuracy scores 74.42%, matching the prefix control's
+aggregate score at both depths ([baseline artifact](results/beyond_match3_position_baseline.json)).
+No model improves on these controls. The previously reported 74.85% baseline pools four seeds.
+Aggregate agreement is compatible with a position shortcut, but does not establish identical predictions.
+
+This target asks whether any earlier ordered pair completes an identity relation with the current
+element. The shared short-product branch exposes the current matrix times an average of individual
+past matrices; its full prefix multiplies every intervening token. Neither explicitly exposes the
+histogram of arbitrary earlier ordered-pair products that would support direct identity lookup. A transports
+along contiguous paths, while C and deeper layers can learn contextual interactions. This structural
+distinction motivates a learnability hypothesis; it does not prove an expressivity impossibility.
+Even an explicit sum of triple products would need a readout that distinguishes identity matches
+from the other summed terms. BOS and causal boundaries also reveal position despite `pos=0`.
+
+All arms learn the affine regression problem far better than predicting the mean context value
+(MSE 12.21277). At the registered compute budget, the combined layers do not lead this probe:
+
+| Arm | One-layer test MSE | Two-layer test MSE |
+|---|---:|---:|
+| Convolved softmax | 0.020527 | 0.004219 |
+| Convolved Parallax | 0.017094 | 0.001722 |
+| A | 0.016037 | 0.003109 |
+| B | 0.019783 | 0.002787 |
+| C | 0.017419 | 0.002596 |
+| Prefix | 0.066160 | 0.019530 |
+| Gated DeltaNet | 0.004653 | 0.002154 |
+| Gated DeltaProduct | 0.014731 | 0.008264 |
+
+These are descriptive seed-0 means over 2,048 test examples. The raw results retain standard errors
+of squared error; those measure conditional test uncertainty, not training-seed variation. The
+ranking alone establishes neither statistical superiority nor an isolated effect of composition.
 
 Language, if candidates qualify, uses a single FineWeb-Edu shard, GPT-2 tokens, six layers of width
 512, context 512, batch 64, BF16 and Muon. The fixed binaries contain 744.58M training tokens and
@@ -129,6 +157,8 @@ Language, if candidates qualify, uses a single FineWeb-Edu shard, GPT-2 tokens, 
 recorded before quality runs. Current preparation code specifies a document-level 99:1 split;
 the original dataset revision and tokenizer build were not recorded. Every included arm receives three fresh approximately 100M-token
 rate trials at {.002, .004, .008}. Only final unrounded validation loss selects the rate.
+A candidate with no valid trial remains unconfirmed while other viable candidates continue;
+all five controls are mandatory. Such failures never reduce the frozen compute allowances.
 Fresh seeds 1/2/3 use candidate schedules set by the most expensive surviving candidate's
 approximately 400M-token nominal budget. Before any language quality results, a conservative
 allowance gives each control enough complete updates to cover every candidate under four declared

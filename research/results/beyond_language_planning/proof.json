@@ -5588,14 +5588,14 @@
   },
   "files": {
     "research/analysis/beyond_dataset_fingerprint.py": "be86c110f14d1685d1ae28e647cd2814a2459238994e195395ef4aeba1752fde",
-    "research/analysis/beyond_language_protocol.py": "14a425d1970eff9a48ff9df3277ad3875a4c847f9aab0211ccd88ab62a9163f9",
-    "research/analysis/test_beyond_language_protocol.py": "136d130b21aeaea597e2600f0bc29817f6ece86dbc0fb76940acf3e849191086",
+    "research/analysis/beyond_language_protocol.py": "bd1589a3499464a305efcebfd068f85fec0d11cf9dd8b9f7160135e946f87f0b",
+    "research/analysis/test_beyond_language_protocol.py": "a688132d86029088bf1fe3e3035c48de92fd55e64da0a2f53ac76968b545b045",
     "research/results/beyond_language_planning/budget.json": "30ef28e7f61a0107ffb4495cfbac32ecd09004e0e52dbe0df4f0367a6c15f209",
     "research/results/beyond_language_planning/dataset.json": "8fbe5ba2a626dc61375af5fac0b80992910e6eb1ed6ac91c443fe75036135570",
-    "research/results/beyond_language_planning/handoff.md": "dda12584e72ae764bb3acaec11e0aa6f3416fa110d0677a31ec9732e04eb5089",
+    "research/results/beyond_language_planning/handoff.md": "73de643328cd4d9c791d73b77b0f1d78f23bfe2631235cdad43087fbe7f37105",
     "research/results/beyond_language_planning/tables.md": "09c3e78c69f6b4f741da8255e483a0747c4ec821bd911c63ed26a08a74dd096a"
   },
-  "git_head_during_validation": "e650433948c657f56e13d8cc5ed01ff4bf93e54c",
+  "git_head_during_validation": "915f4c7cbdf1ba71204fcc3e62e6df4315d14d6d",
   "historical_nominal_planning_cases": {
     "A/B/C": {
       "budget": {
@@ -5632,7 +5632,8 @@
     "All new files are under research/analysis or research/results/beyond_language_planning.",
     "Draft plans were generated only in a temporary directory for portability checks, then removed.",
     "Final Stage1 closure and the reporting-only model-source bridge remain prerequisites for freezing.",
-    "Pre-quality dataset fingerprint completed through local control-plane streaming only; no Modal Functions. Production freeze requires committed dataset evidence; final-study rehash remains planned."
+    "Pre-quality dataset fingerprint completed through local control-plane streaming only; no Modal Functions. Production freeze requires committed dataset evidence; final-study rehash remains planned.",
+    "Prospective candidate-local all-invalid tuning policy implemented before language quality runs; registration and final Stage1/source bridge still required for production freeze."
   ],
   "original_counter_audit_preserved_sha256": "689c470b15bdf2c2e80d4ad3d81207484d3de5b0665a5dedb5c2fac734f85167",
   "planning_cases": {
@@ -5801,8 +5802,8 @@
   "schema_version": 1,
   "status": "passed",
   "test_command": "python research/analysis/test_beyond_language_protocol.py",
-  "test_output": "test_all_terminal_before_any_selection (__main__.ProtocolTests.test_all_terminal_before_any_selection) ... ok\ntest_all_three_survivors_use_larger_common_budget (__main__.ProtocolTests.test_all_three_survivors_use_larger_common_budget) ... ok\ntest_allowance_proof_or_schedule_tampering_rejected_after_rehash (__main__.ProtocolTests.test_allowance_proof_or_schedule_tampering_rejected_after_rehash) ... ok\ntest_bridge_only_allows_audited_lm_reporting_change (__main__.ProtocolTests.test_bridge_only_allows_audited_lm_reporting_change) ... ok\ntest_bridge_requires_exact_committed_endpoints_and_diff (__main__.ProtocolTests.test_bridge_requires_exact_committed_endpoints_and_diff) ... ok\ntest_budget_deferral_requires_linked_reason_missing_cells_and_ledger (__main__.ProtocolTests.test_budget_deferral_requires_linked_reason_missing_cells_and_ledger) ... ok\ntest_committed_evidence_and_immutable_outputs (__main__.ProtocolTests.test_committed_evidence_and_immutable_outputs) ... ok\ntest_dataset_evidence_is_required_and_bound_for_frozen_plans (__main__.ProtocolTests.test_dataset_evidence_is_required_and_bound_for_frozen_plans) ... ok\ntest_dataset_schema_size_paths_and_current_recipe_are_checked (__main__.ProtocolTests.test_dataset_schema_size_paths_and_current_recipe_are_checked) ... ok\ntest_dataset_streaming_hash_and_truncated_or_changing_volume (__main__.ProtocolTests.test_dataset_streaming_hash_and_truncated_or_changing_volume) ... Hashing polyformer-data/fineweb_edu/train.bin: 4 bytes\nFinished fineweb_edu/train.bin: 7b11c1133330cd161071bf23a0c9b6ce5320a8f3a0f83620035a72be46df4104\nHashing polyformer-data/fineweb_edu/val.bin: 2 bytes\nFinished fineweb_edu/val.bin: 9b4fb24edd6d1d8830e272398263cdbf026b97392cc35387b991dc0248a628f9\nHashing polyformer-data/fineweb_edu/train.bin: 4 bytes\nFinished fineweb_edu/train.bin: 7b11c1133330cd161071bf23a0c9b6ce5320a8f3a0f83620035a72be46df4104\nHashing polyformer-data/fineweb_edu/val.bin: 2 bytes\nFinished fineweb_edu/val.bin: 9b4fb24edd6d1d8830e272398263cdbf026b97392cc35387b991dc0248a628f9\nHashing polyformer-data/fineweb_edu/train.bin: 4 bytes\nok\ntest_draft_and_unconfirmed_provenance_cannot_export (__main__.ProtocolTests.test_draft_and_unconfirmed_provenance_cannot_export) ... ok\ntest_every_subset_controls_dominate_all_candidates_and_are_minimal (__main__.ProtocolTests.test_every_subset_controls_dominate_all_candidates_and_are_minimal) ... ok\ntest_exact_tie_chooses_lower_rate (__main__.ProtocolTests.test_exact_tie_chooses_lower_rate) ... ok\ntest_explicit_early_numerical_failure_is_an_invalid_trial (__main__.ProtocolTests.test_explicit_early_numerical_failure_is_an_invalid_trial) ... ok\ntest_final_blocks_both_rnns_and_independent_seeds (__main__.ProtocolTests.test_final_blocks_both_rnns_and_independent_seeds) ... ok\ntest_four_work_conventions_preserve_original_counters_and_include_no_cse_A (__main__.ProtocolTests.test_four_work_conventions_preserve_original_counters_and_include_no_cse_A) ... ok\ntest_frozen_plan_preserves_policy_and_analysis_source_identity (__main__.ProtocolTests.test_frozen_plan_preserves_policy_and_analysis_source_identity) ... ok\ntest_invalid_rate_reported_and_cannot_win (__main__.ProtocolTests.test_invalid_rate_reported_and_cannot_win) ... ok\ntest_manifest_must_cover_exact_grid (__main__.ProtocolTests.test_manifest_must_cover_exact_grid) ... ok\ntest_no_rounded_intermediate_or_final_score_leakage (__main__.ProtocolTests.test_no_rounded_intermediate_or_final_score_leakage) ... ok\ntest_nonadvancing_stage1_arms_must_have_explicit_closed_status (__main__.ProtocolTests.test_nonadvancing_stage1_arms_must_have_explicit_closed_status) ... ok\ntest_nonfinite_or_missing_raw_never_uses_rounded_fallback (__main__.ProtocolTests.test_nonfinite_or_missing_raw_never_uses_rounded_fallback) ... ok\ntest_reconciliation_preserves_candidate_floor_gap_and_valid_reference (__main__.ProtocolTests.test_reconciliation_preserves_candidate_floor_gap_and_valid_reference) ... ok\ntest_registered_compute_and_fresh_schedules (__main__.ProtocolTests.test_registered_compute_and_fresh_schedules) ... ok\ntest_registration_digest_allows_log_updates_but_not_protocol_edits (__main__.ProtocolTests.test_registration_digest_allows_log_updates_but_not_protocol_edits) ... ok\ntest_selection_reassignment_rejected_even_after_rehash (__main__.ProtocolTests.test_selection_reassignment_rejected_even_after_rehash) ... ok\ntest_source_and_config_corruption_fail_closed (__main__.ProtocolTests.test_source_and_config_corruption_fail_closed) ... ok\ntest_stage1_requires_all18_unique_cells_and_all_survivors (__main__.ProtocolTests.test_stage1_requires_all18_unique_cells_and_all_survivors) ... ok\ntest_unknown_policy_uncommitted_or_wrong_original_provenance_rejected (__main__.ProtocolTests.test_unknown_policy_uncommitted_or_wrong_original_provenance_rejected) ... ok\ntest_written_rule_pass_retains_strict_reference_floor_failure (__main__.ProtocolTests.test_written_rule_pass_retains_strict_reference_floor_failure) ... ok\n\n----------------------------------------------------------------------\nRan 30 tests in 2.787s\n\nOK\n",
-  "tests_passed": 30,
+  "test_output": "test_accounting_corruption_cannot_become_candidate_local_failure (__main__.ProtocolTests.test_accounting_corruption_cannot_become_candidate_local_failure) ... ok\ntest_all_terminal_before_any_selection (__main__.ProtocolTests.test_all_terminal_before_any_selection) ... ok\ntest_all_three_survivors_use_larger_common_budget (__main__.ProtocolTests.test_all_three_survivors_use_larger_common_budget) ... ok\ntest_allowance_proof_or_schedule_tampering_rejected_after_rehash (__main__.ProtocolTests.test_allowance_proof_or_schedule_tampering_rejected_after_rehash) ... ok\ntest_bridge_only_allows_audited_lm_reporting_change (__main__.ProtocolTests.test_bridge_only_allows_audited_lm_reporting_change) ... ok\ntest_bridge_requires_exact_committed_endpoints_and_diff (__main__.ProtocolTests.test_bridge_requires_exact_committed_endpoints_and_diff) ... ok\ntest_budget_deferral_requires_linked_reason_missing_cells_and_ledger (__main__.ProtocolTests.test_budget_deferral_requires_linked_reason_missing_cells_and_ledger) ... ok\ntest_candidate_only_invalid_trials_allow_every_other_viable_candidate (__main__.ProtocolTests.test_candidate_only_invalid_trials_allow_every_other_viable_candidate) ... ok\ntest_committed_evidence_and_immutable_outputs (__main__.ProtocolTests.test_committed_evidence_and_immutable_outputs) ... ok\ntest_dataset_evidence_is_required_and_bound_for_frozen_plans (__main__.ProtocolTests.test_dataset_evidence_is_required_and_bound_for_frozen_plans) ... ok\ntest_dataset_schema_size_paths_and_current_recipe_are_checked (__main__.ProtocolTests.test_dataset_schema_size_paths_and_current_recipe_are_checked) ... ok\ntest_dataset_streaming_hash_and_truncated_or_changing_volume (__main__.ProtocolTests.test_dataset_streaming_hash_and_truncated_or_changing_volume) ... Hashing polyformer-data/fineweb_edu/train.bin: 4 bytes\nFinished fineweb_edu/train.bin: 7b11c1133330cd161071bf23a0c9b6ce5320a8f3a0f83620035a72be46df4104\nHashing polyformer-data/fineweb_edu/val.bin: 2 bytes\nFinished fineweb_edu/val.bin: 9b4fb24edd6d1d8830e272398263cdbf026b97392cc35387b991dc0248a628f9\nHashing polyformer-data/fineweb_edu/train.bin: 4 bytes\nFinished fineweb_edu/train.bin: 7b11c1133330cd161071bf23a0c9b6ce5320a8f3a0f83620035a72be46df4104\nHashing polyformer-data/fineweb_edu/val.bin: 2 bytes\nFinished fineweb_edu/val.bin: 9b4fb24edd6d1d8830e272398263cdbf026b97392cc35387b991dc0248a628f9\nHashing polyformer-data/fineweb_edu/train.bin: 4 bytes\nok\ntest_draft_and_unconfirmed_provenance_cannot_export (__main__.ProtocolTests.test_draft_and_unconfirmed_provenance_cannot_export) ... ok\ntest_each_mandatory_control_invalid_stops_finals_even_with_viable_candidates (__main__.ProtocolTests.test_each_mandatory_control_invalid_stops_finals_even_with_viable_candidates) ... ok\ntest_every_subset_controls_dominate_all_candidates_and_are_minimal (__main__.ProtocolTests.test_every_subset_controls_dominate_all_candidates_and_are_minimal) ... ok\ntest_exact_tie_chooses_lower_rate (__main__.ProtocolTests.test_exact_tie_chooses_lower_rate) ... ok\ntest_expensive_invalid_candidate_does_not_reduce_original_control_allowances (__main__.ProtocolTests.test_expensive_invalid_candidate_does_not_reduce_original_control_allowances) ... ok\ntest_explicit_early_numerical_failure_is_an_invalid_trial (__main__.ProtocolTests.test_explicit_early_numerical_failure_is_an_invalid_trial) ... ok\ntest_explicit_worker_errors_may_lack_config_and_counters (__main__.ProtocolTests.test_explicit_worker_errors_may_lack_config_and_counters) ... ok\ntest_final_blocks_both_rnns_and_independent_seeds (__main__.ProtocolTests.test_final_blocks_both_rnns_and_independent_seeds) ... ok\ntest_four_work_conventions_preserve_original_counters_and_include_no_cse_A (__main__.ProtocolTests.test_four_work_conventions_preserve_original_counters_and_include_no_cse_A) ... ok\ntest_frozen_plan_preserves_policy_and_analysis_source_identity (__main__.ProtocolTests.test_frozen_plan_preserves_policy_and_analysis_source_identity) ... ok\ntest_invalid_rate_reported_and_cannot_win (__main__.ProtocolTests.test_invalid_rate_reported_and_cannot_win) ... ok\ntest_manifest_must_cover_exact_grid (__main__.ProtocolTests.test_manifest_must_cover_exact_grid) ... ok\ntest_no_rounded_intermediate_or_final_score_leakage (__main__.ProtocolTests.test_no_rounded_intermediate_or_final_score_leakage) ... ok\ntest_no_viable_candidate_stops_finals_and_pending_grid_cannot_close (__main__.ProtocolTests.test_no_viable_candidate_stops_finals_and_pending_grid_cannot_close) ... ok\ntest_nonadvancing_stage1_arms_must_have_explicit_closed_status (__main__.ProtocolTests.test_nonadvancing_stage1_arms_must_have_explicit_closed_status) ... ok\ntest_nonfinite_or_missing_raw_never_uses_rounded_fallback (__main__.ProtocolTests.test_nonfinite_or_missing_raw_never_uses_rounded_fallback) ... ok\ntest_partial_final_blocks_use_active_arm_identity_and_original_steps (__main__.ProtocolTests.test_partial_final_blocks_use_active_arm_identity_and_original_steps) ... ok\ntest_reconciliation_preserves_candidate_floor_gap_and_valid_reference (__main__.ProtocolTests.test_reconciliation_preserves_candidate_floor_gap_and_valid_reference) ... ok\ntest_registered_compute_and_fresh_schedules (__main__.ProtocolTests.test_registered_compute_and_fresh_schedules) ... ok\ntest_registration_digest_allows_log_updates_but_not_protocol_edits (__main__.ProtocolTests.test_registration_digest_allows_log_updates_but_not_protocol_edits) ... ok\ntest_selection_eligibility_cannot_drop_valid_arm_or_forge_terminal_grid (__main__.ProtocolTests.test_selection_eligibility_cannot_drop_valid_arm_or_forge_terminal_grid) ... ok\ntest_selection_reassignment_rejected_even_after_rehash (__main__.ProtocolTests.test_selection_reassignment_rejected_even_after_rehash) ... ok\ntest_source_and_config_corruption_fail_closed (__main__.ProtocolTests.test_source_and_config_corruption_fail_closed) ... ok\ntest_stage1_requires_all18_unique_cells_and_all_survivors (__main__.ProtocolTests.test_stage1_requires_all18_unique_cells_and_all_survivors) ... ok\ntest_unknown_policy_uncommitted_or_wrong_original_provenance_rejected (__main__.ProtocolTests.test_unknown_policy_uncommitted_or_wrong_original_provenance_rejected) ... ok\ntest_written_rule_pass_retains_strict_reference_floor_failure (__main__.ProtocolTests.test_written_rule_pass_retains_strict_reference_floor_failure) ... ok\n\n----------------------------------------------------------------------\nRan 38 tests in 3.525s\n\nOK\n",
+  "tests_passed": 38,
   "top_level_research_source_map": {
     "beyond_chunk_check.py": "f671fef1033410fc7bbf2d0e07138070304ecd595110797c27242c746d50cdf6",
     "beyond_diag.py": "ab176f04bdf08a4ebcc650672929f2627c910e53b631fffde8d8ed96696f6a39",
@@ -5835,5 +5836,49 @@
     "verify_prior_art.py": "0a230c5d236c4528fd2930ee57ffe9228d9342ce47bd5a3341223950e1ee6c6b",
     "wp_summary.py": "51a85ef347d3b24c03a72712a3e64e54609daf13d13a8d381fb90ede5511e673"
   },
-  "top_level_research_sources_unchanged": true
+  "top_level_research_sources_unchanged": true,
+  "tuning_failure_validation": {
+    "accounting_integrity": "Global ProtocolError for missing/nonfinite/contradictory required counters on otherwise successful trials; explicit worker errors may omit fields but present finite accounting contradictions still raise.",
+    "extra_attempts_or_rate_extensions": false,
+    "full_original_grid_preserved": true,
+    "independent_review": "diagnostic_audit confirmed full-grid/pending/mandatory-control/viable-candidate/unchanged-allowance logic; identified counter-classification issue was corrected before final validation.",
+    "integrity_tests": [
+      "all required counter fields missing/nonfinite/contradictory across every rate of one candidate stop globally",
+      "sparse explicit bounded worker errors remain candidate-local invalid trials",
+      "impossible negative or over-budget total FLOPs hard-stop even when an explicit failed result omits tokens"
+    ],
+    "no_language_quality_observed": true,
+    "original_plan_and_allowances_unchanged": true,
+    "policy": {
+      "allocation_rule": "Retain the original plan, survivors, all candidate schedules and control allowances, including allowances for a tuning-invalid candidate.",
+      "candidate_rule": "A candidate with no valid trial is tuning_invalid and unconfirmed; every candidate with a valid trial must enter finals.",
+      "control_rule": "All five controls rawS, convS, convP, GDN1 and DP4 require a valid selected rate.",
+      "interpretation": "Invalid trials are numerical, operational or incomplete measurements; exclusion is not a measured quality loss.",
+      "name": "beyond-language-candidate-local-tuning-failure-v1",
+      "stop_rule": "Stop the entire final grid if any mandatory control has no valid trial or no candidate has a valid trial.",
+      "terminal_rule": "All three registered trials of every original arm must be terminal before any rate selection.",
+      "unchanged": [
+        "three registered rates",
+        "seed 0 tuning",
+        "independent final seeds",
+        "complete fresh schedules",
+        "no extra attempts",
+        "no rate extensions",
+        "no intermediate or held-out selection",
+        "budget caps"
+      ]
+    },
+    "policy_id": "5a2058cda5ad1d84b8bb9d8a6843514b641e81390dcee1c5a28fca4da4cb27e9",
+    "registration_snippet": "/tmp/beyond-tuning-failure-amendment.md",
+    "shared_verifier": "verify_rate_selection(plan,selection,allow_invalid=False) -> final_arm_order",
+    "status": "passed",
+    "tests": [
+      "candidate-only all-invalid trials permit every viable candidate",
+      "each of five mandatory controls all-invalid stops all finals",
+      "no viable candidates stops finals; pending is never terminal",
+      "re-sealed omission/header/winner/row/policy tampering rejects",
+      "partial prior blocks preserve active arm identity",
+      "expensive A invalid retains original A target and all control allowances"
+    ]
+  }
 }

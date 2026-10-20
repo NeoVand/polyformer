@@ -11,6 +11,9 @@ Example:
 JSON and TSV are deterministic. Optional plots are standalone PNG/PDF figures.
 Sequence standard errors condition on a trained model and assume independent
 sampled sequences; overlapping windows can violate that assumption.
+Candidates with three invalid tuning trials remain explicitly unconfirmed in
+the report. A missing valid control rate or no valid candidate stops all finals.
+The original plan, dataset fingerprint and control allowances remain retained.
 """
 from __future__ import annotations
 
@@ -114,12 +117,15 @@ def verify_inputs(plan, selection, confirmation, manifests, *, bridge=None, repo
         ("stage1_strict_code_seed0_survivors", "strict_code_seed0_survivors"),
     ):
         require(plan.get(plan_key) == confirmation.get(confirmation_key), f"{plan_key} differs from Stage-1 evidence")
+    final_arm_order = p.verify_rate_selection(plan, selection, allow_invalid=True)
     expected, by_cell = {}, {}
-    for seed in plan["final_seeds"]:
-        jobs = p.final_jobs(plan, selection, seed)
-        for arm, job in zip(plan["arm_order"], jobs):
-            expected[job["id"]] = (arm, seed, job)
-            by_cell[(arm, seed)] = job
+    if final_arm_order:
+        for seed in plan["final_seeds"]:
+            jobs = p.final_jobs(plan, selection, seed)
+            require(len(jobs) == len(final_arm_order), "final job grid differs from validated final arm order")
+            for arm, job in zip(final_arm_order, jobs):
+                expected[job["id"]] = (arm, seed, job)
+                by_cell[(arm, seed)] = job
     membership = {}
     for manifest in manifests:
         p.check_seal(manifest)
@@ -131,7 +137,7 @@ def verify_inputs(plan, selection, confirmation, manifests, *, bridge=None, repo
             require(job["id"] in expected and job == expected[job["id"]][2],
                     "unexpected or modified final manifest job")
             membership[job["id"]] = manifest
-    return by_cell, membership
+    return by_cell, membership, final_arm_order
 
 
 def checkpoint_evidence(result, job, checkpoint_root=None):
@@ -336,15 +342,30 @@ def ledger_row(ledger, job_id, manifest_sha):
 
 def build_report(plan, selection, confirmation, manifests, results, *, bridge=None,
                  repository=None, ledger=None, checkpoint_root=None):
-    by_cell, membership = verify_inputs(plan, selection, confirmation, manifests,
-                                       bridge=bridge, repository=repository)
+    by_cell, membership, final_arm_order = verify_inputs(
+        plan, selection, confirmation, manifests, bridge=bridge, repository=repository
+    )
     rows, arrays = {}, {}
-    for (arm, seed), job in by_cell.items():
-        row, array = audit_run(plan, selection, arm, seed, job, membership.get(job["id"]),
-                               results.get(job["id"]), checkpoint_root=checkpoint_root)
-        row["cost"] = ledger_row(ledger, job["id"], row.get("manifest_sha256"))
-        rows[(arm, seed)] = row
-        arrays[(arm, seed)] = array
+    for arm in plan["arm_order"]:
+        for seed in plan["final_seeds"]:
+            job = by_cell.get((arm, seed))
+            if job is None:
+                invalid = arm in selection["invalid_arms"]
+                row = {
+                    "arm": arm, "seed": seed, "job_id": None, "loss_raw": None,
+                    "status": "tuning_invalid" if invalid else "tuning_blocked",
+                    "reason": ("All three registered tuning trials were invalid; no rate selected."
+                               if invalid else "The final grid stopped because a required control or every candidate lacked a valid rate."),
+                    "tuning_trials": copy.deepcopy([trial for trial in selection["rows"] if trial["arm"] == arm]),
+                    "cost": {"status": "not_scheduled", "estimate_usd": None},
+                }
+                array = None
+            else:
+                row, array = audit_run(plan, selection, arm, seed, job, membership.get(job["id"]),
+                                       results.get(job["id"]), checkpoint_root=checkpoint_root)
+                row["cost"] = ledger_row(ledger, job["id"], row.get("manifest_sha256"))
+            rows[(arm, seed)] = row
+            arrays[(arm, seed)] = array
     for arm in plan["arm_order"]:
         complete = [r for (a, _), r in rows.items() if a == arm and r["status"] == "complete"]
         if len({(r["params"], r["nonembedding_params"]) for r in complete}) > 1:
@@ -364,6 +385,13 @@ def build_report(plan, selection, confirmation, manifests, results, *, bridge=No
               for arm in sorted(confirmation["candidates"])}
     for arm in gates:
         gates[arm]["written_rule_only"] = gates[arm]["status"] == "passed" and strict[arm]["status"] != "passed"
+        tuning_status = ("tuning_invalid" if arm in selection["tuning_invalid_candidates"]
+                         else "selected" if arm in final_arm_order
+                         else "tuning_blocked" if arm in plan["survivors"] else "not_eligible")
+        for gate in (gates[arm], strict[arm]):
+            gate["language_tuning_status"] = tuning_status
+            if tuning_status in ("tuning_invalid", "tuning_blocked"):
+                gate["reason"] = "No final loss comparison is available; tuning failure does not establish a loss-based rejection."
     summaries = {
         arm: seed_summary(rows[(arm, s)]["loss_raw"] for s in plan["final_seeds"]
                           if rows[(arm, s)]["status"] == "complete") for arm in plan["arm_order"]
@@ -389,6 +417,15 @@ def build_report(plan, selection, confirmation, manifests, results, *, bridge=No
         "source_bridge_sha256": bridge["sha256"] if bridge else None,
         "source_hashes": plan["source_hashes"], "manifest_sha256s": sorted(m["sha256"] for m in manifests),
         "selected_rates": copy.deepcopy(selection["selected"]),
+        "tuning": {key: copy.deepcopy(selection[key]) for key in (
+            "status", "invalid_arms", "invalid_controls", "tuning_invalid_candidates",
+            "viable_candidates", "final_arm_order", "stop_reasons", "rows")},
+        "original_arm_order": list(plan["arm_order"]), "final_arm_order": list(final_arm_order),
+        "tuning_failure_policy": copy.deepcopy(plan["tuning_failure_policy"]),
+        "tuning_failure_policy_id": plan["tuning_failure_policy_id"],
+        **{key: copy.deepcopy(plan[key]) for key in (
+            "dataset_evidence", "dataset_evidence_sha256",
+            "dataset_evidence_file_sha256", "dataset_evidence_path")},
         "reporter_sha256": p.digest(Path(__file__).read_bytes()),
         "active_gate_policy": confirmation["active_gate_policy"],
         "gate_reconciliation": copy.deepcopy(confirmation["gate_reconciliation"]),
@@ -401,7 +438,7 @@ def build_report(plan, selection, confirmation, manifests, results, *, bridge=No
         "across_seed_loss_summaries": summaries, "across_seed_paired_summaries": paired_summaries,
         "composition_comparison": mechanism, "final_sample": plan["final_sample"],
         "uncertainty_note": UNCERTAINTY_NOTE,
-        "pairing_basis": "Same frozen data path, evaluation seed, sequence count, token length and generator draw order; worker outputs do not supply individual window IDs.",
+        "pairing_basis": "Same fingerprinted frozen corpus, evaluation seed, sequence count, token length and generator draw order. Dataset files are hashed before training; workers do not rehash files or supply individual window IDs.",
         "scalar_sequence_consistency_atol": SCALAR_SEQUENCE_ATOL,
         "gate_numeric_tolerance": 0,
         "accounting": {"target_training_flops": plan["target_training_flops"],
@@ -410,14 +447,14 @@ def build_report(plan, selection, confirmation, manifests, results, *, bridge=No
                        "budget_plan": copy.deepcopy(plan["budget"]),
                        "final_runs_estimate_usd": math.fsum(r["cost"]["estimate_usd"] for r in rows.values()
                                                           if r["cost"].get("estimate_usd") is not None),
-                       "final_runs_missing_cost_entries": sum(r["cost"].get("estimate_usd") is None
+                       "final_runs_missing_cost_entries": sum(r["job_id"] is not None and r["cost"].get("estimate_usd") is None
                                                              for r in rows.values()),
                        "note": "Use the frozen per-arm steps and any prospective control allowance. Controls can receive more work than candidates under the declared conventions; this is not executed GPU FLOP equality. Runtime includes compilation/evaluation. Ledger figures are estimates, not invoices."},
         "ledger_sha256": record_digest(ledger) if ledger is not None else None,
         "ledger_cost_basis": ledger.get("cost_basis") if ledger else None,
-        "coverage": {"expected_runs": len(rows),
+        "coverage": {"expected_runs": len(by_cell), "original_arm_seed_cells": len(rows),
                      **{status: sum(r["status"] == status for r in rows.values())
-                        for status in ("complete", "pending", "invalid")}},
+                        for status in ("complete", "pending", "invalid", "tuning_invalid", "tuning_blocked")}},
         "result_usage": "Only final raw means determine gates. Intermediate checkpoints, rounded losses, ablations and activity never select runs or rates.",
     }
     return p.seal(data)
@@ -469,10 +506,13 @@ def write_outputs(report, directory, *, plots=False):
         "conditional_paired_sequence_se", "reason"]))
     gates = [{"candidate": arm, "active_status": g["status"],
               "strict_code_status": report["strict_code_candidate_gates"][arm]["status"],
+              "language_tuning_status": g["language_tuning_status"],
               "written_rule_only": g["written_rule_only"]}
              for arm, g in report["candidate_gates"].items()]
     write_text_immutable(directory / "gates.tsv", tabular(gates, [
-        "candidate", "active_status", "strict_code_status", "written_rule_only"]))
+        "candidate", "active_status", "strict_code_status", "language_tuning_status", "written_rule_only"]))
+    write_text_immutable(directory / "tuning_trials.tsv", tabular(report["tuning"]["rows"], [
+        "arm", "lr", "job_id", "status", "validation_loss_raw", "reason"]))
     if plots:
         plot_report(report, directory)
 
@@ -507,6 +547,14 @@ def plot_report(report, directory):
     fig, axes = plt.subplots(max(1, len(candidates)), 1, figsize=(10, 3.5 * max(1, len(candidates))),
                              squeeze=False)
     for arm, ax in zip(candidates, axes[:, 0]):
+        available = any(r["candidate"] == arm and r["status"] == "complete"
+                        for r in report["comparisons"])
+        if not available:
+            ax.set_title(f"Candidate {arm}: no valid final paired comparisons")
+            ax.text(.5, .5, report["candidate_gates"][arm]["language_tuning_status"],
+                    ha="center", va="center", transform=ax.transAxes)
+            ax.set_xticks(range(len(CONTROLS)), CONTROLS)
+            continue
         for seed, offset in ((1, -.16), (2, 0), (3, .16)):
             data = [r for r in report["comparisons"] if r["candidate"] == arm
                     and r["seed"] == seed and r["status"] == "complete"]

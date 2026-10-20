@@ -277,6 +277,27 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   study. No dataset contents, worker source or training recipe changed; the original unpinned
   download revision and tokenizer build cannot be recovered retrospectively.
 
+
+- 2026-10-20 14:58 UTC — Clarified language failure handling prospectively, before any quality
+  trial. If only a candidate has no valid result across its three registered rates, keep every failure
+  and mark it tuning-invalid/unconfirmed while continuing every viable candidate. All five controls
+  remain mandatory; any control without a valid rate, or no viable candidate, stops the final grid.
+  Original compute allocations and control allowances remain fixed even if the failed candidate
+  set the budget. Identity/accounting contradictions stop for investigation rather than being
+  classified as numerical failure. This policy changes no architecture, rate, gate or paid job.
+
+
+- 2026-10-20 14:58 UTC — All 48 descriptive jobs completed without numerical/execution failures;
+  all pass manifest/configuration/step/FLOP audits. Screen settled total is $17.691. C/A's 36
+  frozen confirmations launched in app `ap-pNvJTjpGROnx7nXNNJyBOb`, log
+  `/tmp/beyond-stage1-confirm-ca.log`, eight L4 slots. Match-3 scores span 73.863–74.418% balanced
+  accuracy: no arm improves on the matched-test-seed position-only accuracy rule (74.4178%);
+  the separately calibrated balanced-accuracy rule scores 74.7824% on that same seed. The earlier
+  74.8455% value pools four test seeds and must not be confused with either matched-seed rule.
+  Two-layer affine MSE is S .004219, P .001722, A/B/C .003109/.002787/.002596, GDN1 .002154,
+  DP4 .008264, prefix .019530; the mean-value baseline is 12.212769. These are descriptive
+  single-training-seed results, with per-example uncertainty retained, not additional gate choices.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
@@ -632,9 +653,45 @@ fingerprint after the study and report agreement or changes; no retokenization o
 three fresh 3,051-update runs (99,975,168 tokens), seed 0, rates {.002, .004, .008}, warmup 305 updates,
 eight evaluation marks, `vseqs=1024`, `vbig=0`. Select the smallest finite **final unrounded** validation
 loss on the fixed seed-1234 validation sample; ties select the lower rate. Require all three jobs
-terminal before selection. A failed/nonfinite run is reported and cannot win. If all three fail,
-that arm is invalid and the full headline cannot be evaluated. Do not extend the rate grid at its
-edges or select intermediate checkpoints. Freeze selected rates in a committed artifact.
+terminal before selection. A failed/nonfinite run is reported and cannot win. The prospective
+candidate-local failure policy below specifies progression if an arm has no valid rate; that arm
+cannot establish a language headline. Do not extend the rate grid at its edges or select intermediate
+checkpoints. Freeze selected rates and final-job eligibility in a committed artifact.
+
+**Prospective candidate-local tuning failures.** This rule is registered before
+any language quality trial. All three registered rate trials of every original
+arm must be terminal before selecting rates. A candidate whose three trials
+are invalid is retained in the plan, selection and final report as
+`tuning_invalid` and unconfirmed; its invalid trials are not measured quality
+losses. Every candidate with at least one valid trial proceeds at its selected
+rate. All five controls—raw softmax, convolutional softmax, convolutional
+Parallax, GDN1 and DP4—are mandatory. If any control has no valid trial, or no
+candidate has a valid trial, the entire final grid stops and the report states
+the reason.
+
+The original plan, original Stage-1 survivor list, all candidate schedules and
+all control allowances remain frozen. In particular, a candidate's tuning
+failure does not reduce controls' work, even if that candidate set the largest
+compute allowance. Final job eligibility is recorded separately in the
+committed selection artifact. It cannot silently drop a candidate with a valid
+rate or any comparator. No additional attempts, rate extensions, intermediate
+checkpoints or final held-out results are used to recover an invalid arm.
+
+The selection retains every original tuning row, all invalid-run reasons and
+all valid-rate winners. It records `viable_candidates`,
+`tuning_invalid_candidates`, `invalid_controls`, `final_arm_order` and
+`stop_reasons`. A shared verifier recomputes these fields from the complete
+terminal grid before final export or reporting. A partial candidate selection
+may proceed; all headline gates remain per candidate and require all registered
+comparators and all three independent final seeds.
+
+Policy ID:
+`5a2058cda5ad1d84b8bb9d8a6843514b641e81390dcee1c5a28fca4da4cb27e9`.
+
+Source, configuration, job-identity or declared accounting contradictions are integrity errors,
+not candidate-local training failures. Successful results require complete, finite, consistent token
+and FLOP counts. Explicit worker failures may lack optional metrics but must retain intact provenance;
+any present contradictory accounting also stops selection for investigation.
 
 Final runs use new initialization/data-order seeds **1, 2 and 3**, a complete fresh schedule with
 400 warmup updates and 16 evaluation marks. The independent final sample is LOCAL.md's fixed
