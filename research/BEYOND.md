@@ -373,6 +373,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   the saved unequal metrics. This is descriptive interpretation, not checkpoint/rate selection or
   evidence that coupling alone caused failure. Language first-wave jobs are training without errors.
 
+- 2026-10-20 15:37 UTC — Language tuning is 8/18 complete: all rawS/convS rates plus convP
+  .002/.004. Every completed result passes the production source/configuration/accounting audit;
+  no failures or rate selections. All completed curves have the exact eight scheduled evaluations,
+  including final update 3,051. Eight calls are active and two remain undispatched. Settled costs
+  plus active reservations total $43.261027 across all stages; this is a conservative estimate,
+  not an invoice. Committing the completed-result snapshot while the unchanged grid continues.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

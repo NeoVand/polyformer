@@ -66,6 +66,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "02ae8f70919eb9ed301f2b4d": {
+      "call_id": "fc-01M5CZ7NTP9BB94BVWXZ4K0DS9",
+      "gpu": "H100",
+      "id": "02ae8f70919eb9ed301f2b4d",
+      "launched_at": "2026-10-20T15:35:15.070121+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:35:14.974662+00:00",
+      "reserved_usd": 1.161859,
+      "stage": "language",
+      "status": "running"
+    },
     "03bc5be7b1f09ff533e62901": {
       "call_id": "fc-01M5CXSX6B2XWM4YFMB6RZ74VC",
       "gpu": "L4",
@@ -105,8 +117,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:09.007467+00:00",
       "reserved_usd": 0.795727,
+      "result_file": "results/beyond_runs/04ff39a931b72351b93fcc20.json",
+      "settled_at": "2026-10-20T15:35:10.175549+00:00",
+      "settled_usd": 0.547708,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "058f348dc52a7a144fa1e4a2": {
       "call_id": "fc-01M5CT6J5SZRJG2MFE2JDRKVZ8",
@@ -273,6 +288,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "0d6bd2baaab5cbd309c43d78": {
+      "call_id": "fc-01M5CZ98Y3CGEVVKTVJW4MCMAQ",
+      "gpu": "H100",
+      "id": "0d6bd2baaab5cbd309c43d78",
+      "launched_at": "2026-10-20T15:36:07.397757+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:36:07.310955+00:00",
+      "reserved_usd": 1.161859,
+      "stage": "language",
+      "status": "running"
+    },
     "109e3056086fd05a1f720b97": {
       "call_id": "fc-01M5CWRH5BZWWM4D16H1PZS2DG",
       "gpu": "L4",
@@ -297,8 +324,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:09.012445+00:00",
       "reserved_usd": 0.917771,
+      "result_file": "results/beyond_runs/10ecef8688ef7f415405d777.json",
+      "settled_at": "2026-10-20T15:35:14.967858+00:00",
+      "settled_usd": 0.551772,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "1136e78d2dac6579855ee94c": {
       "call_id": "fc-01M5CSP4BS2FQZFYSRNZ35E2KT",
@@ -414,8 +444,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:09.023359+00:00",
       "reserved_usd": 0.917771,
+      "result_file": "results/beyond_runs/1995be6a7df2f25820321347.json",
+      "settled_at": "2026-10-20T15:35:16.375929+00:00",
+      "settled_usd": 0.555066,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "1a4e1b4e6627b6d1701e0b76": {
       "call_id": "fc-01M5CSW3VE2A74SXWGHYES82WS",
@@ -491,6 +524,18 @@
       "settled_usd": 0.0827,
       "stage": "screen",
       "status": "complete"
+    },
+    "1cf129ef62147b12e63b8847": {
+      "call_id": "fc-01M5CZ7HYY5E8FMWCWE18HNWS5",
+      "gpu": "H100",
+      "id": "1cf129ef62147b12e63b8847",
+      "launched_at": "2026-10-20T15:35:11.113413+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:35:10.794225+00:00",
+      "reserved_usd": 1.161859,
+      "stage": "language",
+      "status": "running"
     },
     "1de37b95cfc1d7c7194fce9d": {
       "call_id": "fc-01M5CRKJMH64W9DQFHZ42JS407",
@@ -806,6 +851,18 @@
       "settled_usd": 0.088782,
       "stage": "screen",
       "status": "complete"
+    },
+    "38b07e2e8da9494e7b2d342e": {
+      "call_id": "fc-01M5CZ7Q6NE39M93D49H49ZD94",
+      "gpu": "H100",
+      "id": "38b07e2e8da9494e7b2d342e",
+      "launched_at": "2026-10-20T15:35:16.480112+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:35:16.383652+00:00",
+      "reserved_usd": 1.161859,
+      "stage": "language",
+      "status": "running"
     },
     "39f8b7190ea127e5927b9237": {
       "call_id": "fc-01M5CVE143DQ2KTVQFPDP737JM",
@@ -1272,6 +1329,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "5f05915e65c6aa772c6e37af": {
+      "call_id": "fc-01M5CZ7H6FZPE97FM42Y0GP1TP",
+      "gpu": "H100",
+      "id": "5f05915e65c6aa772c6e37af",
+      "launched_at": "2026-10-20T15:35:10.334444+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:35:10.183668+00:00",
+      "reserved_usd": 0.917771,
+      "stage": "language",
+      "status": "running"
+    },
     "5f140c94e86b872102f924cc": {
       "call_id": "fc-01M5CPX5493BTEDX3QB514ZW71",
       "gpu": "L4",
@@ -1466,6 +1535,18 @@
       "settled_usd": 0.097692,
       "stage": "screen",
       "status": "complete"
+    },
+    "680f858d0d2c0d7eb66461d5": {
+      "call_id": "fc-01M5CZ9Q8QG89YRJY6HAHZT78B",
+      "gpu": "H100",
+      "id": "680f858d0d2c0d7eb66461d5",
+      "launched_at": "2026-10-20T15:36:22.084190+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:36:21.759277+00:00",
+      "reserved_usd": 2.138211,
+      "stage": "language",
+      "status": "running"
     },
     "6a5ade0208f0c3a272fbafe5": {
       "call_id": "fc-01M5CQQAR4S634GRPHZAQSQT3G",
@@ -1926,8 +2007,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:09.016691+00:00",
       "reserved_usd": 0.917771,
+      "result_file": "results/beyond_runs/8befdf44ca3e362df31c10b7.json",
+      "settled_at": "2026-10-20T15:35:18.154199+00:00",
+      "settled_usd": 0.551246,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "8c3133e65979b0d3dcff9908": {
       "call_id": "fc-01M5CV8B0XEM4SGCJWDWDFHN3S",
@@ -2478,8 +2562,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:08.994832+00:00",
       "reserved_usd": 0.795727,
+      "result_file": "results/beyond_runs/ad393fb8545b395f2946c1fb.json",
+      "settled_at": "2026-10-20T15:35:10.785614+00:00",
+      "settled_usd": 0.547522,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "aeba07aa2cd367805e5b8a42": {
       "call_id": "fc-01M5CSJKZJCXGQ6YKS1GVEX3YZ",
@@ -2586,6 +2673,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "b6fa0e155be4584000255654": {
+      "call_id": "fc-01M5CZ7RYANA480A3Y8NBPXJFY",
+      "gpu": "H100",
+      "id": "b6fa0e155be4584000255654",
+      "launched_at": "2026-10-20T15:35:18.309352+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:35:18.159582+00:00",
+      "reserved_usd": 1.161859,
+      "stage": "language",
+      "status": "running"
+    },
     "b74b24358278b2a08d034915": {
       "call_id": "fc-01M5CY0C2AW272NE87D1F68X4C",
       "gpu": "L4",
@@ -2625,8 +2724,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:09.030784+00:00",
       "reserved_usd": 0.917771,
+      "result_file": "results/beyond_runs/bbf5656e063b8cb9dc2076df.json",
+      "settled_at": "2026-10-20T15:36:07.303072+00:00",
+      "settled_usd": 0.61632,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "bc201c2b634689541e34166c": {
       "call_id": "fc-01M5CY4PXZM6WFWPBSFXKEWT1N",
@@ -2792,6 +2894,18 @@
       "settled_usd": 0.084349,
       "stage": "screen",
       "status": "complete"
+    },
+    "c9ed7635311e59e3187d265c": {
+      "call_id": "fc-01M5CZ7JDDPA1DSQM15R1JSXKG",
+      "gpu": "H100",
+      "id": "c9ed7635311e59e3187d265c",
+      "launched_at": "2026-10-20T15:35:11.575841+00:00",
+      "manifest": "beyond_language_tuning",
+      "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
+      "reserved_at": "2026-10-20T15:35:11.405027+00:00",
+      "reserved_usd": 1.161859,
+      "stage": "language",
+      "status": "running"
     },
     "ca34e12ddaa0e33904e7d075": {
       "call_id": "fc-01M5CVSNGC1S55RF9Z6407KTYC",
@@ -3042,8 +3156,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:09.001794+00:00",
       "reserved_usd": 0.795727,
+      "result_file": "results/beyond_runs/d9ccc90a6481b79d074c1ec5.json",
+      "settled_at": "2026-10-20T15:35:11.396580+00:00",
+      "settled_usd": 0.547658,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "da1ce7ea9b318c3f4379e155": {
       "call_id": "fc-01M5CPK6BD76G00NR19F2W9385",
@@ -3414,8 +3531,11 @@
       "manifest_sha256": "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440",
       "reserved_at": "2026-10-20T15:30:09.027280+00:00",
       "reserved_usd": 0.917771,
+      "result_file": "results/beyond_runs/f0a17264ec6f6ca25eb75cc0.json",
+      "settled_at": "2026-10-20T15:36:21.751749+00:00",
+      "settled_usd": 0.634371,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "f0e252bb919c8ea6a0a928dd": {
       "call_id": "fc-01M5CPVV9ZRXV6J4DZTWQAP85X",
