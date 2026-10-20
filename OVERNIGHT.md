@@ -34,6 +34,18 @@ ending with `Co-Authored-By: Claude Opus 5.5 <noreply@anthropic.com>` for Claude
 and /bin/mv -f. Modal: `uvx modal run research/modal_run.py::main --grid <name>`. Local JAX: `uv run --no-project
 --with "jax[cpu]" --with optax --with numpy python ...`.
 
+## Publishing
+
+Neo, 20 October 2026: "yes I want it live." Claude merges `claude/story-wrapup` into main and pushes after
+phase 4's review passes (build, check, tests, screenshots). Astra never pushes.
+
 ## Log
 
 - Phase 1 launched; Astra's final message goes to `briefs/astra-phase1.out.md`, transcript id in `briefs/astra-phase1.log`.
+- Phase 1 A started (Astra/Codex): audit the implemented symmetry, prove qualified separation and sufficiency results, and build numerical checks.
+- Phase 1 B started (Astra/Codex): verified prior-art audit and novelty boundary, especially discrete signatures and matrix development.
+- Phase 1 C started (Astra/Codex): select and test a second composition benchmark, run a pilot, and commit predictions before the three-seed grid.
+- Phase 1 B finished (`bf3d0ef`, Astra/Codex): 36 arXiv citations verified by fetched abstract pages; Seq2Tens is the closest generating-map predecessor and path development the closest group-product predecessor. Novelty is narrowed to the matrix/marked-arity realization and task-specific separation; two thesis/workshop leads remain explicitly UNVERIFIED.
+- Phase 1 C checkpoint (`5d5ddd2`, Astra/Codex): brute-force tests and eight-arm seed-0 pilot complete; numerical predictions committed before the 24-run confirmation grid. The short swap-program pilot is solved by positional softmax and the matrix RNN as well as noncommuting holonomy.
+- Phase 1 C finished (`e92e4a5`, Astra/Codex): all four registered criteria hold. Commuting arms average approximately the exact 62.037% ceiling; holonomy d=3/4 and the matrix RNN reach 100%, positional softmax 1L reaches 98.95% and 2L/3L reach 100%. All 32 L4 runs used 0.432 subprocess-hours ($0.35 GPU-only estimate; $3.09 generous resource allowance); both apps are stopped.
+- Phase 1 A finished (Astra/Codex): sharp Bayes bound; exact A4 83.054698% and A5 77.228752% ceilings; constructive token-only Match-3 and positional Match-k proofs; joint commutativity-reflection criterion and counterexample to faithful-dimension necessity. Hand-built A4/A5 heads pass raw and normalized checks on 64 sequences each; all A4 posterior classes and 86,400 A5 reorderings independently verify the exact ceiling method.
