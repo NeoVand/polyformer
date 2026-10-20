@@ -294,3 +294,233 @@ any claim of novelty.
    with rotations (the non-abelian subset attention).
 3. **Real data**: a holonomy branch in the S6 language-model harness at equal FLOPs under Muon, and on code, where
    scopes and stacks are non-commutative.
+
+## 7. State tracking: the word problem over A5 and S5
+
+Next step 1 of section 6, registered before its main runs (20 October 2026). Code: `groups.task_word`, `groups.word_commuting_ceiling`,
+`groups.irrep_det`, `groups.householders_needed`, `polybench.holonomy_causal` and `--model deltaprod`; checks in
+section 7 of `test_groups.py`; grids `wp_*` in `modal_run.py`; tables from `research/wp_summary.py`.
+
+### 7.1 Question and tasks
+
+The open question from section 6: products of learned matrices along a sequence are already the core of linear RNNs
+with matrix state, which track non-abelian groups. Does the composition view give anything there? The word problem
+is the cleanest test: read g_1 ... g_T and output, at every position t, the running product g_1 g_2 ... g_t. For a
+non-solvable group it is NC1-complete, so constant-depth softmax attention cannot solve it at every length unless
+TC0 = NC1.
+
+| Task | Group | Length | Scored at every position | Chance |
+|---|---|---|---|---|
+| wp_a5_16, wp_a5_64 | A5 (60) | 16, 64 | the product, one of 60 classes | 1.7% |
+| wp_s5_16, wp_s5_64 | S5 (120) | 16, 64 | the product, one of 120 classes | 0.8% |
+| ws_a5_16, ws_a5_64 | A5 | 16, 64 | does the product fix the letter 5 (in A4)? positive rate 0.20 | 50% |
+| ws_s5_16, ws_s5_64 | S5 | 16, 64 | does the product fix the letter 5 (in S4)? positive rate 0.20 | 50% |
+
+A BOS token comes first and is not scored. The binary variant is cheaper (two outputs) and still NC1-complete:
+the stabiliser's coset action on the 5 letters is faithful, so the automaton that tracks one letter has the whole
+group as its transition group. Classes are uniform at every position, so balanced accuracy equals token accuracy
+on the class tasks. Every model trained at length 16 is also scored at length 64 (`--evallen 64`).
+
+### 7.2 What each layer can represent
+
+**Holonomy attention, causal.** For the word problem the layer is made causal: at position i it reads, for arity
+m + 1 <= K = 3, the sum over subsets of positions <= i that end at i of their ordered products (L_m(i) M_i, divided
+by the count C(i, m)), and one more sector, the **prefix product** P_i = U_0 U_1 ... U_i, the full-arity sector with
+its gates divided out. All sectors are RMS-normalised and read by one shared projection, as before. P_i alone is an
+orthogonal RNN with matrix state, H_i = H_{i-1} U(x_i), read linearly: that is the `orth` arm (`--order 0`). So on
+this task the prefix sector *is* the prior art, and the experiment can only show (a) that the layer finds it and
+(b) whether the subset sectors add or cost anything.
+
+**Which groups fit in SO(d): determinants matter.** The rotations exp(A) have determinant 1, so a head can hold a
+real irrep rho only if det rho = 1, or rho + det rho one dimension up. A5 is perfect, so every irrep has det 1. In S5
+transpositions act as reflections in the 4-dimensional irreps, so det 4 = det 4' = sign; of the faithful irreps
+(4, 4', 5, 5', 6) only the 5 has det 1 (determinants computed from the characters and checked against explicit
+matrices):
+
+| Head dimension d | 2 | 3 | 4 | 5 | 6 | 7 |
+|---|---|---|---|---|---|---|
+| A5: irreps a head can hold | none | 3, 3' | 3, 3', 4 | all | all | all |
+| S5: irreps a head can hold | sign (as sign + sign) | sign | sign | sign, 4 + sign, 4' + sign, 5 | + 5' | all |
+| S5: faithful? | no | no | **no** | yes | yes | yes |
+
+So one layer of holonomy attention can hold A5 exactly from d = 3, but S5 only from **d = 5**, not d = 4: a faithful
+representation of S5 must contain a faithful irrep (its normal subgroups are 1, A5, S5), and none fits SO(4). (S5's
+smallest faithful irrep has dimension 4, but it lives in O(4), not SO(4).) DeltaProduct's Householders can reflect, so
+it is not bound by this: the standard 4 is a product of at most 4 of them.
+
+**Two layers reach S5 at d = 3.** S5 = A5 x| Z2. With p_s the parity of g_1 ... g_s and tau a transposition,
+h_s = tau^(p_(s-1)) g_s tau^(p_s) is even and g_1 ... g_t = h_1 ... h_t tau^(p_t) (checked on 500 random words).
+A first layer can hold the sign (d >= 2, a rotation by pi) and so give every position its prefix parity; a second
+layer can then hold an A5 irrep of h_s, which is a function of g_s and p_s. So two layers at d = 3 or 4 can solve
+S5; whether training finds this is a question for the data.
+
+**Commuting layers.** Newton attention is holonomy attention at d = 2 (section 2), so the commuting control is
+d = 2 with the same causal sectors and prefix. One causal commuting layer sees at position t its element, the
+multiset of the elements before it and the position, never their order. Given that, every ordering of the prefix is
+equally likely, so the best accuracy is the plug-in estimate of `word_commuting_ceiling` (1,000 words, 256
+reorderings per position):
+
+| Task | 16, every position | 16, second half | 64, every position | 64, second half |
+|---|---|---|---|---|
+| A5 classes | 20.9 | 1.7 (chance) | 6.6 | 1.6 |
+| S5 classes | 20.1 | 1.9 (parity known: 1/60) | 6.3 | 1.6 |
+| A5 stabiliser (balanced) | 62.7 | about 50 | 53.3 | about 50 |
+| S5 stabiliser (balanced) | 61.7 | about 50 | 53.3 | about 50 |
+
+The first two positions are exact (one element; one element and one before it), the third is about one half (two
+orders), and from position 8 on the answer is at chance. Two causal layers are not order-blind (the second layer
+sees the nested prefix multisets), so the ceiling binds only at one layer.
+
+**DeltaProduct.** I - beta k k^T fixes the hyperplane orthogonal to k, so a product of r of them fixes a subspace of
+codimension at most r. An exact faithful representation therefore needs, per token, at least the largest
+codimension of a fixed space over the group, minimised over faithful irreps (`groups.householders_needed`): **A5 2,
+S5 4** (the 5-cycles; Cartan-Dieudonne constructs the decompositions, checked). This matches Siems et al.'s
+constructions (S_n in one layer with n_h = n - 1; A5 as a rotation group of R^3 with n_h = 2). With two layers the
+semidirect route above needs one reflection per odd element for the parity layer and two per token for A5, so
+n_h = 2 can solve S5 in two layers; n_h = 1 cannot hold A5 in any one layer.
+
+### 7.3 Arms and protocol
+
+Every arm is causal and reads the same tokens; residual width 64, one MLP per layer, polybench defaults (AdamW,
+rate 2e-3, cosine, batch 128), **6,000 steps at length 16 and 12,000 at length 64** (the pilot's length-64 S5 run
+was still rising at 6,000), three seeds.
+
+- **holonomy attention** d = 3, 4, 5 (85, 64, 51 heads), causal sectors K = 3 plus the prefix product, no positions;
+- **holonomy without the prefix** (d = 5, K = 3 only): the layer of section 2, made causal;
+- **orthogonal RNN** (d = 3 or 5): the prefix product alone, H_i = H_(i-1) exp(A(x_i)), read as a full matrix;
+- **Householder RNN** (d = 4 or 5, n_h = 1, 2, 4; `--hh`): the same matrix state and read-out, with DeltaProduct's
+  transitions U(x) = prod_j (I - beta_j k_j k_j^T), beta in (0, 2), in place of rotations;
+- **Newton attention** = holonomy at d = 2 (128 heads), same sectors;
+- **softmax attention** with learned positions (causal mask), 1 and 2 layers. Positions 17-64 are untrained in the
+  length-16 models, so softmax's length-64 numbers are not a test of anything;
+- **DeltaProduct** (`--model deltaprod`, Siems et al.): 4 heads of 16, n_h = 1, 2, 4 generalised Householder steps
+  per token with beta = 2 sigmoid in (0, 2), unit keys and queries, per-head RMS norm, read-out S_t q_t; no short
+  convolution and no gating (a minimal implementation, checked against an explicit loop).
+
+Readings: balanced accuracy over every position, over the second half of the positions (where the commuting ceiling
+and softmax are at chance), whole sequences right, accuracy by position, and the length-16 models scored at length
+64. For holonomy runs the first layer's matrices are a function of the element alone, so `rep_content` reads which
+irreps they hold.
+
+### 7.4 Pilot (seed 0, before the predictions below were frozen)
+
+Grids `wp_pilot` (31 runs), `wp_pilot_dp` and `wp_pilot_dp2` (DeltaProduct settings, 14 runs), `wp_pilot_hh`
+(Householder RNN, 6 runs); 6,000 steps unless noted. Balanced accuracy %, every position / second half; length 64
+for a length-16 model:
+
+| Task | Arm | All | Second half | At 64 | Notes |
+|---|---|---|---|---|---|
+| A5 classes, 16 | holonomy d = 3, 4, 5 | 100 | 100 | 100 | exact by step 1,200; d = 3 heads hold 3 and 3' (best homomorphism error 0.002) |
+| | orthogonal RNN d = 5 | 100 | 100 | 99.97 | |
+| | Householder RNN d = 5, n_h = 2 / 1 | 100 / 16.9 | 100 / 1.6 | 100 / 5.4 | n_h = 1 cannot hold A5 |
+| | holonomy d = 5 without prefix | 20.3 | 1.7 | | positions 1-3 exact, then chance: exactly its arity |
+| | Newton (d = 2) | 17.3 | 1.7 | | ceiling 20.9 |
+| | softmax 1L / 2L | 14.0 / 14.0 | 1.8 / 1.8 | | positions 1-2 exact, then chance |
+| | DeltaProduct n_h = 1 / 2 / 4 | 13.4 / 14.1 / 14.1 | 1.6 / 1.5 / 1.8 | | positions 1-2 only |
+| S5 classes, 16 | holonomy d = 5 | 98.4 | 97.1 | 81.3 | holds sign and 4' (4' + sign is in SO(5)) |
+| | orthogonal RNN d = 5 | 99.5 | 99.1 | 89.7 | sign and 4'; snaps near step 4,000 |
+| | holonomy d = 4 / d = 3 | 41.3 / 22.8 | 10.1 / 1.9 | 11.5 / 7.0 | no faithful SO(d) representation: accuracy decays with position |
+| | Householder RNN d = 5, n_h = 4 / 2 | 100 / 24.6 | 100 / 2.8 | 100 / 7.2 | n_h = 4 as the codimension bound says |
+| | Householder RNN d = 4, n_h = 4 | 99.3 | 98.7 | 90.3 | reflections reach O(4), which rotations cannot |
+| | holonomy d = 5 without prefix | 19.7 | 0.9 | | positions 1-3 exact |
+| | Newton (d = 2) | 12.0 | 1.8 | | ceiling 20.1 |
+| | softmax 1L / 2L | 7.3 / 7.1 | 0.9 / 0.9 | | only position 1 (S5 has 14,400 pairs) |
+| | DeltaProduct n_h = 1 / 2 / 4 | 8.7 / 9.5 / 10.5 | | | |
+| | holonomy d = 3, 2 layers | 13.2 | 0.7 | | the semidirect route is not found |
+| | DeltaProduct n_h = 2, 2 layers | 12.5 | 0.9 | | |
+| S5 classes, 64 | holonomy d = 5 | 89.5 | 82.6 | | still rising at 6,000 steps; 876 s |
+| | softmax 1L; DeltaProduct n_h = 4 | 2.5; 3.0 | 0.8; 0.8 | | |
+| S5 stabiliser, 16 | holonomy d = 5 | 98.0 | 96.3 | 80.9 | |
+| | DeltaProduct n_h = 4 | **99.0** | 98.3 | 75.3 | DeltaProduct *does* track S5 when one letter is read |
+| | Newton; softmax 1L | 56.9; 57.7 | 50.0; 50.0 | | ceiling 61.7 |
+| A5 stabiliser, 16 | DeltaProduct n_h = 2 | 58.9 | 50.0 | | |
+
+DeltaProduct settings tried on the class tasks, all at 11-14% on A5 (n_h = 2) and 10-13% on S5 (n_h = 4), i.e.
+positions 1-2 only: beta starting at 2 sigmoid(3) = 1.9 (near reflections) or 2 sigmoid(-3) = 0.1 (near the
+identity) instead of 1; 20,000 steps; width 128; 8 heads of 16; one head of 64; rates 5e-4 and 5e-3.
+
+What the pilot changed, before freezing:
+
+1. **The Householder RNN arm was added.** DeltaProduct failed the class tasks under every setting but solved the S5
+   stabiliser, so its transitions can learn S5 here. Putting the same transitions into the full matrix read-out
+   solved A5 at n_h = 2 and S5 at n_h = 4 in about 1,200 steps, and failed at n_h = 1 and 2 respectively, exactly
+   the Householder bound. So DeltaProduct's failure on the class tasks is its narrow read-out (dv numbers per
+   head, S_t q_t) at this width and budget, not its transitions, and the comparison that bears on holonomy
+   attention is between parametrisations of the same matrix state.
+2. Length-64 cells train for 12,000 steps.
+3. The two-layer semidirect route (S5 at d = 3) was not found in the pilot; it is registered as expected to fail
+   rather than as an open hypothesis.
+4. A5 extrapolates from 16 to 64 exactly for every arm that solves it; S5 does so only with Householder transitions
+   (100) and not with rotations (81, 90). This is registered as a prediction from one seed.
+
+### 7.5 Prior art
+
+The word problem of a non-solvable group (A5, S5) is NC1-complete
+(Barrington 1989, JCSS 38). Constant-depth transformers and diagonal state-space models sit in TC0 and cannot
+compose permutations at arbitrary length unless TC0 = NC1 (Merrill, Petty and Sabharwal, arXiv:2404.08819);
+transformers simulate any automaton at depth O(log T), and at constant depth only when its groups are solvable
+(Liu, Ash, Goel, Krishnamurthy and Zhang, arXiv:2210.10749). The models that do track non-solvable groups carry
+one running product of matrices. Unitary and orthogonal RNNs fix the transition (Arjovsky, Shah and Bengio,
+arXiv:1511.06464; Householder products, Mhammedi et al., arXiv:1612.00188; the exponential of a skew-symmetric
+matrix, which holonomy attention uses, Lezcano-Casado and Martinez-Rubio, arXiv:1901.08428). Input-dependent
+transitions are the newer line: DeltaNet's state update is a generalised Householder transformation (Yang et al.,
+arXiv:2406.06484); allowing its eigenvalues into [-1, 1] lets it reflect, which parity and state tracking need
+(Grazzi et al., arXiv:2411.12537); DeltaProduct takes n_h Householder steps per token and solves S_n in one layer
+with n_h = n - 1, and A5, a rotation group of R^3, with n_h = 2 (Siems et al., arXiv:2502.10297). The closest
+construction in form is the path development layer, which maps each increment of a path into a matrix Lie algebra
+and multiplies the exponentials along the path (Lou, Li and Ni, arXiv:2204.00740): that product is holonomy
+attention's prefix sector. What holonomy attention adds is the subset sum: for every position it sums the ordered
+products over all (m+1)-subsets of positions, F_m(i) = sum_{a+b=m} L_a(i) M_i R_b(i), which is the image in a
+matrix group of the iterated-sums signature of the token sequence (Diehl, Ebrahimi-Fard and Tapia,
+arXiv:1906.05823) truncated at arity K, and the coefficient of z^m in prod_t (I + z M_t), a non-commutative
+elementary symmetric function. A linear RNN reads the single top-arity term; holonomy attention reads every arity
+and, without a causal mask, every position on both sides. So on the word problem, which needs only the top arity,
+the prefix sector is an orthogonal RNN with matrix state and the experiment must say whether the subset sums add
+anything; on relational tasks (section 2: which three elements compose to the identity) the low arities do the
+work and a running product does not answer the question.
+
+### 7.6 Predictions, registered (balanced accuracy, every cell on 3 of 3 seeds unless noted)
+
+Ceilings below are the one-layer commuting ceilings of section 7.2 plus 2 points.
+
+- **W1 (one exact representation solves the word problem in one layer).** Class tasks at length 16: holonomy
+  d = 3, 4, 5, the orthogonal RNN d = 5 and the Householder RNN d = 5 n_h = 2 reach >= 99% on A5; holonomy d = 5, the
+  orthogonal RNN d = 5 and the Householder RNN d = 5 n_h = 4 reach >= 95% on S5, and the Householder RNN d = 4 n_h = 4
+  >= 95%. At length 64 (12,000 steps): holonomy d = 3, the orthogonal RNN d = 3 and the Householder RNN n_h = 2 >= 95%
+  on A5; holonomy d = 5, the orthogonal RNN d = 5 and the Householder RNN n_h = 4 >= 90% on S5. Stabiliser tasks:
+  the same arms (holonomy d = 3 on A5, d = 5 on S5, Householder n_h = 2 / 4) >= 95% at length 16 and >= 90% at 64.
+- **W2 (no exact representation, no tracking).** Second-half balanced accuracy <= 20% at length 16 for: holonomy
+  d = 3 and d = 4 on S5 classes (no faithful SO(d) representation), the Householder RNN n_h = 2 on S5 and n_h = 1 on
+  A5 (below the Householder bound); and <= 60% for holonomy d = 3 on the S5 stabiliser.
+- **W3 (commuting control).** Newton (d = 2), one layer, at or below the ceiling plus 2: A5 classes <= 22.9 (16) and
+  <= 8.6 (64); S5 classes <= 22.1 (16) and <= 8.3 (64); A5 stabiliser <= 64.7 (16); S5 stabiliser <= 63.7 (16).
+- **W4 (constant-depth softmax).** Softmax, one and two layers: second-half balanced accuracy <= 5% on every class
+  cell and <= 60% on every stabiliser cell, at both lengths.
+- **W5 (arity).** Holonomy d = 5 without the prefix sector, length 16, mean over seeds: accuracy >= 95% at each of
+  positions 1-3 and <= 10% at every position from 5 on, on A5 and S5. The causal subset sectors compose at most
+  K = 3 elements, so the running product beyond that has to come from the top-arity sector.
+- **W6 (do the subset sectors add anything?).** On every class cell where both run, holonomy attention and the
+  orthogonal RNN of the same d are within 3 points (seed means): A5 16 (d = 5), A5 64 (d = 3), S5 16 and 64 (d = 5).
+  If holonomy is ahead by more than 3 points anywhere, the subset sectors help state tracking; if behind, they cost.
+- **W7 (two layers).** Holonomy d = 3 with two layers on S5 classes stays <= 30% (the semidirect route of 7.2 exists
+  but is not found); DeltaProduct n_h = 2 with two layers <= 20%; Newton and softmax with two layers on the class
+  tasks: second half <= 5%.
+- **W8 (DeltaProduct as implemented).** At every n_h, class tasks <= 20% at length 16 and second half <= 5%; S5
+  stabiliser at n_h = 4 >= 95% at length 16; A5 stabiliser at n_h = 2 <= 70%.
+- **W9 (length generalisation, from one pilot seed).** Trained at 16, scored at 64: every arm that meets W1 on A5
+  classes >= 95%; on S5 classes the Householder RNN n_h = 4 (d = 5) >= 95%, while holonomy d = 5 and the orthogonal
+  RNN d = 5 are below 95% on at least 2 of 3 seeds.
+
+**Decisions.** If W1, W5 and W6 hold, the composition view pays on state tracking **only through its top-arity
+sector, which is a linear RNN with matrix state**: holonomy attention solves the word problems that softmax and
+commuting layers cannot (W3, W4), but it does so as an orthogonal RNN does, and the subset sums contribute nothing
+there. Their value, if any, stays with relational queries (section 2). If W9 holds as well, reflections are the
+better parametrisation for the prefix (O(d) rather than SO(d)), and holonomy attention should take Householder
+products for its matrices. If W6 fails in holonomy's favour, the subset sectors help state tracking and that is the
+next thing to explain. If W1 fails for an arm with an exact representation, check learnability (one amendment
+allowed: 20,000 steps on the failing cells) before reading W6.
+
+### 7.7 Budget
+
+Pilot 51 runs; main grid `wp_main` 210 runs (48 + 54 class runs at length 16, 42 at length 64, 42 stabiliser runs at
+16 and 24 at 64), estimated 12 GPU-hours on L4, about $10; cap $20.

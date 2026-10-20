@@ -491,8 +491,83 @@ def grp_e1(seeds: list[int], tasks: list[str], steps: int = 6000) -> list[list[s
     return runs
 
 
+# GROUPS.md section 7: word problems over A5 and S5. Every arm is causal: holonomy attention with its causal
+# subset sectors (K = 3) and the prefix product, Newton attention as its commuting d = 2 case, the prefix
+# product alone (an orthogonal RNN with matrix state), softmax with positions, DeltaProduct with n_h
+# Householders per token. Runs at length 16 are also scored at length 64.
+def wp_arm(kind: str, d: int = 0, nh: int = 0) -> dict:
+    if kind == "holo":
+        return {"model": "holo", **holo_args(d), "causal": 1, "prefix": 1}
+    if kind == "noprefix":
+        return {"model": "holo", **holo_args(d), "causal": 1, "prefix": 0}
+    if kind == "orth":
+        return {"model": "holo", **holo_args(d), "order": 0, "causal": 1, "prefix": 1}
+    if kind == "hh":
+        # DeltaProduct's transitions (nh generalised Householders) in the matrix-state read-out of the orth arm
+        return {"model": "holo", **holo_args(d), "order": 0, "causal": 1, "prefix": 1, "hh": nh}
+    if kind == "sa":
+        return {"model": "sa", "causal": 1}
+    return {"model": "deltaprod", "nh": nh, "pos": 0}
+
+
+def wp_runs(tasks, arms, seeds, layers, steps=6000):
+    runs = []
+    for t in tasks:
+        for kind, d, nh in arms:
+            a = wp_arm(kind, d, nh)
+            m = a.pop("model")
+            extra = {"evallen": 64} if t.endswith("_16") else {}
+            for L in layers:
+                runs += grid([t], [m], seeds, steps=steps, layers=L, **a, **extra)
+    return runs
+
+
+def wp_main() -> list[list[str]]:
+    S = [0, 1, 2]
+    common = [("holo", 3, 0), ("holo", 4, 0), ("holo", 5, 0), ("holo", 2, 0), ("orth", 5, 0), ("noprefix", 5, 0),
+              ("sa", 0, 0), ("dp", 0, 1), ("dp", 0, 2), ("dp", 0, 4)]
+    runs = wp_runs(["wp_a5_16"], common + [("hh", 5, 1), ("hh", 5, 2)], S, [1])
+    runs += wp_runs(["wp_s5_16"], common + [("hh", 5, 2), ("hh", 5, 4), ("hh", 4, 4)], S, [1])
+    runs += wp_runs(["wp_a5_16"], [("holo", 2, 0), ("sa", 0, 0), ("dp", 0, 1), ("hh", 5, 1)], S, [2])
+    runs += wp_runs(["wp_s5_16"], [("holo", 3, 0), ("holo", 2, 0), ("sa", 0, 0), ("dp", 0, 2), ("hh", 5, 2)], S, [2])
+    runs += wp_runs(["wp_a5_64"], [("holo", 3, 0), ("orth", 3, 0), ("holo", 2, 0), ("sa", 0, 0), ("dp", 0, 2), ("hh", 5, 2)], S, [1], steps=12000)
+    runs += wp_runs(["wp_s5_64"], [("holo", 5, 0), ("orth", 5, 0), ("holo", 2, 0), ("sa", 0, 0), ("dp", 0, 4), ("hh", 5, 4)], S, [1], steps=12000)
+    runs += wp_runs(["wp_a5_64", "wp_s5_64"], [("sa", 0, 0)], S, [2], steps=12000)
+    runs += wp_runs(["ws_a5_16"], [("holo", 3, 0), ("holo", 2, 0), ("sa", 0, 0), ("dp", 0, 2), ("dp", 0, 4), ("hh", 5, 2)], S, [1])
+    runs += wp_runs(["ws_s5_16"], [("holo", 5, 0), ("holo", 3, 0), ("holo", 2, 0), ("sa", 0, 0), ("dp", 0, 4), ("hh", 5, 4)], S, [1])
+    runs += wp_runs(["ws_a5_16", "ws_s5_16"], [("sa", 0, 0)], S, [2])
+    runs += wp_runs(["ws_a5_64"], [("holo", 3, 0), ("sa", 0, 0), ("dp", 0, 2), ("hh", 5, 2)], S, [1], steps=12000)
+    runs += wp_runs(["ws_s5_64"], [("holo", 5, 0), ("sa", 0, 0), ("dp", 0, 4), ("hh", 5, 4)], S, [1], steps=12000)
+    return runs
+
+
+WP_ALL = [("holo", 3, 0), ("holo", 4, 0), ("holo", 5, 0), ("holo", 2, 0), ("orth", 5, 0), ("noprefix", 5, 0),
+          ("sa", 0, 0), ("dp", 0, 1), ("dp", 0, 2), ("dp", 0, 4)]
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
+    # GROUPS.md section 7 pilot (before the predictions are frozen): learnability and cost, seed 0
+    "wp_pilot": wp_runs(["wp_a5_16", "wp_s5_16"], [a for a in WP_ALL if a[0] != "sa"], [0], [1])
+                + wp_runs(["wp_a5_16", "wp_s5_16"], [("sa", 0, 0)], [0], [1, 2])
+                + wp_runs(["wp_s5_16"], [("holo", 3, 0), ("dp", 0, 2)], [0], [2])
+                + wp_runs(["wp_s5_64"], [("holo", 5, 0), ("sa", 0, 0), ("dp", 0, 4)], [0], [1])
+                + wp_runs(["ws_s5_16"], [("holo", 5, 0), ("holo", 2, 0), ("sa", 0, 0), ("dp", 0, 4)], [0], [1]),
+    # pilot, DeltaProduct at defaults learned nothing beyond position 2: is it its beta = 1 start or its budget?
+    "wp_pilot_dp": [r + extra for t, nh in (("wp_a5_16", 2), ("wp_s5_16", 4)) for r in wp_runs([t], [("dp", 0, nh)], [0], [1], steps=6000)
+                    for extra in (["--beta0", "3"], ["--beta0", "-3"])]
+                   + [r for t, nh in (("wp_a5_16", 2), ("wp_s5_16", 4)) for r in wp_runs([t], [("dp", 0, nh)], [0], [1], steps=20000)]
+                   + [r + ["--beta0", "3"] for r in wp_runs(["wp_a5_16"], [("dp", 0, 1)], [0], [1])],
+    # second DeltaProduct round: is the read-out too narrow (width 64, heads of 16) or the rate wrong?
+    "wp_pilot_dp2": [r + extra for r in wp_runs(["wp_a5_16"], [("dp", 0, 2)], [0], [1])
+                     for extra in (["--d", "128"], ["--d", "128", "--heads", "8"], ["--heads", "1"], ["--lr", "5e-4"],
+                                   ["--lr", "5e-3"], ["--d", "128", "--beta0", "3"])]
+                    + [r + ["--d", "128"] for r in wp_runs(["wp_s5_16"], [("dp", 0, 4)], [0], [1])],
+    # GROUPS.md section 7 main grid (registered in section 7.6 before it ran): 3 seeds; length-64 cells 12,000 steps
+    "wp_main": wp_main(),
+    # third round: DeltaProduct's transitions with the full matrix-state read-out (is it the read-out?)
+    "wp_pilot_hh": wp_runs(["wp_a5_16"], [("hh", 5, 1), ("hh", 5, 2)], [0], [1])
+                   + wp_runs(["wp_s5_16"], [("hh", 5, 2), ("hh", 5, 4), ("hh", 4, 4)], [0], [1])
+                   + wp_runs(["ws_a5_16"], [("dp", 0, 2)], [0], [1]),
     "baseline": baseline(),
     "phase_a": phase_a(),
     "newton_a": newton_a(),

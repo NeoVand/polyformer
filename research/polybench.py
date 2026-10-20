@@ -376,6 +376,13 @@ TASKS = {
     "g3_z60": (lambda r, B: groups.task_gmatch(r, B, "Z60", 11, 3), [61], 2, False),
     "g3_a5": (lambda r, B: groups.task_gmatch(r, B, "A5", 11, 3), [61], 2, False),
 }
+# GROUPS.md section 7: the word problem (prefix products) over A5 and S5, as |G| classes (wp_) or as
+# membership of the point stabiliser (ws_), at lengths 16 and 64
+for _g, _n in (("a5", 60), ("s5", 120)):
+    for _T in (16, 64):
+        TASKS[f"wp_{_g}_{_T}"] = ((lambda g, T: lambda r, B: groups.task_word(r, B, g.upper(), T, "class"))(_g, _T), [_n + 1], _n, False)
+        TASKS[f"ws_{_g}_{_T}"] = ((lambda g, T: lambda r, B: groups.task_word(r, B, g.upper(), T, "stab"))(_g, _T), [_n + 1], 2, False)
+WORD_GROUP = {"a5": "A5", "s5": "S5"}
 
 # ----------------------------------------------------------------------------- model
 ORDER3 = {"tree", "strassen", "cubic", "cubic_add", "cubic_marg", "cubic_qgate", "cubic_wide"}
@@ -450,7 +457,21 @@ def init(key, cfg, vocabs, C, T):
             # ordered products over subsets of positions, every arity 1..K, through one shared projection
             d, K = cfg.gdim, cfg.order
             a = {"s": dense(next(ks), D, H * d * d), "g": dense(next(ks), D, H),
-                 "o": dense(next(ks), H * d * d, D), "alpha": jnp.ones((K, D))}
+                 "o": dense(next(ks), H * d * d, D), "alpha": jnp.ones((K + getattr(cfg, "prefix", 0), D))}
+            if getattr(cfg, "hh", 0):
+                # DeltaProduct's transitions instead of rotations: hh generalised Householders per token and head
+                a["s"] = dense(next(ks), D, H * cfg.hh * d)
+                a["hb"] = dense(next(ks), D, H * cfg.hh)
+                a["hb"]["b"] = jnp.full(H * cfg.hh, float(getattr(cfg, "beta0", 0.0)))
+        if cfg.model == "deltaprod":
+            # DeltaProduct (Siems et al. 2025): n_h generalised Householder steps per token on a matrix state,
+            # beta in (0, 2) so the transitions can reflect (negative eigenvalues, Grazzi et al. 2024)
+            nh = cfg.nh
+            a = {"q": dense(next(ks), D, H * dh), "k": dense(next(ks), D, H * nh * dh), "v": dense(next(ks), D, H * nh * dh),
+                 "beta": dense(next(ks), D, H * nh), "o": dense(next(ks), H * dh, D), "on": jnp.ones((H, dh))}
+            # --beta0 b starts every beta at 2 sigmoid(b): 0 is DeltaNet's default (beta = 1, a projection that
+            # erases the state along k), large b starts near reflections, which keep it
+            a["beta"]["b"] = jnp.full(H * nh, float(getattr(cfg, "beta0", 0.0)))
         if cfg.model == "sfa":
             # subset attention: one softmax per head selects, Newton's identities read every arity from it
             r, K = cfg.rank, cfg.order
@@ -644,10 +665,67 @@ def holonomy_sectors(M, K):
 
 
 def holo_mats(cfg, a, x):
-    """The rotations U = exp(A), A skew-symmetric and linear in the token, [..., H, d, d]."""
+    """The rotations U = exp(A), A skew-symmetric and linear in the token, [..., H, d, d]; with --hh n instead
+    the product of n generalised Householders I - beta k k^T, k unit, beta = 2 sigmoid in (0, 2) (DeltaProduct)."""
     d = cfg.gdim
+    if getattr(cfg, "hh", 0):
+        k = lin(a["s"], x).reshape(x.shape[:-1] + (cfg.heads, cfg.hh, d))
+        k = k / jnp.sqrt((k ** 2).sum(-1, keepdims=True) + 1e-6)
+        beta = 2 * jax.nn.sigmoid(lin(a["hb"], x)).reshape(x.shape[:-1] + (cfg.heads, cfg.hh))
+        U = jnp.broadcast_to(jnp.eye(d, dtype=x.dtype), x.shape[:-1] + (cfg.heads, d, d))
+        for j in range(cfg.hh):
+            Uk = jnp.einsum("...ij,...j->...i", U, k[..., j, :])
+            U = U - beta[..., j, None, None] * jnp.einsum("...i,...j->...ij", Uk, k[..., j, :])
+        return U
     S = lin(a["s"], x).reshape(x.shape[:-1] + (cfg.heads, d, d))
     return jax.scipy.linalg.expm((S - jnp.swapaxes(S, -1, -2)) * (cfg.phase / 2))
+
+
+def holonomy_causal(M, U, K, prefix):
+    """
+    The causal holonomy sectors (GROUPS.md section 7). M: gated matrices, U: the rotations without gates,
+    both [B, T, H, d, d]. Returns K arrays [B, T, H, d, d], entry m at position i the sum over the
+    (m+1)-subsets of positions <= i that contain i of their products in position order (L_m(i) M_i), and,
+    with prefix, the product of every rotation up to i, U_0 U_1 ... U_i: the full-arity sector with its
+    gates divided out, which is one running product (an orthogonal RNN with matrix state). O(T K d^3).
+    """
+    B, T, H, d, _ = M.shape
+    eye = jnp.broadcast_to(jnp.eye(d, dtype=M.dtype), (B, H, d, d))
+
+    def step(carry, inp):
+        run, P = carry                     # run[m]: sum over m-subsets of earlier positions of their products
+        Mi, Ui = inp
+        out = jnp.einsum("kbhij,bhjl->kbhil", run, Mi) if K else run
+        run = jnp.concatenate([run[:1], run[1:] + out[:-1]], 0) if K else run
+        P = P @ Ui
+        return (run, P), (out, P)
+
+    run0 = jnp.concatenate([eye[None], jnp.zeros((max(K, 1) - 1, B, H, d, d), M.dtype)], 0)
+    _, (outs, Ps) = jax.lax.scan(step, (run0, eye), (jnp.moveaxis(M, 1, 0), jnp.moveaxis(U, 1, 0)))
+    secs = [jnp.moveaxis(outs[:, m], 0, 1) for m in range(K)]
+    return secs + ([jnp.moveaxis(Ps, 0, 1)] if prefix else [])
+
+
+def deltaprod_scan(q, k, v, beta):
+    """
+    q: [B, T, H, dk]; k: [B, T, H, nh, dk] (unit); v: [B, T, H, nh, dv]; beta: [B, T, H, nh]. Per token,
+    nh delta-rule steps S <- S + beta (v - S k) k^T = S (I - beta k k^T) + beta v k^T on the state
+    S [B, H, dv, dk], then o_t = S_t q_t. So S_t = S_0 A_1 ... A_t + writes, A_t a product of nh
+    generalised Householders.
+    """
+    B, T, H, nh, dk = k.shape
+    dv = v.shape[-1]
+
+    def step(S, inp):
+        qt, kt, vt, bt = inp
+        for j in range(nh):
+            Sk = jnp.einsum("bhvk,bhk->bhv", S, kt[:, :, j])
+            S = S + bt[:, :, j, None, None] * jnp.einsum("bhv,bhk->bhvk", vt[:, :, j] - Sk, kt[:, :, j])
+        return S, jnp.einsum("bhvk,bhk->bhv", S, qt)
+
+    S0 = jnp.zeros((B, H, dv, dk), q.dtype)
+    _, o = jax.lax.scan(step, S0, tuple(jnp.moveaxis(t, 1, 0) for t in (q, k, v, beta)))
+    return jnp.moveaxis(o, 0, 1)                    # [B, T, H, dv]
 
 
 def attention(cfg, a, x):
@@ -688,15 +766,33 @@ def attention(cfg, a, x):
         # holonomy attention (GROUPS.md): ordered products of gated per-token rotations over every subset
         # of positions, arity 1..K, normalised per arity like Newton attention and read by one projection
         d, K = cfg.gdim, cfg.order
-        M = jax.nn.sigmoid(lin(a["g"], x))[..., None, None] * holo_mats(cfg, a, x)
-        F = holonomy_sectors(M, K)
-        feats = jnp.stack([F[m] / math.comb(max(T - 1, m), m) for m in range(K)], 3).reshape(B, T, H, K, d * d)
+        U = holo_mats(cfg, a, x)
+        M = jax.nn.sigmoid(lin(a["g"], x))[..., None, None] * U
+        if getattr(cfg, "causal", 0):
+            # subsets of positions <= i that end at i, divided by their count C(i, m); then the prefix product
+            F = holonomy_causal(M, U, K, getattr(cfg, "prefix", 0))
+            cnt = np.array([[max(math.comb(i, m), 1) for m in range(K)] + [1] * getattr(cfg, "prefix", 0) for i in range(T)], np.float32)
+            feats = jnp.stack(F, 2) / cnt[None, :, :, None, None, None]
+            feats = jnp.moveaxis(feats, 2, 3).reshape(B, T, H, K + getattr(cfg, "prefix", 0), d * d)
+        else:
+            F = holonomy_sectors(M, K)
+            feats = jnp.stack([F[m] / math.comb(max(T - 1, m), m) for m in range(K)], 3).reshape(B, T, H, K, d * d)
         if cfg.fnorm:
             feats = feats / jnp.sqrt((feats ** 2).mean((2, 4), keepdims=True) + 1e-6)
         parts = jnp.einsum("bthkc,hcd->btkd", feats, a["o"]["w"].reshape(H, d * d, D)) * a["alpha"][None, None]
         if getattr(cfg, "want_parts", False):
             return parts
         return parts.sum(2) + a["o"]["b"]
+    if cfg.model == "deltaprod":
+        nh = cfg.nh
+        unit = lambda t: t / jnp.sqrt((t ** 2).sum(-1, keepdims=True) + 1e-6)
+        q = unit(lin(a["q"], x).reshape(B, T, H, dh))
+        k = unit(lin(a["k"], x).reshape(B, T, H, nh, dh))
+        v = lin(a["v"], x).reshape(B, T, H, nh, dh)
+        beta = 2 * jax.nn.sigmoid(lin(a["beta"], x).reshape(B, T, H, nh))
+        o = deltaprod_scan(q, k, v, beta)
+        o = o / jnp.sqrt((o ** 2).mean(-1, keepdims=True) + 1e-6) * a["on"]   # per-head RMS norm, as DeltaNet
+        return lin(a["o"], o.reshape(B, T, H * dh))
     if cfg.model == "sfa":
         # Subset attention. One softmax per head picks which tokens a query reads; Newton's identities on
         # the weighted power sums give, for every arity m + 1 <= K, the query's channels times the mean
@@ -917,6 +1013,8 @@ def attention(cfg, a, x):
     elif cfg.model == "sa":
         q, k, v = (heads(lin(a[n], x)) for n in ("q", "k", "v"))
         s = jnp.einsum("bhic,bhjc->bhij", q, k) / math.sqrt(dh)
+        if getattr(cfg, "causal", 0):
+            s = jnp.where(jnp.tril(jnp.ones((T, T), bool)), s, -1e9)
         y = jnp.einsum("bhij,bhjc->bhic", jax.nn.softmax(s, -1), v)
     else:
         q, k1, k2, v1, v2 = (heads(lin(a[n], x)) for n in ("q", "k1", "k2", "v1", "v2"))
@@ -999,6 +1097,12 @@ def main():
     ap.add_argument("--task", default="match3"); ap.add_argument("--model", default="cubic")
     ap.add_argument("--layers", type=int, default=1); ap.add_argument("--d", type=int, default=64)
     ap.add_argument("--heads", type=int, default=4); ap.add_argument("--wide", type=int, default=4); ap.add_argument("--vdim", type=int, default=8); ap.add_argument("--plen", type=int, default=3); ap.add_argument("--recur", type=int, default=1); ap.add_argument("--modes", type=int, default=81); ap.add_argument("--nocubic", type=int, default=0); ap.add_argument("--rank", type=int, default=32); ap.add_argument("--order", type=int, default=6); ap.add_argument("--phase", type=float, default=2.0); ap.add_argument("--rawphase", type=int, default=0); ap.add_argument("--readout", default="full"); ap.add_argument("--fnorm", type=int, default=0); ap.add_argument("--diag", type=int, default=1); ap.add_argument("--gdim", type=int, default=3)
+    # word problems (GROUPS.md section 7): --causal 1 (softmax and holonomy attention), --prefix 1 (holonomy's
+    # running product as one more sector; with --order 0 it is the only one, an orthogonal RNN with matrix
+    # state), --nh Householders per token (--model deltaprod), --evallen L also scores at length L
+    ap.add_argument("--causal", type=int, default=0); ap.add_argument("--prefix", type=int, default=0)
+    ap.add_argument("--nh", type=int, default=2); ap.add_argument("--evallen", type=int, default=0)
+    ap.add_argument("--beta0", type=float, default=0.0); ap.add_argument("--hh", type=int, default=0)
     # subset attention (--model sfa): Poisson vacuum, optional logit cap, zero-initialised queries, statistics, linear-value path
     ap.add_argument("--vac", type=float, default=0.2); ap.add_argument("--cap", type=float, default=0.0); ap.add_argument("--qzero", type=int, default=1); ap.add_argument("--stats", default="fermi"); ap.add_argument("--vpath", type=int, default=1); ap.add_argument("--hops", type=int, default=0)
     ap.add_argument("--steps", type=int, default=3000); ap.add_argument("--batch", type=int, default=128)
@@ -1016,7 +1120,7 @@ def main():
     gen, vocabs, C, kind = TASKS[cfg.task]
     multilabel = kind == "multilabel"
     rng = np.random.default_rng(cfg.seed)
-    tok0, _, _ = gen(rng, 2); T = tok0.shape[1]
+    tok0, _, _ = gen(rng, 2); T = max(tok0.shape[1], cfg.evallen + 1)
     if cfg.trainset:
         # a fixed training set, reshuffled every epoch; the last batch of an epoch may be short
         dtok, dtgt, dmsk = gen(rng, cfg.trainset)
@@ -1047,6 +1151,7 @@ def main():
         return jax.jit(lambda p, tok, tgt, msk: eval_impl(c, p, tok, tgt, msk))
 
     def eval_impl(c, p, tok, tgt, msk):
+        word = c.task[:3] in ("wp_", "ws_")
         lg = forward(c, p, tok)
         if multilabel:
             hit = ((lg > 0) == (tgt > 0.5)).all(-1)
@@ -1064,6 +1169,13 @@ def main():
             recalls.append((hit * cm).sum() / jnp.maximum(cm.sum(), 1))
             present.append((cm.sum() > 0).astype(jnp.float32))
         bal = (jnp.stack(recalls) * jnp.stack(present)).sum() / jnp.maximum(jnp.stack(present).sum(), 1)
+        if word:
+            # word problems: also accuracy per position and balanced accuracy over the second half
+            half = jnp.arange(tgt.shape[1]) > tgt.shape[1] // 2
+            rec2 = [(hit * (tgt == k) * msk * half).sum() / jnp.maximum(((tgt == k) * msk * half).sum(), 1) for k in range(C)]
+            pr2 = [(((tgt == k) * msk * half).sum() > 0).astype(jnp.float32) for k in range(C)]
+            bal2 = (jnp.stack(rec2) * jnp.stack(pr2)).sum() / jnp.maximum(jnp.stack(pr2).sum(), 1)
+            return tokacc, ok.all(-1).mean(), bal, (hit * msk).sum(0) / jnp.maximum(msk.sum(0), 1), bal2
         return tokacc, ok.all(-1).mean(), bal
 
     evaluate = eval_with(cfg)
@@ -1083,12 +1195,21 @@ def main():
             tok, tgt, msk = gen(rng, cfg.batch)
         params, st, l = step(params, st, tok, tgt, msk)
         if (it + 1) % max(1, cfg.steps // 10) == 0:
-            ta, sa, ba = evaluate(params, etok, etgt, emsk)
+            ta, sa, ba = evaluate(params, etok, etgt, emsk)[:3]
             curve.append((it + 1, round(float(l), 4), round(float(ta), 4), round(float(sa), 4), round(float(ba), 4)))
-    ta, sa, ba = evaluate(params, etok, etgt, emsk)
+    res = evaluate(params, etok, etgt, emsk)
+    ta, sa, ba = res[:3]
     tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") + ("_shared" if cfg.readout == "shared" else "") + ("_fnorm" if cfg.fnorm else "") if cfg.model == "newton" else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_bose" if cfg.stats == "bose" else "") + ("" if cfg.vpath else "_novp") + ("" if cfg.qzero else "_qrand") + (f"_v{cfg.vac:g}" if cfg.vac != 0.2 else "") + (f"_c{cfg.cap:g}" if cfg.cap else "") + (f"_w{cfg.hops}" if cfg.hops else "") if cfg.model == "sfa" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
     if cfg.model == "holo":
-        tag = f"holo_d{cfg.gdim}_h{cfg.heads}_K{cfg.order}" + ("_fnorm" if cfg.fnorm else "")
+        tag = f"holo_d{cfg.gdim}_h{cfg.heads}_K{cfg.order}" + ("_fnorm" if cfg.fnorm else "") + ("_causal" if cfg.causal else "") + ("_prefix" if cfg.prefix else "")
+        if cfg.order == 0:
+            tag = f"orth_d{cfg.gdim}_h{cfg.heads}"
+        if cfg.hh:
+            tag = tag.replace("orth", "hhrnn").replace("holo", "holohh") + f"_nh{cfg.hh}" + (f"_b{cfg.beta0:g}" if cfg.beta0 else "")
+    if cfg.model == "deltaprod":
+        tag = f"deltaprod_nh{cfg.nh}" + (f"_b{cfg.beta0:g}" if cfg.beta0 else "")
+    if cfg.model == "sa" and cfg.causal:
+        tag = "sa_causal"
     if cfg.embed != "table":
         tag += f"_{cfg.embed}"
     out = {"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed, "d": cfg.d, "pos": cfg.pos,
@@ -1109,13 +1230,27 @@ def main():
             out["per_d"][str(dd)] = round(float(evaluate(params, dtok, dtgt, dmsk)[2]), 4)
     if cfg.model == "holo" and cfg.task.startswith("g3_") and not cfg.pos and cfg.layers == 1:
         out["rep"] = holo_rep_content(cfg, params)
+    if cfg.task[:3] in ("wp_", "ws_"):
+        out["per_pos"] = [round(float(v), 4) for v in np.asarray(res[3])[1:]]
+        out["bal_late"] = round(float(res[4]), 4)
+        if cfg.model == "holo" and not cfg.pos:
+            # the first layer reads only the embedding, so its rotations are a function of the element
+            out["rep"] = holo_rep_content(cfg, params)
+        if cfg.evallen:
+            # length generalisation: the same task at another length, positions beyond training included
+            lt = cfg.task.rsplit("_", 1)[0] + f"_{cfg.evallen}"
+            ltok, ltgt, lmsk = TASKS[lt][0](np.random.default_rng(40_000 + cfg.seed), 1024)
+            lres = evaluate(params, ltok, ltgt, lmsk)
+            out["len"] = {"task": lt, "tok_acc": round(float(lres[0]), 4), "seq_acc": round(float(lres[1]), 4),
+                          "bal_acc": round(float(lres[2]), 4), "bal_late": round(float(lres[4]), 4),
+                          "per_pos": [round(float(v), 4) for v in np.asarray(lres[3])[1:]]}
     if cfg.model in ("newton", "sfa") and cfg.diag and cfg.layers == 1 and cfg.recur == 1 and not multilabel:
         out["diag"] = newton_diagnostics(cfg, params, etok, etgt, emsk, eval_with)
     print(json.dumps(out))
 
 def holo_rep_content(cfg, params):
     """Which irreps of the task's group the trained layer's rotations hold (groups.rep_content)."""
-    G = groups.get({"g3_z12": "Z12", "g3_a4": "A4", "g3_z60": "Z60", "g3_a5": "A5"}[cfg.task])
+    G = groups.get({"g3_z12": "Z12", "g3_a4": "A4", "g3_z60": "Z60", "g3_a5": "A5"}.get(cfg.task) or WORD_GROUP[cfg.task.split("_")[1]])
     L = params["layers"][0]
     x = ln(L["ln1"], params["emb"][0][: G.n])                       # every element, no positions
     U = holo_mats(cfg, L["attn"], x).transpose(1, 0, 2, 3)           # [H, |G|, d, d]
