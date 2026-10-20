@@ -45,6 +45,17 @@ import numpy as np
 import optax
 
 BEYOND_ARCHS = ("beyond_a", "beyond_b", "beyond_c", "gated_delta", "prefix")
+QKV_CONV_ARCHS = ("gpt", "plx", "beyond_a", "beyond_b", "beyond_c")
+
+
+def qkv_conv_width(cfg):
+    """Validate the optional shared attention-locality module; zero disables it."""
+    width = getattr(cfg, "qkv_conv", 0)
+    if type(width) is not int or width < 0:
+        raise ValueError("qkv_conv must be a nonnegative integer")
+    if width and cfg.arch not in QKV_CONV_ARCHS:
+        raise ValueError(f"qkv_conv is supported only for {QKV_CONV_ARCHS}, not {cfg.arch!r}")
+    return width
 
 
 def load(path="/root/enwik8"):
@@ -90,6 +101,7 @@ def ln(p, x):
 
 def init(key, cfg):
     D, L, T = cfg.d, cfg.layers, cfg.ctx
+    conv_width = qkv_conv_width(cfg)
     ks = iter(jax.random.split(key, 16 + 16 * L))
     p = {"emb": jax.random.normal(next(ks), (cfg.vocab, D)) * 0.02, "pos": jax.random.normal(next(ks), (T, D)) * 0.02,
          "lnf": ln_init(D), "layers": []}
@@ -155,13 +167,29 @@ def init(key, cfg):
                 lyr.pop("qkv")
                 lyr.pop("o")
                 lyr.update({k: v for k, v in extra.items() if k in ("qkv", "o")})
+    if conv_width:
+        import beyond_layers
+        # Separate shared seed stream, after BEYOND extras: S/P/A/B/C receive
+        # identical kernels, and every pre-existing model parameter is unchanged.
+        conv_keys = jax.random.split(jax.random.fold_in(key, 703), L)
+        for lyr, conv_key in zip(p["layers"], conv_keys):
+            lyr["qkv_conv"] = beyond_layers.init_qkv_conv(conv_key, D, conv_width)
     return p
+
+
+def project_qkv(lyr, x):
+    """Project Q/K/V, then apply optional causal depthwise FIR without activation."""
+    packed = lin(lyr["qkv"], x)
+    if "qkv_conv" in lyr:
+        import beyond_layers
+        packed = beyond_layers.causal_depthwise_conv(packed, lyr["qkv_conv"])
+    return jnp.split(packed, 3, -1)
 
 
 def softmax_attention(cfg, lyr, x):
     B, T, D = x.shape
     H = cfg.heads
-    q, k, v = jnp.split(lin(lyr["qkv"], x), 3, -1)
+    q, k, v = project_qkv(lyr, x)
     sh = lambda t: t.reshape(B, T, H, D // H).transpose(0, 2, 1, 3)
     q, k, v = sh(q), sh(k), sh(v)
     if getattr(cfg, "lookback", 0):
@@ -258,7 +286,7 @@ def local_attention(cfg, lyr, x, stats=None):
     The corrected weights still sum to one and stay on the causal past; one A V product as in softmax."""
     B, T, D = x.shape
     H = cfg.heads
-    q, k, v = jnp.split(lin(lyr["qkv"], x), 3, -1)
+    q, k, v = project_qkv(lyr, x)
     sh = lambda t: t.reshape(B, T, H, D // H).transpose(0, 2, 1, 3)
     q, k, v = sh(q), sh(k), sh(v)
     s = jnp.where(jnp.tril(jnp.ones((T, T), bool)), capped_scores(cfg, q, k), -1e9)
@@ -554,11 +582,15 @@ def flops_per_token(cfg, T):
     Every power-sum pass, Newton recursion, read-out, look-back and walk pass is included.
     """
     D, L, V, H = cfg.d, cfg.layers, cfg.vocab, cfg.heads
+    conv_width = qkv_conv_width(cfg)
     if cfg.arch in BEYOND_ARCHS:
         import beyond_layers
         return L * (beyond_layers.forward_flops(cfg, cfg.arch, T) + 4 * D * cfg.mlp) + 2 * D * V
     ta = (T + 1) / 2
     lyr = 2 * (4 * D * D + 2 * D * cfg.mlp) + 2 * 2 * ta * D + 5 * ta * H        # projections, MLP, QK, AV, softmax
+    # BEYOND arms count this in beyond_layers.forward_flops above; count it
+    # here only for the ordinary softmax/Parallax implementations.
+    lyr += 6 * conv_width * D
     if cfg.arch == "sfa":
         r, K = cfg.rank, cfg.order
         lyr += 2 * 2 * D * H * r                                                   # phases and gates
@@ -682,6 +714,8 @@ def main():
     ap.add_argument("--lam0", type=float, default=1.0)
     ap.add_argument("--opt", default="adamw", help="adamw | muon")
     ap.add_argument("--plx_norm", type=int, default=0, help="Parallax with RMSNorm on rho (gain 0 at init, W_R random)")
+    ap.add_argument("--qkv_conv", type=int, default=0,
+                    help="optional causal depthwise QKV width, no activation; shared S/P/A/B/C backbone")
     ap.add_argument("--pos", type=int, default=1, help="learned positions; disabled for position-free word diagnostics")
     ap.add_argument("--gdim", type=int, default=5, help="BEYOND small orthogonal matrix dimension")
     ap.add_argument("--nh", type=int, default=4, help="matrix transition / DeltaProduct microsteps")

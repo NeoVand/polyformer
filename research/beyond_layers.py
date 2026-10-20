@@ -39,6 +39,18 @@ def _dense(key, fan_in, fan_out, scale=1.0):
     }
 
 
+def init_qkv_conv(key, d, width):
+    """Bias-free causal depthwise QKV kernel, with lag zero stored first.
+
+    This is the established Primer-style local binding component. Initializing
+    it from a separate key preserves every pre-existing parameter draw.
+    """
+    if width < 1:
+        raise ValueError("qkv_conv width must be positive")
+    bound = 1 / math.sqrt(width)
+    return jax.random.uniform(key, (width, 3 * d), minval=-bound, maxval=bound)
+
+
 def _mm(cfg, a, b, spec=None):
     if _get(cfg, "bf16", 0):
         a, b = a.astype(jnp.bfloat16), b.astype(jnp.bfloat16)
@@ -99,6 +111,9 @@ def init_layer(key, cfg, kind=None):
         p["qkv"] = _dense(next(keys), d, 3 * d)
         p["o"] = _dense(next(keys), d, d, scale)
         p["wr"] = {"w": jnp.zeros((d, d)), "b": jnp.zeros(d)}
+        width = int(_get(cfg, "qkv_conv", 0))
+        if width:
+            p["qkv_conv"] = init_qkv_conv(jax.random.fold_in(key, 911), d, width)
     if kind in ("beyond_a", "beyond_b", "beyond_c", "prefix"):
         # Independent parameters in equal initial pairs: H(k)H(k)=I.
         # Their derivatives have opposite signs and do not vanish individually.
@@ -163,7 +178,10 @@ def content_attention(cfg, p, x):
     """Return content output and (corrected weights, original value heads)."""
     b, t, d = x.shape
     h = cfg.heads
-    q, k, v = jnp.split(_lin(cfg, p["qkv"], x), 3, -1)
+    qkv = _lin(cfg, p["qkv"], x)
+    if "qkv_conv" in p:
+        qkv = causal_depthwise_conv(qkv, p["qkv_conv"])
+    q, k, v = jnp.split(qkv, 3, -1)
     split = lambda z: z.reshape(b, t, h, d // h).transpose(0, 2, 1, 3)
     q, k, v = split(q), split(k), split(v)
     logits = _mm(cfg, q, k, "bhtd,bhsd->bhts") / math.sqrt(d // h)
@@ -376,6 +394,8 @@ def forward_flops(cfg, kind=None, seq_len=None):
         content = 10 * d * d + 8 * ta * d + 8 * ta * h + 3 * d
         if _get(cfg, "ablate", "none") == "precision":
             content = 8 * d * d + 4 * ta * d + 5 * ta * h
+        # Three projected streams, width taps, multiply-plus-add convention.
+        content += 6 * int(_get(cfg, "qkv_conv", 0)) * d
         if _get(cfg, "ablate", "none") == "composition":
             return float(content)
     transition = 2 * d * gh * gnh * gd + gh * gnh * (6 * gd * gd + 5 * gd)

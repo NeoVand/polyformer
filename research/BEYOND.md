@@ -102,6 +102,17 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   Added final checkpoint persistence and same-sample final component ablations for later language runs.
 - 2026-10-20 13:22 UTC — The remaining induction control also reaches 100%. All 35 initial jobs are
   complete with finite outputs; conservative settled estimate $4.726 (screen $2.400, language $2.326).
+- 2026-10-20 13:24 UTC — Word controls and recurrent runtime tests launched from immutable manifests
+  committed at `75dc81a`, predictions/implementation `cf2b32f`. Launch logs are
+  `/tmp/beyond-word-learn.log` and `/tmp/beyond-runtime.log`. Their uploaded sources remain fixed.
+  Added an optional common QKV convolution after the raw-MQAR binding failure; register its narrow
+  control pilot below. This is an explicit architecture refinement, not a replacement retrieval task.
+- 2026-10-20 13:27 UTC — The random-initialized prefix reader reaches A5 second-half balanced
+  validation accuracy 95.19%, 98.83%, 99.72%, 100%, 100%, 100% at successive 1,000-update marks;
+  final independent-test accuracy is 100%. Paired initialization and the historical control are
+  still pending. This supports testing the random initialization in all three candidates, before
+  freezing the main screen. The shared-convolution implementation passes causal, reduction, gradient,
+  shared-initialization and exact-cost checks; the legacy LOCAL.md test suite still passes.
 
 ## 1. Design registration (before training)
 
@@ -253,3 +264,33 @@ charged to the development reserve (not language-quality selection). Choose the 
 implementation. The recurrence and FLOP count are unchanged; local forward and VJP equivalence tests
 must pass before launch. Prediction: moderate unrolling reduces serial dispatch overhead, although
 the largest factor may cost more compilation. Report failed/timed-out variants and the chosen factor.
+
+**Local-binding refinement and control pilot.** [Primer](https://arxiv.org/abs/2109.08668) supplies the
+established depthwise-QKV convolution; [Arora et al.](https://arxiv.org/abs/2505.15105) separately show
+that short convolutions can implement the association step in retrieval. Add an optional causal
+width-3 depthwise filter after Q/K/V projection, with no activation. Initialize each channel's taps
+uniformly in [-1/sqrt(3), 1/sqrt(3)] from a separate seed stream shared by softmax, Parallax and A/B/C.
+Every pre-existing parameter draw is preserved. It adds 9D parameters and 18D nominal forward FLOPs
+per layer. A/B's token-to-matrix input stays unchanged; C is conditioned on the convolved attention
+output. The recurrent controls retain their own native convolution. This component is prior art.
+
+Before choosing it for the main grid, run five softmax control jobs at seed 0 and 6,000 updates:
+MQAR at depths 1 and 2, each at Muon .004 and .008; induction at depth 2 and .004.
+Other settings match the retrieval control extension (width 128, heads 4, batch 64, weight decay .1,
+256 validation / 512 test, six evaluations). L4 timeout 600 seconds each, maximum $1.30,
+charged to the screen cap. Prediction: at least one rate exceeds 90% MQAR at both depths, and
+induction remains at least 90%. If adopted, use the same convolution in diagnostics **and language**
+for S/P/A/B/C, compare against that equally equipped softmax, and retain raw softmax as an additional
+language comparator. Raw-MQAR failures remain reported. Neither a bound-key/value task nor
+chance matching can replace the registered retrieval gate.
+
+**Combined-layer learnability pilot.** Following the random-prefix result, test A/B/C separately on
+A5 and S5 length 16 at one layer, with independent-random matrix initialization, the shared width-3
+QKV convolution, and their original branch scale .1. Add the random standalone prefix reader on S5.
+Seven seed-0 jobs, 6,000 updates, Muon .004, width 128, four heads, batch 64, weight decay .1,
+256 validation / 512 test sequences, six evaluations, no positions; L4 timeout 600 seconds,
+maximum $1.82 charged to the screen cap. Prediction: B reaches the 95% late-position criterion on
+both groups; A may pay for its value coupling and C may learn more slowly because its transitions
+depend on attention. The standalone prefix separates combined-layer interference from a failure of
+the shared state component. These remain development runs; the final screen will use explicitly
+matched compute and independent confirmation seeds.
