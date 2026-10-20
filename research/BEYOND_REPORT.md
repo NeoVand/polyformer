@@ -1,12 +1,14 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-15:15 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+15:23 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
 seeds. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. C fails the written rule:
-two-layer S5 seeds 1 and 2 score **3.25% and 6.78%**, below the 95% threshold. These are valid
-completed measurements; the remaining C/A grid is still running. A's outcome is pending.
+two-layer S5 seeds 1/2/3 score **3.25%, 6.78% and 1.59%**, below the 95% threshold. These are valid
+completed measurements. A also fails: one-layer S5 seeds 1 and 3 score **5.46% and 13.44%**.
+C's complete record has no other below-floor cells. A also fails two-layer S5 at seeds 2 and 3.
+All mandatory confirmations are complete and audited. **B is the sole candidate eligible for language.**
 All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete, and no language quality sweep has begun.
 These results establish successful synthetic-task learning in this regime, not a language advantage.
@@ -99,9 +101,26 @@ These are selected seed-0 results, not independent confirmation.
 
 | Candidate | Selected seed-0 validation | Independent seeds 1/2/3: written rule | Independent seeds 1/2/3: original code | Language eligibility |
 |---|---|---|---|---|
-| A | 100% in all six cells | Pending | Unconfirmed: reference floor | Pending |
+| A | 100% in all six cells | Rejected: 14/18 cells pass | Rejected; candidate failures and reference-floor failures | Not eligible |
 | B | 100% in all six cells | Passed: 100% in all 18 cells | Unconfirmed: reference floor | Eligible under written rule |
-| C | 100% in all six cells | Failed S5 L2 seeds 1/2; remaining grid running | Reference-floor issue plus candidate failures; closure pending | Not eligible |
+| C | 100% in all six cells | Rejected: 15/18 cells pass | Rejected; candidate failures and reference-floor failures | Not eligible |
+
+The failed cells are all S5. The following are final second-half balanced test accuracies (%),
+with a 95% absolute floor plus the registered reference margin:
+
+| Candidate | Depth | Seed 1 | Seed 2 | Seed 3 |
+|---|---:|---:|---:|---:|
+| A | 1 | 5.459 | 100 | 13.438 |
+| A | 2 | 100 | 1.657 | 90.726 |
+| B | 1 | 100 | 100 | 100 |
+| B | 2 | 100 | 100 | 100 |
+| C | 1 | 100 | 99.634 | 100 |
+| C | 2 | 3.253 | 6.776 | 1.590 |
+
+All other candidate confirmation cells pass. No failure is due solely to the relative margin.
+The [complete confirmation artifact](results/beyond_stage1_confirmation.json) audits every candidate
+and reference result. These are learnability and reproducibility failures of the frozen recipes,
+not proofs of insufficient expressivity or isolated causal effects of the coupling choices.
 
 A disclosed protocol discrepancy requires reporting both columns. The written gate required
 candidate accuracy of at least 90% on retrieval or 95% on second-half word positions, and no more

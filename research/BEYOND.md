@@ -312,6 +312,29 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   under the registered all-cells rule. All remaining C/A jobs continue unchanged; complete
   confirmation classification will be sealed after the entire grid closes. B remains eligible.
 
+- 2026-10-20 15:16 UTC — C's third two-layer S5 confirmation also failed: 1.590191013%
+  balanced second-half test accuracy (`f42e9787dd8636906c637cb5`), again finite and integrity-valid.
+  All three independent seeds fail this cell despite selected seed-0 validation reaching 100%.
+  This establishes a reproducibility/learnability failure for the frozen recipe, not an expressivity
+  impossibility or an isolated causal effect of attention conditioning.
+
+- 2026-10-20 15:17 UTC — A also fails independent confirmation: one-layer S5 seeds 1 and 3
+  score 5.458905638% and 13.43755079% balanced second-half test accuracy
+  (`3baa01c6c5822fee57550bd8`, `971507305f6e63432d17232d`). These are finite, completed and
+  identity/accounting-audited runs. C is now complete: its only below-floor cells are the three
+  two-layer S5 seeds. B is the sole candidate that can advance; the remaining A jobs still run to
+  preserve the complete registered record. No language job has launched and no recipe changed.
+
+- 2026-10-20 15:23 UTC — All mandatory Stage-1 calls are closed and all 72 confirmation/reference
+  results are integrity-audited. Final artifact `results/beyond_stage1_confirmation.json`, seal
+  `7bf813f4960062be47dce620a45a417a85848e986406bec3e732ebe7c2fcb8be`: active written rule
+  B passes 18/18 cells, A is rejected with 14/18, C rejected with 15/18. A additionally fails S5
+  L2 seeds 2/3 at 1.656640750%/90.72641994%. There are no reference-gap-only failures.
+  Under the original strict code A/C are rejected and B is unconfirmed because of the two reference
+  floors. Screen settled cost is $21.414724. The optional, already-committed LLA regression pair
+  fits even at its full $0.519542 reservation and launched in `ap-rybRGDHPKwzydAjW8NVdBt`.
+  All worker sources remain frozen until that pair closes. B alone will enter language.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
