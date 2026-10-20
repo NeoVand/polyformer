@@ -34,7 +34,9 @@ import argparse
 import json
 import math
 import os
+import pickle
 import sys
+import tempfile
 import time
 
 import jax
@@ -433,6 +435,42 @@ def block(cfg, lyr, x, stats=None):
                     "composition_over_content": rms(update - content) / rms(content),
                     "precision_over_content": rms(content - local_constant) / rms(content),
                 })
+                if cfg.arch == "beyond_a":
+                    no_coupling_cfg = argparse.Namespace(**{**vars(cfg), "ablate": "coupling"})
+                    no_transport_parameters = lyr
+                    if getattr(cfg, "ablate", "none") == "precision":
+                        no_transport_parameters = {
+                            **lyr, "wr": jax.tree_util.tree_map(jnp.zeros_like, lyr["wr"])
+                        }
+                    no_transport = (
+                        content if getattr(cfg, "ablate", "none") == "composition" else
+                        beyond_layers.apply_layer(no_coupling_cfg, no_transport_parameters, normed)
+                    )
+                    record["matrix_over_content"] = rms(no_transport - content) / rms(content)
+                    record["transport_over_content"] = rms(update - no_transport) / rms(content)
+                else:
+                    record["matrix_over_content"] = rms(update - content) / rms(content)
+                # A nonzero readout could be a constant identity feature.
+                # Measure changing rotations separately on this held-out batch.
+                source = normed
+                if cfg.arch == "beyond_c" and getattr(cfg, "ablate", "none") != "coupling":
+                    source = source + jnp.tanh(lyr["context_mix"]) * content
+                _, _, _, gh, gd, gnh, _ = beyond_layers._dims(cfg)
+                vectors = beyond_layers._lin(cfg, lyr["group_vectors"], source)
+                vectors = vectors.reshape(*source.shape[:2], gh, gnh, gd)
+                transitions = beyond_layers.householder_products(vectors)
+                identity_distance = transitions - jnp.eye(gd, dtype=transitions.dtype)
+                record["transition_identity_frob_mean"] = jnp.mean(
+                    jnp.linalg.norm(identity_distance, axis=(-2, -1))
+                )
+                if source.shape[1] > 1:
+                    left, right = transitions[:, :-1], transitions[:, 1:]
+                    commutator = left @ right - right @ left
+                    record["adjacent_commutator_frob_mean"] = jnp.mean(
+                        jnp.linalg.norm(commutator, axis=(-2, -1))
+                    )
+                else:
+                    record["adjacent_commutator_frob_mean"] = jnp.asarray(0.0)
             stats.append(record)
         x = x + update
     if cfg.arch == "sfa":
@@ -555,6 +593,68 @@ def flops_per_token(cfg, T):
     return L * lyr + 2 * D * V
 
 
+def save_final_checkpoint(cfg, params, artifact_dir):
+    """Write our own trusted final checkpoint; never load an external pickle."""
+    os.makedirs(artifact_dir, exist_ok=True)
+    destination = os.path.join(artifact_dir, "final.pkl")
+    payload = {
+        "schema": 1,
+        "cfg": vars(cfg).copy(),
+        "params": jax.tree_util.tree_map(lambda x: np.asarray(jax.device_get(x)), params),
+        "versions": {"jax": jax.__version__, "optax": optax.__version__, "numpy": np.__version__},
+        "created_unix": time.time(),
+    }
+    temporary = None
+    try:
+        with tempfile.NamedTemporaryFile(mode="wb", dir=artifact_dir, prefix=".final.", suffix=".tmp",
+                                         delete=False) as output:
+            temporary = output.name
+            pickle.dump(payload, output, protocol=pickle.HIGHEST_PROTOCOL)
+            output.flush()
+            os.fsync(output.fileno())
+        os.replace(temporary, destination)
+    finally:
+        if temporary is not None and os.path.exists(temporary):
+            os.unlink(temporary)
+    return {"path": destination, "bytes": os.path.getsize(destination), "schema": 1}
+
+
+def final_ablation_losses(cfg, params, bx, by, batch_size):
+    """Final-only interventions on exactly the original val_big sample.
+
+    Reuse trained parameters without selecting a rate, checkpoint or seed.
+    B has no coupling operation to remove.
+    """
+    if not cfg.arch.startswith("beyond_"):
+        return {}
+    modes = ["composition", "precision"]
+    if cfg.arch in ("beyond_a", "beyond_c"):
+        modes.append("coupling")
+    results = {}
+    for mode in modes:
+        ablated_cfg = argparse.Namespace(**{**vars(cfg), "ablate": mode})
+
+        def make_losses(config):
+            @jax.jit
+            def losses(p, x, y):
+                logits = forward(config, p, x)
+                return optax.softmax_cross_entropy_with_integer_labels(logits, y).sum()
+            return losses
+
+        score = make_losses(ablated_cfg)
+        total = 0.0
+        for start in range(0, len(bx), batch_size):
+            total += float(score(params, bx[start:start + batch_size], by[start:start + batch_size]))
+        value = total / (len(bx) * bx.shape[1])
+        if not math.isfinite(value):
+            raise FloatingPointError(f"nonfinite final {mode} ablation loss")
+        results[mode] = round(value, 5)
+        if getattr(cfg, "progress", 0):
+            print(json.dumps({"final_ablation": mode, "val_big": results[mode],
+                              "arch": cfg.arch, "seed": cfg.seed}), file=sys.stderr, flush=True)
+    return results
+
+
 def main():
     global MM
     ap = argparse.ArgumentParser()
@@ -607,8 +707,22 @@ def main():
     ap.add_argument("--early", type=int, default=0, help="also evaluate every this many steps early in training")
     ap.add_argument("--early_until", type=int, default=0, help="last step of the early evaluations (default: a fifth)")
     ap.add_argument("--probe", type=int, default=0, help="repeated-random-token induction probe")
+    ap.add_argument("--group_init", choices=("paired", "random"), default="paired")
+    ap.add_argument("--delta_unroll", type=int, default=1)
     ap.add_argument("--progress", type=int, default=0, help="emit evaluation progress to stderr for durable run logs")
+    ap.add_argument("--save-final", type=int, default=0,
+                    help="atomically save cfg and final parameters to BEYOND_ARTIFACT_DIR/final.pkl")
+    ap.add_argument("--ablations", type=int, default=0,
+                    help="final-only component losses for candidates on the same 1024 val_big sequences")
     cfg = ap.parse_args()
+    artifact_dir = os.environ.get("BEYOND_ARTIFACT_DIR")
+    if cfg.save_final and not artifact_dir:
+        ap.error("--save-final 1 requires BEYOND_ARTIFACT_DIR")
+    if cfg.ablations and cfg.arch.startswith("beyond_"):
+        if cfg.vbig != 1024:
+            ap.error("--ablations 1 requires --vbig 1024 for the registered held-out sample")
+        if cfg.ablate != "none":
+            ap.error("--ablations 1 requires an unablated training configuration (--ablate none)")
     if cfg.bf16:
         MM = jnp.bfloat16
     if not cfg.mlp:
@@ -720,6 +834,10 @@ def main():
                 raise FloatingPointError(f"nonfinite training/evaluation loss at step {it + 1}")
     last = curve[-1]
     extra = {}
+    if cfg.save_final:
+        # Save before additional diagnostic compilation so trained parameters
+        # survive interrupted or failed post-training ablations.
+        extra["checkpoint"] = save_final_checkpoint(cfg, params, artifact_dir)
     if cfg.vbig:
         # a larger held-out set drawn with its own generator, scored once at the end (LOCAL.md's gate metric)
         bx, by = batch(val, np.random.default_rng(5678), cfg.vbig)
@@ -727,6 +845,12 @@ def main():
         for i in range(0, len(bx), vb):
             tot += float(np.asarray(poslosses(params, bx[i : i + vb], by[i : i + vb])).sum())
         extra["val_big"] = round(tot / (len(bx) * T), 5)
+        if cfg.ablations and cfg.arch.startswith("beyond_"):
+            extra["ablation_val_big"] = final_ablation_losses(cfg, params, bx, by, vb)
+            extra["ablation_delta_val_big"] = {
+                name: round(value - extra["val_big"], 5)
+                for name, value in extra["ablation_val_big"].items()
+            }
     if cfg.arch in ("lla", "plx"):
         # what the trained layers use: gates, ridges and chart scale (lla), probe weight norm (plx), and the
         # correction-to-output ratio and weight range on one held-out batch

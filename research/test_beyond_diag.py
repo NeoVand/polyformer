@@ -1,5 +1,6 @@
 """Task-definition tests for BEYOND; no accelerator or training required."""
 
+import argparse
 import itertools
 import unittest
 
@@ -90,6 +91,49 @@ class DiagnosticTaskTests(unittest.TestCase):
             coeff = np.linalg.lstsq(design, xb[:-1, 2], rcond=None)[0]
             prediction = np.r_[xb[-1, :2], 1] @ coeff
             self.assertAlmostEqual(prediction, float(expected), places=5)
+
+    def test_fixed_reference_budget_matches_distinct_delta_variants(self):
+        # A shared reference must not inherit the evaluated arm's nh. Include
+        # regression to verify its adapter FLOPs are part of the same budget.
+        peers = ["gpt", "beyond_a", "gated_delta"]
+        for regression_task in (False, True):
+            task = "regression" if regression_task else "wp_a5_16"
+            _, T, V, pos, _ = bd.TASKS[task]
+            configs = []
+            for nh in (1, 4):
+                args = argparse.Namespace(arch="gated_delta", d=128, layers=1, heads=4,
+                                          mlp=0, chart=8, pos=None, set=[("nh", nh)])
+                configs.append(bd.model_config(args, T, V, pos))
+            costs = [bd.task_flops(cfg, T, regression_task) for cfg in configs]
+            target = 0.8 * min(costs)  # explicitly below BOTH arms' own costs
+            reference_steps, batch = 123, 32
+            target_total = 3 * target * reference_steps * batch * T
+            updates = []
+            for cfg in configs:
+                steps, own, _ = bd.compute_budget(cfg, T, reference_steps, peers,
+                                                  regression_task, target_fpt=target)
+                updates.append(steps)
+                self.assertLess(steps, reference_steps)
+                actual_total = 3 * own * steps * batch * T
+                self.assertLessEqual(actual_total, target_total)
+                self.assertLess(target_total - actual_total, 3 * own * batch * T)
+            self.assertGreater(updates[0], updates[1])
+            for invalid in (0, -1, float("nan"), float("inf")):
+                with self.assertRaises(ValueError):
+                    bd.compute_budget(configs[0], T, reference_steps, peers,
+                                      regression_task, target_fpt=invalid)
+            with self.assertRaisesRegex(ValueError, "cannot fund one update"):
+                bd.compute_budget(configs[0], T, 1, [], regression_task, target_fpt=costs[0] / 2)
+
+    def test_unmatched_budget_preserves_exact_requested_steps(self):
+        args = argparse.Namespace(arch="prefix", d=128, layers=1, heads=4,
+                                  mlp=0, chart=8, pos=None, set=[])
+        cfg = bd.model_config(args, 17, 61, 0)
+        own = bd.task_flops(cfg, 17)
+        self.assertNotEqual(own, int(own))  # reproduce fractional prefix-scan cost
+        for peers in ([], ["prefix"]):
+            steps, _, _ = bd.compute_budget(cfg, 17, 1000, peers)
+            self.assertEqual(steps, 1000)
 
     def test_second_half_metric_excludes_easy_prefix(self):
         y = np.array([[0, 0, 1, 0, 1], [0, 1, 0, 1, 0]])

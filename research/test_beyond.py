@@ -112,6 +112,44 @@ def test_delta_scan():
             state = state @ (jnp.eye(3) - bt[..., None, None] * kt[..., :, None] * kt[..., None, :])
         expected.append(jnp.einsum("bhvk,bhk->bhv", state, q[:, t]))
     close(got, jnp.stack(expected, 1))
+    # Scan unrolling changes compilation only, including a partial last block.
+    args = (q, k, v, beta, decay)
+    loss = lambda *inputs, unroll=1: jnp.sum(bl.gated_delta_scan(*inputs, unroll=unroll) ** 2)
+    reference_grad = jax.grad(loss, argnums=(0, 1, 2, 3, 4))(*args)
+    for unroll in (4, 8):
+        close(bl.gated_delta_scan(*args, unroll=unroll), out)
+        grad = jax.grad(lambda *inputs: loss(*inputs, unroll=unroll),
+                        argnums=(0, 1, 2, 3, 4))(*args)
+        for actual, expected in zip(grad, reference_grad):
+            np.testing.assert_allclose(actual, expected, rtol=3e-5, atol=5e-6)
+
+
+def test_initializations():
+    x = jax.random.normal(jax.random.key(51), (2, 7, 20))
+    for name in ("prefix", "beyond_b"):
+        cfg = config(name, group_init="paired")
+        paired = bl.init_layer(jax.random.key(52), cfg)
+        cfg.group_init = "random"
+        random = bl.init_layer(jax.random.key(52), cfg)
+        for parameter in paired:
+            if parameter != "group_vectors":
+                assert all(bool(jnp.array_equal(a, b)) for a, b in zip(
+                    jax.tree_util.tree_leaves(paired[parameter]),
+                    jax.tree_util.tree_leaves(random[parameter]),
+                )), parameter
+        matrices = lambda p: bl.householder_products(
+            bl._lin(cfg, p["group_vectors"], x).reshape(2, 7, 2, 4, 5)
+        )
+        close(matrices(paired), jnp.eye(5))
+        u = matrices(random)
+        close(u @ u.swapaxes(-1, -2), jnp.eye(5))
+        assert float(jnp.max(jnp.abs(u - jnp.eye(5)))) > 0.1
+        assert float(jnp.max(jnp.abs(u[:, 0] @ u[:, 1] - u[:, 1] @ u[:, 0]))) > 0.1
+        y = bl.apply_layer(cfg, random, x)
+        close(y[:, :4], bl.apply_layer(cfg, random, x.at[:, 4:].add(5))[:, :4])
+        gradient = jax.grad(lambda p: jnp.mean(bl.apply_layer(cfg, p, x) ** 2))(random)
+        assert all(bool(jnp.isfinite(g).all()) for g in jax.tree_util.tree_leaves(gradient))
+        assert float(jnp.linalg.norm(gradient["group_vectors"]["w"])) > 1e-6
 
 
 def test_layers():
@@ -179,6 +217,7 @@ if __name__ == "__main__":
     test_transport()
     test_affine_precision()
     test_delta_scan()
+    test_initializations()
     test_rectangular_delta()
     output["layers"] = test_layers()
     output["status"] = "pass"

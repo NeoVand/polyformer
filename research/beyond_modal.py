@@ -248,12 +248,14 @@ def worker(job, expected_sources):
         return {"error": "remote source hash mismatch", "wall": round(time.monotonic() - started, 3)}
     log_dir = pathlib.Path("/runs") / job["id"]
     log_dir.mkdir(parents=True, exist_ok=True)
+    environment = os.environ.copy()
+    environment["BEYOND_ARTIFACT_DIR"] = str(log_dir)
     stdout_path, stderr_path = log_dir / "stdout.log", log_dir / "stderr.log"
     command = [sys.executable, "-u", str(remote_root / job["script"]), *job["argv"]]
     timed_out = False
     with stdout_path.open("w") as fout, stderr_path.open("w") as ferr:
         process = subprocess.Popen(command, cwd=remote_root, stdout=fout, stderr=ferr,
-                                   text=True, start_new_session=True)
+                                   text=True, start_new_session=True, env=environment)
         deadline, last_commit, offsets = time.monotonic() + job["max_seconds"], 0.0, [0, 0]
         while process.poll() is None:
             remaining = deadline - time.monotonic()
@@ -300,6 +302,12 @@ def worker(job, expected_sources):
     result["remote_completed_at"] = stamp()
     result["log_volume"] = "polyformer-beyond-runs"
     result["log_directory"] = job["id"]
+    result["artifacts"] = [
+        {"name": path.name, "bytes": path.stat().st_size}
+        for path in sorted(log_dir.iterdir())
+        if path.is_file() and not path.name.startswith(".") and path.name not in
+        ("stdout.log", "stderr.log", "result.json")
+    ]
     if job["gpu"] != "CPU":
         try:
             result["gpu_actual"] = subprocess.check_output(

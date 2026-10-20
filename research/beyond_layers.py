@@ -102,8 +102,15 @@ def init_layer(key, cfg, kind=None):
     if kind in ("beyond_a", "beyond_b", "beyond_c", "prefix"):
         # Independent parameters in equal initial pairs: H(k)H(k)=I.
         # Their derivatives have opposite signs and do not vanish individually.
-        half = jax.random.normal(next(keys), (d, gh, gnh // 2, gd)) / math.sqrt(d)
-        weights = jnp.repeat(half, 2, axis=2).reshape(d, gh * gnh * gd)
+        group_key = next(keys)
+        group_init = _get(cfg, "group_init", "paired")
+        if group_init == "paired":
+            half = jax.random.normal(group_key, (d, gh, gnh // 2, gd)) / math.sqrt(d)
+            weights = jnp.repeat(half, 2, axis=2).reshape(d, gh * gnh * gd)
+        elif group_init == "random":
+            weights = jax.random.normal(group_key, (d, gh * gnh * gd)) / math.sqrt(d)
+        else:
+            raise ValueError("group_init must be paired or random")
         p["group_vectors"] = {"w": weights, "b": jnp.zeros(gh * gnh * gd)}
         p["group_out"] = _dense(next(keys), gh * gd * gd, d, scale)
         initial = 1.0 if kind == "prefix" else float(_get(cfg, "branch_scale", 0.1))
@@ -251,7 +258,7 @@ def causal_depthwise_conv(x, kernel):
     return total
 
 
-def gated_delta_scan(q, k, v, beta, decay, initial=None):
+def gated_delta_scan(q, k, v, beta, decay, initial=None, unroll=1):
     """Generalized delta updates with per-token decay, then matrix-query read.
 
     q [B,T,H,dk], k [B,T,H,nh,dk], v [B,T,H,nh,dv].
@@ -273,7 +280,8 @@ def gated_delta_scan(q, k, v, beta, decay, initial=None):
         return state, output
 
     _, outputs = jax.lax.scan(
-        step, initial, tuple(jnp.moveaxis(z, 1, 0) for z in (q, k, v, beta, decay))
+        step, initial, tuple(jnp.moveaxis(z, 1, 0) for z in (q, k, v, beta, decay)),
+        unroll=unroll,
     )
     return jnp.moveaxis(outputs, 0, 1)
 
@@ -298,7 +306,7 @@ def apply_layer(cfg, p, x, kind=None):
         beta = float(_get(cfg, "beta_max", 2.0)) * jax.nn.sigmoid(beta_logits)
         log_decay = -jnp.exp(p["A_log"]) * jax.nn.softplus(_lin(cfg, p["ddecay"], x) + p["dt_bias"])
         decay = jnp.exp(log_decay).reshape(b, t, h)
-        out = gated_delta_scan(q, k, v, beta, decay)
+        out = gated_delta_scan(q, k, v, beta, decay, unroll=int(_get(cfg, "delta_unroll", 1)))
         out = out / jnp.sqrt((out * out).mean(-1, keepdims=True) + 1e-5) * p["delta_norm"]
         gate = jax.nn.silu(_lin(cfg, p["dgate"], x)).reshape(b, t, h, dv)
         return _lin(cfg, p["delta_out"], (out * gate).reshape(b, t, vd))

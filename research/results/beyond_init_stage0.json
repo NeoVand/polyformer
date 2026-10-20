@@ -1,0 +1,37 @@
+{
+  "status": "pass",
+  "rows": [
+    {
+      "arch": "prefix",
+      "nonidentity": 1.8770896196365356,
+      "commutator_max": 1.476701259613037,
+      "orthogonality_error": 7.152557373046875e-07,
+      "causality_error": 0.0,
+      "group_grad_norm": 1.5105608701705933
+    },
+    {
+      "arch": "beyond_a",
+      "nonidentity": 1.9432252645492554,
+      "commutator_max": 1.6907410621643066,
+      "orthogonality_error": 8.940696716308594e-07,
+      "causality_error": 0.0,
+      "group_grad_norm": 0.09522610902786255
+    },
+    {
+      "arch": "beyond_b",
+      "nonidentity": 1.9432252645492554,
+      "commutator_max": 1.6907410621643066,
+      "orthogonality_error": 8.940696716308594e-07,
+      "causality_error": 0.0,
+      "group_grad_norm": 0.09397149085998535
+    },
+    {
+      "arch": "beyond_c",
+      "nonidentity": 1.9432252645492554,
+      "commutator_max": 1.6907410621643066,
+      "orthogonality_error": 8.940696716308594e-07,
+      "causality_error": 0.0,
+      "group_grad_norm": 0.08788187801837921
+    }
+  ]
+}

@@ -89,6 +89,19 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   At 1,000 updates, small MQAR scores are S 10.07%, P 9.96%, A/B/C 9.72/9.58/9.56%,
   GDN1 99.69%, prefix 0.54%. The attention controls have not learned binding yet; the recurrent control
   has a causal convolution. Before freezing the screen, register a control-learnability extension below.
+- 2026-10-20 13:20 UTC — The 24 diagnostic timing pilots are complete. All one-layer class-word arms
+  remain near chance at 1,000 updates; this includes the new prefix control, so there is no demonstrated
+  state-learning positive control in the common backbone yet. Softmax's 6,000-update MQAR tests give
+  10.07% / 10.62% at rates .004 / .008; induction at .004 gives 100% (the .008 job is pending).
+  The exact validation-set key-blind value-histogram oracle is 10.376%, loss 2.69364 nats; the two
+  softmax training losses are 2.70145 / 2.69968. This supports a binding plateau, not successful retrieval.
+  DP4's language time is 1.442 seconds/update. Conservative settled-plus-reserved estimate is $4.88.
+  Register narrow positive-control and runtime tests below before launching them. Added explicit common
+  FLOP targets to avoid inheriting an arm's recurrent microstep count when pricing its peers; fixed a
+  floating-point rounding issue that gave the unmatched prefix pilots 999 rather than 1,000 steps.
+  Added final checkpoint persistence and same-sample final component ablations for later language runs.
+- 2026-10-20 13:22 UTC — The remaining induction control also reaches 100%. All 35 initial jobs are
+  complete with finite outputs; conservative settled estimate $4.726 (screen $2.400, language $2.326).
 
 ## 1. Design registration (before training)
 
@@ -215,3 +228,28 @@ at least one rate reaches 90% on both tasks; if it does not, the screen must dis
 local key/value binding from failure of content selection. Do not call chance-level matching a pass.
 These control results may guide a documented task or common-backbone amendment before the main screen;
 they cannot support a confirmatory architectural claim.
+
+**Word learnability extension, registered before these results.** Three seed-0 A5 length-16 jobs,
+6,000 updates each: (1) the exact historical holonomy positive control, `polybench.py`, one layer,
+residual width 64, matrix dimension 3, 85 heads, order 3, normalized sectors, causal prefix, no positions,
+AdamW .002, weight decay .01, batch 128; (2–3) the current standalone prefix reader, one layer,
+width 128, four dimension-5 heads, four Householders, order 2, no positions, Muon .004,
+weight decay .1, batch 64, with paired-identity versus independent-random Householder initialization.
+The new reader uses 256 validation / 512 final-test sequences; the historical control retains its
+2,048-sequence evaluation and length-64 extrapolation. L4, 600-second timeout each, maximum $0.78,
+charged to the screen cap. Prediction: the historical control exceeds 95% second-half accuracy;
+random initialization gives the new reader a stronger learning signal than paired identity.
+Identity initialization has nonzero parameter gradients but makes first-order prefix perturbations
+additive; order-sensitive commutators appear only at second order. This is a learnability hypothesis,
+not a proof of the pilot failure. If both new variants fail, vary head capacity or training recipe
+one factor at a time before claiming a composition limitation. Do not relax the 95% gate.
+
+**Runtime-only recurrent engineering extension.** The serial recurrent implementation is much slower
+than attention despite similar nominal FLOPs. Test exact `lax.scan` unroll factors 1, 4 and 16,
+for each of GDN1 and DP4 at the S6 shape, seed 0, 200 updates, Muon .004, warmup 20, 32 validation
+sequences and no `val_big`. Six H100 jobs, 900-second timeout each, maximum $7.71,
+charged to the development reserve (not language-quality selection). Choose the fastest finite
+100-to-200-update interval independently for each recurrent configuration. Loss does not select the
+implementation. The recurrence and FLOP count are unchanged; local forward and VJP equivalence tests
+must pass before launch. Prediction: moderate unrolling reduces serial dispatch overhead, although
+the largest factor may cost more compilation. Report failed/timed-out variants and the chosen factor.

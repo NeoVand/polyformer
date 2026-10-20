@@ -123,6 +123,7 @@ def normalize_record(job, manifest, result, ledger_entry, path=None):
         "steps": result.get("steps"), "reference_steps": result.get("reference_steps", args.get("steps", 6000)),
         "batch": result.get("batch", args.get("batch", 64)),
         "flops_per_token": result.get("flops_per_token"), "train_flops": result.get("train_flops"),
+        "target_flops_per_token": result.get("target_flops_per_token", args.get("target_fpt")),
         "wall": result.get("wall", result.get("secs")), "status": status, "error": str(error),
         "gpu": result.get("gpu_requested", job.get("gpu", ledger_entry.get("gpu"))),
         "max_seconds": job.get("max_seconds"), "attempt": job.get("attempt", 0),
@@ -178,6 +179,7 @@ def selection_group(record):
         "config": cfg, "settings": record["settings"],
         "opt": record["opt"], "wd": args.get("wd", 0.1),
         "reference_steps": record["reference_steps"], "batch": record["batch"],
+        "target_fpt": record.get("target_flops_per_token", args.get("target_fpt")),
         "equal_flops": sorted(str(args.get("equal_flops", "")).split(",")),
         "evalset": args.get("evalset", 1024), "evallen": args.get("evallen", 0),
         "metric": record["metric"], "model_source_hashes": record["model_source_hashes"],
@@ -256,7 +258,7 @@ def export_selection(path, selected):
     keep = ("task", "arch", "layers", "seed", "lr", "opt", "config", "settings", "argv",
             "script", "gpu", "max_seconds", "manifest", "job_id", "prediction_commit",
             "metric", "validation_score", "test_score", "test", "steps", "reference_steps",
-            "batch", "flops_per_token", "train_flops", "selected_by", "tested_rates",
+            "batch", "flops_per_token", "target_flops_per_token", "train_flops", "selected_by", "tested_rates",
             "selection_group", "result_file")
     payload = [{key: row[key] for key in keep} for row in sorted_records(selected)]
     target = pathlib.Path(path)
@@ -284,6 +286,11 @@ def self_test():
         row("regression-low-test", .2, .01, metric="mse"),
     ])
     assert {r["job_id"] for r in selected} == {"best-val", "variant", "regression-low-val"}
+    small_budget = row("small-budget", .8, .9)
+    large_budget = row("large-budget", .9, .8)
+    small_budget["args"]["target_fpt"] = 500_000
+    large_budget["args"]["target_fpt"] = 700_000
+    assert len(select_rates([small_budget, large_budget])) == 2
     assert classify_status({"error": "subprocess exceeded 900 seconds"}, {}) == "TIMEOUT"
     assert classify_status({"failure": "nonfinite_parameters"}, {}) == "FAIL"
     assert classify_status(None, {"status": "running"}) == "RUNNING"

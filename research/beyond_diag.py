@@ -11,10 +11,14 @@ affine function is sampled for each sequence; its query value is hidden.
 Example:
     python research/beyond_diag.py --task mqar_small --arch gpt --layers 2
 
-``--equal-flops gpt,plx,beyond_a,beyond_b,beyond_c,prefix`` preserves width and
-gives each arm the training compute of the most expensive listed arm run for
-``--steps`` updates. ``--steps`` is therefore the reference update budget, not
-necessarily the executed update count. The counter is lm.flops_per_token;
+``--target-fpt F`` sets a fixed reference forward FLOPs/token budget shared by
+all configurations for one task/depth: execute floor(steps * F / own_F) updates.
+Compute F externally over the fully specified arms, including RNN variants.
+``--equal-flops`` is a convenience for same-configuration peers only; it inherits
+the current arm's settings and cannot define a fair cross-variant reference.
+An explicit --target-fpt overrides its maximum. ``--steps`` is the reference
+update budget, not necessarily the executed update count. The counter is
+lm.flops_per_token (with the continuous regression input/output adjustment);
 reported wall time remains separate from this architectural FLOP convention.
 Rate selection uses validation only; a disjoint final test is evaluated once.
 """
@@ -160,15 +164,27 @@ def task_flops(cfg, context, regression_task=False):
     return fpt
 
 
-def compute_budget(cfg, context, reference_steps, peers, regression_task=False):
-    """Match total nominal training FLOPs at fixed width; round updates down."""
+def compute_budget(cfg, context, reference_steps, peers, regression_task=False, target_fpt=None):
+    """Match total training FLOPs, rounding updates down; explicit target wins.
+
+    The explicit reference may be below this arm's per-token cost, in which case
+    this arm receives fewer than reference_steps updates. A budget too small to
+    fund one update is rejected instead of silently exceeding the budget.
+    """
     own = task_flops(cfg, context, regression_task)
     costs = {cfg.arch: own}
     for arch in peers:
         other = argparse.Namespace(**{**vars(cfg), "arch": arch})
         costs[arch] = task_flops(other, context, regression_task)
-    reference = max(costs.values())
-    steps = max(1, math.floor(reference_steps * reference / own))
+    reference = max(costs.values()) if target_fpt is None else float(target_fpt)
+    if not math.isfinite(reference) or reference <= 0:
+        raise ValueError("target FLOPs/token must be finite and positive")
+    # With no compute matching, execute the requested update count exactly.
+    # Multiplying before dividing can otherwise turn 1000 into 999 through
+    # rounding when the recurrence counter has fractional FLOPs/token.
+    steps = int(reference_steps) if target_fpt is None and not peers else math.floor(reference_steps * (reference / own))
+    if steps < 1:
+        raise ValueError("training FLOP budget cannot fund one update; increase --steps or --target-fpt")
     return steps, own, costs
 
 
@@ -256,8 +272,11 @@ def main():
     ap.add_argument("--testset", type=int, default=2048)
     ap.add_argument("--evalbatch", type=int, default=128)
     ap.add_argument("--evals", type=int, default=10)
+    ap.add_argument("--progress", action="store_true", help="emit per-evaluation progress JSON to stderr")
     ap.add_argument("--evallen", type=int, default=0)
-    ap.add_argument("--equal-flops", default="", help="comma-separated peer architecture names")
+    ap.add_argument("--equal-flops", default="", help="same-configuration peers; explicit --target-fpt overrides")
+    ap.add_argument("--target-fpt", type=float, default=None,
+                    help="fixed reference forward FLOPs/token shared across fully specified arms")
     ap.add_argument("--set", type=parse_setting, action="append", default=[])
     args = ap.parse_args()
     if min(args.steps, args.batch, args.evalset, args.testset, args.evalbatch, args.evals) <= 0:
@@ -270,7 +289,11 @@ def main():
     peers = [arch.strip() for arch in args.equal_flops.split(",") if arch.strip()]
     if any(arch not in ARCHS for arch in peers):
         ap.error(f"--equal-flops accepts only {','.join(ARCHS)}")
-    steps, fpt, peer_costs = compute_budget(cfg, T, args.steps, peers, regression_task)
+    try:
+        steps, fpt, peer_costs = compute_budget(cfg, T, args.steps, peers, regression_task, args.target_fpt)
+    except ValueError as error:
+        ap.error(str(error))
+    reference_fpt = max(peer_costs.values()) if args.target_fpt is None else args.target_fpt
     rng = np.random.default_rng(args.seed)
     params = lm.init(jax.random.PRNGKey(args.seed), cfg)
     if regression_task:
@@ -342,7 +365,17 @@ def main():
                 failure = "nonfinite_parameters"
                 break
             validation = evaluate(params, gen, args.evalset, 10_000 + args.seed)
-            curve.append({"step": finished, "loss": value, "validation": validation})
+            elapsed = round(time.time() - t0, 3)
+            curve.append({"step": finished, "loss": value, "validation": validation, "secs": elapsed})
+            if args.progress:
+                progress = {
+                    "event": "diagnostic_progress", "task": args.task, "arch": args.arch,
+                    "seed": args.seed, "step": finished, "planned_steps": steps,
+                    "secs": elapsed, "loss": value,
+                    "validation": {key: validation[key] for key in
+                                   ("acc", "bal_acc", "bal_late", "mse", "normalized_mse") if key in validation},
+                }
+                print(json.dumps(progress, allow_nan=False), file=sys.stderr, flush=True)
     final = evaluate(params, gen, args.testset, 20_000 + args.seed) if failure is None else None
     output = {
         "task": args.task, "arch": args.arch, "model": args.arch, "layers": args.layers,
@@ -350,8 +383,10 @@ def main():
         "params": nparams, "steps": finished, "reference_steps": args.steps,
         "batch": args.batch, "train_tokens": finished * args.batch * T,
         "flops_per_token": fpt, "peer_flops_per_token": peer_costs,
+        "target_flops_per_token": reference_fpt,
+        "budget_source": "explicit_target_fpt" if args.target_fpt is not None else "same_config_peer_maximum",
         "train_flops": 3 * fpt * finished * args.batch * T,
-        "reference_train_flops": 3 * max(peer_costs.values()) * args.steps * args.batch * T,
+        "reference_train_flops": 3 * reference_fpt * args.steps * args.batch * T,
         "validation_seed": 10_000 + args.seed, "test_seed": 20_000 + args.seed,
         "evalset": args.evalset, "testset": args.testset,
         "selection_metric": "final_validation_mse" if regression_task else
