@@ -13,6 +13,7 @@ import argparse
 import copy
 import hashlib
 import importlib
+import importlib.util
 import json
 import math
 import pathlib
@@ -105,7 +106,8 @@ def audit_result(manifest, job, result, p, bd):
     A terminal numerical failure is left to the frozen planner's invalid-run
     rule; an identity or accounting mismatch prevents selection entirely.
     """
-    report = {'job_id': job['id'], 'manifest': manifest['name'], 'status': 'pending', 'errors': []}
+    report = {'job_id': job['id'], 'manifest': manifest['name'], 'manifest_sha256': manifest['sha256'],
+              'status': 'pending', 'errors': []}
     if result is None:
         return report
     errors = report['errors']
@@ -220,13 +222,18 @@ def metric_record(job, result, audit, task, depth, seed, arm, lr, p):
            'uncertainty': None, 'audit': audit}
     if job is None or result is None:
         return row
-    if audit['status'] in ('integrity_invalid', 'measurement_invalid'):
-        row.update(status='invalid', error=result.get('error') or result.get('failure') or audit['errors'])
+    if audit['status'] == 'integrity_invalid':
+        raise ValueError(f"{job['id']}: confirmation integrity failure: {audit['errors']}")
+    if audit['status'] == 'measurement_invalid':
+        row.update(status='terminal_invalid', error=result.get('error') or result.get('failure')
+                   or 'nonfinite result fields', terminal_errors={
+                       key: result[key] for key in ('error', 'failure', 'nonfinite_fields', 'stderr', 'stdout')
+                       if key in result})
         return row
     metrics = result.get('test')
     score = metrics.get(row['metric']) if isinstance(metrics, dict) else None
     if not finite(score) or not 0 <= score <= 1:
-        row.update(status='invalid', error='missing, nonfinite or out-of-range final test score')
+        row.update(status='terminal_invalid', error='missing, nonfinite or out-of-range final test score')
         return row
     uncertainty = {'all_position_acc_se_sequences': metrics.get('acc_se_sequences'),
                    'late_metric_se_missing': p.is_word(task),
@@ -234,7 +241,7 @@ def metric_record(job, result, audit, task, depth, seed, arm, lr, p):
     if row['metric'] == 'acc' and finite(metrics.get('acc_se_sequences')):
         se = metrics['acc_se_sequences']
         if se < 0:
-            row.update(status='invalid', error='negative sequence standard error')
+            row.update(status='terminal_invalid', error='negative sequence standard error')
             return row
         uncertainty.update(selected_metric_standard_error=se,
                            selected_metric_ci95_normal=[max(0., score - 1.96 * se), min(1., score + 1.96 * se)])
@@ -257,7 +264,70 @@ def metric_record(job, result, audit, task, depth, seed, arm, lr, p):
     return row
 
 
-def confirmation_artifact(selection, manifests, results_dir=None, research_dir=DEFAULT_RESEARCH):
+def missing_cells(candidate):
+    """Preserve every unresolved measurement, including absent and terminal runs."""
+    return [
+        {k: cell[k] for k in ('task', 'layers', 'seed')} | {
+            'candidate_status': cell['candidate']['status'],
+            'reference_status': cell['reference']['status'],
+            'candidate_job_id': cell['candidate']['job_id'],
+            'reference_job_id': cell['reference']['job_id'],
+        }
+        for cell in candidate['cells']
+        if cell['candidate']['status'] != 'complete' or cell['reference']['status'] != 'complete'
+    ]
+
+
+def apply_budget_deferrals(artifact, arms, reason, ledger_path):
+    """Apply an explicit budget decision only to otherwise pending candidates."""
+    if not arms:
+        if reason:
+            raise ValueError('a deferral reason requires an explicit deferred arm')
+        return
+    if not isinstance(reason, str) or not reason.strip():
+        raise ValueError('explicit budget deferral requires a nonempty reason')
+    if len(set(arms)) != len(arms) or not set(arms) <= {'A', 'B', 'C'}:
+        raise ValueError('deferred arms must be distinct candidate names')
+    for arm in arms:
+        if artifact['candidates'][arm]['status'] != 'pending':
+            raise ValueError(f'{arm}: only pending confirmations may be budget-deferred')
+    path = pathlib.Path(ledger_path)
+    raw = path.read_bytes()
+    ledger = json.loads(raw)
+    snapshot = {}
+    for stage in ('screen', 'language', 'development'):
+        entries = [j for j in ledger.get('jobs', {}).values() if j.get('stage') == stage]
+        settled = sum(j['settled_usd'] for j in entries if finite(j.get('settled_usd')))
+        reserved = sum(j.get('reserved_usd', 0) for j in entries if not finite(j.get('settled_usd')))
+        cap = ledger.get('caps', {}).get(stage)
+        if not finite(cap) or cap <= 0:
+            raise ValueError(f'deferral ledger has no finite {stage} cap')
+        snapshot[stage] = {'settled_usd': settled, 'reserved_usd': reserved,
+                           'total_usd': settled + reserved, 'cap_usd': cap}
+    snapshot['total'] = {
+        'settled_usd': sum(s['settled_usd'] for s in snapshot.values()),
+        'reserved_usd': sum(s['reserved_usd'] for s in snapshot.values()),
+        'cap_usd': sum(s['cap_usd'] for s in snapshot.values()),
+    }
+    snapshot['total']['total_usd'] = snapshot['total']['settled_usd'] + snapshot['total']['reserved_usd']
+    artifact['budget_deferrals'] = {}
+    for arm in arms:
+        candidate = artifact['candidates'][arm]
+        missing = missing_cells(candidate)
+        if not missing:
+            raise ValueError(f'{arm}: pending status contains no missing confirmation cells')
+        decision = {
+            'status': 'budget_deferred', 'reason': reason.strip(),
+            'ledger_sha256': digest(ledger), 'ledger_file_sha256': hashlib.sha256(raw).hexdigest(),
+            'ledger_snapshot': snapshot, 'missing_cells': missing,
+            'scope': 'Explicit decision; no failure/pass is overridden and no automatic budget inference is made.',
+        }
+        candidate.update(status='unconfirmed', budget_deferral=decision)
+        artifact['budget_deferrals'][arm] = decision
+
+
+def confirmation_artifact(selection, manifests, results_dir=None, research_dir=DEFAULT_RESEARCH,
+                          deferred_arms=(), deferral_reason=None, ledger_path=None):
     research = pathlib.Path(research_dir).resolve()
     p, bd = modules(research)
     if not isinstance(selection, dict):
@@ -265,6 +335,16 @@ def confirmation_artifact(selection, manifests, results_dir=None, research_dir=D
     verify_json_hash(selection, 'frozen seed0 selection')
     if selection.get('protocol_id') != p.PROTOCOL_ID:
         raise ValueError('frozen selection belongs to another protocol')
+    reconciliation = None
+    if 'gate_reconciliation' in selection:
+        spec = importlib.util.spec_from_file_location(
+            'beyond_confirmation_gate_policy', pathlib.Path(__file__).with_name('beyond_gate_reconciliation.py'))
+        adapter = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(adapter)
+        reconciliation = adapter.validate_reconciliation(selection)
+    elif 'strict_code_seed0_gates' in selection or 'strict_code_survivors' in selection:
+        raise ValueError('strict-code provenance requires a registered gate reconciliation')
+    active_policy = reconciliation['policy_id'] if reconciliation else 'strict_frozen_v1'
     sources = selection.get('model_source_hashes')
     if not isinstance(sources, dict) or set(sources) != set(p.MODEL_SOURCES):
         raise ValueError('selection must identify exactly the five model/data source files')
@@ -274,6 +354,9 @@ def confirmation_artifact(selection, manifests, results_dir=None, research_dir=D
     by_arguments = {digest(j['argv']): j for j in expected}
     entries, _ = read_manifests(manifests, research, p, sources)
     folder = pathlib.Path(results_dir or research / 'results/beyond_runs')
+    ledger_file = pathlib.Path(ledger_path or research / 'results/beyond_budget.json')
+    ledger_raw = ledger_file.read_bytes() if ledger_file.exists() else None
+    ledger = json.loads(ledger_raw).get('jobs', {}) if ledger_raw else {}
     found = {}
     for manifest, job in entries:
         key = digest(job['argv'])
@@ -288,8 +371,15 @@ def confirmation_artifact(selection, manifests, results_dir=None, research_dir=D
             if job.get('protocol', {}).get(field) != prototype['protocol'][field]:
                 raise ValueError(f'confirmation {field} does not bind the frozen selection')
         path = folder / (job['id'] + '.json')
-        result = json.loads(path.read_text()) if path.exists() else None
+        raw = path.read_bytes() if path.exists() else None
+        result = json.loads(raw) if raw is not None else None
         audit = audit_result(manifest, job, result, p, bd)
+        if result is None and ledger.get(job['id'], {}).get('status') in ('complete', 'error'):
+            audit.update(status='integrity_invalid', errors=['terminal ledger entry has no settled result artifact'])
+        if audit['status'] == 'integrity_invalid':
+            raise ValueError(f"{job['id']}: confirmation integrity failure: {audit['errors']}")
+        audit.update(result_file_sha256=hashlib.sha256(raw).hexdigest() if raw is not None else None,
+                     result_file=str(path), ledger_entry=ledger.get(job['id']))
         found[key] = (job, result, audit)
 
     def read_cell(task, depth, seed, selected):
@@ -303,57 +393,90 @@ def confirmation_artifact(selection, manifests, results_dir=None, research_dir=D
         selected = selection['references'][p.cell_key(task, depth)]['selected']
         for seed in (1, 2, 3):
             references[f'{p.cell_key(task, depth)}/seed{seed}'] = read_cell(task, depth, seed, selected)
-    candidates = {}
-    for arm in p.PRIORITY:
-        if arm not in selection['survivors']:
-            candidates[arm] = {'status': 'rejected', 'reason': 'did_not_pass_seed0_screen',
-                               'cells': [], 'pass_job_ids': [], 'reference_job_ids': []}
-            continue
-        cells = []
-        for task, depth in p.PRIMARY_CELLS:
-            selected = selection['selected'][p.cell_key(task, depth, arm)]['selected']
-            for seed in (1, 2, 3):
-                candidate = read_cell(task, depth, seed, selected)
-                reference = references[f'{p.cell_key(task, depth)}/seed{seed}']
-                floor = .95 if p.is_word(task) else .90
-                status = 'pending'
-                if candidate['status'] == 'invalid':
-                    status = 'invalid'
-                elif reference['status'] == 'invalid':
-                    status = 'reference_invalid'
-                elif reference['status'] == 'complete' and not p.at_least(reference['test_score'], floor):
-                    status = 'reference_failed'
-                elif candidate['status'] == 'complete' and not p.at_least(candidate['test_score'], floor):
-                    status = 'rejected'
-                elif candidate['status'] == reference['status'] == 'complete':
-                    status = 'passed' if p.at_least(candidate['test_score'] + .03, reference['test_score']) else 'rejected'
-                cells.append({'task': task, 'layers': depth, 'seed': seed, 'candidate': candidate,
-                              'reference': reference, 'gate': {'status': status, 'floor': floor, 'maximum_reference_gap': .03,
-                                                            'threshold_tolerance': p.EPS}})
-        states = {c['gate']['status'] for c in cells}
-        # A bad positive control never licenses a pass against a weaker baseline.
-        status = ('invalid' if 'invalid' in states else 'rejected' if 'rejected' in states
-                  else 'unconfirmed' if states & {'reference_failed', 'reference_invalid'}
-                  else 'pending' if 'pending' in states else 'passed')
-        candidates[arm] = {'status': status, 'cells': cells,
-                           'pass_job_ids': [c['candidate']['job_id'] for c in cells if c['gate']['status'] == 'passed'],
-                           'reference_job_ids': sorted({c['reference']['job_id'] for c in cells if c['reference']['job_id']}),
-                           'confirmation_required_cells': 18, 'confirmation_passed_cells': sum(c['gate']['status'] == 'passed' for c in cells)}
+    def evaluate(eligible, reference_floor_required, policy):
+        outcomes = {}
+        for arm in p.PRIORITY:
+            if arm not in eligible:
+                outcomes[arm] = {'status': 'rejected', 'reason': 'did_not_pass_seed0_screen',
+                                 'cells': [], 'pass_job_ids': [], 'reference_job_ids': [],
+                                 'gate_policy': policy}
+                continue
+            cells = []
+            for task, depth in p.PRIMARY_CELLS:
+                selected = selection['selected'][p.cell_key(task, depth, arm)]['selected']
+                for seed in (1, 2, 3):
+                    candidate = read_cell(task, depth, seed, selected)
+                    reference = references[f'{p.cell_key(task, depth)}/seed{seed}']
+                    floor = .95 if p.is_word(task) else .90
+                    status = 'pending'
+                    if candidate['status'] == 'terminal_invalid':
+                        status = 'terminal_invalid'
+                    elif reference['status'] == 'terminal_invalid':
+                        status = 'reference_terminal_invalid'
+                    elif reference_floor_required and reference['status'] == 'complete' and not p.at_least(reference['test_score'], floor):
+                        status = 'reference_failed'
+                    elif candidate['status'] == 'complete' and not p.at_least(candidate['test_score'], floor):
+                        status = 'rejected'
+                    elif candidate['status'] == reference['status'] == 'complete':
+                        status = 'passed' if p.at_least(candidate['test_score'] + .03, reference['test_score']) else 'rejected'
+                    cells.append({'task': task, 'layers': depth, 'seed': seed, 'candidate': candidate,
+                                  'reference': reference, 'gate': {
+                                      'status': status, 'floor': floor, 'maximum_reference_gap': .03,
+                                      'threshold_tolerance': p.EPS, 'reference_floor_required': reference_floor_required,
+                                      'gate_policy': policy}})
+            states = {c['gate']['status'] for c in cells}
+            status = ('rejected' if 'rejected' in states
+                      else 'unconfirmed' if states & {'reference_failed', 'terminal_invalid', 'reference_terminal_invalid'}
+                      else 'pending' if 'pending' in states else 'passed')
+            outcomes[arm] = {'status': status, 'gate_policy': policy, 'cells': cells,
+                            'pass_job_ids': [c['candidate']['job_id'] for c in cells if c['gate']['status'] == 'passed'],
+                            'reference_job_ids': sorted({c['reference']['job_id'] for c in cells if c['reference']['job_id']}),
+                            'confirmation_required_cells': 18, 'confirmation_passed_cells': sum(c['gate']['status'] == 'passed' for c in cells)}
+            terminal_runs = {
+                row['job_id']: row for cell in cells for row in (cell['candidate'], cell['reference'])
+                if row['status'] == 'terminal_invalid'
+            }
+            if terminal_runs:
+                outcomes[arm]['terminal_closure'] = {
+                    'reason': 'terminal_invalid_runs', 'resulting_status': status,
+                    'runs': [terminal_runs[key] for key in sorted(terminal_runs)],
+                    'missing_cells': missing_cells(outcomes[arm]),
+                    'ledger_file_sha256': hashlib.sha256(ledger_raw).hexdigest() if ledger_raw else None,
+                    'scope': 'Terminal invalid measurements never imply accuracy failure or a pass. Any separately observed valid rejection is preserved.',
+                }
+        return outcomes
+
+    candidates = evaluate(selection['survivors'], reconciliation is None, active_policy)
+    strict_candidates = evaluate(selection.get('strict_code_survivors', selection['survivors']), True, 'strict_frozen_v1')
     artifact = {
         'schema': 'stage1_confirmation', 'schema_version': 1, 'protocol_id': p.PROTOCOL_ID,
         'frozen_selection_sha256': selection['sha256'], 'model_source_hashes': sources,
         'candidates': candidates, 'references': references,
+        'active_gate_policy': active_policy,
+        'strict_code_candidates': strict_candidates,
+        'strict_code_passed_candidates': [a for a in p.PRIORITY if strict_candidates[a]['status'] == 'passed'],
+        'strict_code_seed0_survivors': selection.get('strict_code_survivors', selection['survivors']),
+        'terminal_closures': {arm: c['terminal_closure'] for arm, c in candidates.items() if 'terminal_closure' in c},
         'passed_candidates': [a for a in p.PRIORITY if candidates[a]['status'] == 'passed'],
         'primary_cells': [list(x) for x in p.PRIMARY_CELLS], 'seeds': [1, 2, 3],
         'source_manifest_hashes': sorted({m['sha256'] for m, _ in entries}),
         'gate_measurement': 'independent final TEST only; seed0 selected rates/reference arms are frozen',
-        'status_definitions': {'passed': 'all18 final-test cells pass with valid positive controls',
+        'status_definitions': {'passed': 'all18 final-test cells pass the stated policy with finite completed frozen references',
                               'rejected': 'a valid candidate test fails its floor/margin, or candidate failed seed0',
                               'pending': 'one or more needed results are absent/running',
-                              'invalid': 'candidate artifact or measurement is invalid',
-                              'unconfirmed': 'the frozen positive control is invalid or fails its absolute floor; no substitution'},
+                              'unconfirmed': 'a terminal measurement is invalid, the frozen positive control failed, or an explicit documented budget deferral leaves confirmations missing',
+                              'integrity_failure': 'artifact identity/accounting failure raises an error; no confirmation artifact is emitted'},
         'evaluator_sha256': hashlib.sha256(pathlib.Path(__file__).read_bytes()).hexdigest(),
     }
+    if reconciliation:
+        artifact['gate_reconciliation'] = copy.deepcopy(reconciliation)
+    apply_budget_deferrals(artifact, tuple(deferred_arms), deferral_reason,
+                           ledger_path or research / 'results/beyond_budget.json')
+    # The same explicit missing-evidence decision closes strict pending records;
+    # it never overwrites an existing strict rejection, pass, or reference failure.
+    for arm, decision in artifact.get('budget_deferrals', {}).items():
+        if strict_candidates[arm]['status'] == 'pending':
+            strict_candidates[arm].update(status='unconfirmed', budget_deferral=copy.deepcopy(decision))
     artifact['sha256'] = digest(artifact)
     return artifact
 
@@ -414,13 +537,139 @@ def self_test(research):
         assert confirmation_artifact(selection, [confirm_path], results, research)['candidates']['B']['status'] == 'rejected'
         bpath.unlink()
         assert confirmation_artifact(selection, [confirm_path], results, research)['candidates']['B']['status'] == 'pending'
+        ledger_path = folder / 'deferral-ledger.json'
+        ledger_path.write_text(json.dumps({'caps': {'screen': 25, 'language': 100, 'development': 25},
+                                          'jobs': {'done': {'stage': 'screen', 'settled_usd': 8},
+                                                   'active': {'stage': 'screen', 'reserved_usd': 2}}}))
+        deferred = confirmation_artifact(selection, [confirm_path], results, research,
+                                         deferred_arms=('B',), deferral_reason='Synthetic budget test',
+                                         ledger_path=ledger_path)
+        assert deferred['candidates']['B']['status'] == 'unconfirmed'
+        assert len(deferred['budget_deferrals']['B']['missing_cells']) == 1
+        assert deferred['budget_deferrals']['B']['ledger_snapshot']['screen']['total_usd'] == 10
+        assert 'B' not in deferred['passed_candidates']
+        for reason in (None, ''):
+            try:
+                confirmation_artifact(selection, [confirm_path], results, research,
+                                      deferred_arms=('B',), deferral_reason=reason, ledger_path=ledger_path)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError('reasonless deferral accepted')
         wrong = copy.deepcopy(original); wrong['seed'] += 1; bpath.write_text(json.dumps(wrong))
-        assert confirmation_artifact(selection, [confirm_path], results, research)['candidates']['B']['status'] == 'invalid'
+        try:
+            confirmation_artifact(selection, [confirm_path], results, research)
+        except ValueError as error:
+            assert 'integrity failure' in str(error)
+        else:
+            raise AssertionError('an identity mismatch emitted a confirmation artifact')
+        failed = copy.deepcopy(original)
+        failed.update(failure='nonfinite_training_loss', nonfinite_fields=['loss'])
+        failed.pop('test')
+        bpath.write_text(json.dumps(failed))
+        closed = confirmation_artifact(selection, [confirm_path], results, research)
+        assert closed['candidates']['B']['status'] == 'unconfirmed'
+        assert closed['passed_candidates'] == ['C', 'A']
+        closure = closed['terminal_closures']['B']
+        assert closure['reason'] == 'terminal_invalid_runs' and len(closure['missing_cells']) == 1
+        assert closure['runs'][0]['terminal_errors']['failure'] == 'nonfinite_training_loss'
+        assert closure['runs'][0]['audit']['result_file_sha256'] == hashlib.sha256(bpath.read_bytes()).hexdigest()
+        timeout = {key: original[key] for key in ('job_id', 'argv', 'script', 'source_hashes', 'manifest', 'manifest_sha256')}
+        timeout.update(error='subprocess exceeded 600 seconds', stderr='worker timeout')
+        bpath.write_text(json.dumps(timeout))
+        closed = confirmation_artifact(selection, [confirm_path], results, research)
+        assert closed['candidates']['B']['status'] == 'unconfirmed'
+        assert closed['passed_candidates'] == ['C', 'A']
+        assert closed['terminal_closures']['B']['runs'][0]['terminal_errors']['stderr'] == 'worker timeout'
+        # A separate valid floor failure remains a rejection despite another timeout.
+        other_bjob = next(j for j in manifest['jobs'] if j['protocol']['arm'] == 'B' and j['id'] != bjob['id'])
+        other_bpath = results / (other_bjob['id'] + '.json')
+        other_good = json.loads(other_bpath.read_text())
+        other_bad = copy.deepcopy(other_good); other_bad['test'].update(acc=.5, bal_late=.5)
+        other_bpath.write_text(json.dumps(other_bad))
+        closed = confirmation_artifact(selection, [confirm_path], results, research)
+        assert closed['candidates']['B']['status'] == 'rejected'
+        assert closed['terminal_closures']['B']['resulting_status'] == 'rejected'
+        other_bpath.write_text(json.dumps(other_good))
         bpath.write_text(json.dumps(original))
+        try:
+            confirmation_artifact(selection, [confirm_path], results, research,
+                                  deferred_arms=('B',), deferral_reason='Cannot override a pass',
+                                  ledger_path=ledger_path)
+        except ValueError:
+            pass
+        else:
+            raise AssertionError('passing candidate was deferred')
         refjob = next(j for j in manifest['jobs'] if j['protocol']['arm'] == 'prefix')
         refpath = results / (refjob['id'] + '.json'); refresult = json.loads(refpath.read_text()); refresult['test']['bal_late'] = .94
         refpath.write_text(json.dumps(refresult))
         assert confirmation_artifact(selection, [confirm_path], results, research)['candidates']['B']['status'] == 'unconfirmed'
+        # Prospective registered written-rule outcomes coexist with original strict outcomes.
+        spec = importlib.util.spec_from_file_location(
+            'beyond_confirmation_test_policy', pathlib.Path(__file__).with_name('beyond_gate_reconciliation.py'))
+        adapter = importlib.util.module_from_spec(spec); spec.loader.exec_module(adapter)
+        import subprocess
+        registration = subprocess.check_output(
+            ['git', '-C', str(research.parent), 'rev-parse', 'HEAD'], text=True).strip()
+        written_selection = adapter.reconcile(selection, registration)
+        written_path, written_manifest = install('written_confirmation', p.confirmation_jobs(written_selection, 'all'))
+        written = confirmation_artifact(written_selection, [written_path], results, research)
+        assert written['passed_candidates'] == written['strict_code_passed_candidates'] == list(p.PRIORITY)
+        assert written['gate_reconciliation'] == written_selection['gate_reconciliation']
+        wrefjob = next(j for j in written_manifest['jobs'] if j['protocol']['arm'] == 'prefix')
+        wrefpath = results / (wrefjob['id'] + '.json'); wrefgood = json.loads(wrefpath.read_text())
+        wrefbad = copy.deepcopy(wrefgood); wrefbad['test'].update(acc=.94, bal_late=.94)
+        wrefpath.write_text(json.dumps(wrefbad))
+        written = confirmation_artifact(written_selection, [written_path], results, research)
+        assert written['passed_candidates'] == list(p.PRIORITY)
+        assert written['strict_code_passed_candidates'] == []
+        assert all(c['status'] == 'unconfirmed' for c in written['strict_code_candidates'].values())
+        assert all(not c['gate']['reference_floor_required'] for c in written['candidates']['B']['cells'])
+        wrefpath.unlink()
+        assert confirmation_artifact(written_selection, [written_path], results, research)['candidates']['B']['status'] == 'pending'
+        wrefpath.write_text(json.dumps({**wrefgood, 'failure': 'nonfinite_reference_loss'}))
+        assert confirmation_artifact(written_selection, [written_path], results, research)['candidates']['B']['status'] == 'unconfirmed'
+        wrefpath.write_text(json.dumps(wrefgood))
+        wbjob = next(j for j in written_manifest['jobs'] if j['protocol']['arm'] == 'B')
+        wbpath = results / (wbjob['id'] + '.json'); wbgood = json.loads(wbpath.read_text())
+        for value in (.94, .959):
+            wbbad = copy.deepcopy(wbgood); wbbad['test'].update(acc=value, bal_late=value)
+            wbpath.write_text(json.dumps(wbbad))
+            assert confirmation_artifact(written_selection, [written_path], results, research)['candidates']['B']['status'] == 'rejected'
+        boundary = copy.deepcopy(wbgood); boundary['test'].update(acc=.96, bal_late=.96)
+        wbpath.write_text(json.dumps(boundary))
+        assert confirmation_artifact(written_selection, [written_path], results, research)['candidates']['B']['status'] == 'passed'
+        wbpath.write_text(json.dumps(wbgood))
+        for key, value in (('policy_id', 'unknown'), ('registration_commit', None)):
+            altered = copy.deepcopy(written_selection); altered['gate_reconciliation'][key] = value
+            altered.pop('sha256'); altered['sha256'] = digest(altered)
+            try:
+                confirmation_artifact(altered, [written_path], results, research)
+            except ValueError:
+                pass
+            else:
+                raise AssertionError(f'unregistered/unknown reconciliation accepted: {key}')
+        # Strict seed0 failure cannot be retroactively erased by fresh test results.
+        low_reference_records = []
+        for job in first['jobs']:
+            task, _, arm, _, _, _ = p.identify_job(job)
+            result = synthetic_result(job, first)
+            if p.is_word(task) and arm in p.WORD_REFERENCES:
+                result['validation'].update(acc=.94, bal_late=.94)
+            low_reference_records.append(p.make_record(job, result))
+        for job in p.alternate_jobs(low_reference_records):
+            job['id'] = digest(job['argv'])[:24]  # Synthetic identity; no manifest is dispatched.
+            result = synthetic_result(job, first); result['validation'].update(acc=.94, bal_late=.94)
+            low_reference_records.append(p.make_record(job, result))
+        strict_ineligible = p.select(low_reference_records, sources)
+        assert strict_ineligible['survivors'] == []
+        newly_eligible = adapter.reconcile(strict_ineligible, registration)
+        later_path, _ = install('written_only_eligible', p.confirmation_jobs(newly_eligible, 'all'))
+        later = confirmation_artifact(newly_eligible, [later_path], results, research)
+        assert later['passed_candidates'] == list(p.PRIORITY) and later['strict_code_passed_candidates'] == []
+        assert later['strict_code_seed0_survivors'] == []
+        assert all(c['status'] == 'rejected' and c['reason'] == 'did_not_pass_seed0_screen'
+                   for c in later['strict_code_candidates'].values())
         # Metadata/accounting/worker-source mismatches are independently rejected.
         firstjob = first['jobs'][0]; good = synthetic_result(firstjob, first)
         for field, bad in (('job_id', 'swapped'), ('argv', []), ('lr', .123), ('steps', good['steps'] - 1),
@@ -436,8 +685,14 @@ def self_test(research):
         failed['train_tokens'] = 10 * 64 * context; failed['train_flops'] = 3 * fpt * 10 * 64 * context
         assert audit_result(first, firstjob, failed, p, bd)['status'] == 'measurement_invalid'
     return {'passed': True, 'checks': ['all18 final-test gates', 'canonical artifact hash', 'frozen rates and variants',
-            'pending/invalid/rejected separation', 'failed positive reference cannot pass', 'source/metadata/FLOP integrity',
-            'held-out quality does not affect initial audit', 'partial failures retain correct semantics']}
+            'pending/terminal-invalid/rejected separation', 'failed positive reference cannot pass', 'source/metadata/FLOP integrity',
+            'held-out quality does not affect initial audit', 'partial failures retain correct semantics',
+            'explicit pending-only budget deferral with reason/ledger/missing-cell provenance',
+            'integrity failures globally block artifacts', 'terminal numerical failures/timeouts preserve other passes',
+            'terminal closure preserves errors/result hashes/missing cells and independent valid rejections',
+            'registered written/strict dual outcomes preserve numeric reference-floor divergence',
+            'missing/invalid references never pass either policy', 'unchanged candidate floors and margin tolerance',
+            'unknown policy/missing registration rejected', 'original strict seed0 failure is never retroactively passed']}
 
 
 def main():
@@ -447,17 +702,21 @@ def main():
     for name in ('audit-initial', 'confirm'):
         cmd = sub.add_parser(name); cmd.add_argument('--manifest', action='append', required=True)
         cmd.add_argument('--results-dir', type=pathlib.Path); cmd.add_argument('--output')
+        cmd.add_argument('--ledger', type=pathlib.Path)
         if name == 'confirm':
             cmd.add_argument('--selection', required=True, type=pathlib.Path)
+            cmd.add_argument('--deferred-arm', choices=('A', 'B', 'C'), action='append')
+            cmd.add_argument('--deferral-reason')
         else:
-            cmd.add_argument('--ledger', type=pathlib.Path)
             cmd.add_argument('--select-output'); cmd.add_argument('--alternates-output')
     sub.add_parser('self-test')
     args = ap.parse_args(); research = args.research_dir.resolve()
     if args.command == 'self-test':
         write_json(None, self_test(research)); return
     if args.command == 'confirm':
-        artifact = confirmation_artifact(args.selection, args.manifest, args.results_dir, research)
+        artifact = confirmation_artifact(args.selection, args.manifest, args.results_dir, research,
+                                         deferred_arms=args.deferred_arm or (),
+                                         deferral_reason=args.deferral_reason, ledger_path=args.ledger)
         write_json(args.output, artifact)
     else:
         artifact = audit_initial_results(args.manifest, args.results_dir, research, args.ledger)

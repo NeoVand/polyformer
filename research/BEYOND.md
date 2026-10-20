@@ -213,6 +213,17 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   changes, and no confirmation outcome has been observed. The matrix RNN word failures remain in
   the record; they do not imply an expressivity impossibility.
 
+
+- 2026-10-20 14:18 UTC — The reconciled selection is sealed at commit `79e7aad`; its strict and
+  written-rule seed-0 survivors are identically B, C, A. Independent shared-reference and B runs
+  (36 jobs) launched from manifest commit `a4bf178`, app `ap-B2mThiC800wdEqxhimaAYg`, log
+  `/tmp/beyond-stage1-references-b.log`, eight concurrent L4 slots. No additional tuning is allowed.
+  C/A's 36 confirmation configurations are also frozen, to run after the descriptive grid in the
+  registered order. The dual-policy evaluator passes 17 checks; the report builder passes seven
+  and preserves unrounded decisions, validation/test separation and original-code outcomes.
+  Before these confirmations, conservative settled totals were screen $9.528, language $2.326,
+  development $4.759, total $16.613. Root worker sources remain unchanged.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
