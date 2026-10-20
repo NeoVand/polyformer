@@ -400,6 +400,15 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   language estimate is $17.302019 including timing pilots; total across all stages $43.658243.
   The report now distinguishes total/non-embedding parameters and all four modeled-work totals.
 
+- 2026-10-20 16:05 UTC — Committed rates and all tuning evidence in `4746245`, then exported and
+  committed the complete six-arm seed-1 final block in `a2f7df6`. Launched app
+  `ap-hPs6cmYAdk6j72xPal4Jta`, manifest `manifests/beyond_language_seed1.json`, local log
+  `/tmp/beyond-language-seed1.log`. All six calls are active; no original arm is omitted.
+  The harness auditor checks final artifacts, while a separate read-only audit will download
+  checkpoints and fingerprint their bytes without deserialization. Later seed blocks remain
+  conditional only on terminal completion of this block and the fixed budget checks, not its losses.
+  Current settled-plus-reserved estimate is $64.542413 total, including $38.186189 language.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
