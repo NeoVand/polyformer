@@ -1,7 +1,7 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-15:28 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+15:30 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
 seeds. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. C fails the written rule:
@@ -10,7 +10,8 @@ completed measurements. A also fails: one-layer S5 seeds 1 and 3 score **5.46% a
 C's complete record has no other below-floor cells. A also fails two-layer S5 at seeds 2 and 3.
 All mandatory confirmations are complete and audited. **B is the sole candidate eligible for language.**
 All three candidates reached 100% selected seed-0 validation in the
-six primary cells. The descriptive grid is complete, and no language quality sweep has begun.
+six primary cells. The descriptive grid is complete. B's language plan is frozen, and no language
+quality sweep has begun.
 These results establish successful synthetic-task learning in this regime, not a language advantage.
 
 The question is whether one affordable layer can combine content selection, improved local
@@ -180,7 +181,8 @@ ranking alone establishes neither statistical superiority nor an isolated effect
 The one-layer LLA result also shows why a learnable precision correction must not be described as
 guaranteed recovery of an affine function after training.
 
-Language, if candidates qualify, uses a single FineWeb-Edu shard, GPT-2 tokens, six layers of width
+The frozen [language plan](results/beyond_language_plan.json) tests B against five controls using
+a single FineWeb-Edu shard, GPT-2 tokens, six layers of width
 512, context 512, batch 64, BF16 and Muon. The fixed binaries contain 744.58M training tokens and
 7.51M held-out tokens. Their full [fingerprints](results/beyond_language_planning/dataset.json) were
 recorded before quality runs. Current preparation code specifies a document-level 99:1 split;
@@ -206,7 +208,7 @@ and may understate uncertainty when windows overlap.
 | Convolved Parallax | Pending | Pending | Pending | Pending |
 | Gated DeltaNet, one update | Pending | Pending | Pending | Pending |
 | Gated DeltaProduct, four updates | Pending | Pending | Pending | Pending |
-| A / B / C, only if confirmed | Pending | Pending | Pending | Pending |
+| B | Pending | Pending | Pending | Pending |
 
 For each seed, the headline requires candidate loss at most 99% of the better raw/convolved
 softmax loss, and no higher than the better Gated DeltaNet/DeltaProduct loss. All three seeds and
@@ -233,8 +235,10 @@ chunk 32: GDN1/DP4 took .153/.361 seconds per update versus .439/1.060 for their
 versions. These engineering measurements are not language-quality results.
 
 The hard caps are **$25 diagnostic screen, $100 language, $25 development, $150 total**, including
-pilots, failures and reservations. Before confirmation launches, conservative settled estimates were
-$9.528/$2.326/$4.759 respectively, totaling $16.613; these are estimates, not invoice totals.
+pilots, failures and reservations. The completed screen cost estimate is $21.597644; language timing
+pilots are $2.326004 and development is $4.758580, totaling $28.682228 before language quality runs.
+The frozen B-only language comparison forecasts $66.657532 including its timing pilots; its summed
+timeout maximum is $86.258104. These are resource estimates, not invoice totals.
 The [ledger](results/beyond_budget.json), immutable manifests and [registration log](BEYOND.md)
 remain authoritative. Budget exhaustion leaves missing runs explicitly unconfirmed.
 

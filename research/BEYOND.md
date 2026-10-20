@@ -345,6 +345,17 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   paths changed, with unchanged training established by the saved Stage-0 proof. No language
   quality jobs have launched.
 
+- 2026-10-20 15:30 UTC — Committed complete Stage-1 evidence and reporting patch in `c55c3bd`;
+  committed source bridge `a8fcc9df1d7981dddcb7df9c048f2556a841ba85d0420d221fda743ce2070b39`
+  in `e8eab2b`. The production verifier accepts the actual closure and exact reporting-only diff.
+  Froze `results/beyond_language_plan.json`, seal
+  `1c3aa0819d081dd233d289a0241e94b1141f4fae31ac8eff8cd2c8f046d3126e`, with survivor B and
+  controls rawS/convS/convP/GDN1/DP4. The 18 rate trials each use 3,051 updates; final B uses
+  12,207 updates (399,998,976 tokens). Control updates are 13,540/13,531/12,533/13,105/10,277.
+  Nominal B target is 1.2139564225136e17 training FLOPs; all four work conventions are recorded.
+  Language forecast is $66.657532 including pilots, aggregate timeout maximum $86.258104.
+  All source, data, policy and evaluation identities are frozen before any quality launch.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
