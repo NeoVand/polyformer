@@ -7,7 +7,7 @@ The planner lives below `research/analysis/`, so it does not change the frozen t
 Paths below are relative to the worktree:
 
 - `research/analysis/beyond_language_protocol.py`: planner, validation-only rate selector, final-block exporter.
-- `research/analysis/test_beyond_language_protocol.py`: 20 CPU tests.
+- `research/analysis/test_beyond_language_protocol.py`: 24 CPU tests.
 - `research/results/beyond_language_planning/proof.json`: artifact hashes, test output and portability checks.
 - `research/results/beyond_language_planning/tables.md`: B/C and A/B/C draft planning tables.
 - `research/results/beyond_language_planning/budget.json`: timing inputs and previously settled language spend.

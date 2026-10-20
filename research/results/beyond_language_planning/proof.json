@@ -1,12 +1,159 @@
 {
+  "counter_sensitivity_read_only": {
+    "candidate_extra_compute_percent_at_registered_update_counts": {
+      "A/B/C": {
+        "A": {
+          "DP4": 2.9964369547850644,
+          "GDN1": 2.9976256989874495,
+          "convP": -0.26738292545819276,
+          "convS": -0.44669574112190524,
+          "rawS": -0.45228261093556155
+        },
+        "B": {
+          "DP4": 3.1968516648861245,
+          "GDN1": 3.1980427221959262,
+          "convP": -0.07331909053750474,
+          "convS": -0.2529808204649653,
+          "rawS": -0.2585785614400704
+        },
+        "C": {
+          "DP4": 3.1980119779271288,
+          "GDN1": 3.199203048628796,
+          "convP": -0.07219554627104774,
+          "convS": -0.25185929625867187,
+          "rawS": -0.2574571001730197
+        }
+      },
+      "B/C": {
+        "B": {
+          "DP4": 3.2012992085308056,
+          "GDN1": 3.2000268931255293,
+          "convP": -0.06470111771835763,
+          "convS": -0.2537861244308992,
+          "rawS": -0.2559174493601768
+        },
+        "C": {
+          "DP4": 3.193502575196261,
+          "GDN1": 3.1922303559116516,
+          "convP": -0.07225101184311633,
+          "convS": -0.26132173359532107,
+          "rawS": -0.26345289750764334
+        }
+      }
+    },
+    "dimensions": {
+      "context": 512,
+      "heads": 8,
+      "layers": 6,
+      "padded_transport_width": 520,
+      "width": 512
+    },
+    "formulas": {
+      "A": "parallax_B_C + L*(4*(T-(T+1)/2)*padded - 2*T*padded)",
+      "parallax_B_C": "L*((T-(T+1)/2)*(8*D+8*H)-2*T*D)",
+      "softmax": "L*(T-(T+1)/2)*(4*D+5*H)"
+    },
+    "independent_formula_review": "design_prior_art independently verified all three source-dense delta formulas.",
+    "interpretation": "Equal registered nominal analytic training FLOPs is supported. Exact equal executed GPU arithmetic is not established. Under this source-dense sensitivity, candidates use about3.0\u20133.2% more arithmetic than the recurrent baselines and about0.25\u20130.45% less than softmax at the same registered nominal budget.",
+    "limits": [
+      "The old nominal convention charges two Parallax value products even though JAX already combines their weights into one product; a ta-to-T substitution alone overstates source arithmetic.",
+      "A assumes the duplicate ordinary W@V expression is shared, consistent with the declared counter and the CPU HLO check; GPU code was not profiled.",
+      "Scalar costs remain estimates. The common3x-forward approximation, special chunk solve backward surcharge, and exclusions of optimizer/rematerialization arithmetic remain unchanged.",
+      "A positive language result should be described as satisfying the preregistered nominal-FLOP gate, not proof of equality in hardware-executed FLOPs."
+    ],
+    "ordinary_value_product_sharing_check": {
+      "GPU_sharing_measured": false,
+      "backend": "CPU",
+      "method": "optimized HLO of two identical beyond_layers._mm calls with S6 shapes",
+      "optimized_dot_operations": 1
+    },
+    "rows": {
+      "A": {
+        "combined_value_product_forward_credit": 6340608,
+        "increase_over_nominal_percent": 2.9980101221052093,
+        "net_source_dense_forward_delta": 3225312.0,
+        "nominal_forward_fpt": 107581758.1875,
+        "source_dense_forward_estimate": 110807070.1875,
+        "source_dense_training_estimate": 332421210.5625,
+        "triangle_to_dense_forward_delta": 9565920.0
+      },
+      "B": {
+        "combined_value_product_forward_credit": 3145728,
+        "increase_over_nominal_percent": 3.1943918255672017,
+        "net_source_dense_forward_delta": 3231552.0,
+        "nominal_forward_fpt": 101163294.1875,
+        "source_dense_forward_estimate": 104394846.1875,
+        "source_dense_training_estimate": 313184538.5625,
+        "triangle_to_dense_forward_delta": 6377280.0
+      },
+      "C": {
+        "combined_value_product_forward_credit": 3145728,
+        "increase_over_nominal_percent": 3.194100842225878,
+        "net_source_dense_forward_delta": 3231552.0,
+        "nominal_forward_fpt": 101172510.1875,
+        "source_dense_forward_estimate": 104404062.1875,
+        "source_dense_training_estimate": 313212186.5625,
+        "triangle_to_dense_forward_delta": 6377280.0
+      },
+      "DP4": {
+        "combined_value_product_forward_credit": 0,
+        "increase_over_nominal_percent": 0.0,
+        "net_source_dense_forward_delta": 0.0,
+        "nominal_forward_fpt": 123706314.0,
+        "source_dense_forward_estimate": 123706314.0,
+        "source_dense_training_estimate": 372031326.0,
+        "triangle_to_dense_forward_delta": 0.0
+      },
+      "GDN1": {
+        "combined_value_product_forward_credit": 0,
+        "increase_over_nominal_percent": 0.0,
+        "net_source_dense_forward_delta": 0.0,
+        "nominal_forward_fpt": 98067262.5,
+        "source_dense_forward_estimate": 98067262.5,
+        "source_dense_training_estimate": 294429883.5,
+        "triangle_to_dense_forward_delta": 0.0
+      },
+      "convP": {
+        "combined_value_product_forward_credit": 3145728,
+        "increase_over_nominal_percent": 3.2684028499245574,
+        "net_source_dense_forward_delta": 3231552.0,
+        "nominal_forward_fpt": 98872512.0,
+        "source_dense_forward_estimate": 102104064.0,
+        "source_dense_training_estimate": 306312192.0,
+        "triangle_to_dense_forward_delta": 6377280.0
+      },
+      "convS": {
+        "combined_value_product_forward_credit": 0,
+        "increase_over_nominal_percent": 3.4593611759197898,
+        "net_source_dense_forward_delta": 3200904.0,
+        "nominal_forward_fpt": 92528760.0,
+        "source_dense_forward_estimate": 95729664.0,
+        "source_dense_training_estimate": 287188992.0,
+        "triangle_to_dense_forward_delta": 3200904.0
+      },
+      "rawS": {
+        "combined_value_product_forward_credit": 0,
+        "increase_over_nominal_percent": 3.4614297567570302,
+        "net_source_dense_forward_delta": 3200904.0,
+        "nominal_forward_fpt": 92473464.0,
+        "source_dense_forward_estimate": 95674368.0,
+        "source_dense_training_estimate": 287023104.0,
+        "triangle_to_dense_forward_delta": 3200904.0
+      }
+    },
+    "scope": "Source-level arithmetic sensitivity only. No registered counters, steps, budgets or model sources changed; no GPU profiler measurement."
+  },
+  "dependency_hashes": {
+    "research/analysis/beyond_gate_reconciliation.py": "5cbbe98a3659fc5871d8a29054dbe1cc8e6839dbc0a3db35da5b2124f55b6f5f"
+  },
   "files": {
-    "research/analysis/beyond_language_protocol.py": "6200aed52ddb4f4528d34d488b8eb74d1921beed148dc8b263eab16937b9ded1",
-    "research/analysis/test_beyond_language_protocol.py": "d920415330efb7ff035da52afb00818b18b830e0ce17a14bd2a89f6b56373839",
+    "research/analysis/beyond_language_protocol.py": "1320196b1743a54157058a6a57d2670e091a357c4aa0d13f1636ce9376fce18f",
+    "research/analysis/test_beyond_language_protocol.py": "50318e00e54f885ba128d74db90ccd97ff057b4a953d3f102b0afb0c09eb437d",
     "research/results/beyond_language_planning/budget.json": "195c6cf0e213239dd7ad6c4e94b2bc030c2b8a57ea02a483c05f42bc605c489a",
     "research/results/beyond_language_planning/handoff.md": "4745764673861a62658273eb983e7f5dd9a777a363e4273c24275cee5058af46",
     "research/results/beyond_language_planning/tables.md": "b10256b83266e21bfb38dc1dd3634f2cbc8e8289a5b6cb1a11b7ed2db3abd3c0"
   },
-  "git_head_during_validation": "7d7977acb35d9455f08c89eaf2ca534bababba06",
+  "git_head_during_validation": "4bf684f6e986e32874543e29dfbcc8fd1de88739",
   "notes": [
     "No language plan frozen.",
     "No paid jobs launched.",
@@ -66,13 +213,24 @@
       "status": "passed"
     }
   ],
+  "prospective_registration_commit": "445048e487906265c99a135e08ccedea39a03230",
+  "recognized_stage1_policy_id": "59e1b83139fbb148de0132005de781486a86aa79cd4a2c5d675ca21416863d46",
+  "reconciliation_checks": [
+    "Exact known policy; unknown policies rejected.",
+    "Committed Section4.1 and policy identifier verified through shared adapter.",
+    "Original sealed strict selection and strict seed0 survivors verified at registration commit.",
+    "Registration must be an ancestor of language freeze evidence.",
+    "Both active and strict confirmation outcomes retained using identical measurements.",
+    "All18 active pass cells require finite complete references and unchanged candidate floor/gap/tolerance.",
+    "Planner and gate-adapter hashes pinned for export/selection."
+  ],
   "same_draft_across_working_directories": true,
   "schema": "language_planner_validation",
   "schema_version": 1,
   "status": "passed",
   "test_command": "python research/analysis/test_beyond_language_protocol.py",
-  "test_output": "test_all_terminal_before_any_selection (__main__.ProtocolTests.test_all_terminal_before_any_selection) ... ok\ntest_all_three_survivors_use_larger_common_budget (__main__.ProtocolTests.test_all_three_survivors_use_larger_common_budget) ... ok\ntest_bridge_only_allows_audited_lm_reporting_change (__main__.ProtocolTests.test_bridge_only_allows_audited_lm_reporting_change) ... ok\ntest_bridge_requires_exact_committed_endpoints_and_diff (__main__.ProtocolTests.test_bridge_requires_exact_committed_endpoints_and_diff) ... ok\ntest_budget_deferral_requires_linked_reason_missing_cells_and_ledger (__main__.ProtocolTests.test_budget_deferral_requires_linked_reason_missing_cells_and_ledger) ... ok\ntest_committed_evidence_and_immutable_outputs (__main__.ProtocolTests.test_committed_evidence_and_immutable_outputs) ... ok\ntest_draft_and_unconfirmed_provenance_cannot_export (__main__.ProtocolTests.test_draft_and_unconfirmed_provenance_cannot_export) ... ok\ntest_exact_tie_chooses_lower_rate (__main__.ProtocolTests.test_exact_tie_chooses_lower_rate) ... ok\ntest_explicit_early_numerical_failure_is_an_invalid_trial (__main__.ProtocolTests.test_explicit_early_numerical_failure_is_an_invalid_trial) ... ok\ntest_final_blocks_both_rnns_and_independent_seeds (__main__.ProtocolTests.test_final_blocks_both_rnns_and_independent_seeds) ... ok\ntest_invalid_rate_reported_and_cannot_win (__main__.ProtocolTests.test_invalid_rate_reported_and_cannot_win) ... ok\ntest_manifest_must_cover_exact_grid (__main__.ProtocolTests.test_manifest_must_cover_exact_grid) ... ok\ntest_no_rounded_intermediate_or_final_score_leakage (__main__.ProtocolTests.test_no_rounded_intermediate_or_final_score_leakage) ... ok\ntest_nonadvancing_stage1_arms_must_have_explicit_closed_status (__main__.ProtocolTests.test_nonadvancing_stage1_arms_must_have_explicit_closed_status) ... ok\ntest_nonfinite_or_missing_raw_never_uses_rounded_fallback (__main__.ProtocolTests.test_nonfinite_or_missing_raw_never_uses_rounded_fallback) ... ok\ntest_registered_compute_and_fresh_schedules (__main__.ProtocolTests.test_registered_compute_and_fresh_schedules) ... ok\ntest_registration_digest_allows_log_updates_but_not_protocol_edits (__main__.ProtocolTests.test_registration_digest_allows_log_updates_but_not_protocol_edits) ... ok\ntest_selection_reassignment_rejected_even_after_rehash (__main__.ProtocolTests.test_selection_reassignment_rejected_even_after_rehash) ... ok\ntest_source_and_config_corruption_fail_closed (__main__.ProtocolTests.test_source_and_config_corruption_fail_closed) ... ok\ntest_stage1_requires_all18_unique_cells_and_all_survivors (__main__.ProtocolTests.test_stage1_requires_all18_unique_cells_and_all_survivors) ... ok\n\n----------------------------------------------------------------------\nRan 20 tests in 1.082s\n\nOK\n",
-  "tests_passed": 20,
+  "test_output": "test_all_terminal_before_any_selection (__main__.ProtocolTests.test_all_terminal_before_any_selection) ... ok\ntest_all_three_survivors_use_larger_common_budget (__main__.ProtocolTests.test_all_three_survivors_use_larger_common_budget) ... ok\ntest_bridge_only_allows_audited_lm_reporting_change (__main__.ProtocolTests.test_bridge_only_allows_audited_lm_reporting_change) ... ok\ntest_bridge_requires_exact_committed_endpoints_and_diff (__main__.ProtocolTests.test_bridge_requires_exact_committed_endpoints_and_diff) ... ok\ntest_budget_deferral_requires_linked_reason_missing_cells_and_ledger (__main__.ProtocolTests.test_budget_deferral_requires_linked_reason_missing_cells_and_ledger) ... ok\ntest_committed_evidence_and_immutable_outputs (__main__.ProtocolTests.test_committed_evidence_and_immutable_outputs) ... ok\ntest_draft_and_unconfirmed_provenance_cannot_export (__main__.ProtocolTests.test_draft_and_unconfirmed_provenance_cannot_export) ... ok\ntest_exact_tie_chooses_lower_rate (__main__.ProtocolTests.test_exact_tie_chooses_lower_rate) ... ok\ntest_explicit_early_numerical_failure_is_an_invalid_trial (__main__.ProtocolTests.test_explicit_early_numerical_failure_is_an_invalid_trial) ... ok\ntest_final_blocks_both_rnns_and_independent_seeds (__main__.ProtocolTests.test_final_blocks_both_rnns_and_independent_seeds) ... ok\ntest_frozen_plan_preserves_policy_and_analysis_source_identity (__main__.ProtocolTests.test_frozen_plan_preserves_policy_and_analysis_source_identity) ... ok\ntest_invalid_rate_reported_and_cannot_win (__main__.ProtocolTests.test_invalid_rate_reported_and_cannot_win) ... ok\ntest_manifest_must_cover_exact_grid (__main__.ProtocolTests.test_manifest_must_cover_exact_grid) ... ok\ntest_no_rounded_intermediate_or_final_score_leakage (__main__.ProtocolTests.test_no_rounded_intermediate_or_final_score_leakage) ... ok\ntest_nonadvancing_stage1_arms_must_have_explicit_closed_status (__main__.ProtocolTests.test_nonadvancing_stage1_arms_must_have_explicit_closed_status) ... ok\ntest_nonfinite_or_missing_raw_never_uses_rounded_fallback (__main__.ProtocolTests.test_nonfinite_or_missing_raw_never_uses_rounded_fallback) ... ok\ntest_reconciliation_preserves_candidate_floor_gap_and_valid_reference (__main__.ProtocolTests.test_reconciliation_preserves_candidate_floor_gap_and_valid_reference) ... ok\ntest_registered_compute_and_fresh_schedules (__main__.ProtocolTests.test_registered_compute_and_fresh_schedules) ... ok\ntest_registration_digest_allows_log_updates_but_not_protocol_edits (__main__.ProtocolTests.test_registration_digest_allows_log_updates_but_not_protocol_edits) ... ok\ntest_selection_reassignment_rejected_even_after_rehash (__main__.ProtocolTests.test_selection_reassignment_rejected_even_after_rehash) ... ok\ntest_source_and_config_corruption_fail_closed (__main__.ProtocolTests.test_source_and_config_corruption_fail_closed) ... ok\ntest_stage1_requires_all18_unique_cells_and_all_survivors (__main__.ProtocolTests.test_stage1_requires_all18_unique_cells_and_all_survivors) ... ok\ntest_unknown_policy_uncommitted_or_wrong_original_provenance_rejected (__main__.ProtocolTests.test_unknown_policy_uncommitted_or_wrong_original_provenance_rejected) ... ok\ntest_written_rule_pass_retains_strict_reference_floor_failure (__main__.ProtocolTests.test_written_rule_pass_retains_strict_reference_floor_failure) ... ok\n\n----------------------------------------------------------------------\nRan 24 tests in 2.335s\n\nOK\n",
+  "tests_passed": 24,
   "top_level_research_source_map": {
     "beyond_chunk_check.py": "f671fef1033410fc7bbf2d0e07138070304ecd595110797c27242c746d50cdf6",
     "beyond_diag.py": "ab176f04bdf08a4ebcc650672929f2627c910e53b631fffde8d8ed96696f6a39",

@@ -224,6 +224,16 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   Before these confirmations, conservative settled totals were screen $9.528, language $2.326,
   development $4.759, total $16.613. Root worker sources remain unchanged.
 
+
+- 2026-10-20 14:26 UTC — Saved the working report in `BEYOND_REPORT.md`, with all pending outcomes
+  explicitly marked. The language planner now verifies the registered gate reconciliation and pins
+  its adapter; 24 CPU tests plus four portability checks pass. A fresh source-level FLOP sensitivity
+  audit finds approximately 3.0–3.2% more candidate arithmetic than RNN arithmetic at the nominal
+  matched budget, and approximately 0.25–0.45% less than softmax: dense score products and combined
+  corrected-weight value products differ from the legacy analytic convention. Exact GPU arithmetic
+  has not been measured. The audit is in `results/beyond_language_planning/proof.json`; no counters,
+  worker sources, training schedules or quality jobs changed. Resolve this before freezing language.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

@@ -14,14 +14,22 @@ p = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(p)
 ROOT = HERE.parent
 BUDGET = json.loads((ROOT / "results" / "beyond_language_planning" / "budget.json").read_text())
+REGISTRATION_COMMIT = "445048e487906265c99a135e08ccedea39a03230"
+ORIGINAL_SELECTION = json.loads(p.git(ROOT, "show", f"{REGISTRATION_COMMIT}:{p.STRICT_SELECTION_PATH}"))
 
 
 def fixture_plan():
     plan = p.build_plan(ROOT, ["B", "C"], BUDGET)
+    confirmation = confirmation_for(plan)
     # Synthetic sealed provenance for pure-function tests; production CLI
     # separately requires committed evidence and an audited source bridge.
     return p.seal({**plan, "status": "frozen", "evidence_commit": "a" * 40,
-                   "stage1_confirmation_sha256": "b" * 64})
+                   "stage1_confirmation_sha256": confirmation["sha256"],
+                   "stage1_gate_reconciliation": confirmation["gate_reconciliation"],
+                   "stage1_active_gate_policy": confirmation["active_gate_policy"],
+                   "stage1_strict_code_candidates": confirmation["strict_code_candidates"],
+                   "stage1_strict_code_passed_candidates": confirmation["strict_code_passed_candidates"],
+                   "stage1_strict_code_seed0_survivors": confirmation["strict_code_seed0_survivors"]})
 
 
 def manifest_for(plan):
@@ -63,12 +71,33 @@ def results_for(plan, manifest):
 
 
 def confirmation_for(plan):
-    cells = [{"task": task, "layers": layers, "seed": seed, "gate": {"status": "passed"}}
-             for task, layers in p.PRIMARY_CELLS for seed in p.FINAL_SEEDS]
+    def record(strict):
+        policy = "strict_frozen_v1" if strict else p.RECONCILIATION_POLICY_ID
+        cells = [{
+            "task": task, "layers": layers, "seed": seed,
+            "candidate": {"status": "complete", "test_score": 1.0},
+            "reference": {"status": "complete", "test_score": 1.0},
+            "gate": {"status": "passed", "floor": .95 if task.startswith("wp_") else .90,
+                     "maximum_reference_gap": .03, "threshold_tolerance": 1e-12,
+                     "reference_floor_required": strict, "gate_policy": policy},
+        } for task, layers in p.PRIMARY_CELLS for seed in p.FINAL_SEEDS]
+        return {"status": "passed", "cells": cells, "gate_policy": policy}
     return p.seal({
         "schema": "stage1_confirmation", "schema_version": 1,
+        "protocol_id": p.STAGE1_PROTOCOL_ID,
         "model_source_hashes": plan["model_source_hashes"],
-        "candidates": {arm: {"status": "passed", "cells": cells} for arm in ("B", "C")},
+        "active_gate_policy": p.RECONCILIATION_POLICY_ID,
+        "gate_reconciliation": {
+            "policy_id": p.RECONCILIATION_POLICY_ID, "policy": p.reconciliation_adapter().POLICY,
+            "registration_commit": REGISTRATION_COMMIT,
+            "original_selection_sha256": ORIGINAL_SELECTION["sha256"],
+            "original_protocol_id": p.STAGE1_PROTOCOL_ID,
+            "adoption_scope": "Only confirmations prospectively registered under this sealed reconciliation; no retrospective change to the strict-code outcome.",
+        },
+        "candidates": {arm: record(False) for arm in ("B", "C")},
+        "strict_code_candidates": {arm: record(True) for arm in ("B", "C")},
+        "strict_code_passed_candidates": ["B", "C"],
+        "strict_code_seed0_survivors": ORIGINAL_SELECTION["survivors"],
         "passed_candidates": ["B", "C"],
     })
 
@@ -249,6 +278,89 @@ class ProtocolTests(unittest.TestCase):
             with self.subTest(mode=mode), self.assertRaises(p.ProtocolError):
                 p.verify_confirmation(p.seal(c), survivors, self.plan["model_source_hashes"])
 
+    def test_written_rule_pass_retains_strict_reference_floor_failure(self):
+        c = confirmation_for(self.plan)
+        for role in ("candidates", "strict_code_candidates"):
+            c[role]["B"]["cells"][0]["reference"]["test_score"] = .89
+        strict = c["strict_code_candidates"]["B"]
+        strict["status"] = "unconfirmed"
+        strict["cells"][0]["gate"]["status"] = "reference_failed"
+        c["strict_code_passed_candidates"] = ["C"]
+        p.verify_confirmation(p.seal(c), ["B", "C"], self.plan["model_source_hashes"],
+                              repository=ROOT.parent, evidence_commit=REGISTRATION_COMMIT)
+        self.assertEqual(c["passed_candidates"], ["B", "C"])
+        self.assertEqual(c["strict_code_candidates"]["B"]["status"], "unconfirmed")
+        self.assertFalse(c["candidates"]["B"]["cells"][0]["gate"]["reference_floor_required"])
+        self.assertTrue(c["strict_code_candidates"]["B"]["cells"][0]["gate"]["reference_floor_required"])
+
+    def test_unknown_policy_uncommitted_or_wrong_original_provenance_rejected(self):
+        for mode in ("active", "policy_id", "policy_contents", "missing_registration",
+                     "pre_registration", "original_selection", "protocol", "eligibility", "strict_missing"):
+            c = confirmation_for(self.plan)
+            if mode == "active":
+                c["active_gate_policy"] = "unknown"
+            elif mode == "policy_id":
+                c["gate_reconciliation"]["policy_id"] = "f" * 64
+            elif mode == "policy_contents":
+                c["gate_reconciliation"]["policy"]["word_threshold"] = .94
+            elif mode == "missing_registration":
+                c["gate_reconciliation"]["registration_commit"] = "0" * 40
+            elif mode == "pre_registration":
+                c["gate_reconciliation"]["registration_commit"] = p.git(ROOT, "rev-parse", REGISTRATION_COMMIT + "^").decode().strip()
+            elif mode == "original_selection":
+                c["gate_reconciliation"]["original_selection_sha256"] = "f" * 64
+            elif mode == "protocol":
+                c["protocol_id"] = "f" * 64
+            elif mode == "eligibility":
+                c["strict_code_seed0_survivors"] = []
+            else:
+                c.pop("strict_code_candidates")
+            with self.subTest(mode=mode), self.assertRaises(p.ProtocolError):
+                p.verify_confirmation(p.seal(c), ["B", "C"], self.plan["model_source_hashes"])
+        earlier = p.git(ROOT, "rev-parse", REGISTRATION_COMMIT + "^").decode().strip()
+        with self.assertRaises(p.ProtocolError):
+            p.verify_confirmation(confirmation_for(self.plan), ["B", "C"], self.plan["model_source_hashes"],
+                                  repository=ROOT.parent, evidence_commit=earlier)
+
+    def test_reconciliation_preserves_candidate_floor_gap_and_valid_reference(self):
+        for mode in ("floor", "gap", "reference_missing", "reference_nonfinite",
+                     "reference_out_of_range", "gate_floor", "gate_margin", "gate_tolerance"):
+            c = confirmation_for(self.plan)
+            for role in ("candidates", "strict_code_candidates"):
+                cell = c[role]["B"]["cells"][0]
+                if mode == "floor":
+                    cell["candidate"]["test_score"] = .899
+                elif mode == "gap":
+                    cell["candidate"]["test_score"] = .96
+                elif mode == "reference_missing":
+                    cell["reference"]["status"] = "pending"
+                elif mode == "reference_nonfinite":
+                    cell["reference"]["test_score"] = None
+                elif mode == "reference_out_of_range":
+                    cell["reference"]["test_score"] = 1.1
+                elif mode == "gate_floor":
+                    cell["gate"]["floor"] = .89
+                elif mode == "gate_margin":
+                    cell["gate"]["maximum_reference_gap"] = .04
+                else:
+                    cell["gate"]["threshold_tolerance"] = .01
+            with self.subTest(mode=mode), self.assertRaises(p.ProtocolError):
+                p.verify_confirmation(p.seal(c), ["B", "C"], self.plan["model_source_hashes"])
+        c = confirmation_for(self.plan)
+        c["strict_code_candidates"]["B"]["cells"][0]["reference"]["test_score"] = .99
+        with self.assertRaises(p.ProtocolError):
+            p.verify_confirmation(p.seal(c), ["B", "C"], self.plan["model_source_hashes"])
+
+    def test_frozen_plan_preserves_policy_and_analysis_source_identity(self):
+        for field in ("stage1_active_gate_policy", "planner_sha256", "gate_policy_adapter_sha256"):
+            bad = p.seal({**self.plan, field: "f" * 64})
+            with self.subTest(field=field), self.assertRaises(p.ProtocolError):
+                p.verify_plan(bad)
+        bad = copy.deepcopy(self.plan)
+        bad["stage1_gate_reconciliation"]["registration_commit"] = "0" * 40
+        with self.assertRaises(p.ProtocolError):
+            p.verify_plan(p.seal(bad))
+
     def test_bridge_only_allows_audited_lm_reporting_change(self):
         c = confirmation_for(self.plan)
         current = dict(self.plan["model_source_hashes"])
@@ -274,11 +386,13 @@ class ProtocolTests(unittest.TestCase):
         for status in ("pending", "invalid", "unknown"):
             bad = copy.deepcopy(c)
             bad["candidates"]["A"] = {"status": status, "cells": []}
+            bad["strict_code_candidates"]["A"] = {"status": status, "cells": []}
             with self.subTest(status=status), self.assertRaises(p.ProtocolError):
                 p.verify_confirmation(p.seal(bad), ["B", "C"], self.plan["model_source_hashes"])
         for status in ("rejected", "unconfirmed"):
             valid = copy.deepcopy(c)
             valid["candidates"]["A"] = {"status": status, "cells": []}
+            valid["strict_code_candidates"]["A"] = {"status": status, "cells": []}
             p.verify_confirmation(p.seal(valid), ["B", "C"], self.plan["model_source_hashes"])
 
     def test_budget_deferral_requires_linked_reason_missing_cells_and_ledger(self):
@@ -296,6 +410,7 @@ class ProtocolTests(unittest.TestCase):
         }
         c["budget_deferrals"] = {"A": deferral}
         c["candidates"]["A"] = {"status": "unconfirmed", "cells": [], "budget_deferral": deferral}
+        c["strict_code_candidates"]["A"] = {"status": "unconfirmed", "cells": []}
         p.verify_confirmation(p.seal(c), ["B", "C"], self.plan["model_source_hashes"])
         for field in ("reason", "missing_cells", "ledger_sha256", "ledger_snapshot"):
             bad = copy.deepcopy(c)

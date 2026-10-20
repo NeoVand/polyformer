@@ -64,6 +64,9 @@ REFERENCE_STEPS = 12207
 VERSIONS = {"jax": "0.12.0", "optax": "0.2.8", "numpy": "2.5.4"}
 RATE_PER_SECOND = 0.00122044
 RESOURCE_OVERHEAD_SECONDS = 152
+STAGE1_PROTOCOL_ID = "829e3a8f2bbdce4b2a2b1fdd602f0565704750cb3ce6e69b1fa96bbe408fab63"
+RECONCILIATION_POLICY_ID = "59e1b83139fbb148de0132005de781486a86aa79cd4a2c5d675ca21416863d46"
+STRICT_SELECTION_PATH = "research/results/beyond_stage1_selection_strict.json"
 
 
 class ProtocolError(ValueError):
@@ -226,10 +229,102 @@ def make_job(plan, arm, phase, lr, seed):
     return job
 
 
-def verify_confirmation(confirmation, survivors, current_model_sources, bridge=None):
+def reconciliation_adapter():
+    path = Path(__file__).with_name("beyond_gate_reconciliation.py")
+    spec = importlib.util.spec_from_file_location("_beyond_language_gate_policy", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    if module.POLICY_ID != RECONCILIATION_POLICY_ID:
+        raise ProtocolError("the reconciliation adapter has an unknown policy")
+    return module
+
+
+def verify_passed_cells(arm, record, *, strict):
+    required = {(task, layers, seed) for task, layers in PRIMARY_CELLS for seed in FINAL_SEEDS}
+    cells = record["cells"]
+    actual = [(c["task"], c["layers"], c["seed"]) for c in cells]
+    if len(actual) != 18 or set(actual) != required:
+        raise ProtocolError(f"{arm} lacks the 18 unique independent confirmation cells")
+    policy = "strict_frozen_v1" if strict else RECONCILIATION_POLICY_ID
+    if record.get("gate_policy") != policy:
+        raise ProtocolError(f"{arm} candidate gate policy differs from its stated outcome")
+    for cell in cells:
+        gate = cell["gate"]
+        floor = 0.95 if cell["task"].startswith("wp_") else 0.90
+        if (gate.get("status") != "passed" or gate.get("gate_policy") != policy
+                or gate.get("reference_floor_required") is not strict
+                or gate.get("floor") != floor or gate.get("maximum_reference_gap") != 0.03
+                or gate.get("threshold_tolerance") != 1e-12):
+            raise ProtocolError(f"{arm} confirmation gate differs from the recognized policy")
+        scores = []
+        for role in ("candidate", "reference"):
+            result = cell.get(role, {})
+            score = result.get("test_score")
+            if result.get("status") != "complete" or not finite_number(score) or not 0 <= score <= 1:
+                raise ProtocolError(f"{arm} passed gate lacks a finite completed {role}")
+            scores.append(score)
+        score, reference = scores
+        if (score < floor - 1e-12 or score + 0.03 < reference - 1e-12
+                or (strict and reference < floor - 1e-12)):
+            raise ProtocolError(f"{arm} passed gate violates its stated numeric inequalities")
+
+
+def verify_confirmation_policy(confirmation, repository=None, evidence_commit=None):
+    if confirmation.get("active_gate_policy") != RECONCILIATION_POLICY_ID:
+        raise ProtocolError("unrecognized or missing active Stage-1 gate policy")
+    metadata = confirmation.get("gate_reconciliation")
+    repository = Path(repository) if repository is not None else Path(__file__).resolve().parents[2]
+    try:
+        reconciliation_adapter().validate_reconciliation_metadata(metadata, repository)
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ProtocolError(f"invalid Stage-1 gate reconciliation: {exc}") from exc
+    if (confirmation.get("protocol_id") != STAGE1_PROTOCOL_ID
+            or metadata.get("original_protocol_id") != STAGE1_PROTOCOL_ID):
+        raise ProtocolError("Stage-1 reconciliation changed the original registered protocol")
+    registration = metadata["registration_commit"]
+    try:
+        original = json.loads(git(repository, "show", f"{registration}:{STRICT_SELECTION_PATH}"))
+        check_seal(original)
+    except (subprocess.CalledProcessError, json.JSONDecodeError) as exc:
+        raise ProtocolError("registration commit lacks the sealed original strict selection") from exc
+    if (original["sha256"] != metadata["original_selection_sha256"]
+            or original.get("protocol_id") != STAGE1_PROTOCOL_ID
+            or confirmation.get("strict_code_seed0_survivors") != original.get("survivors")):
+        raise ProtocolError("Stage-1 strict seed-0 provenance differs from its committed original selection")
+    if evidence_commit is not None:
+        ancestor = subprocess.run(
+            ["git", "merge-base", "--is-ancestor", registration, evidence_commit],
+            cwd=repository, capture_output=True, check=False,
+        )
+        if ancestor.returncode:
+            raise ProtocolError("language evidence does not descend from the prospective Stage-1 registration")
+    strict = confirmation.get("strict_code_candidates")
+    if not isinstance(strict, dict) or set(strict) != set(confirmation["candidates"]):
+        raise ProtocolError("both written-rule and strict-code candidate records must be retained")
+    strict_passed = sorted(arm for arm, value in strict.items() if value.get("status") == "passed")
+    if sorted(confirmation.get("strict_code_passed_candidates", [])) != strict_passed:
+        raise ProtocolError("strict-code passed candidate list disagrees with retained outcomes")
+    if not set(strict_passed) <= set(confirmation["strict_code_seed0_survivors"]):
+        raise ProtocolError("strict-code confirmation cannot pass a strict-ineligible seed-0 candidate")
+    if not set(strict_passed) <= set(confirmation["passed_candidates"]):
+        raise ProtocolError("a strict-code pass must also satisfy the active written rule")
+    for arm in strict_passed:
+        verify_passed_cells(arm, strict[arm], strict=True)
+    for arm, active in confirmation["candidates"].items():
+        active_cells = {(c["task"], c["layers"], c["seed"]): c for c in active.get("cells", [])}
+        for cell in strict[arm].get("cells", []):
+            counterpart = active_cells.get((cell["task"], cell["layers"], cell["seed"]))
+            if counterpart is None or any(cell.get(role) != counterpart.get(role) for role in ("candidate", "reference")):
+                raise ProtocolError("written-rule and strict-code outcomes must use identical measurements")
+    return metadata
+
+
+def verify_confirmation(confirmation, survivors, current_model_sources, bridge=None, *,
+                        repository=None, evidence_commit=None):
     check_seal(confirmation)
     if (confirmation.get("schema"), confirmation.get("schema_version")) != ("stage1_confirmation", 1):
         raise ProtocolError("unsupported Stage-1 confirmation artifact")
+    verify_confirmation_policy(confirmation, repository, evidence_commit)
     expected_passed = sorted(k for k, v in confirmation["candidates"].items()
                              if v.get("status") == "passed")
     if sorted(confirmation["passed_candidates"]) != expected_passed or sorted(survivors) != expected_passed:
@@ -255,14 +350,8 @@ def verify_confirmation(confirmation, survivors, current_model_sources, bridge=N
     if any(v.get("budget_deferral") is not None and arm not in deferrals
            for arm, v in confirmation["candidates"].items()):
         raise ProtocolError("Stage-1 candidate budget deferral is not linked from the closure artifact")
-    required = {(task, layers, seed) for task, layers in PRIMARY_CELLS for seed in FINAL_SEEDS}
     for arm in survivors:
-        cells = confirmation["candidates"][arm]["cells"]
-        actual = [(c["task"], c["layers"], c["seed"]) for c in cells]
-        if len(actual) != 18 or set(actual) != required:
-            raise ProtocolError(f"{arm} lacks the 18 unique independent confirmation cells")
-        if any(c["gate"]["status"] != "passed" for c in cells):
-            raise ProtocolError(f"{arm} contains a confirmation gate that did not pass")
+        verify_passed_cells(arm, confirmation["candidates"][arm], strict=False)
     before = confirmation["model_source_hashes"]
     if set(before) != set(MODEL_SOURCES):
         raise ProtocolError("incomplete Stage-1 model source map")
@@ -311,7 +400,8 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
     if sources(root) != before:
         raise ProtocolError("research sources changed while calculating the plan")
     if confirmation is not None:
-        verify_confirmation(confirmation, survivors, models, bridge)
+        verify_confirmation(confirmation, survivors, models, bridge, repository=root.parent,
+                            evidence_commit=evidence_commit)
         if "val_loss_raw" not in (root / "lm.py").read_text():
             raise ProtocolError("apply and audit the unrounded reporting amendment before freezing")
     target_arm = max(survivors, key=lambda a: (counts[a]["training_fpt"], a))
@@ -321,9 +411,15 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
         "status": "frozen" if confirmation is not None else "draft",
         "source_hashes": before, "model_source_hashes": models,
         "planner_sha256": digest(Path(__file__).read_bytes()), "runtime_versions": VERSIONS,
+        "gate_policy_adapter_sha256": digest(Path(__file__).with_name("beyond_gate_reconciliation.py").read_bytes()),
         "evidence_commit": evidence_commit,
         "language_registration_sha256": digest(language_registration((root / "BEYOND.md").read_text())),
         "stage1_confirmation_sha256": confirmation["sha256"] if confirmation else None,
+        "stage1_gate_reconciliation": copy.deepcopy(confirmation["gate_reconciliation"]) if confirmation else None,
+        "stage1_active_gate_policy": confirmation["active_gate_policy"] if confirmation else None,
+        "stage1_strict_code_candidates": copy.deepcopy(confirmation["strict_code_candidates"]) if confirmation else None,
+        "stage1_strict_code_passed_candidates": copy.deepcopy(confirmation["strict_code_passed_candidates"]) if confirmation else None,
+        "stage1_strict_code_seed0_survivors": copy.deepcopy(confirmation["strict_code_seed0_survivors"]) if confirmation else None,
         "stage1_closed_candidate_statuses": {
             arm: value["status"] for arm, value in confirmation["candidates"].items()
         } if confirmation else None,
@@ -405,6 +501,18 @@ def verify_plan(plan):
         raise ProtocolError("unsupported language plan")
     if plan.get("status") != "frozen":
         raise ProtocolError("draft plans cannot export jobs or select rates")
+    if plan.get("planner_sha256") != digest(Path(__file__).read_bytes()):
+        raise ProtocolError("language planner source differs from the frozen plan")
+    if plan.get("gate_policy_adapter_sha256") != digest(Path(__file__).with_name("beyond_gate_reconciliation.py").read_bytes()):
+        raise ProtocolError("gate policy adapter source differs from the frozen plan")
+    if plan.get("stage1_active_gate_policy") != RECONCILIATION_POLICY_ID:
+        raise ProtocolError("frozen language plan lacks the recognized Stage-1 gate policy")
+    try:
+        metadata = reconciliation_adapter().validate_reconciliation_metadata(plan.get("stage1_gate_reconciliation"))
+    except (ValueError, TypeError, KeyError) as exc:
+        raise ProtocolError(f"frozen language plan has invalid gate provenance: {exc}") from exc
+    if metadata.get("original_protocol_id") != STAGE1_PROTOCOL_ID:
+        raise ProtocolError("frozen language plan changed the original Stage-1 protocol")
     for key, length in (("stage1_confirmation_sha256", 64), ("evidence_commit", 40)):
         value = plan.get(key)
         if not isinstance(value, str) or len(value) != length or any(c not in "0123456789abcdef" for c in value):
