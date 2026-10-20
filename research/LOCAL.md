@@ -24,12 +24,12 @@ arity as the source of what it does gain.**
   correction-to-output ratio 0.4-1.9, largest in the last layer), so this is a small real effect, not a
   layer that switched itself off.
 - **Ours vs prior art: Parallax wins.** P (Muon, 4e-3) is below L8 on 3 of 3 seeds by 0.35-0.58%, more
-  than its 3.3% extra FLOPs are worth (softmax gains 0.1-0.3% from 6.9% more FLOPs here). The exact solve
+  than its 3.4% extra FLOPs are worth (softmax gains 0.1-0.3% from 6.9% more FLOPs here). The exact solve
   and the volume selection do not help at this scale.
 - **Parallax replicates, small.** P beats softmax at P's FLOPs on 3 of 3 seeds under Muon (0.64-0.90%) and
   only 0.29% on average under AdamW (2 of 3 seeds), the optimizer interaction its paper reports, at about
-  1/30 of its smallest model and 1/200 of its tokens. Under Muon its gap over softmax grew from +0.26% at 100M tokens to -0.78% at 400M
-  (seed 0); L8's stayed flat (-0.47%, -0.43%).
+  1/30 of its smallest model and 1/200 of its tokens. Under Muon its gap over softmax grew from +0.26% at
+  100M tokens to -0.78% at 400M (seed 0); L8's stayed flat (-0.47%, -0.43%).
 - **Arity: not tested as registered** (the ladder needs a headline go). The indirect evidence is against
   it: Parallax's correction is exactly a pair sector (subsets of size 2, product weights, no volume), and it
   beats L8, whose sectors reach size 9. That comparison changes more than arity (a 64-dimensional learned
