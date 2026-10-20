@@ -1,6 +1,7 @@
-/** The works the report cites, in order of first use. */
+/** Metadata checked in research/PRIOR_ART.md and results/prior_art_verified.json.
+ * The original Transformer citation is retained from the report's bibliography.
+ */
 import type { Reference } from '#lib/learn/references.ts';
-
 export const BIB: Reference[] = [
 	{
 		id: 'vaswani',
@@ -28,23 +29,6 @@ export const BIB: Reference[] = [
 		url: 'https://arxiv.org/abs/2306.02896'
 	},
 	{
-		id: 'roy',
-		authors: 'A. Roy, T. Chou, S. S. Duvvuri, S. Chen, J. Yu, X. Wang, M. Zaheer, R. Anil',
-		title: 'Fast and simplex: 2-simplicial attention in Triton',
-		venue: 'arXiv:2507.02754',
-		year: 2025,
-		url: 'https://arxiv.org/abs/2507.02754'
-	},
-	{
-		id: 'kozachinskiy',
-		authors:
-			'A. Kozachinskiy, F. Urrutia, H. Jimenez, T. Steifer, G. Pizarro, M. Fuentes, F. Meza, C. B. Calderon, C. Rojas',
-		title: 'Strassen attention, split VC dimension and compositionality in transformers',
-		venue: 'NeurIPS',
-		year: 2025,
-		url: 'https://arxiv.org/abs/2501.19215'
-	},
-	{
 		id: 'chakrabarti',
 		authors: 'S. Chakrabarti, T. Pitassi, J. Alman',
 		title: 'Poly-attention: a general scheme for higher-order self-attention',
@@ -53,86 +37,21 @@ export const BIB: Reference[] = [
 		url: 'https://arxiv.org/abs/2602.02422'
 	},
 	{
-		id: 'alman',
-		authors: 'J. Alman, Z. Song',
+		id: 'lla',
+		authors: 'Y. Zuo, Y. Yin, Z. Zeng, A. Li, B. Zhu, Z. Wang',
 		title:
-			'How to capture higher-order correlations? Generalizing matrix softmax attention to Kronecker computation',
-		venue: 'ICLR',
-		year: 2024,
-		url: 'https://arxiv.org/abs/2310.04064'
-	},
-	{
-		id: 'abbe',
-		authors: 'E. Abbe, E. Boix-Adserà, T. Misiakiewicz',
-		title: 'SGD learning on neural networks: leap complexity and saddle-to-saddle dynamics',
-		venue: 'COLT',
-		year: 2023,
-		url: 'https://arxiv.org/abs/2302.11055'
-	},
-	{
-		id: 'drozdov',
-		authors: 'A. Drozdov, P. Verga, M. Yadav, M. Iyyer, A. McCallum',
-		title: 'Unsupervised latent tree induction with deep inside-outside recursive autoencoders',
-		venue: 'NAACL',
-		year: 2019,
-		url: 'https://arxiv.org/abs/1904.02142'
-	},
-	{
-		id: 'dussolle',
-		authors: 'A. Dussolle, P. Liò',
-		title: 'How smoothing is N-simplicial attention?',
-		venue: 'arXiv:2512.15600',
+			'Local linear attention: an optimal interpolation of linear and softmax attention for test-time regression',
+		venue: 'arXiv preprint',
 		year: 2025,
-		url: 'https://arxiv.org/abs/2512.15600'
+		url: 'https://arxiv.org/abs/2510.01450'
 	},
 	{
-		id: 'homa',
-		authors: 'S. Amiraslani, X. Gao',
-		title:
-			'Beyond pairwise attention: higher-order modular attention for efficient sequence learning',
-		venue: 'arXiv:2603.11133',
+		id: 'parallax',
+		authors: 'Y. Zuo, D. Pai, Z. Zeng, A. Dewulf, S. Hu, Z. Wang',
+		title: 'Parallax: parameterized local linear attention for language modeling',
+		venue: 'arXiv preprint',
 		year: 2026,
-		url: 'https://arxiv.org/abs/2603.11133'
-	},
-	{
-		id: 'nexus',
-		authors: 'H. Chen, C. Zhu, K. Han, Y. Tian, Y. Liang, T. Guo, X. Chen, D. Tao, Y. Wang',
-		title: 'Nexus: higher-order attention mechanisms in transformers',
-		venue: 'arXiv:2512.03377',
-		year: 2025,
-		url: 'https://arxiv.org/abs/2512.03377'
-	},
-	{
-		id: 'bergen',
-		authors: 'L. Bergen, T. J. O’Donnell, D. Bahdanau',
-		title: 'Systematic generalization with edge transformers',
-		venue: 'NeurIPS',
-		year: 2021,
-		url: 'https://arxiv.org/abs/2112.00578'
-	},
-	{
-		id: 'floydnet',
-		authors: 'J. Yu, M. Zeng, Q. Ye',
-		title: 'FloydNet: a learning paradigm for global relational reasoning',
-		venue: 'arXiv:2601.19094',
-		year: 2026,
-		url: 'https://arxiv.org/abs/2601.19094'
-	},
-	{
-		id: 'zaheer',
-		authors: 'M. Zaheer, S. Kottur, S. Ravanbakhsh, B. Poczos, R. Salakhutdinov, A. Smola',
-		title: 'Deep sets',
-		venue: 'NeurIPS',
-		year: 2017,
-		url: 'https://arxiv.org/abs/1703.06114'
-	},
-	{
-		id: 'wagstaff',
-		authors: 'E. Wagstaff, F. Fuchs, M. Engelcke, I. Posner, M. A. Osborne',
-		title: 'On the limitations of representing functions on sets',
-		venue: 'ICML',
-		year: 2019,
-		url: 'https://arxiv.org/abs/1901.09006'
+		url: 'https://arxiv.org/abs/2605.29157'
 	},
 	{
 		id: 'nanda',
@@ -143,52 +62,85 @@ export const BIB: Reference[] = [
 		url: 'https://arxiv.org/abs/2301.05217'
 	},
 	{
-		id: 'alon',
-		authors: 'N. Alon, R. Yuster, U. Zwick',
-		title: 'Color-coding',
-		venue: 'Journal of the ACM 42(4)',
-		year: 1995
-	},
-	{
-		id: 'dehghani',
-		authors: 'M. Dehghani, S. Gouws, O. Vinyals, J. Uszkoreit, Ł. Kaiser',
-		title: 'Universal transformers',
+		id: 'seq2tens',
+		authors: 'C. Toth, P. Bonnier, H. Oberhauser',
+		title: 'Seq2Tens: an efficient representation of sequences by low-rank tensor projections',
 		venue: 'ICLR',
-		year: 2019,
-		url: 'https://arxiv.org/abs/1807.03819'
+		year: 2021,
+		url: 'https://arxiv.org/abs/2006.07027'
 	},
 	{
-		id: 'sanford24',
-		authors: 'C. Sanford, D. Hsu, M. Telgarsky',
-		title: 'Transformers, parallel computation, and logarithmic depth',
-		venue: 'ICML',
+		id: 'pathdev',
+		authors: 'H. Lou, S. Li, H. Ni',
+		title: 'Path Development Network with finite-dimensional Lie group representation',
+		venue: 'Transactions on Machine Learning Research (first preprint 2022)',
 		year: 2024,
-		url: 'https://arxiv.org/abs/2402.09268'
+		url: 'https://arxiv.org/abs/2204.00740'
 	},
 	{
-		id: 'velickovic',
-		authors:
-			'P. Veličković, A. P. Badia, D. Budden, R. Pascanu, A. Banino, M. Dashevskiy, R. Hadsell, C. Blundell',
-		title: 'The CLRS algorithmic reasoning benchmark',
-		venue: 'ICML',
-		year: 2022,
-		url: 'https://arxiv.org/abs/2205.15659'
+		id: 'zaheer',
+		authors: 'M. Zaheer, S. Kottur, S. Ravanbakhsh, B. Poczos, R. Salakhutdinov, A. Smola',
+		title: 'Deep sets',
+		venue: 'NeurIPS',
+		year: 2017,
+		url: 'https://arxiv.org/abs/1703.06114'
 	},
 	{
-		id: 'hla',
-		authors: 'Y. Zhang, Z. Qin, M. Wang, Q. Gu',
-		title: 'Higher-order linear attention',
-		venue: 'arXiv:2510.27258',
-		year: 2025,
-		url: 'https://arxiv.org/abs/2510.27258'
+		id: 'chughtai',
+		authors: 'B. Chughtai, L. Chan, N. Nanda',
+		title: 'A toy model of universality: reverse engineering how networks learn group operations',
+		venue: 'arXiv preprint',
+		year: 2023,
+		url: 'https://arxiv.org/abs/2302.03025'
 	},
 	{
-		id: 'janossy',
-		authors: 'R. L. Murphy, B. Srinivasan, V. Rao, B. Ribeiro',
+		id: 'orthogonal',
+		authors: 'M. Lezcano-Casado, D. Martínez-Rubio',
 		title:
-			'Janossy pooling: learning deep permutation-invariant functions for variable-size inputs',
-		venue: 'ICLR',
+			'Cheap orthogonal constraints in neural networks: a simple parametrization of the orthogonal and unitary group',
+		venue: 'ICML',
 		year: 2019,
-		url: 'https://arxiv.org/abs/1811.01900'
+		url: 'https://arxiv.org/abs/1901.08428'
+	},
+	{
+		id: 'iteratedsums',
+		authors: 'J. Diehl, K. Ebrahimi-Fard, N. Tapia',
+		title: 'Time-warping invariants of multidimensional time series',
+		venue: 'Acta Applicandae Mathematicae 170:265–290',
+		year: 2020,
+		url: 'https://arxiv.org/abs/1906.05823'
+	},
+	{
+		id: 'deepsignatures',
+		authors: 'P. Bonnier, P. Kidger, I. Perez Arribas, C. Salvi, T. Lyons',
+		title: 'Deep signature transforms',
+		venue: 'NeurIPS',
+		year: 2019,
+		url: 'https://arxiv.org/abs/1905.08494'
+	},
+	{
+		id: 'roughtransformers',
+		authors: 'F. Moreno-Pino, Á. Arroyo, H. Waldon, X. Dong, Á. Cartea',
+		title:
+			'Rough Transformers: lightweight and continuous time series modelling through signature patching',
+		venue: 'NeurIPS',
+		year: 2024,
+		url: 'https://arxiv.org/abs/2405.20799'
+	},
+	{
+		id: 'deltaproduct',
+		authors: 'J. Siems, T. Carstensen, A. Zela, F. Hutter, M. Pontil, R. Grazzi',
+		title: 'DeltaProduct: improving state-tracking in linear RNNs via Householder products',
+		venue: 'NeurIPS',
+		year: 2025,
+		url: 'https://arxiv.org/abs/2502.10297'
+	},
+	{
+		id: 'automata',
+		authors: 'B. Liu, J. T. Ash, S. Goel, A. Krishnamurthy, C. Zhang',
+		title: 'Transformers learn shortcuts to automata',
+		venue: 'ICLR',
+		year: 2023,
+		url: 'https://arxiv.org/abs/2210.10749'
 	}
 ];

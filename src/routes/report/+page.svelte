@@ -1,1557 +1,1105 @@
 <script lang="ts">
-	import { asset } from '$app/paths';
-	import type { DiagramResult } from '#lib/engine/protocol.ts';
+	import { resolve } from '$app/paths';
 	import Cite from '#lib/learn/Cite.svelte';
-	import ArityFigure from '#lib/report/ArityFigure.svelte';
 	import { BIB } from '#lib/report/bib.ts';
-	import CurvesFigure from '#lib/report/CurvesFigure.svelte';
-	import ArityUseFigure from '#lib/report/ArityUseFigure.svelte';
-	import CharactersFigure from '#lib/report/CharactersFigure.svelte';
-	import newtonDiag from '#lib/report/results/newton_diag.json';
-	import lm from '#lib/report/results/lm.json';
-	import EvidenceMatrix from '#lib/report/EvidenceMatrix.svelte';
-	import FeynmanFigure from '#lib/report/FeynmanFigure.svelte';
-	import MarginalDemo from '#lib/report/MarginalDemo.svelte';
-	import NewtonDemo from '#lib/report/NewtonDemo.svelte';
-	import ReplicationTable from '#lib/report/ReplicationTable.svelte';
-	import TensorGraphFigure from '#lib/report/TensorGraphFigure.svelte';
-	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
-	import { CUBIC, FEYNMAN, NEWTON } from '#lib/viz/computeGraphs.ts';
+	import CharactersResult from '#lib/report/CharactersResult.svelte';
+	import GroupLadder from '#lib/report/GroupLadder.svelte';
+	import { CHARACTER_ROWS, GROUP_ROWS, SWAP_ROWS } from '#lib/report/groupResults.ts';
 	import Theorem from '#lib/report/Theorem.svelte';
-	import type { Card } from '#lib/set/cards.ts';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
-	import SetCard from '#lib/ui/SetCard.svelte';
-	import { Book, Compare, Feynman, FunctionIcon, Grid, Matrix, Note } from '#lib/ui/icons.ts';
-	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
-	import FlowLegend from '#lib/viz/FlowLegend.svelte';
+	import { Book, Compare, FunctionIcon, Grid, Matrix, Note } from '#lib/ui/icons.ts';
+	import baseline from '#lib/report/results/baseline.json';
+	import phaseA from '#lib/report/results/phase_a.json';
+	import newtonE from '#lib/report/results/newton_e.json';
 
-	// ── which part of the paper is on screen ─────────────────────────────────
-	const PARTS: Record<string, string> = {
+	const repo = 'https://github.com/neovand/polyformer/blob/main/';
+	const source = (path: string) => `${repo}${path}`;
+	const sections: Record<string, string> = {
 		abstract: 'abstract',
-		intro: 'abstract',
-		hierarchy: 'hierarchy',
-		dspa: 'dspa',
-		composition: 'dspa',
-		algebra: 'algebra',
-		experiments: 'experiments',
+		beginning: 'beginning',
+		language: 'beginning',
+		composition: 'composition',
+		'character-results': 'composition',
+		holonomy: 'composition',
+		groups: 'groups',
+		theory: 'theory',
+		programs: 'programs',
+		'word-problems': 'programs',
 		related: 'related',
-		limits: 'related',
-		appendix: 'appendix',
-		references: 'appendix'
+		meaning: 'related',
+		reproducibility: 'related',
+		references: 'related'
 	};
 	let section = $state('abstract');
-	function watch(el: HTMLElement) {
-		const io = new IntersectionObserver(
+	function watch(element: HTMLElement) {
+		const observer = new IntersectionObserver(
 			(entries) => {
-				for (const e of entries) if (e.isIntersecting) section = PARTS[e.target.id] ?? section;
+				for (const entry of entries)
+					if (entry.isIntersecting) section = sections[entry.target.id] ?? section;
 			},
-			{ rootMargin: '-35% 0px -60% 0px' }
+			{ rootMargin: '-20% 0px -65% 0px' }
 		);
-		el.querySelectorAll('section[id]').forEach((s) => io.observe(s));
-		return () => io.disconnect();
+		element.querySelectorAll('section[id]').forEach((entry) => observer.observe(entry));
+		return () => observer.disconnect();
 	}
-
-	// ── the recorded SET model, for the tree-expansion figure ────────────────
-	let setModel = $state.raw<{ layout: number[][]; diagram: DiagramResult } | null>(null);
-	let root = $state<number | null>(null);
-	$effect(() => {
-		fetch(asset('recorded/set-diagram.json'))
-			.then((r) => (r.ok ? r.json() : null))
-			.then((j) => j?.diagram && (setModel = j))
-			.catch(() => {});
-	});
-
-	// ── results from the research harness (research/summarize.py writes these) ─
-	interface Row {
-		task: string;
-		model: string;
-		seeds: number[];
-		bal: number[];
-		bal_mean: number;
-		params: number;
-		curves?: [number, number][][];
-	}
-	const FILES = import.meta.glob<Row[]>('/src/lib/report/results/*.json', {
-		eager: true,
-		import: 'default'
-	});
-	const grid = (name: string): Row[] => FILES[`/src/lib/report/results/${name}.json`] ?? [];
-	/** Newton attention at its default size gets a short id in the tables. */
-	const newton = (rows: Row[], from = 'newton-K6-r32-h4') =>
-		rows.map((r) => (r.model === from ? { ...r, model: 'newton' } : r));
-	const baseline = grid('baseline');
-	const phaseA = grid('phase_a');
-	const newtonA = grid('newton_a');
-	const newtonB = grid('newton_b');
-	const newtonC = grid('newton_c');
-	const newtonE = grid('newton_e');
-	/** Newton attention as Section 5 defines it: normalised arities, one shared read-out. */
-	const FINAL = 'newton-K6-r256-h4-shared-fnorm';
-
-	const BASE_TASKS = [
-		{ id: 'set', label: 'SET' },
-		{ id: 'set4', label: 'Four-card SET' },
-		{ id: 'chase', label: 'Pointer chase', floor: 0.125 },
-		{ id: 'compose3', label: 'Three-hop', floor: 0.125 }
-	];
-	const BASE_MODELS = [
-		{ id: 'standard-1L', label: 'Standard, 1 layer' },
-		{ id: 'standard-2L', label: 'Standard, 2 layers' },
-		{ id: 'standard-3L', label: 'Standard, 3 layers' },
-		{ id: 'tree', label: 'Tree' },
-		{ id: 'strassen', label: 'Strassen' },
+	const earlyModels = [
+		{ id: 'standard-1L', label: 'Softmax 1L' },
+		{ id: 'standard-2L', label: 'Softmax 2L' },
+		{ id: 'standard-3L', label: 'Softmax 3L' },
 		{ id: 'cubic', label: 'Cubic' },
-		{ id: 'quartic', label: 'Dense quartic' },
-		{ id: 'dspa4', label: 'Feynman' },
-		{ id: 'newton', label: 'Newton attention, rank 32' },
-		{ id: 'newton-K6-r256-h4', label: 'Newton attention, rank 256' },
-		{ id: FINAL, label: 'the same, normalised arities' }
+		{ id: 'newton-K6-r256-h4-shared-fnorm', label: 'Newton, shared + normalized' }
 	];
-	const LADDER_TASKS = [
+	const earlyTasks = [
+		{ id: 'set', label: 'SET' },
 		{ id: 'zs3', label: 'Match-3' },
 		{ id: 'zs4', label: 'Match-4' },
-		{ id: 'zs5', label: 'Match-5' },
-		{ id: 'arity', label: 'Smallest arity', floor: 0.25 }
+		{ id: 'zs5', label: 'Match-5' }
 	];
-	const LADDER_MODELS = [
-		{ id: 'standard-1L', label: 'Standard, 1 layer' },
-		{ id: 'standard-2L', label: 'Standard, 2 layers' },
-		{ id: 'standard-3L', label: 'Standard, 3 layers' },
-		{ id: 'cubic', label: 'Cubic' },
-		{ id: 'quartic', label: 'Dense quartic' },
-		{ id: 'dspa4', label: 'Feynman' },
-		{ id: 'dspa5', label: 'Feynman with Newton primitives' },
-		{ id: 'dspa5-d128', label: 'the same, width 128' },
-		{ id: 'dspa5-d192', label: 'the same, width 192' },
-		{ id: 'dspa5-lin', label: 'the same, no cubic sector' },
-		{ id: 'newton', label: 'Newton attention, rank 32' },
-		{ id: 'newton-K6-r256-h4', label: 'Newton attention, rank 256' },
-		{ id: FINAL, label: 'the same, normalised arities' }
-	];
-	const ORDER_MODELS = [
-		{ id: 'newton-K3-r32-h4', label: 'Order 3' },
-		{ id: 'newton-K4-r32-h4-s20000', label: 'Order 4, 20,000 steps' },
-		{ id: 'newton-K6-r32-h4', label: 'Order 6' },
-		{ id: 'newton-K6-r32-h4-s20000', label: 'Order 6, 20,000 steps' }
-	];
-	const RANKS = [8, 16, 32, 40, 48, 64, 128];
-	const RANK_MODELS = RANKS.map((r) => ({ id: `newton-K6-r${r}-h1-s10000`, label: `Rank ${r}` }));
-	const WIDE_MODELS = [
-		{ id: 'newton-K6-r128-h4', label: 'Newton, rank 128' },
-		{ id: 'newton-K6-r256-h4', label: 'Newton, rank 256' },
-		{ id: 'newton-K3-r128-h4', label: 'Rank 128, order 3' },
-		{ id: 'newton-K4-r128-h4', label: 'Rank 128, order 4' },
-		{ id: 'standard-3L-d256', label: 'Standard, 3 layers, width 256' },
-		{ id: 'cubic-d192', label: 'Cubic, width 192' }
-	];
-	const FIX_TASKS = [
-		...LADDER_TASKS,
-		{ id: 'set', label: 'SET' },
-		{ id: 'set4', label: 'Four-card SET' }
-	];
-	const FIX_MODELS = [
-		{ id: 'newton-K6-r256-h4', label: 'Own read-out per arity' },
-		{ id: 'newton-K6-r256-h4-shared', label: 'Shared read-out' },
-		{ id: 'newton-K6-r256-h4-fnorm', label: 'Normalised arities' },
-		{ id: FINAL, label: 'Shared and normalised' },
-		{ id: 'newton-K6-r512-h4-fnorm', label: 'Normalised, rank 512' },
-		{ id: 'newton-K6-r512-h4-shared-fnorm', label: 'Shared and normalised, rank 512' }
-	];
-	// one layer trained on Match-3, 4 and 5 at once, next to the same layer trained on each alone
-	const MIX_ROWS = [
-		...newtonB
-			.filter((r) => r.model === 'newton-K6-r256-h4')
-			.map((r) => ({ ...r, model: 'alone' })),
-		...newtonE.filter((r) => r.model === FINAL).map((r) => ({ ...r, model: 'alone-final' })),
-		...newtonDiag.mixed
-	];
-	const MIX_MODELS = [
-		{ id: 'alone', label: 'Own read-outs, each task alone' },
-		{ id: 'mix345-r256-s6000', label: 'Own read-outs, trained together' },
-		{ id: 'mix345-r256-s18000', label: 'the same, 18,000 steps' },
-		{ id: 'alone-final', label: 'Shared and normalised, each task alone' },
-		{ id: 'mix345-r256-shared-fnorm-s6000', label: 'Shared and normalised, trained together' }
-	];
-	// Match3 on HOMA's protocol: our runs under one id per model across the two lengths, beside
-	// the published means and standard deviations (Amiraslani and Gao, Table 2, at d = 64 and 128)
-	const homaM3 = grid('homa_m3');
-	const HOMA_PUBLISHED: [string, number, number, number, number][] = [
-		['homa', 0.993, 0.002, 0.925, 0.008],
-		['blockwise3d', 0.958, 0.008, 0.912, 0.004],
-		['pairwise', 0.83, 0.003, 0.731, 0.012]
-	];
-	const M3_ROWS = [
-		...HOMA_PUBLISHED.flatMap(([model, m6, s6, m8, s8]) =>
-			[
-				['match3_n6', m6, s6],
-				['match3_n8', m8, s8]
-			].map(([task, mean, sd]) => ({
-				task: task as string,
-				model,
-				seeds: [],
-				bal: [],
-				bal_mean: mean as number,
-				sd: sd as number,
-				params: 0
-			}))
-		),
-		...homaM3.map((r) => ({
-			...r,
-			model: /^newton-K6-r(24|84)-/.test(r.model) ? 'newton-budget' : r.model.replace(/-d\d+$/, '')
-		}))
-	];
-	const M3_TASKS = [
-		{ id: 'match3_n6', label: 'N = 6, M = 30' },
-		{ id: 'match3_n8', label: 'N = 8, M = 56' }
-	];
-	/** Parameters at N = 6 and N = 8 in each label: the comparison is at a fixed budget. */
-	const M3_MODELS = [
-		{ id: 'homa', label: 'HOMA, published (28k, 91k)' },
-		{ id: 'blockwise3d', label: 'Triadic only, published' },
-		{ id: 'pairwise', label: 'Pairwise, published' },
-		{ id: 'standard-1L', label: 'Standard, 1 layer (19k, 74k)' },
-		{ id: 'standard-2L', label: 'Standard, 2 layers (36k, 140k)' },
-		{ id: 'standard-3L', label: 'Standard, 3 layers (52k, 207k)' },
-		{ id: 'cubic', label: 'Cubic (27k, 107k)' },
-		{ id: 'newton-budget', label: 'Newton attention (28k, 91k)' },
-		{ id: FINAL, label: 'Newton attention, rank 256 (267k, 269k)' }
-	];
-	const LM_LABEL: Record<string, string> = {
-		gpt: 'Softmax attention',
-		hybrid: 'Softmax attention with a Newton attention branch',
-		newton: 'Newton attention in place of softmax attention'
-	};
-	const CURVE_MODELS = [
-		{ id: 'standard-3L', label: 'Standard, 3 layers', tone: 0.45, dash: '2 3' },
-		{ id: 'dspa5', label: 'Feynman, Newton primitives', tone: 0.6, dash: '6 3' },
-		{ id: 'cubic', label: 'Cubic', tone: 0.8, dash: '' },
-		{ id: 'quartic', label: 'Dense quartic', tone: 0.8, dash: '8 3 2 3' },
-		{ id: 'newton', label: 'Newton, rank 32', tone: 0.7, dash: '1 3' },
-		{ id: 'newton-K6-r256-h4', label: 'Newton, rank 256', tone: 0.9, dash: '4 2' },
-		{ id: FINAL, label: 'Newton, normalised arities', tone: 1, dash: '', emphasis: true }
-	];
-
-	// ── equations ────────────────────────────────────────────────────────────
-	const T = {
-		match: String.raw`\mathrm{Match}_k(x)_i = \mathbf 1\Big[\,\exists\, S \subseteq [n]\setminus\{i\},\ |S| = k-1 :\ x_i + \textstyle\sum_{j\in S} x_j = 0\,\Big]`,
-		thm1: String.raw`\mathbb E\big[f(X)\mid Y=1\big] \;=\; \mathbb E\big[f(X)\mid Y=0\big] \qquad\text{for every}\qquad f(x)=\sum_{S\subsetneq[r]} f_S(x_S)`,
-		y: String.raw`Y = \mathbf 1[X_1+\cdots+X_r = 0]`,
-		uniform: String.raw`\Pr\big[\,Y=1 \mid X_S = x_S\,\big] = \frac{|G|^{h-1}}{|G|^{h}} = \frac{1}{|G|}`,
-		dc: String.raw`\mathcal D[M]_{jk} = M_{jk} - \bar M_{j\cdot} - \bar M_{\cdot k} + \bar M_{\cdot\cdot}`,
-		deg2: String.raw`\ell_i(j,k) = u_i(j) + w_i(k) + c(j,k) \quad\Longrightarrow\quad \mathcal D[\ell_i] = \mathcal D[c]`,
-		cubic: String.raw`\mathcal D[\ell_i] = \sum_{a=1}^{d} q_{ia}\; \mathcal D\big[\,K^{1}_{\cdot a}\, (K^{2}_{\cdot a})^{\top}\big]`,
-		cubicHead: String.raw`A_{ijk} = \big\langle Q_i,\; K^1_j \odot K^2_k \big\rangle, \qquad y_i = \sum_{j,k} \operatorname{softmax}_{jk}(A_{i\cdot\cdot})\; V^1_j \odot V^2_k`,
-		dspa: String.raw`\begin{aligned}\Phi^{r}_t \;=\;& \pi_{\text{leaf}}\, v_t \;+\; \sum_j \pi_j\, \Phi^{r-1}_j \;+\; \sum_{j,k} \pi_{jk}\, \Phi^{r-1}_j \odot \Phi^{r-1}_k \\ &+\; \sum_{j,m} \pi_{jm}\, \Phi^{r-1}_j \odot \Psi^{r}_m \;+\; \pi_{\text{carry}}\, \Phi^{r-1}_t, \qquad \Psi^r_m = \sum_{k,l} \rho^r_{m,kl}\, \Phi^{r-1}_k \odot \Phi^{r-1}_l\end{aligned}`,
-		mu: String.raw`\mu_s = -\log |S_s|`,
-		tree: String.raw`\Phi^R_t \;=\; \sum_{T \in \mathcal T_{R,t}} w_T(V) \bigodot_{\ell \in L(T)} v_{\tau(\ell)}, \qquad w_T \ge 0,\quad \sum_{T} w_T = 1,\quad |L(T)| \le 3^R`,
-		degrees: String.raw`D_0 = 1, \qquad D_r \le \max\{D_{r-1},\, 2D_{r-1},\, 3D_{r-1}\}`,
-		exch: String.raw`\sum_{j,k,l} H_{(t,j),(k,l)}\; \Phi_j \odot \Phi_k \odot \Phi_l, \qquad H_{(t,j),(k,l)} = \sum_{m=1}^{M} \pi_{t,jm}\, \rho_{m,kl}`,
-		kernel: String.raw`K_{(i,j),(k,l)} = \mathbf 1\big[x_i + x_j + x_k + x_l = 0\big]`,
-		rank: String.raw`\operatorname{rank} H \le M \qquad\text{while}\qquad \operatorname{rank} K = |G|`,
-		phi: String.raw`\phi_c(x) = \omega^{\langle c,\, x\rangle},\qquad \omega = e^{2\pi i/3},\qquad \phi(x)\odot\phi(y) = \phi(x+y)`,
-		newton: String.raw`\begin{aligned} P_j &= \sum_{t} \phi(x_t)^{\odot j}, \qquad r\,E_r = \sum_{j=1}^{r} (-1)^{j-1}\, E_{r-j}\odot P_j, \\ N_{i,k} &= \frac{1}{|G|}\sum_{c}\sum_{j=0}^{k-1} (-1)^j\, E_{k-1-j}(c)\; \phi_c(x_i)^{j+1} \end{aligned}`,
-		gen: String.raw`\prod_{t=1}^{n}\big(1 + z\,e_{x_t}\big) = \sum_{r\ge 0} z^r E_r`,
-		excl: String.raw`\prod_{t\ne i}\big(1 + z\,e_{x_t}\big) = \Big(\sum_r z^r E_r\Big)\Big(\sum_j (-z)^j e_{j x_i}\Big) \;\Longrightarrow\; E^{(-i)}_{r} = \sum_{j=0}^{r} (-1)^j\, e_{j x_i} * E_{r-j}`,
-		coef: String.raw`N_{i,k} = \big[e_{-x_i}\big]\, E^{(-i)}_{k-1}, \qquad \big[e_g\big]\,A = \frac{1}{|G|}\sum_c \hat A(c)\,\overline{\phi_c(g)}`,
-		cost: String.raw`O\big((kn + k^2)\,|G|\big)\quad\text{versus}\quad \Theta(n^k d)\ \text{for dense order-}k\text{ attention}`,
-		width: String.raw`d \;\ge\; |G| - 1`,
-		nPhase: String.raw`\phi_t = \sigma(W_g h_t) \odot \exp\!\big(i\, W_\theta h_t\big) \in \mathbb C^{r}`,
-		nPow: String.raw`P^{(-q)}_j = \sum_{t \ne q} \phi_t^{\odot j}, \qquad m\, e^{(-q)}_m = \sum_{j=1}^{m} (-1)^{j-1}\, e^{(-q)}_{m-j} \odot P^{(-q)}_j`,
-		nOut: String.raw`y_q = \sum_{m=0}^{K-1} \alpha_m \odot W_o\, \nu\Big( \big[\operatorname{Re},\, \operatorname{Im}\big]\, \tbinom{n-1}{m}^{-1} \phi_q \odot e^{(-q)}_m \Big), \qquad \nu(u) = \frac{u}{\operatorname{rms}(u)}`,
-		nSubset: String.raw`\phi_q \odot e^{(-q)}_m \;=\; \sum_{S \subseteq [n]\setminus\{q\},\ |S| = m}\ \ \bigodot_{t \in S \cup \{q\}} \phi_t`,
-		nCost: String.raw`O(nKr)`
+	function earlyResult(model: string, task: string) {
+		const rows = model.startsWith('newton') ? newtonE : task === 'set' ? baseline : phaseA;
+		const row = rows.find((entry) => entry.model === model && entry.task === task);
+		return row ? (row.bal_mean * 100).toFixed(2) : '—';
+	}
+	const eq = {
+		character: String.raw`\chi(a+b)=\chi(a)\chi(b),\qquad \chi(x)=e^{i\theta(x)}`,
+		sectors: String.raw`F_r(i)=\sum_{\substack{s_1<\cdots<s_r\\i\in\{s_1,\ldots,s_r\}}} M_{s_1}\cdots M_{s_r}`,
+		polynomial: String.raw`\prod_{t=1}^{n}(I+zM_t)=\sum_{r=0}^{n}z^r E_r`,
+		recurrence: String.raw`E_r(t)=E_r(t-1)+E_{r-1}(t-1)M_t`,
+		bayes: String.raw`\mathrm{BA}\le B^*=\frac12+\frac{\mathbb E|p(O)-\pi|}{4\pi(1-\pi)}`,
+		representation: String.raw`\rho(ab)=\rho(a)\rho(b)`,
+		readout: String.raw`F_r(i)=\sum_{a+b=r-1}L_a(i)\,M_i\,R_b(i)`,
+		compression: String.raw`\mu(A_1\otimes\cdots\otimes A_r)=A_1\cdots A_r`
 	};
 </script>
 
 <svelte:head>
-	<title>Report | Polyformer</title>
+	<title>Learning to compose · Report | Polyformer</title>
 	<meta
 		name="description"
-		content="How many tokens make a relation? A working paper on attention that lets the data choose the arity, with proofs, live checks and every measured result."
+		content="From higher-order attention to group representations: a working paper with exact order-blind limits, learned rotations, negative language results, and controlled comparisons."
 	/>
 </svelte:head>
 
 <PageFrame
 	rail={[
 		{ id: 'abstract', label: 'Paper', icon: Note },
-		{ id: 'hierarchy', label: 'Arity', icon: FunctionIcon },
-		{ id: 'dspa', label: 'Feynman', icon: Feynman },
-		{ id: 'algebra', label: 'Algebra', icon: Matrix },
-		{ id: 'experiments', label: 'Results', icon: Compare },
-		{ id: 'related', label: 'Related', icon: Book },
-		{ id: 'appendix', label: 'Appendix', icon: Grid }
+		{ id: 'beginning', label: 'The road', icon: FunctionIcon },
+		{ id: 'composition', label: 'Composition', icon: Matrix },
+		{ id: 'groups', label: 'Results', icon: Compare },
+		{ id: 'theory', label: 'Theory', icon: Book },
+		{ id: 'programs', label: 'Programs', icon: Grid },
+		{ id: 'related', label: 'Context', icon: Book }
 	]}
 	active={section}
 >
 	<article class="paper" {@attach watch}>
 		<header class="title-block">
-			<h1>How many tokens make a relation?</h1>
-			<p class="subtitle">Attention that lets the data choose the arity</p>
-			<p class="authors">
-				Mostafa “Neo” Mohsenvand <span class="draft">Working draft, October 2026</span>
-			</p>
+			<p class="eyebrow">Polyformer · research report</p>
+			<h1>Learning to compose</h1>
+			<p class="subtitle">From higher-order attention to group representations</p>
+			<p class="authors">Mostafa “Neo” Mohsenvand <span>Working draft · 20 October 2026</span></p>
 		</header>
 
 		<section id="abstract">
-			<aside class="side key">
-				<span class="ev-key proved">Proved here</span>
-				<span class="ev-key measured">Measured</span>
-				<span class="ev-key open">Open</span>
-				<span>Every number on this page was measured with the code that runs this site.</span>
+			<aside class="side">
+				<b>The central result</b>A layer that discards order has an exact accuracy ceiling. Learned
+				rotation products cross it. This is a restricted separation with stated assumptions.
 			</aside>
 			<p class="abstract">
-				<b>Abstract.</b> Attention scores tokens in pairs, yet many relations hold only among three
-				or more tokens at once. Higher-order attention captures them at a cost that grows as <MathTex
-					tex="n^k"
-				/> and fixes the arity <MathTex tex="k" /> in advance. We ask whether the data can choose it.
-				For relations defined by a zero sum in a finite abelian group, the label lives on characters of
-				full degree, so every score built from fewer than <MathTex tex="k" /> tokens has the same mean
-				on matching and non-matching tuples (Theorem 1). Composing arity from lower-order parts does not
-				get around this in practice: an operator that mixes arities inside one softmax and can represent
-				the composition (Theorem 3) does not learn it, and neither does standard attention at any depth
-				we tried. In the group algebra, though, arity is the degree of a symmetric polynomial. Pooled
-				power sums and Newton's identities count the
-				<MathTex tex="k" />-way relations of every token, for every <MathTex tex="k" />, in time
-				linear in the sequence (Theorem 5). Newton attention turns that identity into a layer with
-				learnable phases. Offered every arity up to six, it solves SET, Match-3, Match-4 and the
-				task whose label is the smallest arity at which a token completes a relation on every seed
-				(the best fixed-order operator reaches 54% on the last), and reaches 97.5% on Match-5.
-				Trained on three arities at once, it is exact on all three. Capping its order below a task's
-				arity returns it to exactly chance, and widening fixed-order baselines to its size does not
-				move them. Switching off one arity at a time shows that the trained layer depends on exactly
-				the arities each task contains, and its channels converge to the characters of the group:
-				across 93 runs, accuracy is close to linear in the number of characters found, and exact
-				when all 40 are. In a small byte-level language model it does not help, so the gain is
-				specific to relations among many tokens.
+				Attention compares tokens in pairs. On deliberately relational tasks, native products over
+				more tokens learn what our softmax baselines do not. But higher-order models did not meet
+				our registered language-model improvement threshold. That negative result led to a sharper
+				question: <strong>what should features do when they meet?</strong> Supplying every character feature
+				of a finite group still leaves softmax at chance on Match-4 in our training regime; Newton attention
+				supplies the missing product and solves it. When composition depends on order, commuting products
+				reach at most an exact information ceiling. Holonomy attention instead multiplies learned rotations
+				and acquires approximate group representations, including the icosahedral rotations of A₅. We
+				give qualified constructive theorems and a second benchmark where ordinary order-aware baselines
+				also succeed. The contribution is a specific relational use of established sequence-composition
+				ideas, with measured gains and explicit limits.
+			</p>
+			<p class="reading">
+				For the visual introduction, start with <a href={resolve('/learn')}>Learn</a>. For the
+				rotations themselves, open <a href={resolve('/explore/groups')}>the group lab</a>.
 			</p>
 		</section>
 
-		<section id="intro">
-			<h2><span class="n">1</span>Introduction</h2>
+		<section id="beginning">
+			<h2><span>1</span> The road began with relations</h2>
 			<p>
-				Lay twelve SET cards on a table and ask which of them belong to a SET. No pair of cards
-				settles it. Any two cards are completed by exactly one third card, and whether that card
-				lies on the table is a fact about all three at once. Relations like this, among three or
-				more objects at a time, run through reasoning: a path is a relation among its steps, a
-				reaction among its reagents, an inference among its premises.
-			</p>
-			<p>
-				A transformer head compares a query with one key at a time <Cite refs={BIB} id="vaswani" />.
-				Whatever three tokens jointly imply has to be assembled from pairwise scores over several
-				layers, and for some relations that is provably expensive <Cite
+				A softmax attention head scores each query–key pair, then mixes values using those scores <Cite
 					refs={BIB}
-					id={['sanford23', 'kozachinskiy']}
-				/>. Higher-order attention scores a query against pairs of keys and solves such relations in
-				one layer <Cite refs={BIB} id={['clift', 'sanford23', 'roy', 'chakrabarti']} />, at
-				<MathTex tex="\Theta(n^3 d)" /> per head; order <MathTex tex="k" /> costs
-				<MathTex tex="\Theta(n^k d)" />
-				<Cite refs={BIB} id="alman" />. Each of these fixes the arity once, for every token and
-				every input.
+					id="vaswani"
+				/>. A relation can live beyond any one pair. In SET, each card has four attributes with
+				three possible values; three cards form a set when every attribute is all the same or all
+				different. Encoding each attribute as 0, 1 or 2 makes this a sum of zero, coordinate by
+				coordinate, wrapping around after 2. Match-k asks whether a token belongs to any k-token
+				zero-sum subset.
 			</p>
 			<p>
-				We ask whether the data can choose the arity instead, and find that arity is algebra. For
-				relations defined by a zero sum in a finite abelian group, a <MathTex tex="k" />-way
-				relation is invisible on average to every score built from fewer tokens (Section 2). An
-				operator that composes arity from lower-order parts can represent the answer but does not
-				learn it (Sections 3, 4 and 6). Once arity is native, it is cheap: in the group algebra a
-				Hadamard product is a convolution, pooled powers are power sums, and Newton's identities
-				turn them into counts of relations of every arity at once, linear in the sequence (Section 5
-				and Figure 1). Newton attention builds a layer from that identity. With every arity up to
-				six on offer, it uses the one each task needs, and taking that arity off the menu sends it
-				back to chance (Section 6).
-			</p>
-			<figure class="wide fig">
-				<ArityFigure />
-				<figcaption>
-					<b>Figure 1.</b> (a) A query card and three relations it takes part in, written as sums:
-					every attribute adds to zero modulo 3. (b) Under a character <MathTex tex="\chi" />
-					each card is a phase, and a product of phases is the phase of the sum. A SET gives phase zero
-					under all 81 characters of <MathTex tex={String.raw`\mathbb Z_3^4`} />, so they add to 81;
-					any other triple splits them 27, 27, 27 and they cancel. (c) Phases pooled once into power
-					sums and combined by Newton's identities give every token its count of relations of every
-					arity, each step linear in <MathTex tex="n" />. (d) The cost of one head: dense order-<MathTex
-						tex="k"
-					/> attention grows as <MathTex tex="n^k" />, Newton attention with every arity up to six
-					as
-					<MathTex tex="6n" />.
-				</figcaption>
-			</figure>
-			<p class="contrib">
-				<b>Contributions.</b> (i) Arity as Fourier degree, with an indistinguishability theorem for
-				proper-subset scores. (ii) Feynman attention, an operator that mixes arities inside one
-				softmax, its exact expansion as a sum over trees, and a rank obstruction that explains why
-				composing arity through shared intermediates fails. (iii) Newton's identities in the group
-				algebra, which count every arity at linear cost, and Newton attention, the layer built on
-				them, with knockouts showing the arity a trained layer uses and probes showing it learns the
-				group's characters. (iv) A measured Match-<MathTex tex="k" /> ladder across ten operators, three
-				seeds each, with order ablations and width-matched baselines; evidence that characters found at
-				one arity carry over to others; and a language-model test where the layer does not help. (v) Every
-				result reproducible in this page or in the published harness.
-			</p>
-		</section>
-
-		<section id="hierarchy">
-			<h2><span class="n">2</span>The arity hierarchy</h2>
-			<p>
-				Let <MathTex tex="G" /> be a finite abelian group and <MathTex tex="x_1,\dots,x_n \in G" /> the
-				tokens. SET is the case <MathTex tex={String.raw`G=\mathbb Z_3^4`} />: a card is four
-				attributes with three values each, and three distinct cards form a SET exactly when they sum
-				to zero.
-			</p>
-			<Theorem kind="Definition" n={1} name="Match-k">
-				<MathTex display tex={T.match} />
-				<p>Distinct positions only; repeated values at distinct positions are allowed.</p>
-			</Theorem>
-
-			<Theorem n={1} name="Proper-subset scores are blind on average" evidence="proved" id="thm1">
-				<p>
-					Let <MathTex tex="X_1,\dots,X_r" /> be independent and uniform on <MathTex tex="G" />,
-					with
-					<MathTex tex={T.y} />. For every proper subset <MathTex
-						tex={String.raw`S \subsetneq [r]`}
-					/>, the distribution of <MathTex tex="X_S" /> is uniform under both <MathTex tex="Y=1" /> and
-					<MathTex tex="Y=0" />. Consequently
-				</p>
-				<MathTex display tex={T.thm1} />
-				<p>
-					and no threshold on such an <MathTex tex="f" /> separates every matching tuple from every other.
-				</p>
-				{#snippet proof()}
-					<p>
-						Fix <MathTex tex="X_S = x_S" />. The remaining <MathTex tex="h = r - |S| \ge 1" /> coordinates
-						are uniform and independent. Choose all but one freely; the last is then determined by the
-						zero-sum condition, so exactly <MathTex tex={String.raw`|G|^{h - 1}`} /> of the <MathTex
-							tex="|G|^h"
-						/> completions match:
-					</p>
-					<MathTex display tex={T.uniform} />
-					<p>
-						This does not depend on <MathTex tex="x_S" />, so <MathTex tex="X_S" /> is independent of
-						<MathTex tex="Y" /> and has the same uniform law given either label. Each term
-						<MathTex tex="f_S(X_S)" /> therefore has the same conditional mean under both labels, and
-						so does their sum. A threshold that put every matching tuple strictly above every other would
-						give the matching class a strictly larger mean.
-					</p>
-				{/snippet}
-			</Theorem>
-			<MarginalDemo />
-			<aside class="side">
-				The fact behind Theorem 1 is classical: the uniform distribution on solutions of one linear
-				equation in <MathTex tex="r" /> unknowns is <MathTex tex="(r-1)" />-wise independent.
-			</aside>
-			<p>
-				In Fourier terms the label is a sum of characters of full support, orthogonal to every
-				function of fewer coordinates. Two consequences follow. A logit built from pairs carries no
-				first-moment signal for a three-way relation; and the relation has leap <MathTex tex="k" /> in
-				the sense of Abbe et al.
-				<Cite refs={BIB} id="abbe" />, which predicts the long plateau and sudden snap seen when a
-				model of the right order trains (Figure 7). The theorem is about means of scores. A softmax
-				is not linear, so it is not by itself a lower bound on classifiers; representational lower
-				bounds for pairwise attention on Match3 need communication complexity <Cite
+				For independent uniform group elements conditioned on an r-way zero sum, every proper subset
+				remains uniform. Looking at fewer than r elements cannot detect that constraint by itself.
+				This fact motivates native interactions of the right order; it does <em>not</em> prove that
+				a multilayer transformer cannot combine pairwise computations into the answer. Higher-order
+				attention and Match-k limitations have substantial prior art <Cite
 					refs={BIB}
-					id="sanford23"
+					id={['clift', 'sanford23', 'chakrabarti']}
 				/>.
 			</p>
-
-			<Theorem
-				kind="Proposition"
-				n={2}
-				name="Degree-2 scores cannot couple a pair to the query"
-				evidence="proved"
-			>
-				<p>
-					Write <MathTex tex="\mathcal D" /> for double centring, <MathTex tex={T.dc} />. If query
-					<MathTex tex="i" />'s logit over pairs <MathTex tex="(j,k)" /> is a degree-2 polynomial in the
-					three roles, as in standard, tree and Strassen attention, then
-				</p>
-				<MathTex display tex={T.deg2} />
-				<p>
-					is the same for every query. A cubic head instead gives <MathTex tex={T.cubic} />, which
-					spans up to
-					<MathTex tex="d" /> dimensions as the query varies.
-				</p>
-				{#snippet proof()}
-					<p>
-						A degree-2 polynomial in three roles has monomials pairing query with first key, query
-						with second key, and the two keys. The first two depend on <MathTex tex="(i,j)" /> or <MathTex
-							tex="(i,k)"
-						/> only, so they are a row effect and a column effect of the pair matrix, which double centring
-						removes. What remains is the centred key-key term, which does not involve the query.
-					</p>
-				{/snippet}
-			</Theorem>
-			<p>
-				A cubic head scores the query against every pair of keys at once and reads the product of
-				their values,
-			</p>
-			<MathTex display tex={T.cubicHead} />
-			<p>
-				Figure 2 shows its computation graph, and one head built by hand for SET. Its score tensor
-				peaks exactly on the SETs, and the same numbers, read as attention on hyperedges, put the
-				query's weight on a triangle rather than an edge.
-			</p>
-			<figure class="wide fig">
-				<p class="sub"><span class="tag">(a)</span> The computation</p>
-				<ComputeGraph graph={CUBIC} label="Computation graph of cubic attention" />
-				<p class="sub"><span class="tag">(b)</span> The scores, as a tensor and as hyperedges</p>
-				<TensorGraphFigure />
-				<figcaption>
-					<b>Figure 2.</b> Cubic attention. (a) Its computation graph, after the original Polyformer
-					notebook: role-specific keys and values meet in Hadamard products, and one softmax runs
-					over ordered pairs. (b) One head on twelve SET cards. Left: the score tensor
-					<MathTex tex={String.raw`A_{ijk}`} />, one block per triple sized by its score, with the
-					query's slice as a solid plane. Right: the same scores as attention on hyperedges; every
-					SET on the table is a membrane, and the lit triangle is where the query's weight goes. The
-					query tours every card in a SET; pick a card or a block to take over, and drag either view
-					to turn it.
-				</figcaption>
-			</figure>
-		</section>
-
-		<section id="dspa">
-			<h2><span class="n">3</span>Feynman attention: arity as a choice inside one softmax</h2>
-			<p>
-				Feynman attention lets every token choose, at every round, how many tokens it reads. Each
-				token keeps a state <MathTex tex="\Phi^r_t" />, starting from its value
-				<MathTex tex="\Phi^0_t = v_t" /> and rebuilt for <MathTex tex="R" /> rounds:
-			</p>
-			<MathTex display tex={T.dspa} />
 			<aside class="side">
-				The name records the analogy that guided the design: the recursion is a Dyson–Schwinger
-				equation, and unrolled, its output is a sum over Feynman diagrams (Theorem 3 and Figure 5).
+				<b>Measured here</b>Balanced accuracy averages sensitivity on positive tokens and
+				specificity on negative tokens. Chance is 50%, even if the labels are imbalanced.
 			</aside>
 			<p>
-				One softmax <MathTex tex="\pi" /> runs over every option of every sector, scored by a single trilinear
-				vertex
-				<MathTex tex={String.raw`\langle q_t, a\odot b\rangle`} /> over tokens, a vacuum token and the
-				virtual modes. The sectors offer very different numbers of options (one leaf, <MathTex
-					tex="n"
-				/> hops,
-				<MathTex tex="n^2" /> pairs), so each sector gets a fixed bias <MathTex tex={T.mu} />, which
-				gives every sector equal prior mass at initialisation. A carry keeps finished results fixed,
-				and the read-out is RMS-normalised.
+				Cubic attention scores a query with two partners together. Newton attention sums products
+				over subsets of several sizes, using a recurrence instead of enumerating them. On our
+				synthetic tasks, this choice matters decisively.
 			</p>
-			<figure class="wide fig">
-				<ComputeGraph graph={FEYNMAN} label="Computation graph of Feynman attention" />
-				<figcaption>
-					<b>Figure 3.</b> The computation graph of Feynman attention. One score, the trilinear
-					vertex <MathTex tex={String.raw`\langle q_t, u \odot w\rangle`} /> plus a fixed bias per sector,
-					feeds one softmax over every option of every sector; the weighted sum rebuilds each token's
-					state, and the loop runs <MathTex tex="R" /> rounds.
-				</figcaption>
-			</figure>
-			<Theorem n={3} name="Tree expansion" evidence="proved" id="thm3">
-				<p>For every input and every setting of the weights, before normalisation,</p>
-				<MathTex display tex={T.tree} />
-				<p>
-					where <MathTex tex={String.raw`\mathcal T_{R,t}`} /> is a finite set of token-labelled derivation
-					trees (leaf, hop or carry with one child, pair with two, exchange with three) and <MathTex
-						tex="w_T"
-					/> is the product of the softmax weights along the tree. Without the exchange sector the bound
-					is
-					<MathTex tex="2^R" />.
-				</p>
-				{#snippet proof()}
-					<p>
-						Induction on rounds. Substitute the recurrence for each previous-round state and
-						distribute the sums through the Hadamard products, which is valid because <MathTex
-							tex={String.raw`(\mathbb R^d, +, \odot)`}
-						/>
-						is a commutative algebra. Each option contributes one tree per choice of child trees, weighted
-						by the product of its own softmax weight and the children's weights. Replacing every leaf
-						by the scalar 1 shows the weights sum to one, since each softmax sums to one. The number of
-						leaves obeys
-					</p>
-					<MathTex display tex={T.degrees} />
-					<p>
-						the factor 3 coming from an exchange, which multiplies one state by a mode built from
-						two.
-					</p>
-				{/snippet}
-			</Theorem>
-			<p class="caveat">
-				Two qualifications matter. The weights depend on the input, so the output is a polynomial in
-				the values only when the routing is frozen; and a finite softmax never selects one arity
-				exactly: what adapts is how the weight is spread over trees of different sizes. Figures 4
-				and 5 show that spread for trained models.
+			<div class="table-scroll wide">
+				<table>
+					<thead
+						><tr
+							><th scope="col">One layer unless shown</th>{#each earlyTasks as task (task.id)}<th
+									scope="col"
+									class="num">{task.label}</th
+								>{/each}</tr
+						></thead
+					>
+					<tbody
+						>{#each earlyModels as model (model.id)}<tr
+								><th scope="row">{model.label}</th>{#each earlyTasks as task (task.id)}<td
+										class="num">{earlyResult(model.id, task.id)}</td
+									>{/each}</tr
+							>{/each}</tbody
+					>
+				</table>
+			</div>
+			<p class="caption">
+				<b>Table 1.</b> Balanced accuracy %, three-seed means. SET:
+				<a href={source('src/lib/report/results/baseline.json')}>baseline</a>; Match-k:
+				<a href={source('src/lib/report/results/phase_a.json')}>phase_a</a>; Newton:
+				<a href={source('src/lib/report/results/newton_e.json')}>newton_e</a>. These are
+				research-harness results, distinct from the browser runs in Compare. Width and parameter
+				counts differ; this is evidence of learning behavior, not an efficiency ranking.
 			</p>
+			<p>
+				The earlier Feynman/DS-PA branch composes attention operations through repeated computation.
+				It succeeds on SET and pointer chains, yet did not make the harder Match-k tasks easy at its
+				tested budget. Its useful lesson survives: a layer's internal computation matters as much as
+				the number of tokens in a score.
+			</p>
+		</section>
 
-			{#if setModel}
-				{@const d = setModel.diagram}
-				{@const cards = setModel.layout as unknown as Card[]}
-				<figure class="wide fig">
-					<div class="keyed">
-						<DiagramFlow
-							align="start"
-							head={d.perHead[0]}
-							n={d.n}
-							rounds={d.rounds}
-							rows={[Array.from({ length: cards.length }, (_, i) => i + 1)]}
-							root={root ?? d.token}
-							onroot={(t) => (root = t)}
-							pitch={20}
-							column={220}
+		<section id="language">
+			<h2><span>2</span> Language did not reward higher order</h2>
+			<aside class="side">
+				<b>Negative evidence</b><a href={source('research/SEARCH.md')}>SEARCH §8</a> and
+				<a href={source('research/LOCAL.md')}>LOCAL §0</a>. These conclusions concern our
+				small-model scale and training budgets.
+			</aside>
+			<p>
+				We tested the proposed subset mechanisms on token-level language modeling and controlled
+				diagnostic tasks. The search did not produce a higher-order replacement that cleared our
+				registered improvement threshold. This is part of the result.
+			</p>
+			<div class="table-scroll wide">
+				<table class="language-table">
+					<thead
+						><tr><th scope="col">Stage</th><th scope="col">Outcome at the registered gate</th></tr
+						></thead
+					>
+					<tbody>
+						<tr
+							><th scope="row">S0 · language</th><td
+								>Free-field at 0.97× FLOPs was 2.2% worse on FineWeb-Edu at 400M tokens; the
+								improved initialization was still 0.8% worse.</td
+							></tr
 						>
-							{#snippet label(t)}<SetCard card={cards[t - 1]} width={15} />{/snippet}
-						</DiagramFlow>
-						<div class="key"><FlowLegend /></div>
-					</div>
-					<figcaption>
-						<b>Figure 4.</b> Theorem 3 for a Feynman attention model trained in a browser on SET (two
-						rounds, step 1,500, 99.98% held out). Every token's state at every round, marked with the
-						vertex of the sector it mostly uses. Lines show what one card reads, weighted by the share
-						of its output they carry: each card in a SET reads its two partners at one cubic vertex. Hover
-						or click a card to expand another.
-					</figcaption>
-				</figure>
-			{/if}
-			<figure class="wide fig">
-				<FeynmanFigure />
-				<figcaption>
-					<b>Figure 5.</b> The same expansion as Feynman diagrams, one tree per output, rounds running
-					left to right from the values to the read-out. Line weight is the tree's share of the output.
-					(a) On SET a card's state is one cubic vertex joining its two SET partners. (b) On pointer chasing
-					the query's state is a chain of hops along its list, one per round.
-				</figcaption>
-			</figure>
+						<tr
+							><th scope="row">S1 · diagnostics</th><td
+								>The capability gate passed, but a softmax control with the same look-back keys
+								explained the gains. Subset sectors alone won no family.</td
+							></tr
+						>
+						<tr
+							><th scope="row">S2 · induction</th><td
+								>Walks reached the phase-change measure in 1.10–1.23× softmax's tokens: later,
+								against a target of at most 0.60×.</td
+							></tr
+						>
+						<tr
+							><th scope="row">S6 · local regression</th><td
+								>Local-linear attention gained about 0.4%; Parallax about 0.75%. Both fell short of
+								the 1% loss-reduction gate.</td
+							></tr
+						>
+					</tbody>
+				</table>
+			</div>
+			<p class="caption">
+				<b>Table 2.</b> Rounded headlines exactly as summarized in the research notes. The S6 per-seed
+				local-linear gains at equal FLOPs were 0.40%, 0.39%, 0.37%; Parallax's were 0.64–0.90% under Muon.
+				Lower language loss is better.
+			</p>
+			<p>
+				Local-linear attention and Parallax are prior mechanisms <Cite
+					refs={BIB}
+					id={['lla', 'parallax']}
+				/>. The latter's correction uses a pair sector and beat our higher-arity solved variant.
+				That changes more than arity, so it is suggestive evidence rather than an isolated arity
+				test. We stopped claiming that more order was the destination.
+			</p>
 		</section>
 
 		<section id="composition">
-			<h2><span class="n">4</span>Why composing arity fails</h2>
+			<h2><span>3</span> The turn: how features compose</h2>
 			<p>
-				Two rounds of cubic vertices reach degree four, yet Feynman attention does not learn
-				four-card SET (Match-4 on <MathTex tex={String.raw`\mathbb Z_3^4`} />): it stays at chance
-				on every seed, where dense quartic attention succeeds on two of three (Table 2). Degree is
-				not the problem. A round-two contribution has the form
-				<MathTex
-					tex={String.raw`\pi^2_{i,jk}\,\pi^1_{j,ab}\,\pi^1_{k,cd}\,(v_a\odot v_b\odot v_c\odot v_d)`}
-				/>: the root picks <MathTex tex="(j,k)" />, but what <MathTex tex="j" /> read in round one was
-				decided once, for every query. Intermediates are shared.
+				A <strong>group</strong> is a collection of operations that can be composed, with an
+				operation that does nothing and an inverse that undoes each operation. Composition is
+				associative: regrouping a sequence does not change its result. A group is
+				<strong>abelian</strong>, or commutative, when swapping two operations never changes their
+				product. Clock arithmetic is the simplest example: adding two hours and then three hours is
+				the same as adding three and then two.
+			</p>
+			<p>
+				A <strong>character</strong> of a finite abelian group encodes each element as a point on the
+				unit circle. Its angle is a phase. Combining group elements adds their phases, so their complex
+				values multiply:
+			</p>
+			<MathTex tex={eq.character} display />
+			<p>
+				Here χ names the encoding, a + b means the group's operation, and i in the exponential is
+				the imaginary unit. For SET cards, the group is Z₃⁴: four independent three-hour clocks. Its
+				complete character bank gives every distinction between cards. Newton attention directly
+				multiplies these phase features and sums the products over subsets. A zero-sum subset
+				becomes a product that returns to the circle's starting point.
+			</p>
+			<p>
+				That suggests two explanations of Newton's success. Perhaps it only needs the right
+				coordinates. Or perhaps the important ingredient is performing the product. We separated
+				them experimentally.
+			</p>
+		</section>
+
+		<section id="character-results">
+			<h3>Experiment 1 · give softmax all the coordinates</h3>
+			<aside class="side">
+				<b>Measured here</b>Width 192; one or two softmax layers; an MLP; no positions; 6,000 steps;
+				three seeds. Source: <a href={source('research/GROUPS.md')}>GROUPS §5.1</a>.
+			</aside>
+			<p>
+				We froze the input to all forty conjugate character pairs of Z₃⁴, then trained softmax plus
+				an MLP. A conjugate pair contains one clock encoding and the same clock running backward;
+				together they can be stored as real cosine and sine coordinates. A rotated version of that
+				bank controls for the coordinate basis. Learned tables are the third control.
+			</p>
+			<figure id="fig-characters" class="wide">
+				<CharactersResult />
+				<figcaption>
+					<b>Figure 1.</b> Knowing the features did not teach the tested softmax models the
+					composition. Both depths stayed at chance on Match-4 in every seed. Newton's reference
+					result is from <code>newton_e</code>; it is not a newly trained arm of this grid.
+				</figcaption>
+			</figure>
+			<div class="table-scroll wide">
+				<table>
+					<thead
+						><tr
+							><th scope="col">Arm</th>{#each ['Match-3', 'Match-4', 'Match-5'] as task (task)}<th
+									scope="col"
+									class="num">{task}</th
+								>{/each}</tr
+						></thead
+					>
+					<tbody
+						>{#each CHARACTER_ROWS as row (row.id)}<tr
+								><th scope="row">{row.label}</th>{#each row.values as value, i (i)}<td class="num"
+										>{value.display}{#if value.seeds}<small>({value.seeds})</small>{/if}</td
+									>{/each}</tr
+							>{/each}</tbody
+					>
+				</table>
+			</div>
+			<p class="caption">
+				<b>Table 3.</b> Balanced accuracy %, mean (seeds 0, 1, 2), copied at the precision of GROUPS
+				§5.1. <a href={source('research/results/grp_e1.jsonl')}>Raw experiment 1</a>. The
+				exploratory 20,000-step softmax 2L extension also gave 50.0% on Match-4 in every seed.
+			</p>
+			<p>
+				<strong>This is a learning result, not an impossibility theorem.</strong> Uniform softmax
+				can collect all character sums; a sufficiently wide MLP can implement Newton's identities on
+				this finite domain. The computation exists inside that model class. Training did not find it
+				at the tested widths and budgets. Transformers have learned Fourier composition circuits in
+				other settings <Cite refs={BIB} id="nanda" />. Native multiplication supplied a useful
+				inductive bias here.
+			</p>
+		</section>
+
+		<section id="holonomy">
+			<h2><span>4</span> From clock hands to rotations</h2>
+			<p>
+				Clock hands commute. Spatial rotations generally do not: turning an object around one axis
+				and then another can end somewhere different from reversing those turns. A <strong
+					>representation</strong
+				> assigns a matrix ρ(g) to each group element g so that matrix multiplication preserves the group's
+				composition law:
+			</p>
+			<MathTex tex={eq.representation} display />
+			<p>
+				A representation is <strong>faithful</strong> if different elements receive different
+				matrices. It is <strong>irreducible</strong>, or an <strong>irrep</strong>, if no change of
+				basis splits its action into independent smaller blocks. A₄ is the group of 12 rotations of
+				a tetrahedron; A₅ is the group of 60 rotations of an icosahedron. Both have faithful
+				three-dimensional rotation representations. These definitions describe possible structure;
+				the training labels do not supply the matrices.
+			</p>
+			<aside class="side">
+				<b>Architectural choice</b>A head is a parallel feature channel. Here its dimension d is the
+				size of each rotation matrix, separate from the model's token-embedding width.
+			</aside>
+			<p>
+				<strong>Holonomy attention</strong> gives each token a learned rotation U and a scalar gate
+				g between zero and one. Write M = gU. A rotation is produced by exponentiating a
+				skew-symmetric matrix, an established orthogonal parameterization <Cite
+					refs={BIB}
+					id="orthogonal"
+				/>. For each token i and subset size r, the layer sums products over all r-position subsets
+				containing that token, keeping the sequence order:
+			</p>
+			<MathTex tex={eq.sectors} display />
+			<p>
+				The integer r is the <strong>arity</strong>. Each token can appear at most once in a subset.
+				The individual U matrices are rotations; their gated sums generally are not. The algebra of
+				matrices, rather than only the rotation group, holds the layer's resulting features.
+			</p>
+			<p>
+				At d = 2, all rotations commute. The layer reduces to Newton's phase products, up to the
+				matrix-to-complex identification. At d ≥ 3, the product can preserve order even without
+				position embeddings. This changes the information available to the readout.
+			</p>
+			<details>
+				<summary>The computation · ordered products without enumerating subsets</summary>
+				<p>
+					A formal variable z records subset size. In the product below, choosing I skips a token
+					and choosing zM selects it:
+				</p>
+				<MathTex tex={eq.polynomial} display />
+				<p>The coefficient Eᵣ holds all size-r products. Processing one token at a time gives:</p>
+				<MathTex tex={eq.recurrence} display />
+				<p>
+					For a marked token i, compute these sums on both sides. Lₐ uses a positions before i and
+					Rᵦ uses b positions after i:
+				</p>
+				<MathTex tex={eq.readout} display />
+				<p>
+					The implementation costs O(nK²Hd³) for n tokens, maximum arity K, H heads and d × d
+					matrices. It divides each arity by its subset count, RMS-normalizes it, and combines
+					arities with learned weights and one shared projection. This is a dynamic program with
+					real internal computation, not a constant-time product oracle.
+				</p>
+			</details>
+		</section>
+
+		<section id="groups">
+			<h2><span>5</span> Experiment 2 · make order matter</h2>
+			<aside class="side">
+				<b>Protocol</b>Three seeds, 6,000 steps, 2,048 held-out sequences; width 64. Matrix heads ×
+				dimension ≈ 256. Holonomy and Newton have no positions; softmax does. This is not a
+				FLOP-matched comparison.
+			</aside>
+			<p>
+				<strong>Ordered Match-3</strong> labels a token positive when it belongs to a triple whose product,
+				taken in sequence order, is the identity—the operation that does nothing. We compare cyclic groups
+				Z₁₂ and Z₆₀, where order cannot matter, with A₄ and A₅, where it can. Groups of equal size share
+				the same vocabulary size; the smaller tasks have six positions, the larger ones eleven.
+			</p>
+
+			<figure id="fig-ladder" class="wide">
+				<GroupLadder />
+				<figcaption>
+					<b>Figure 2.</b> A commuting model cannot cross the dashed population ceiling without additional
+					order information. The noncommuting heads do. The vertical lines are exact calculations for
+					these task lengths, not fitted to the training results. Dots are three-seed means at 6,000 steps;
+					softmax has positional embeddings.
+				</figcaption>
+			</figure>
+			<div class="table-scroll wide">
+				<table>
+					<thead
+						><tr
+							><th scope="col">Arm</th>{#each ['Z₁₂', 'A₄', 'Z₆₀', 'A₅'] as group (group)}<th
+									scope="col"
+									class="num">{group}</th
+								>{/each}</tr
+						></thead
+					>
+					<tbody
+						>{#each GROUP_ROWS as row (row.id)}<tr
+								><th scope="row">{row.label}</th>{#each row.values as value, i (i)}<td class="num"
+										>{value.display}{#if value.seeds}<small>({value.seeds})</small>{/if}</td
+									>{/each}</tr
+							>{/each}</tbody
+					>
+				</table>
+			</div>
+			<p class="caption">
+				<b>Table 4.</b> Balanced accuracy %, mean (seeds 0, 1, 2), exactly as displayed in
+				<a href={source('research/GROUPS.md')}>GROUPS §5.2</a>.
+				<a href={source('research/results/grp_e2.jsonl')}>Raw experiment 2</a>. A₅ d = 5 rounds to
+				100.0; its individual scores are 99.97, 99.96, 99.98, so this is not literal perfect
+				accuracy.
+			</p>
+			<p>
+				Newton and d = 2 stay below the exact order-blind ceilings: <strong
+					>A₄ 83.0546984493%</strong
+				>
+				and <strong>A₅ 77.2287515874%</strong>. The large groups expose a striking training gap:
+				positional softmax remains near chance, while noncommuting heads learn the relation. On the
+				smaller A₄ task, three softmax layers reach 99.7%; the distinction is already narrower than
+				a universal softmax failure.
+			</p>
+			<h3>What the heads learned</h3>
+			<p>
+				We test the composition law directly: how close is U(a)U(b) to U(ab), averaged over every
+				pair? This is the <strong>homomorphism error</strong>. We also compare each head's trace—the
+				sum of its diagonal entries—with the known traces of irreducible representations. These
+				diagnostics reveal approximate group structure inside trained heads.
+			</p>
+			<div class="table-scroll">
+				<table>
+					<thead
+						><tr
+							><th scope="col">Group</th><th scope="col">d = 2</th><th scope="col">d = 3</th><th
+								scope="col">d = 4</th
+							><th scope="col">d = 5</th></tr
+						></thead
+					>
+					<tbody>
+						<tr
+							><th scope="row">A₄</th><td>none; 1′, 1″; 1′, 1″</td><td>3; 3; 3</td><td
+								>3; none; 3</td
+							><td>none (×3)</td></tr
+						>
+						<tr
+							><th scope="row">A₅</th><td>none (×3)</td><td>3, 3′; 3, 3′; 3, 3′</td><td
+								>3′; 4; 3, 4</td
+							><td>5; 5; 4, 5</td></tr
+						>
+					</tbody>
+				</table>
+			</div>
+			<p class="caption">
+				<b>Table 5.</b> Detected irreps per seed, from GROUPS §5.2. Detection requires multiplicity ≥
+				½ and homomorphism error &lt; 0.5. “None” means none passed this diagnostic, which can miss structure
+				in heads whose gates suppress some elements.
+			</p>
+			<p>
+				The three-dimensional A₅ heads recover both icosahedral irreps, with best reported
+				homomorphism errors down to 0.05. The registered dimension prediction was <strong
+					>undecided</strong
+				>: d = 3 scored 93.4–94.8%, between its decision thresholds. An exploratory 20,000-step
+				extension reached <strong>99.21%, 99.38%, 99.34%</strong>. Larger dimensions learn faster in
+				these runs; these observations do not prove a universal minimum dimension or exact
+				convergence.
+			</p>
+			<p>
+				The earlier hypothesis that accuracy must track the total Fourier mass of available irreps
+				was too restrictive. A nonlinear readout with token gates can use a faithful representation
+				without holding every irrep. Faithfulness is sufficient under the theorem below; it is not
+				necessary.
+			</p>
+		</section>
+
+		<section id="theory">
+			<h2><span>6</span> What can be proved</h2>
+			<p class="caption">
+				<b>Proved here, with conditions.</b> Full statements and constructions:
+				<a href={source('research/THEORY.md')}>THEORY</a>. Numerical checks:
+				<a href={source('research/results/theory_checks.json')}>theory_checks.json</a>.
+			</p>
+			<p>
+				The boundary is between <strong>position-free commuting composition</strong> and composition that
+				preserves relevant order. It is not a separation between every softmax network and every holonomy
+				network.
+			</p>
+			<Theorem n="1" name="Losing order has a sharp price" evidence="proved">
+				<p>
+					If a predictor sees only the marked token and the multiset of the other tokens, its best
+					possible balanced accuracy is the order-blind Bayes ceiling. More width or a larger
+					classifier cannot recover the discarded order.
+				</p>
+				{#snippet proof()}
+					<p>
+						Let O be that order-blind observation, p(O) the probability of a positive label given
+						it, and π the overall positive rate. The optimal prediction is positive exactly when
+						p(O) ≥ π. Comparing the positive and negative contributions at each observation gives:
+					</p>
+					<MathTex tex={eq.bayes} display />
+					<p>
+						This bound is attained. Randomization cannot improve the larger of two choices. It
+						applies to one position-free Newton layer and to commuting holonomy heads with
+						token-only gates and a pointwise readout. It does not apply when positions, causal
+						masks, neighborhood information or an order-aware preprocessing layer enter the
+						observation.
+					</p>
+				{/snippet}
+			</Theorem>
+			<p>
+				For Match-3, fixing the marked element gives every other element a unique partner that would
+				complete a solution if it came later. Counting the orderings that avoid all such pairs gives
+				an exact conditional probability. An integer dynamic program aggregates these probabilities
+				to the A₄ and A₅ ceilings above. A₄ also agrees with exhaustive enumeration of all 2,985,984
+				sequences and 52,416 observation classes; A₅ is exact without enumerating its full sequence
+				space.
+			</p>
+			<Theorem n="2" name="Faithful rotations suffice for Match-3" evidence="proved">
+				<p>
+					A faithful orthogonal representation, sufficiently many token-gated heads, and a
+					sufficiently wide readout retaining the own-token identity can represent ordered Match-3
+					exactly at every fixed length. For A₄ and A₅, a three-dimensional rotation representation
+					is sufficient.
+				</p>
+				{#snippet proof()}
+					<p>
+						Use paired heads: one multiplies the faithful representation, the other uses identity
+						matrices with the same gates. Varying finite positive gates separates candidate triples
+						by their token content, including repetitions. For a fixed content triple, its
+						successful orders have trace d; all unsuccessful orders, if any successful order exists,
+						share a second trace below d. The identity heads count candidates. The trace sum and
+						candidate count therefore recover the exact number of successes.
+					</p>
+					<p>
+						For group size m, at most (m + 1)(m + 2) heads suffice; gates can be chosen from ¼, ½
+						and ¾. Shared arity normalization preserves the classification margin. The implemented
+						SO(d) parameterization requires determinant +1; an O(d) representation can be embedded
+						in SO(d + 1). A₄ and A₅ already lie in SO(3).
+					</p>
+				{/snippet}
+			</Theorem>
+			<p>
+				This is an existence construction with generous head and readout requirements, not a
+				certificate for the trained width or gradient descent. The corresponding theorem for
+				arbitrary Match-k uses <strong>position-selective gates</strong>. Those gates are not
+				silently granted to the position-free experiment, and a token-only sufficiency theorem for
+				arbitrary k remains open.
 			</p>
 			<Theorem
-				kind="Proposition"
-				n={4}
-				name="Shared modes need one per group element"
+				kind="Corollary"
+				n="3"
+				name="Faithfulness is stronger than necessary"
 				evidence="proved"
 			>
-				<p>At fixed routing, the exchange sector contributes</p>
-				<MathTex display tex={T.exch} />
 				<p>
-					so <MathTex tex={String.raw`\operatorname{rank} H \le M`} />. If every element of <MathTex
-						tex="G"
-					/> occurs as a sum <MathTex tex="x_i+x_j" /> and as a sum <MathTex tex="x_k+x_l" />, the
-					Match-4 kernel
-					<MathTex tex={T.kernel} /> has <MathTex tex={T.rank} />. Reproducing it through shared
-					modes therefore needs
-					<MathTex tex={String.raw`M \ge |G|`} />, and approximating it within spectral distance
-					below one needs the same.
+					For fixed homomorphic matrix families with arbitrarily many token-gated copies and a
+					readout retaining the own token, exact Match-3 is possible if and only if the families
+					jointly preserve noncommuting pairs: whenever ab ≠ ba, some head must distinguish their
+					two product orders.
 				</p>
 				{#snippet proof()}
 					<p>
-						<MathTex tex="H" /> is a product of an <MathTex tex={String.raw`n^2 \times M`} /> and an
-						<MathTex tex={String.raw`M \times n^2`} /> matrix. In <MathTex tex="K" />, the entry
-						depends only on the row sum <MathTex tex="s = x_i + x_j" /> and the column sum <MathTex
-							tex="s' = x_k + x_l"
-						/>, and equals one exactly when <MathTex tex="s' = -s" />. Choosing one row for each
-						value of <MathTex tex="s" /> and the matching column for <MathTex tex="-s" /> gives a <MathTex
-							tex={String.raw`|G|\times|G|`}
-						/> permutation submatrix, so the rank is <MathTex tex="|G|" />. A matrix within spectral
-						distance below one of a permutation matrix is invertible, which gives the approximate
-						version.
+						If every head makes a and b commute, the triples (a, b, (ab)⁻¹) and (b, a, (ab)⁻¹),
+						marked at their final element, collide in every head while their labels differ. Identity
+						padding extends this obstruction to every fixed length. Conversely, the token-gate
+						counting construction can choose a representation that distinguishes the two
+						orientations of each order-sensitive content triple.
+					</p>
+					<p>
+						As a counterexample to faithful-dimension necessity, project A₅ × Z₃ onto a faithful A₅
+						representation in SO(3). The map discards the abelian Z₃ factor, so it is not faithful,
+						but it preserves every noncommuting pair. With the stated gates it suffices for Match-3
+						even though the full group has no faithful orthogonal representation of dimension at
+						most three.
 					</p>
 				{/snippet}
 			</Theorem>
+			<h3>Softmax's capacity is not the disputed point</h3>
 			<p>
-				This bounds one route to the answer, not every classifier, and it points to two remedies.
-				One is classical: store every pair sum in an indexed memory and look up the complement,
-				which settles all-query Match-4 in <MathTex tex="O(n^2)" /> and, with colour coding <Cite
-					refs={BIB}
-					id="alon"
-				/>, Match-<MathTex tex="k" /> in <MathTex tex={String.raw`O(n^{\lceil k/2\rceil})`} />. The
-				other, in the next section, needs no indexing. Section 6 shows that giving Feynman attention
-				the primitives of that construction, and width above <MathTex tex="|G|" />, is still not
-				enough for gradient descent to find it.
+				For finite abelian groups at a fixed sequence length, uniform softmax carrying every
+				character, an own-token residual and a sufficiently large MLP can implement Match-k. With
+				positions and enough heads and width, one softmax layer can recover the full ordered
+				sequence and represent any labeling of this finite input domain. These constructive facts
+				rule out the broad claim “softmax cannot compose.” What remains is an empirical question of
+				learnability and efficiency at realistic resources.
 			</p>
 		</section>
 
-		<section id="algebra">
-			<h2><span class="n">5</span>Arity in the group algebra</h2>
+		<section id="programs">
+			<h2><span>7</span> A second test: execute swap programs</h2>
+			<aside class="side">
+				<b>Preregistered confirmation</b>Predictions committed before the three-seed grid. Six
+				instructions, one query; 6,000 steps. <a href={source('research/GROUPS.md')}>GROUPS §7</a>.
+			</aside>
 			<p>
-				Embed each token by its characters, <MathTex tex={T.phi} />. A Hadamard product of
-				embeddings is the embedding of the sum: Hadamard-product attention computes in the group
-				algebra, where multiplication is convolution. Pooling a Hadamard power over tokens gives a
-				power sum, and power sums determine the elementary symmetric polynomials whose coefficients
-				count zero-sum subsets.
+				Start with two independent sets of four variables, each holding values 0, 1, 2, 3.
+				Interleave three random swaps from each set, then query one variable. To answer, a model
+				must select the relevant instructions and apply them in order. This is a controlled toy
+				program-execution task, not a natural-code benchmark.
 			</p>
-			<Theorem n={5} name="Every arity at linear cost" evidence="checked" id="thm5">
-				<p>
-					For every finite abelian group, every <MathTex tex="k" /> and every input, with
-					<MathTex tex="E_0 = \mathbf 1" />,
-				</p>
-				<MathTex display tex={T.newton} />
-				<p>
-					where <MathTex tex={String.raw`N_{i,k}`} /> is the number of <MathTex
-						tex="(k-1)"
-					/>-subsets of the other positions whose values sum with <MathTex tex="x_i" /> to zero. Every
-					step is a Hadamard product, a Hadamard power or a sum over tokens, and all arities up to <MathTex
-						tex="k"
-					/> together cost
-				</p>
-				<MathTex display tex={T.cost} />
-				{#snippet proof()}
-					<p>
-						In the group algebra <MathTex tex={String.raw`\mathbb C[G]`} />, with basis
-						<MathTex tex="e_g" /> and <MathTex tex={String.raw`e_a * e_b = e_{a + b}`} />,
-					</p>
-					<MathTex display tex={T.gen} />
-					<p>
-						Newton's identities hold in any commutative algebra over the rationals, with power sums
-						<MathTex tex={String.raw`P_j = \sum_t e_{x_t}^{*j} = \sum_t e_{j x_t}`} />. Removing
-						token
-						<MathTex tex="i" /> divides the generating function by <MathTex
-							tex={String.raw`1 + z e_{x_i}`}
-						/>:
-					</p>
-					<MathTex display tex={T.excl} />
-					<p>
-						The count is the coefficient of <MathTex tex={String.raw`e_{-x_i}`} /> in that series:
-					</p>
-					<MathTex display tex={T.coef} />
-					<p>
-						The Fourier transform turns every convolution into a Hadamard product, which gives the
-						formula. Power sums cost <MathTex tex={String.raw`O(kn|G|)`} />, the recursion <MathTex
-							tex={String.raw`O(k^2|G|)`}
-						/> and the read-out <MathTex tex={String.raw`O(kn|G|)`} /> per arity. We checked the counts
-						against enumeration on 60 random tables for <MathTex tex="k" /> = 2 to 6 in Python, and in
-						this site's test suite; the demo below runs the same check live.
-					</p>
-				{/snippet}
-			</Theorem>
-			<NewtonDemo />
 			<p>
-				The width is not incidental. Exact counting reads every character, and a lower bound says
-				that something of that size is needed:
-			</p>
-			<Theorem kind="Proposition" n={6} name="Width lower bound" evidence="open">
-				<p>
-					Any model that summarises the context into a query-independent state and reads it out
-					bilinearly against the query needs <MathTex tex={T.width} />. The proof places one element <MathTex
-						tex="h"
-					/> among zeros, which makes the answer matrix a permutation plus a rank-one term; the write-up,
-					and the extension to non-linear read-outs, are in progress.
-				</p>
-			</Theorem>
-
-			<h3>Newton attention</h3>
-			<p>
-				Theorem 5 needs the characters of a known group. A layer has to learn them, and it should
-				work for relations that are not zero sums. Newton attention keeps the algebra and learns the
-				features. Each token gets <MathTex tex="r" /> complex channels with a learned phase and a learned
-				gate,
-			</p>
-			<MathTex display tex={T.nPhase} />
-			<p>
-				so a character is one linear map away. Leave-one-out power sums and Newton's identities
-				give, for every query <MathTex tex="q" />, the elementary symmetric polynomials of the other
-				tokens,
-			</p>
-			<MathTex display tex={T.nPow} />
-			<p>
-				and the layer reads out every arity up to <MathTex tex="K" /> at once, through one read-out
-				<MathTex tex="W_o" /> shared by all of them and a learned scale <MathTex
-					tex={String.raw`\alpha_m`}
-				/> per arity:
-			</p>
-			<MathTex display tex={T.nOut} />
-			<p>
-				Each arity's features are normalised to unit RMS before the read-out. Higher arities are
-				averages of products of more gates below one, so without it they are far smaller than the
-				low ones and learn slowly. The layer as first run gave every arity its own read-out and did
-				not normalise; Section 6.4 reports both.
-			</p>
-			<figure class="wide fig">
-				<ComputeGraph graph={NEWTON} label="Computation graph of Newton attention" />
-				<figcaption>
-					<b>Figure 6.</b> The computation graph of Newton attention. Each token becomes complex phases;
-					pooled powers give the power sums; Newton's identities give the elementary symmetric polynomials
-					of the other tokens; and the query's own phases times each of them is that arity's term. Nothing
-					is enumerated, and no softmax is needed.
-				</figcaption>
-			</figure>
-			<Theorem kind="Remark" n={1} name="What the layer computes">
-				<p>Each read-out term is an exact sum over distinct subsets that contain the query,</p>
-				<MathTex display tex={T.nSubset} />
-				<p>
-					so the term with index <MathTex tex="m" /> is attention of arity <MathTex tex="m+1" />
-					with a product kernel, every arity costs <MathTex tex={T.nCost} />, and no tuple is ever
-					enumerated. Repeated indices, which make naive factorised higher-order attention count a
-					token twice, are removed exactly by the alternating terms of the recursion. The scales
-					<MathTex tex={String.raw`\alpha_m`} /> weigh the arities: that is where the data chooses.
-				</p>
-			</Theorem>
-		</section>
-
-		<section id="experiments">
-			<h2><span class="n">6</span>Experiments</h2>
-			<h3>6.1 In the browser</h3>
-			<p>
-				All runs use one layer unless noted, width 64, four heads and 4,000 steps on freshly sampled
-				data, with 1,024 held-out tables. These numbers come from this site's jax-js engine, one
-				seed each.
-			</p>
-			<table class="nums">
-				<caption>Table 1. Held-out token accuracy, measured in a browser on WebGPU.</caption>
-				<thead>
-					<tr
-						><th>Model</th><th class="r">SET</th><th class="r">Params</th><th class="r"
-							>Pointer chase</th
-						><th class="r">Params</th></tr
-					>
-				</thead>
-				<tbody>
-					<tr class="hi"
-						><td>Cubic, 1 layer</td><td class="r">100%</td><td class="r">60k</td><td class="r"
-							>84.5%</td
-						><td class="r">63k</td></tr
-					>
-					<tr class="hi"
-						><td>Feynman (2 rounds on SET, 4 on chase)</td><td class="r">100%</td><td class="r"
-							>59k</td
-						><td class="r">100%</td><td class="r">61k</td></tr
-					>
-					<tr
-						><td>Strassen</td><td class="r">95.8%</td><td class="r">60k</td><td class="r">·</td><td
-							class="r"
-						></td></tr
-					>
-					<tr
-						><td>Tree (Chakrabarti et al.)</td><td class="r">76.4%</td><td class="r">60k</td><td
-							class="r">·</td
-						><td class="r"></td></tr
-					>
-					<tr
-						><td>Standard, 3 layers</td><td class="r">·</td><td class="r"></td><td class="r"
-							>94.2%</td
-						><td class="r">154k</td></tr
-					>
-					<tr
-						><td>Standard, 2 layers</td><td class="r">64.4%</td><td class="r">102k</td><td class="r"
-							>88.9%</td
-						><td class="r">104k</td></tr
-					>
-					<tr
-						><td>Standard, 1 layer</td><td class="r">60.5%</td><td class="r">52k</td><td class="r"
-							>64.5%</td
-						><td class="r">54k</td></tr
-					>
-					<tr class="base"
-						><td>Majority class</td><td class="r">53.5%</td><td class="r"></td><td class="r">·</td
-						><td class="r"></td></tr
-					>
-				</tbody>
-			</table>
-
-			<h3>6.2 Replication across seeds</h3>
-			<p>
-				The same operators in the research harness on cloud GPUs, three seeds each, 4,000 steps. The
-				SET tasks are scored by balanced accuracy, the mean of the per-class hit rates, so always
-				answering the majority class scores 50%.
-			</p>
-			<ReplicationTable
-				rows={[...baseline, ...newton(newtonA), ...newtonB, ...newtonE]}
-				tasks={BASE_TASKS}
-				models={BASE_MODELS}
-				caption="Table 2. Mean of three seeds; each dot is one seed on a strip from chance to 100%. SET tasks: balanced accuracy, chance 50%. Pointer chase and three-hop: accuracy over eight answers, chance 12.5%."
-			/>
-			<p>
-				SET is solved by cubic attention, Feynman attention and Newton attention at rank 256 on
-				every seed; no depth of standard attention gets past 62%. On four-card SET dense quartic
-				attention learns on two of three seeds, Newton attention at rank 256 reaches 76% on all
-				three and 99.9% with normalised arities (Section 6.4), and everything else stays at exactly
-				chance. On three-hop composition Feynman attention succeeds on two of three seeds. On
-				pointer chasing three standard layers match Feynman attention, with 2.5 times the
-				parameters. Newton attention has no routing, and at rank 32 it is weak on both chain tasks.
+				For example, after <code>swap(0,1); swap(1,2); swap(2,3)</code>, reading variable 0 returns
+				1. Reversing those statements returns 3. Knowing which statements occurred is not enough.
 			</p>
 
-			<h3>6.3 The Match-<MathTex tex="k" /> ladder</h3>
-			<p>
-				Match-<MathTex tex="k" /> on <MathTex tex={String.raw`\mathbb Z_3^4`} /> for <MathTex
-					tex="k"
-				/> = 3, 4, 5 (twelve cards for <MathTex tex="k = 3" />, nine otherwise, so that about half
-				the cards are positive), and a task whose label is the smallest arity at which a card
-				completes a zero sum: none, 3, 4 or 5. Every operator, three seeds, 6,000 steps.
-			</p>
-			<ReplicationTable
-				rows={[...phaseA, ...newton(newtonA), ...newtonB, ...newtonE]}
-				tasks={LADDER_TASKS}
-				models={LADDER_MODELS}
-				caption="Table 3. Balanced accuracy, mean of three seeds with each seed as a dot. Chance is 50% for Match-k and 25% for the smallest-arity task."
-			/>
-			<p>
-				The ladder separates the operators by arity. Standard attention, at any depth we tried, gets
-				no further than 66% on Match-3 and stays at chance from Match-4 up. Cubic attention and
-				Feynman attention solve Match-3 and stop there. Dense quartic attention learns Match-4 on
-				two of three seeds, after a long plateau and a sudden snap (Figure 7), as the leap of a
-				four-way relation predicts. The Feynman attention variant that has every primitive of the
-				Newton construction (pooled modes, self-products, products of modes) stays at exactly chance
-				on Match-4 at width 64, 128 and 192, above the <MathTex tex="|G| = 81" /> that Proposition 6 asks
-				for: the composition is representable, and it is not found. Removing its cubic sector loses Match-3
-				as well. Newton attention with normalised arities solves every rung up to Match-4 and the smallest-arity
-				task on every seed, and reaches 85% on Match-5.
-			</p>
-			<figure class="wide fig">
-				<CurvesFigure
-					rows={[...phaseA, ...newton(newtonA), ...newtonB, ...newtonE]}
-					panels={[
-						{ task: 'zs3', title: 'Match-3' },
-						{ task: 'zs4', title: 'Match-4' },
-						{ task: 'zs5', title: 'Match-5' }
-					]}
-					models={CURVE_MODELS}
-				/>
-				<figcaption>
-					<b>Figure 7.</b> Held-out balanced accuracy through training, mean of three seeds. Models of
-					the task's order sit at chance and then snap; models below it never leave. Newton attention
-					climbs without the long plateau. With its own read-out per arity it stops short of exact; with
-					normalised arities it is exact on Match-3 and Match-4 within 4,000 steps.
-				</figcaption>
-			</figure>
-
-			<h3>6.4 Newton attention</h3>
-			<p>
-				The order ablation is the cleanest result so far. Cap Newton attention at order 3 and
-				Match-4 stays at exactly 50% on every seed; cap it at 4 and Match-5 does the same, even with
-				20,000 steps. Offer order 6 and both leave chance on every seed. The same holds at rank 128
-				(Table 6). Gradient descent uses the arity when the layer offers it.
-			</p>
-			<ReplicationTable
-				rows={newtonA}
-				tasks={[
-					{ id: 'zs4', label: 'Match-4' },
-					{ id: 'zs5', label: 'Match-5' }
-				]}
-				models={ORDER_MODELS}
-				caption="Table 4. Newton attention with its order capped, rank 32, four heads. Balanced accuracy, three seeds."
-			/>
-			<p>
-				Width is what it needs. At rank 32 it plateaus near 80% on Match-3 and 62% on Match-4, and
-				20,000 steps do not move it. With one head, accuracy on Match-4 rises steadily with the
-				number of channels, though without the sharp step at <MathTex tex="r = 40" /> conjugate pairs
-				that exact character counting would suggest. With four heads of rank 256 it solves SET and Match-3
-				on every seed, reaches 95% on the smallest-arity task and 71% on Match-4, and is the only model
-				above chance on Match-5, at 57% on all three seeds.
-			</p>
-			<ReplicationTable
-				rows={newtonA}
-				tasks={[{ id: 'zs4', label: 'Match-4' }]}
-				models={RANK_MODELS}
-				caption="Table 5. Newton attention on Match-4 by rank, one head, order 6, 10,000 steps. Balanced accuracy, three seeds."
-			/>
-			{#if newtonB.length}
-				<div class="wide">
-					<ReplicationTable
-						rows={newtonB}
-						tasks={[
-							...LADDER_TASKS,
-							{ id: 'set', label: 'SET' },
-							{ id: 'set4', label: 'Four-card SET' }
-						]}
-						models={WIDE_MODELS}
-						caption="Table 6. Wider Newton attention, four heads, 6,000 steps, with its order ablation and width-matched baselines. Balanced accuracy, three seeds."
-					/>
-				</div>
-				<p>
-					Most of its parameters are in the read-out: at rank 256 the projection takes four heads of
-					six arities of 256 complex channels to width 64, 0.79M of 0.96M parameters. Parameters
-					alone do not explain the result: cubic attention widened to 0.52M and three standard
-					layers widened to 2.4M stay at chance on Match-4 and Match-5. Dense quartic attention is
-					still better on Match-4, 84% on two of three seeds with 69k parameters, at a cost that
-					grows as
-					<MathTex tex="n^4" />.
-				</p>
-				<p>
-					Two changes to the read-out close the gap (Table 7). The first normalises each arity's
-					features to unit RMS before they are read. On its own it takes Match-4 from 71% to 98%.
-					The second shares one read-out across arities, with a learned scale per arity. The same
-					characters count relations of every size, so one map can read them all; on its own it
-					helps less, but it cuts the layer from 0.96M parameters to 0.30M. Together they solve SET,
-					four-card SET, Match-3, Match-4 and the smallest-arity task on every seed at rank 256.
-					Match-5 needs more channels: 85% at rank 256, and 97.5% to 98.1% at rank 512, where three
-					of six seeds are exact.
-				</p>
-				<div class="wide">
-					<ReplicationTable
-						rows={[...newtonB, ...newtonC, ...newtonE]}
-						tasks={FIX_TASKS}
-						models={FIX_MODELS}
-						caption="Table 7. The read-out of Newton attention: its own projection per arity as in Table 6, one projection shared across arities, each arity's features normalised to unit RMS, and both. Rank 256 unless stated, four heads, order 6, 6,000 steps. Balanced accuracy, three seeds."
-					/>
-				</div>
-			{:else}
-				<p class="pending">Running now: rank 128 and 256, with width-matched baselines.</p>
-			{/if}
-
-			<h3>6.5 What the trained layer computes</h3>
-			<p>
-				Two probes look inside a trained layer (rank 256, four heads, order 6, shared and normalised
-				read-out). The first switches off one arity at a time and scores the model again (Figure 8).
-				On Match-3 only arity 3 matters: without it accuracy falls to chance, and without any other
-				arity it does not move. Match-4 rests on arity 4 and Match-5 on arity 5. On the
-				smallest-arity task, whose labels involve relations of three, four and five cards, the layer
-				depends on exactly arities 3, 4 and 5 and ignores 1, 2 and 6. Nothing told it which arities
-				a task has.
-			</p>
-			<figure class="wide fig">
-				<ArityUseFigure rows={newtonDiag.knock} />
-				<figcaption>
-					<b>Figure 8.</b> The arity a trained Newton attention layer uses. For each task, the share
-					of its accuracy above chance that is lost when the term of arity <MathTex tex="k" /> is switched
-					off; the number left of each row is the full model's balanced accuracy. Mean of three seeds.
-				</figcaption>
-			</figure>
-			<p>
-				The second compares every learned channel with the 81 characters of <MathTex
-					tex={String.raw`\mathbb Z_3^4`}
-				/>. A channel is a character when its phase on every card, at every position, is <MathTex
-					tex={String.raw`\tfrac{2\pi}{3}\langle c, x\rangle`}
-				/> up to one constant rotation; the resultant <MathTex tex="R" /> of the leftover phases is 1
-				exactly then. After training on Match-3, about one channel in eleven is a character to three decimals,
-				and between them they cover all 40 characters up to conjugation (Figure 9a): the layer rediscovers
-				the Fourier basis of the group, without being told there is one. With its own read-out per arity
-				the layer finds only 11 to 17 of the 40 on Match-4 and about 7 on Match-5, and that was the gap:
-				it picked the right arity but had too few characters to count exactly. Across all 93 runs we probed,
-				whatever the task and configuration, a run is exact exactly when it has found all 40, and in between
-				accuracy is close to linear in the count (Figure 9b): on every one of the 74 Match-<MathTex
-					tex="k"
-				/> runs, balanced accuracy is within five points of <MathTex
-					tex={String.raw`\tfrac12 + \tfrac12 \cdot \tfrac{\text{found}}{40}`}
-				/>, as if each character carried an equal share of the answer. Why the relation is linear we
-				do not yet know. It holds in a browser too: a width-128 layer trained by this site's engine
-				on Match-4 sits at chance for 1,500 steps, then finds characters and gains accuracy
-				together, ending at 32 characters and 90.9% held-out token accuracy, where the line gives
-				90% (Explore, Newton).
-			</p>
-			<figure class="wide fig">
-				<CharactersFigure examples={newtonDiag.examples} points={newtonDiag.scatter} />
-				<figcaption>
-					<b>Figure 9.</b> Newton attention learns characters. (a) Every card's learned phase on the four
-					most character-like channels of a layer trained on Match-3, shaded by the character's value
-					on that card: the 81 cards fall into three tight clusters a third of a turn apart. (b) Every
-					run's balanced accuracy against the number of distinct characters its channels contain, over
-					every configuration of Tables 6 and 7; the dashed line is ½ + ½ · found/40.
-				</figcaption>
-			</figure>
-			<p>
-				A character that counts triples also counts quadruples and quintuples, so what a layer
-				learns at one arity should serve the others. To test this we trained one layer on Match-3, 4
-				and 5 at once, with the first token announcing <MathTex tex="k" />, and scored it on each
-				(Table 8). Each arity then sees a third of the tables that a single-task run sees. Even so,
-				with its own read-out per arity the mixed layer reaches 84% on Match-4 and 83% on Match-5,
-				where the same layer trained on either alone stays near 71% and 57%, though Match-3 falls
-				from 100% to 90%. With the shared, normalised read-out it is exact on all three arities on
-				every seed, at rank 256, where Match-5 alone reaches 85%. Features found on small relations
-				carry the large ones, the way a staircase of easier targets carries a learner past a leap <Cite
-					refs={BIB}
-					id="abbe"
-				/>.
-			</p>
-			<div class="wide">
-				<ReplicationTable
-					rows={MIX_ROWS}
-					tasks={LADDER_TASKS.slice(0, 3)}
-					models={MIX_MODELS}
-					caption="Table 8. One layer trained on Match-3, 4 and 5 together and scored on each, against the same layer trained on each task alone. Rank 256, four heads, order 6, 6,000 steps unless stated. Balanced accuracy, three seeds."
-				/>
-			</div>
-
-			<h3>6.6 A small language model</h3>
-			<p>
-				Text is not made of zero sums, and Newton attention has no keys or values: its gates are set
-				per token, not chosen by the query, so it cannot retrieve a particular earlier token. To see
-				what that means for a sequence model, we trained byte-level language models on enwik8 with
-				3.3M parameters: four layers of width 256, a context of 256 bytes, and 8,000 steps of 64
-				sequences, with causal Newton attention built from prefix power sums (Table 9). Placed
-				beside softmax attention in every layer, with the MLP narrowed to keep the parameter count,
-				it leaves validation bits per character where they were. In place of softmax attention it
-				costs 0.85 bits per character. Newton attention is a layer for relations among many tokens,
-				not a replacement for attention.
-			</p>
-			<table class="nums">
-				<caption
-					>Table 9. Byte-level language models on enwik8, matched in parameters. Validation bits per
-					character, lower is better: mean of three seeds, then each seed.</caption
-				>
-				<thead>
-					<tr><th>Model</th><th class="r">Params</th><th class="r">Bits per character</th></tr>
-				</thead>
-				<tbody>
-					{#each lm as row (row.arch)}
-						<tr class:hi={row.arch === 'gpt'}>
-							<td>{LM_LABEL[row.arch]}</td>
-							<td class="r">{(row.params / 1e6).toFixed(2)}M</td>
-							<td class="r"
-								>{row.mean.toFixed(3)}
-								<span class="seeds">{row.bpc.map((b) => b.toFixed(3)).join(', ')}</span></td
-							>
-						</tr>
-					{/each}
-				</tbody>
-			</table>
-
-			<h3>6.7 Match3 on a published protocol</h3>
-			<p>
-				Every task so far comes from our own generator. The closest established benchmark with
-				published numbers is Match3 as HOMA runs it <Cite refs={BIB} id="homa" />, after Sanford et
-				al. <Cite refs={BIB} id="sanford23" />: <MathTex tex="N" /> integers drawn uniformly from <MathTex
-					tex={String.raw`\mathbb Z_M`}
-				/>, and a token is positive if it and two tokens of the sequence sum to zero, where the two
-				may be the same token or the token itself. We follow their protocol: <MathTex tex="N = 6" /> with
-				<MathTex tex="M = 30" /> and <MathTex tex="N = 8" /> with <MathTex tex="M = 56" />, 30,000
-				training and 2,000 test sequences per seed, 40 epochs of batch 256 with Adam at a learning
-				rate of 0.003 and no schedule, decay or clipping, one attention layer of four heads with no
-				MLP, a fixed Fourier basis of <MathTex tex={String.raw`\mathbb Z_M`} /> followed by a learned
-				projection, no positions, and plain accuracy on the test set after the last epoch, three seeds.
-				Their code is not public, so our generator follows the paper's text; its positive rates, 53% and
-				48%, fall in the range they report. HOMA's best runs are at width 64 and 128, with about 28k and
-				91k parameters by our count. The baselines use those widths, and Newton attention keeps width
-				64 and takes rank 24 and 84, which gives it 28k and 91k parameters.
-			</p>
-			<div class="wide">
-				<ReplicationTable
-					rows={M3_ROWS}
-					tasks={M3_TASKS}
-					models={M3_MODELS}
-					metric="tok"
-					caption="Table 10. Match3 on HOMA's protocol. Accuracy on 2,000 test sequences after 40 epochs, mean of three seeds with each seed as a dot; parameters at N = 6 and 8 in brackets. Published rows are HOMA's Table 2 at width 64 and 128, mean ± standard deviation; HOMA's parameter counts are our estimate. Always answering the majority class scores 52%."
-				/>
-			</div>
-			<p>
-				Newton attention at HOMA's size is exact on <MathTex tex="N = 6" /> and reaches 99.8% on <MathTex
-					tex="N = 8"
-				/>, every seed above 99.6%, where HOMA reports 99.3% and 92.5%. The protocol reproduces
-				their baseline: one layer of standard attention scores 84.4% and 74.6%, and they report
-				83.0% and 73.1% for pairwise attention at the same widths. But cubic attention in our
-				harness, at a similar size, reaches 99.9% and 99.7% as well, so the margin over the
-				published numbers belongs to our implementation of third-order attention, not to Newton
-				attention. Two differences we can name: HOMA's third projection has rank 8 and its pair
-				values reuse one value map, and the paper does not say whether its Match3 models keep the
-				residual connection and LayerNorm that ours do. On this benchmark Newton attention, at a
-				cost linear in the sequence, ties cubic attention, at a cost cubic in it, with the same
-				parameters; rank 256, with three to ten times the parameters, changes nothing. Depth helps
-				standard attention at <MathTex tex="N = 6" />, 98.3% with two layers and 99.4% with three,
-				but not at <MathTex tex="N = 8" />, where three layers reach 76.4% and one seed stays at
-				72.6%.
-			</p>
-			<p>
-				Repeats change which arities the label needs. A token can complete a zero sum with one other
-				token, <MathTex tex="2x_i + x_j = 0" /> or <MathTex tex="x_i + 2x_j = 0" />, or alone, <MathTex
-					tex="3x_i = 0"
-				/>, so relations of one and two tokens carry part of it. Switching off one arity at a time
-				(as in Figure 8) shows the trained layer uses arities 1, 2 and 3 and nothing above. Without
-				arity 3 balanced accuracy falls to 82% at <MathTex tex="N = 6" /> and 74% at <MathTex
-					tex="N = 8"
-				/>, without arity 2 to 83% and 84%, without arity 1 to 95% and 98%; switching off arity 4, 5
-				or 6 moves no seed by more than 0.03 points.
-			</p>
-
-			<h3>6.8 Next</h3>
-			<p>More established benchmarks, each on its own published protocol:</p>
-			<table class="nums plan">
-				<caption>Table 11. Planned benchmarks and the published numbers to beat.</caption>
-				<thead><tr><th>Benchmark</th><th>Why</th><th>To beat</th></tr></thead>
-				<tbody>
-					<tr>
-						<td>CLUTRR, train on chains of 2 to 3, test to 10</td>
-						<td>Composing relations</td>
-						<td>Edge Transformer 58.1% <Cite refs={BIB} id="bergen" /></td>
-					</tr>
-					<tr>
-						<td>CLRS-30 subset, train n = 16, test n = 64</td>
-						<td>Triplet algorithms (Floyd–Warshall, SCC, LCS, optimal BST)</td>
-						<td
-							>FloydNet 81.4% on Floyd–Warshall, fixed data <Cite
-								refs={BIB}
-								id={['floydnet', 'velickovic']}
-							/></td
+			<div class="table-scroll">
+				<table>
+					<thead
+						><tr><th scope="col">Arm</th><th scope="col" class="num">Balanced accuracy %</th></tr
+						></thead
+					>
+					<tbody
+						>{#each SWAP_ROWS as row (row.id)}<tr
+								><th scope="row">{row.label}</th><td class="num"
+									>{row.result.display}<small>({row.result.seeds})</small></td
+								></tr
+							>{/each}
+						<tr class="ceiling-row"
+							><th scope="row">Exact order-blind population ceiling</th><td class="num"
+								>62.037… = 100 × 67/108</td
+							></tr
 						>
-					</tr>
-					<tr>
-						<td>p-hop, p = 16</td>
-						<td>Depth versus arity</td>
-						<td>3 standard layers 97.2%, one layer 48.9%</td>
-					</tr>
-				</tbody>
-			</table>
+					</tbody>
+				</table>
+			</div>
+			<p class="caption">
+				<b>Table 6.</b> Mean (seeds 0, 1, 2), copied from GROUPS §7.3.
+				<a href={source('research/results/grp_swap.jsonl')}>Raw swap-program results</a>. The
+				ceiling concerns population accuracy; finite test scores can be slightly higher. The
+				matrix-state RNN is a generic learned orthogonal recurrence, not a claimed reproduction of a
+				published architecture.
+			</p>
+			<p>
+				The commuting models again finish near their exact information ceiling. Holonomy d = 3 and d
+				= 4 solve the task. So does the matrix RNN, and so do two or three positional softmax
+				layers. Even one softmax layer reaches 98.95%. All four registered criteria hold.
+			</p>
+			<p>
+				<strong
+					>This benchmark confirms the symmetry barrier and shows no advantage over order-aware
+					baselines.</strong
+				> Three relevant instructions create a small finite universe; the experiment does not distinguish
+				a general execution algorithm from learning that finite function. It does not test length generalization,
+				new variables, natural code, or equal-FLOP efficiency. Independent training and test draws are
+				not deduplicated, so exact stream collisions are possible.
+			</p>
+		</section>
+
+		<section id="word-problems">
+			<h3>Word problems · results pending</h3>
+			<!-- WORD-PROBLEMS -->
+			<p>
+				A group's word problem asks whether the product of an entire sequence equals the identity.
+				The A₅/S₅ comparison with softmax and matrix-state recurrence is in progress; <strong
+					>results pending</strong
+				>. No empirical conclusion is included here.
+			</p>
+			<p class="caption">
+				The distinction between fixed-length subset tasks and growing-length word problems is set
+				out in <a href={source('research/THEORY.md')}>THEORY §6</a>.
+			</p>
 		</section>
 
 		<section id="related">
-			<h2><span class="n">7</span>Related work</h2>
+			<h2><span>8</span> What belongs to this project</h2>
 			<p>
-				<b>Higher-order attention.</b> 2-simplicial attention <Cite refs={BIB} id="clift" /> introduced
-				third-order scores and Hadamard pair values, with virtual entities as pair endpoints; Sanford
-				et al. proved third-order attention solves Match3 where pairwise attention needs large width <Cite
+				<strong>Ordered-subsequence products are prior art.</strong> Seq2Tens already sums
+				noncommutative tensor products over ordered subsequences, graded by their length <Cite
 					refs={BIB}
-					id="sanford23"
-				/>; Roy et al. made it fast <Cite refs={BIB} id="roy" />; Strassen attention <Cite
+					id="seq2tens"
+				/>. Holonomy's matrix polynomial is a compression of that feature map: replace each tensor
+				product by ordinary matrix multiplication through the map μ:
+			</p>
+			<MathTex tex={eq.compression} display />
+			<p>
+				<strong>Learned rotation products are also prior art.</strong> Path Development Networks
+				learn a map into a Lie algebra and compose matrix exponentials along a sequence <Cite
 					refs={BIB}
-					id="kozachinskiy"
-				/> and poly-attention <Cite refs={BIB} id="chakrabarti" /> chart cheaper polynomial scores and
-				their limits, and Alman and Song the complexity of the dense case <Cite
-					refs={BIB}
-					id="alman"
-				/>. All fix the order. N-simplicial attention shows a constant key recovers lower orders <Cite
-					refs={BIB}
-					id="dussolle"
-				/>, close to our vacuum token; HOMA fuses a pairwise and a triadic channel with a learned
-				gate after separate softmaxes
-				<Cite refs={BIB} id="homa" />; Nexus nests attention to a fixed depth <Cite
-					refs={BIB}
-					id="nexus"
-				/>. Higher-order linear attention composes attention matrices through prefix summaries, with
-				repeated indices allowed and orders two and three worked out <Cite refs={BIB} id="hla" />.
-				We found no operator that offers several arities inside one softmax, or that sums over
-				distinct subsets of every size through Newton's identities.
+					id="pathdev"
+				/>. They are the closest precedent for the learned group products. Seq2Tens is the closest
+				precedent for the ordered-subset generating construction. The present distinction is the
+				particular gated matrix parameterization and a separate readout for each subset size and
+				each token contained in that subset.
 			</p>
 			<p>
-				<b>Relational and algorithmic reasoning.</b> Edge transformers <Cite
+				The broader lineage includes iterated-sums signatures, learned signature transforms and
+				attention over signature features <Cite
 					refs={BIB}
-					id="bergen"
-				/> and FloydNet
-				<Cite refs={BIB} id="floydnet" /> keep pair states and attend over pivots, the strongest results
-				on composing relations and on CLRS <Cite refs={BIB} id="velickovic" />.
-				<b>Trees and recursion.</b>
-				Sums over trees with products of local weights go back to the inside algorithm and DIORA <Cite
+					id={['iteratedsums', 'deepsignatures', 'roughtransformers']}
+				/>. Permutation-invariant pooling is established <Cite refs={BIB} id="zaheer" />. Learned
+				group representations have already been recovered from networks trained on group operations <Cite
 					refs={BIB}
-					id="drozdov"
-				/>; adaptive depth to universal transformers <Cite refs={BIB} id="dehghani" />.
-				<b>Sets and algebra.</b>
-				Power sums underlie sum-decomposition of set functions and its width limits <Cite
-					refs={BIB}
-					id={['zaheer', 'wagstaff']}
-				/>; Janossy pooling averages a function over k-subsets <Cite refs={BIB} id="janossy" />; and
-				networks learn group operations through Fourier features <Cite refs={BIB} id="nanda" />.
+					id="chughtai"
+				/>. Matrix-transition structure has already been linked to state tracking, including in
+				DeltaProduct <Cite refs={BIB} id="deltaproduct" />, and transformers can learn automaton
+				shortcuts <Cite refs={BIB} id="automata" />.
+			</p>
+			<p>
+				The narrower contribution is the <strong>marked, arity-resolved matrix realization</strong>,
+				the task-specific order-blind bound and exact ceiling calculation, the qualified
+				constructive Match-3 results, and controlled measurements of what training discovers. Our
+				literature audit found no exact prior instance of that complete combination. Two closely
+				related thesis leads still require full-text comparison, so we make no first-of-its-kind
+				claim. The <a href={source('research/PRIOR_ART.md')}>prior-art audit</a> records the overlap and
+				verification status explicitly.
 			</p>
 		</section>
 
-		<section id="limits">
-			<h2><span class="n">8</span>Limitations</h2>
-			<ul>
-				<li>Theorem 1 is about means of scores, not a lower bound for every classifier.</li>
+		<section id="meaning">
+			<h2><span>9</span> What the result suggests next</h2>
+			<p>
+				The useful question has changed from “how many tokens enter one score?” to <strong
+					>“which composition law does the layer make easy to learn?”</strong
+				> On these controlled tasks, clock arithmetic supports unordered relations; spatial rotations
+				preserve the order that changes the answer. A model can discover approximate representations of
+				that structure from labels.
+			</p>
+			<p>
+				That is a precise synthetic result. It does not establish a language-model improvement, a
+				universal representation-dimension law, a general optimization barrier, or an advantage over
+				recurrence. Native composition may reduce optimization or sample demands; proving that is
+				still open.
+			</p>
+			<ol class="next">
 				<li>
-					Theorem 5 is a construction. Newton attention learns it exactly through four-way relations
-					at rank 256, and on five-way relations on three of six seeds at rank 512; how the width it
-					needs grows with arity and with the group is not yet measured.
+					<b>Selection and composition.</b> Test richer query-conditioned subsequences and longer programs,
+					with matrix recurrence and strong positional softmax controls.
 				</li>
 				<li>
-					The width <MathTex tex="|G|" /> grows exponentially with the number of attributes, and the tasks
-					so far are synthetic and small.
+					<b>Resource-matched comparisons.</b> Measure accuracy against parameters, training FLOPs and
+					time, then test lengths and group elements outside the training regime.
 				</li>
 				<li>
-					Newton attention has no routing, so on chain tasks it is weaker than Feynman attention,
-					and in a small language model it does not help (Table 9).
+					<b>Natural data.</b> Evaluate a holonomy branch on language and code only after defining an
+					equal-FLOP protocol. The earlier negative language evidence remains the starting point.
 				</li>
-				<li>
-					The tasks trained together in Table 8 share one group. Whether characters carry over
-					between different relations is untested.
-				</li>
-			</ul>
+			</ol>
 		</section>
 
-		<section id="appendix">
-			<h2>Appendix A. Every measurement so far</h2>
+		<section id="reproducibility">
+			<h3>Evidence and reproducibility</h3>
 			<p>
-				Held-out token accuracy by task and model from the operator search that preceded this
-				report, including operators the main text drops.
+				The research harness, predictions and raw rows are in <a href={source('research/GROUPS.md')}
+					>GROUPS</a
+				>; full qualifications and proofs are in <a href={source('research/THEORY.md')}>THEORY</a>.
+				Exact ceilings are retained in
+				<a href={source('research/results/theory_ceiling.json')}>theory_ceiling.json</a>. The
+				initial attention study's full grids remain in
+				<a href={source('src/lib/report/results')}>the report result archive</a>. Every plotted
+				group value uses the same display precision as its research table.
 			</p>
-			<EvidenceMatrix />
-			<h2 class="app-b">Appendix B. Reproducing this report</h2>
 			<p>
-				The browser engine trains every model on this site with jax-js on WebGPU or WebAssembly. The
-				research harness, the cloud runner and every raw result live in the repository's <code
-					>research/</code
-				>
-				folder, alongside the plan this report follows; recorded browser runs are in
-				<code>static/recorded/</code>.
+				Hand-built representations are checked separately from learned ones. The native A₄/A₅
+				Match-3 constructions make zero label errors on 64 test sequences per group before and after
+				normalization; arbitrary-k positional constructions are checked separately. These finite
+				checks support the implementation, while the mathematical arguments establish the stated
+				theorems. The three-seed scores describe this harness and budget; they are not confidence
+				intervals or claims of universal convergence.
 			</p>
 		</section>
 
 		<section id="references" class="refs">
 			<h2>References</h2>
 			<ol>
-				{#each BIB as r (r.id)}
-					<li id="ref-{r.id}">
-						{r.authors}.
-						{#if r.url}<a href={r.url} rel="external">{r.title}</a>{:else}{r.title}{/if}.
-						<span class="venue">{r.venue}, {r.year}.</span>
-					</li>
-				{/each}
+				{#each BIB as reference (reference.id)}<li id="ref-{reference.id}">
+						{reference.authors}. {#if reference.url}<a href={reference.url} rel="external"
+								>{reference.title}</a
+							>{:else}{reference.title}{/if}. <span>{reference.venue}, {reference.year}.</span>
+					</li>{/each}
 			</ol>
 		</section>
 	</article>
 </PageFrame>
 
 <style>
-	/* A text column with a margin for notes; figures may span both. No boxes, no rules
-	   except the hairlines of tables: hierarchy comes from type and space. */
 	.paper {
-		/* one reading size, growing with the screen; columns are set in the same unit, so the
-		   measure stays near 85 characters while the page fills a wide screen */
-		--read: clamp(15px, calc(9px + 0.42vw), 19.5px);
-		/* the app's type tokens, scaled with the reading size inside this page */
-		--text-2xs: calc(var(--read) * 0.733);
-		--text-xs: calc(var(--read) * 0.8);
-		--text-sm: calc(var(--read) * 0.867);
-		--text-ui: calc(var(--read) * 0.933);
-		--text-lg: calc(var(--read) * 1.067);
-		--text: calc(var(--read) * 44);
-		--gap: calc(var(--read) * 2.9);
-		--side: calc(var(--read) * 14);
-		max-width: calc(var(--text) + var(--gap) + var(--side) + 80px);
+		--text: 680px;
+		--side: 208px;
+		--gap: 44px;
+		max-width: 1012px;
 		margin: 0 auto;
-		padding: 40px 40px 140px;
-		font-size: var(--read);
-		line-height: 1.62;
+		padding: 38px 40px 110px;
 		color: var(--color-ink-2);
+		font-size: 14px;
+		line-height: 1.65;
 	}
 	.paper :global(:where(section, header) > *:not(.wide, .side)) {
 		max-width: var(--text);
 	}
-	/* a display equation wider than the column scrolls instead of being clipped */
-	.paper :global(.katex-display) {
-		overflow-x: auto;
-		overflow-y: hidden;
-		padding: 2px 0;
-	}
 	.title-block {
-		padding-bottom: 6px;
+		margin-bottom: 25px;
+	}
+	.eyebrow {
+		color: var(--color-ink-3);
+		font-size: 10px;
+		letter-spacing: 0.1em;
+		text-transform: uppercase;
+		margin-bottom: 12px;
 	}
 	h1 {
 		margin: 0;
-		font-family: 'KaTeX_Main', 'Times New Roman', serif;
-		font-size: calc(var(--read) * 2.933);
-		font-weight: 400;
-		line-height: 1.08;
-		letter-spacing: -0.01em;
 		color: var(--color-ink);
+		font-size: 36px;
+		font-weight: 450;
+		line-height: 1.12;
+		letter-spacing: -0.04em;
 	}
 	.subtitle {
 		margin: 8px 0 0;
-		font-size: calc(var(--read) * 1.2);
-		color: var(--color-ink-2);
+		font-size: 16px;
 	}
 	.authors {
-		margin: 14px 0 0;
+		display: flex;
+		flex-wrap: wrap;
+		gap: 4px 16px;
+		margin: 16px 0 0;
 		color: var(--color-ink);
+		font-size: 12px;
 	}
-	.draft {
-		margin-left: 12px;
-		font-size: var(--text-xs);
+	.authors span {
 		color: var(--color-ink-3);
+	}
+	section {
+		clear: both;
+		scroll-margin-top: calc(var(--bar-h) + 20px);
 	}
 	.side {
 		float: right;
 		clear: right;
 		width: var(--side);
-		margin: 4px 0 14px;
-		font-size: calc(var(--read) * 0.833);
-		line-height: 1.5;
+		margin: 4px 0 15px 36px;
 		color: var(--color-ink-3);
+		font-size: 11px;
+		line-height: 1.65;
 	}
-	.key {
-		display: grid;
-		gap: 4px;
-		margin-top: 28px;
-	}
-	.ev-key {
-		display: inline-flex;
-		align-items: center;
-		gap: 8px;
-	}
-	.ev-key::before {
-		content: '';
-		width: 6px;
-		height: 6px;
-		border-radius: 50%;
-		background: var(--color-ink);
-	}
-	.ev-key.measured::before {
-		background: var(--color-ink-3);
-	}
-	.ev-key.open::before {
-		background: #444;
+	.side b {
+		display: block;
+		color: var(--color-ink-2);
+		font-weight: 500;
+		margin-bottom: 5px;
 	}
 	.abstract {
-		margin: 26px 0 0;
-		font-size: calc(var(--read) * 0.967);
-		line-height: 1.6;
+		font-size: 14px;
 		color: var(--color-ink);
+		line-height: 1.75;
 	}
-	.abstract b,
-	.contrib b {
-		font-weight: 600;
-	}
-	section {
-		scroll-margin-top: calc(var(--bar-h) + 16px);
+	.reading {
+		margin-top: 18px;
+		font-size: 12px;
+		color: var(--color-ink-3);
 	}
 	h2 {
-		margin: 44px 0 12px;
-		font-size: calc(var(--read) * 1.467);
-		font-weight: 500;
+		margin: 50px 0 16px;
 		color: var(--color-ink);
+		font-size: 23px;
+		font-weight: 500;
+		letter-spacing: -0.025em;
+		line-height: 1.25;
 	}
-	h2 .n {
-		margin-right: 12px;
-		font-family: 'KaTeX_Main', 'Times New Roman', serif;
+	h2 > span {
 		color: var(--color-ink-3);
+		display: inline-block;
+		margin-right: 12px;
+		font-size: 15px;
+		font-weight: 400;
 	}
 	h3 {
-		margin: 28px 0 8px;
-		font-size: var(--read);
-		font-weight: 600;
+		margin: 30px 0 12px;
 		color: var(--color-ink);
+		font-size: 16px;
+		font-weight: 500;
+		line-height: 1.4;
 	}
 	p {
-		margin: 0 0 14px;
+		margin: 0 0 15px;
 	}
-	.contrib {
-		font-size: calc(var(--read) * 0.933);
+	strong,
+	b {
+		color: var(--color-ink);
+		font-weight: 550;
 	}
-	.caveat,
-	.pending {
-		font-size: calc(var(--read) * 0.933);
-		color: var(--color-ink-3);
+	a {
+		color: inherit;
+		text-underline-offset: 3px;
+		text-decoration-color: var(--color-ink-3);
 	}
-	.fig {
+	a:hover {
+		color: var(--color-ink);
+	}
+	figure {
 		clear: both;
-		margin: 22px 0 28px;
+		margin: 28px 0 26px;
+		scroll-margin-top: calc(var(--bar-h) + 24px);
 	}
-	.sub {
-		margin: 0 0 4px;
-		font-size: var(--text-xs);
-		color: var(--color-ink-2);
+	figure > :global(div) {
+		max-width: 800px;
 	}
-	.sub .tag {
-		margin-right: 4px;
-		font-family: 'KaTeX_Main', serif;
-		color: var(--color-ink-3);
-	}
-	/* a drawing with its key in one line beneath, both on the text column's left edge */
-	.keyed {
+	figcaption,
+	.caption {
 		max-width: var(--text);
-	}
-	.keyed .key {
-		margin-top: 6px;
-	}
-	figcaption {
-		margin-top: 12px;
-		max-width: var(--text);
-		font-size: var(--text-xs);
-		line-height: 1.55;
+		margin: 13px 0 22px;
 		color: var(--color-ink-3);
+		font-size: 11px;
+		line-height: 1.6;
 	}
-	figcaption b {
-		color: var(--color-ink-2);
-		font-weight: 600;
+	.table-scroll {
+		clear: both;
+		overflow-x: auto;
+		margin: 20px 0 0;
+		padding-bottom: 3px;
 	}
-	.nums {
+	table {
 		width: 100%;
-		margin: 12px 0 18px;
 		border-collapse: collapse;
-		font-size: var(--text-sm);
+		font-size: 12px;
+		line-height: 1.5;
 	}
-	.nums caption {
-		caption-side: top;
-		margin-bottom: 8px;
+	th,
+	td {
+		padding: 10px 14px 10px 0;
 		text-align: left;
-		font-size: var(--text-xs);
-		color: var(--color-ink-3);
-	}
-	.nums th {
-		padding: 0 8px 7px 0;
-		border-bottom: 1px solid #262626;
-		font-weight: 400;
-		text-align: left;
-		color: var(--color-ink-3);
-	}
-	.nums td {
-		padding: 5px 8px 5px 0;
 		vertical-align: top;
+		font-weight: 400;
 	}
-	.nums tbody tr:first-child td {
-		padding-top: 9px;
+	th:last-child,
+	td:last-child {
+		padding-right: 0;
 	}
-	.nums tbody tr:last-child td {
-		padding-bottom: 9px;
-		border-bottom: 1px solid #262626;
+	thead {
+		border-top: 1px solid var(--color-ink-3);
+		border-bottom: 1px solid var(--color-ink-3);
+		color: var(--color-ink-3);
 	}
-	.nums .r {
+	tbody {
+		border-bottom: 1px solid var(--color-ink-3);
+	}
+	tbody th {
+		color: var(--color-ink);
+		min-width: 165px;
+	}
+	.num {
 		text-align: right;
 		font-variant-numeric: tabular-nums;
+		white-space: nowrap;
 	}
-	.nums tr.hi td {
-		color: var(--color-ink);
+	td small {
+		display: block;
+		color: var(--color-ink-3);
+		font-size: 10px;
+		white-space: nowrap;
 	}
-	.nums .seeds {
-		margin-left: 6px;
-		font-size: var(--text-xs);
+	.language-table tbody th {
+		min-width: 140px;
+	}
+	.ceiling-row {
 		color: var(--color-ink-3);
 	}
-	.nums tr.base td {
-		color: var(--color-ink-3);
+	.ceiling-row th {
+		color: inherit;
 	}
-	.plan td:first-child {
+	details {
+		margin: 22px 0;
+		font-size: 13px;
+	}
+	summary {
+		cursor: pointer;
 		color: var(--color-ink);
+		font-size: 12px;
+		padding: 8px 0;
 	}
-	ul {
-		margin: 0 0 14px;
-		padding-left: 20px;
-	}
-	li {
-		margin-bottom: 6px;
-	}
-	.app-b {
-		font-size: calc(var(--read) * 1.2);
+	details[open] summary {
+		margin-bottom: 10px;
 	}
 	code {
-		font-family: var(--font-mono);
-		font-size: 0.9em;
+		font: 0.9em var(--font-mono);
 		color: var(--color-ink);
+		overflow-wrap: anywhere;
+	}
+	.next {
+		list-style: decimal;
+		padding-left: 18px;
+	}
+	.next li {
+		padding-left: 5px;
+		margin-bottom: 10px;
 	}
 	.refs ol {
-		padding-left: 22px;
-		font-size: var(--text-sm);
-		line-height: 1.55;
+		list-style: decimal;
+		padding-left: 21px;
+		font-size: 12px;
+		line-height: 1.6;
 	}
 	.refs li {
-		margin-bottom: 8px;
-		scroll-margin-top: calc(var(--bar-h) + 16px);
+		margin-bottom: 12px;
+		padding-left: 3px;
+		scroll-margin-top: calc(var(--bar-h) + 20px);
 	}
-	.refs a {
-		color: var(--color-ink);
-	}
-	.venue {
+	.refs li span {
 		color: var(--color-ink-3);
 	}
-	/* one column: notes fall into the text, figures stack */
 	@media (max-width: 1179px) {
 		.paper {
-			max-width: calc(var(--text) + 80px);
+			max-width: 800px;
 		}
 		.side {
 			float: none;
 			width: auto;
+			margin: 0 0 15px;
 			max-width: var(--text);
-			margin: 0 0 14px;
+		}
+		.side b {
+			display: inline;
+			margin-right: 7px;
 		}
 	}
 	@media (max-width: 700px) {
 		.paper {
-			padding: 24px 18px 100px;
-			font-size: 14.5px;
+			padding: 28px 20px 80px;
+			font-size: 13px;
 		}
 		h1 {
-			font-size: 32px;
+			font-size: 31px;
+		}
+		.subtitle {
+			font-size: 14px;
+			line-height: 1.5;
+		}
+		h2 {
+			font-size: 21px;
+			margin-top: 40px;
+		}
+		h3 {
+			font-size: 15px;
+		}
+		.abstract {
+			font-size: 13px;
+		}
+		th,
+		td {
+			padding: 9px 14px 9px 0;
+		}
+		table {
+			font-size: 11px;
+		}
+		tbody th,
+		.language-table tbody th {
+			min-width: 96px;
+		}
+		.num,
+		td small {
+			white-space: normal;
+		}
+		td small {
+			font-size: 9px;
+		}
+		th,
+		td {
+			padding-right: 8px;
+		}
+		.side {
+			font-size: 11px;
+		}
+		.reading {
+			font-size: 11px;
 		}
 	}
 </style>
