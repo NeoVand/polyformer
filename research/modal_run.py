@@ -514,6 +514,9 @@ GRIDS = {
     # LOCAL.md Stage 2 confirmation (best rates from the sweep) and S at equal FLOPs
     "tok_loc_s2": loc_confirm(),
     "tok_loc_eqf": loc_eqf(),
+    # LOCAL.md Stage 3 (only after a headline go): the arity ladder at L8's best optimizer and rate, seed 0
+    "tok_loc_ladder": [loc_argv("fineweb_edu", "lla", loc_best_rates().get(("lla", o), 0), 0, STEPS_400M * 32768, o,
+                                chart=r, early=100) for o in ("muon",) for r in (1, 2, 4, 16)],
     # LOCAL.md Stage 1: mechanism diagnostics, S widened to L8's FLOPs, one and two layers, 3 seeds, both optimizers
     "diag_loc_s1": loc_diag(["softmaxl", "plx", "lla"], [1, 2], [0, 1, 2], [3e-3], ["adamw", "muon"]),
 }

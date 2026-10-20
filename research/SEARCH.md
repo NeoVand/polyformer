@@ -405,3 +405,38 @@ tokens long, so the two positions sit in different documents; TinyStories cannot
   theoretical reason to help is data whose leap content is high by construction (code, arithmetic
   traces) at a width large enough for the arity sectors to find their characters; S1's Match-3 row says
   that width is the first thing to fix.
+
+## 9. S6: local-regression attention (pre-registered in LOCAL.md)
+
+Run on 19 October 2026, after S0-S2. One question carried over from 8.5: is there a higher-order layer that
+beats softmax on token-level language at equal FLOPs, and is arity the reason? The candidate was ridge
+local-linear attention (Zuo et al. 2025): each query fits its values by weighted ridge least squares around
+itself in a learned r-dimensional chart, instead of softmax's weighted mean. LOCAL.md section 2 proves (and
+`test_local.py` verifies by enumeration) that this layer is a normalised sum over subsets of the past of
+every size up to r + 1, weighted by product attention times squared volume in the chart, with the ridge as
+the fugacity of vacuum tokens; softmax is the size-1 sector and Parallax (Zuo et al. 2026) a pair sector
+without volume. Arms, all softmax at init: S (softmax), P (Parallax), L8 (r = 8); AdamW and Muon; S0's
+model, data and protocol; three rates per arm and optimizer, then three seeds at 400M tokens; S also trained
+to each arm's FLOPs.
+
+| Comparison (FineWeb-Edu, 400M tokens, best configuration of each arm, 1,024 held-out sequences) | Seeds 0, 1, 2 | Gate |
+| --- | --- | --- |
+| L8 (Muon) vs S (Muon) at L8's FLOPs | -0.40%, -0.39%, -0.37% | headline needed <= -1%: **no-go** |
+| L8 vs P (Muon), equal tokens, P uses 3.4% more FLOPs | +0.35%, +0.58%, +0.46% | L8 does not beat prior art |
+| P (Muon) vs S (Muon) at P's FLOPs | -0.64%, -0.90%, -0.71% | P below S on 3/3, under 1% |
+| P vs S under AdamW, at P's FLOPs | -0.48%, +0.10%, -0.50% | Muon's advantage for P replicates |
+
+- The harness reproduced S0 (softmax 6L, AdamW 4e-3: 3.6861 against 3.6838). Muon beats AdamW for every
+  arm (4.3% at 100M tokens, 0.3-0.6% at 400M).
+- Stage 1 (MQAR, composite-key MQAR, induction among distractors, Match-3 over tokens; one and two
+  layers): nothing separates the arms; only two-layer induction under Muon is learned, seed-bimodal for all.
+- The arity ladder was gated on a headline go and did not run. Indirectly, the pair-only arm (P) beats the
+  arm with sectors up to size 9 (L8); P also has a wider probe, so this is suggestive only.
+- Spend $57.78 (cap $150).
+
+**Meaning for the search.** The local-linear family gives a small, reliable gain over softmax at this scale
+(0.4% exact, 0.75% for Parallax with Muon), the first architecture in this search to beat softmax at equal
+FLOPs on every seed, but below the 1% bar, and its gain behaves like a first-order (pair) correction to
+softmax's local-constant estimate, not an arity effect. Next steps, in LOCAL.md section 7: the arity ladder
+with a pair-only control (about $10), then Parallax against softmax at two larger scales with Muon, the one
+trend here that grew with tokens.

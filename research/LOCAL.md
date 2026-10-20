@@ -15,7 +15,31 @@ Code: `research/lm.py --arch lla` (the layer, `--chart r`), `--arch plx` (Parall
 
 ## 0. Verdict
 
-Filled in after the runs (section 7).
+**No: at this scale it does not beat softmax by the registered margin, and the evidence points away from
+arity as the source of what it does gain.**
+
+- **Headline: no-go.** L8's best configuration (Muon, rate 8e-3) beats softmax's best configuration at L8's
+  FLOPs on 3 of 3 seeds, but by 0.40%, 0.39% and 0.37%; the gate was 1%. Equal tokens: 0.43-0.54%. Under
+  AdamW the gain is the same size (0.22-0.45% at equal FLOPs). The layer is in use (gates open to 0.3-0.9,
+  correction-to-output ratio 0.4-1.9, largest in the last layer), so this is a small real effect, not a
+  layer that switched itself off.
+- **Ours vs prior art: Parallax wins.** P (Muon, 4e-3) is below L8 on 3 of 3 seeds by 0.35-0.58%, more
+  than its 3.3% extra FLOPs are worth (softmax gains 0.1-0.3% from 6.9% more FLOPs here). The exact solve
+  and the volume selection do not help at this scale.
+- **Parallax replicates, small.** P beats softmax at P's FLOPs on 3 of 3 seeds under Muon (0.64-0.90%) and
+  only 0.29% on average under AdamW (2 of 3 seeds), the optimizer interaction its paper reports, at about
+  1/30 of its smallest model and 1/200 of its tokens. Under Muon its gap over softmax grew from +0.26% at 100M tokens to -0.78% at 400M
+  (seed 0); L8's stayed flat (-0.47%, -0.43%).
+- **Arity: not tested as registered** (the ladder needs a headline go). The indirect evidence is against
+  it: Parallax's correction is exactly a pair sector (subsets of size 2, product weights, no volume), and it
+  beats L8, whose sectors reach size 9. That comparison changes more than arity (a 64-dimensional learned
+  probe against an 8-dimensional solved chart), so it is suggestive, not decisive.
+- **The theory stands on its own.** Ridge local-linear attention is exactly a normalised sum over subsets
+  of the past up to size r + 1, weighted by product attention times squared volume, with the ridge as the
+  fugacity of vacuum tokens at infinity; softmax is the size-1 sector and Parallax a pair sector without
+  volume. Verified by enumeration (section 2).
+- **Spend:** $57.78 of the $150 cap (Stage 0 $0, timing and design pilot $2.94, Stage 1 $4.06, Stage 2
+  $50.78; Stage 3 not run).
 
 ## 1. The layer
 
@@ -272,3 +296,150 @@ about $4, Stage 2 about $50 (sweep $8, confirmation $27, S at equal FLOPs $15), 
 - **FLOPs, not wall clock.** The JAX implementation materialises the weights; FLOPs are counted for a fused
   kernel, including L's recomputation in its second pass.
 - **Parameters.** P adds 0.26M parameters per layer (1.6M in all, +8%); L8 adds 0.004M per layer.
+
+## 6. Results
+
+Run on 19 October 2026; raw rows in `research/results/{diag,tok}_loc_*.jsonl`; every table below is printed
+by `python3 research/local_summary.py`.
+
+### 6.1 Stage 1: mechanism diagnostics
+
+**Stage 1 diagnostics** (accuracy on answer positions, mean of 3 seeds with min-max; balanced for Match-3; S widened to L8's FLOPs; FLOPs of P and S relative to L8 in brackets)
+
+| Task | Layers | S (adamw) | P (adamw) | L8 (adamw) | S (muon) | P (muon) | L8 (muon) |
+|---|---|---|---|---|---|---|---|
+| mqar | 1 | 2.0 (2-2) [1.00] | 2.2 (2-2) [1.00] | 2.0 (2-2) | 2.6 (3-3) [1.00] | 2.7 (3-3) [1.00] | 2.6 (3-3) |
+| mqar | 2 | 2.7 (3-3) [1.01] | 1.5 (1-2) [1.00] | 2.5 (2-3) | 2.5 (2-3) [1.01] | 2.1 (2-2) [1.00] | 2.3 (2-2) |
+| mqar2 | 1 | 2.9 (3-3) [1.00] | 3.7 (4-4) [1.00] | 3.2 (3-3) | 3.8 (4-4) [1.00] | 3.8 (4-4) [1.00] | 3.7 (4-4) |
+| mqar2 | 2 | 3.8 (4-4) [1.01] | 12.8 (2-33) [1.00] | 3.7 (4-4) | 3.3 (3-3) [1.01] | 2.9 (3-3) [1.00] | 3.1 (3-3) |
+| indist | 1 | 0.7 (1-1) [1.00] | 1.2 (1-1) [1.01] | 0.6 (1-1) | 2.8 (3-3) [1.00] | 2.5 (2-3) [1.01] | 2.4 (2-2) |
+| indist | 2 | 0.5 (0-1) [0.99] | 0.5 (0-1) [1.01] | 0.7 (1-1) | 67.8 (4-100) [0.99] | 52.2 (11-81) [1.01] | 39.4 (7-100) |
+| match3 | 1 | 75.6 (75-76) [0.97] | 75.6 (75-76) [1.05] | 75.6 (75-76) | 75.6 (75-76) [0.97] | 75.6 (75-76) [1.05] | 75.6 (75-76) |
+| match3 | 2 | 75.6 (75-76) [1.03] | 75.6 (75-76) [1.06] | 75.6 (75-76) | 75.7 (75-76) [1.03] | 75.7 (75-76) [1.06] | 75.7 (75-76) |
+
+Cells where L8 is below S by more than S's seed spread (the bug check): none
+
+At S1's budget (3,000 steps at width 128) none of the three layers learns MQAR, composite-key MQAR or
+one-layer induction among distractors, and Match-3 over a vocabulary stays at the positional baseline
+(75.6%) for every arm, as it did in S1. The one cell anyone learns is two-layer induction with distractors
+under Muon, and there every arm is seed-bimodal: S solves seeds 0 and 1 and fails seed 2, L8 solves seed 2
+only, P reaches 65% and 81% on seeds 0 and 1. Three seeds cannot separate these (in Stage 1 S is widened
+to d = 140, so it does not share L8's initial weights). Under AdamW nobody learns it. The bug check is
+clean: L8 is nowhere below S by more than S's own seed spread. Read plainly: these recall and
+induction tasks need either more steps or a key-mixing mechanism (S1's look-back hop); neither a local-linear
+fit nor Parallax's probe supplies one at this scale, and Parallax's published MAD recall gains
+(two layers, Muon, 60 epochs, a rate sweep) are not reproduced in this budget.
+
+### 6.2 Stage 2: the language-model test
+
+**Harness check: passed.** S under AdamW at 4e-3 (S0's configuration) gives `val` 3.6880, 3.6837, 3.6867
+(mean 3.6861) against S0's 3.6848, 3.6790, 3.6875 (mean 3.6838): +0.06%, inside S0's seed spread. The runs
+are not bitwise identical to S0's (same seeds and data order; GPU reductions are not deterministic).
+
+**Stage 2 rate sweep** (FineWeb-Edu, 100M tokens, seed 0; held-out loss on 1,024 sequences, best in bold)
+
+| Arm | Optimizer | lr 0.001 | lr 0.002 | lr 0.004 | lr 0.008 | lr 0.016 |
+|---|---|---|---|---|---|---|
+| L8 | adamw |  | 4.0760 | **4.0580** | 4.1525 |  |
+| L8 | muon |  | 3.9306 | 3.8942 | **3.8787** | 3.8975 |
+| P | adamw | 4.1724 | **4.0436** | 6.2964 | 4.8577 |  |
+| P | muon |  | 3.9299 | **3.9070** | 3.9139 |  |
+| S | adamw |  | 4.0791 | **4.0713** | 5.6372 |  |
+| S | muon |  | 3.9412 | 3.9041 | **3.8968** | 3.9097 |
+
+Best rates: L8 adamw: 0.004; L8 muon: 0.008; P adamw: 0.002; P muon: 0.004; S adamw: 0.004; S muon: 0.008
+
+**Stage 2 at 400M tokens** (FineWeb-Edu, 3 seeds; held-out loss on 1,024 sequences; `val` is S0's 128)
+
+| Arm | Optimizer | Rate | FLOPs x S | Loss (mean) | Seeds | val (128 seqs, mean) | vs S same optimizer, equal tokens |
+|---|---|---|---|---|---|---|---|
+| L8 | adamw | 0.004 | 1.0332 | 3.6618 | 3.6648, 3.6584, 3.6623 | 3.6659 | -0.49%, -0.56%, -0.49% |
+| L8 | muon | 0.008 | 1.0332 | 3.6461 | 3.6438, 3.6526, 3.6419 | 3.6497 | -0.43%, -0.44%, -0.54% |
+| P | adamw | 0.002 | 1.0686 | 3.6577 | 3.6529, 3.6670, 3.6531 | 3.6596 | -0.81%, -0.33%, -0.75% |
+| P | muon | 0.004 | 1.0686 | 3.6293 | 3.6311, 3.6315, 3.6253 | 3.6333 | -0.78%, -1.01%, -0.99% |
+| S | adamw | 0.004 | 1.0000 | 3.6808 | 3.6829, 3.6791, 3.6805 | 3.6861 | +0.00%, +0.00%, +0.00% |
+| S | muon | 0.008 | 1.0000 | 3.6633 | 3.6596, 3.6687, 3.6616 | 3.6666 | +0.00%, +0.00%, +0.00% |
+
+**Curves** (`val` on S0's 128 sequences at 100M, 200M and 400M tokens, mean of seeds)
+
+| Arm | Optimizer | 100M | 200M | 400M |
+|---|---|---|---|---|
+| L8 | adamw | 4.2084 | 3.9681 | 3.6659 |
+| L8 | muon | 4.1986 | 4.0039 | 3.6497 |
+| P | adamw | 4.1455 | 3.9097 | 3.6596 |
+| P | muon | 4.1099 | 3.9143 | 3.6333 |
+| S | adamw | 4.2245 | 3.9852 | 3.6861 |
+| S | muon | 4.2161 | 4.0280 | 3.6666 |
+
+**S at equal FLOPs** (S at its best rate per optimizer, trained to the token count that matches each arm's FLOPs)
+
+| Optimizer | Steps | Tokens | Loss (mean) | Seeds |
+|---|---|---|---|---|
+| adamw | 12613 | 413.3M | 3.6735 | 3.6813, 3.6689, 3.6702 |
+| adamw | 13044 | 427.4M | 3.6684 | 3.6705, 3.6634, 3.6713 |
+| muon | 12613 | 413.3M | 3.6603 | 3.6585, 3.6670, 3.6554 |
+| muon | 13044 | 427.4M | 3.6567 | 3.6544, 3.6644, 3.6512 |
+
+Notes. The sweep's best rates were interior after amendment 1 (16e-3 is worse than 8e-3 for S and L8 under
+Muon, 1e-3 worse than 2e-3 for P under AdamW). P is fragile under AdamW: it diverged at 4e-3 (6.30) and
+was poor at 8e-3 (4.86), so its AdamW cell runs at half the others' rate. Muon's advantage over AdamW,
+4.3% for S at 100M tokens, is 0.3-0.6% at 400M. The 200M column compares runs at different points of
+their schedules (Muon cells run at twice AdamW's rate), so only the 100M sweep and the 400M ends are
+like for like.
+
+**Gate decisions**
+
+| Gate | Registered criterion | Per seed (0, 1, 2) | Decision |
+| --- | --- | --- | --- |
+| Headline | L8 best (Muon 8e-3) <= 0.99 x S best at L8's FLOPs (Muon, 413.3M tokens) | -0.40%, -0.39%, -0.37% | **No-go** (0/3) |
+| Equal tokens (reported) | L8 best vs S best at 400M | -0.43%, -0.44%, -0.54% | |
+| L8, AdamW only (reported) | L8 vs S at L8's FLOPs | -0.45%, -0.29%, -0.22% | |
+| Ours vs prior art | L8 best below P best (Muon 4e-3), both 400M | +0.35%, +0.58%, +0.46% | **P better** (L8 below P on 0/3) |
+| P vs S (reported) | P best vs S best at P's FLOPs (427.4M) | -0.64%, -0.90%, -0.71% | P below S on 3/3, >= 1% on 0/3 |
+| P vs S, AdamW only (reported) | P vs S at P's FLOPs | -0.48%, +0.10%, -0.50% | |
+
+P's FLOP surplus over L8 (3.4%) cannot explain the L8 - P gap: S itself gains 0.12-0.28% from 400M to
+427.4M tokens (6.9% more FLOPs) under Muon, so 3.4% is worth about 0.1%, against a gap of 0.35-0.58%.
+
+**What the layers use** (end of training, mean over seeds; per layer 1..6)
+
+- L8 adamw: COR 0.27, 0.33, 0.63, 0.82, 1.04, 1.90; weight range [-0.8, 1.7], [-0.4, 1.2], [-1.1, 2.5], [-1.9, 2.5], [-2.3, 2.7], [-5.1, 6.3]; mean |gate| 0.45, 0.29, 0.33, 0.45, 0.57, 0.76; mean lambda 0.61, 0.72, 0.69, 0.72, 0.72, 0.61
+- L8 muon: COR 0.39, 0.60, 0.69, 0.64, 0.99, 1.84; weight range [-0.8, 1.7], [-0.6, 1.5], [-1.0, 1.8], [-1.5, 1.8], [-1.9, 3.8], [-4.2, 10.3]; mean |gate| 0.33, 0.30, 0.43, 0.53, 0.65, 0.91; mean lambda 0.52, 0.64, 0.70, 0.83, 0.80, 0.64
+- P adamw: COR 1.09, 0.90, 1.26, 1.48, 1.74, 2.61; weight range [-1.8, 3.8], [-1.9, 3.9], [-2.5, 5.0], [-3.8, 7.7], [-5.2, 8.5], [-6.8, 16.5]
+- P muon: COR 0.42, 1.12, 0.99, 0.98, 1.64, 2.11; weight range [-0.1, 1.0], [-1.0, 3.3], [-1.8, 3.4], [-4.7, 6.9], [-4.8, 9.2], [-11.0, 8.4]
+
+The corrections are large: the corrected weights reach -5 to +10 in the last layer, and the ratio of
+correction to softmax output rises with depth for both layers, as Parallax reports for its models. L8's
+ridge settles near 0.5-0.8 in chart units in every layer.
+
+### 6.3 Stage 3
+
+Not run: its registered condition (a headline go) failed.
+
+## 7. Decisions and what to try next
+
+**Decisions.** Headline no-go; L8 does not beat Parallax; Parallax beats softmax at equal FLOPs by less
+than 1% (a small-scale replication, direction and optimizer interaction included); the arity question is
+open, with indirect evidence against it. Per the pre-registration, stop: no Stage 3, nothing for the app.
+
+**Reading.** Replacing softmax's local-constant estimate with a local-linear one helps language a little and
+reliably: 0.4% for the exact ridge fit in an 8-dimensional chart, 0.75% for a learned probe in the full head
+dimension under Muon, at 19M parameters and 400M tokens. Neither reaches 1%. The part of the theory that
+made L8 ours, sectors up to size r + 1 selected by volume, is the part that does not pay here: the arm that
+keeps only the pair sector does better. So the gain looks like a first-order (pair) correction to softmax's
+boundary bias, which is what LLA's own theory says it should be, not a higher-arity effect.
+
+**What to try next**, cheapest first:
+
+1. **Settle the arity question directly** (about $10, exploratory since the gate failed): L1, L2, L4, L16 at
+   400M, seed 0, Muon 8e-3, plus the pair sector alone in the same chart (first order in $1/\lambda$: weights
+   $p_{ij}(1 + (c_j - m_1)\cdot(c_i - m_1)/\lambda)$, no solve), which separates arity from the chart. If L1
+   or the pair sector is about as good as L8, arity is ruled out for this layer.
+2. **Scale, for Parallax rather than L8** (S5-like, about $60-100 with Muon only): softmax and P at 2-3x
+   width and 1-2B tokens. P's gap over softmax grew with tokens under Muon here (+0.26% at 100M, -0.8% at
+   400M, seed 0) and its paper reports 5% lower WikiText perplexity at 0.6B (about 1.6% in loss); this is
+   the one trend in our data that could cross 1%. L8 would need a fused kernel to be worth scaling, and its gap was flat in tokens.
+3. **Close the remaining design gaps to published Parallax** before scaling it: RoPE (on q, k and rho)
+   and QK-norm in the backbone, so that the published RMSNorm on rho is stable (it blew up here with
+   unnormalised keys).
+
