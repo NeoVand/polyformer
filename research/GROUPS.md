@@ -6,6 +6,17 @@ the ordered Match-k task, representation content), `research/polybench.py --mode
 `--embed char|charrot` (frozen characters), brute-force checks in `research/test_groups.py`, grids `grp_*` in
 `research/modal_run.py`, raw rows in `research/results/grp_*.jsonl`.
 
+**Phase 1 qualification (20 October 2026).** The original registrations and interpretations below are preserved
+as historical evidence; [THEORY.md](THEORY.md) and [PRIOR_ART.md](PRIOR_ART.md) give the checked statements.
+“Softmax composes nothing”, “the minimum faithful irrep is enough”, and “exactly at the ceiling” should not be read
+as unrestricted theorems. Fixed-length positional softmax can represent these functions; the commuting-layer bound
+requires an order-blind input view, without positional features; faithful representations are sufficient under the
+stated Match-3 construction assumptions but need not be necessary; and empirical accuracies near a Bayes ceiling
+are finite-sample measurements. The ordered-subset arity polynomial also has close prior art in Seq2Tens. Section 7
+adds a benchmark on which one-layer positional softmax learns almost perfectly, making these qualifications concrete.
+The later exact population-ceiling calculation rounds to 83.0546984493% for A4 and 77.2287515874% for A5, confirming
+the older Monte Carlo estimates' reported precision.
+
 ## 0. The idea being tested
 
 Everything higher-order we built defined order as "a score that depends jointly on k tokens". Three results do not
@@ -329,7 +340,7 @@ classes equiprobable, so the population accuracy and balanced-accuracy ceilings 
 instructions cannot improve this ceiling.
 
 All arms use width 64, learned token tables, the same residual MLP, AdamW at 2e-3 with cosine decay, 6,000 steps,
-batch 128, fresh training programs, and 2,048 held-out programs per seed (`10_000 + seed`). Holonomy d = 2, 3, 4
+batch 128, fresh training programs, and 2,048 independent test draws per seed (`10_000 + seed`). Holonomy d = 2, 3, 4
 has 128, 85, 64 heads, respectively, arities 1..4 and shared normalised read-out. Newton uses four heads of 64
 complex channels and the same four arities. Both have no positions. Softmax uses learned positions and one, two or
 three layers. The prior-art baseline is a learned input-dependent orthogonal matrix-state linear RNN,
@@ -381,3 +392,63 @@ No extra training, learning-rate adjustment, architecture change or harder-task 
 main grid. The seed-0 main row repeats the pilot's deterministic training/evaluation streams and is reported only
 once in the three-seed mean. Results may support an order-sensitive inductive bias, but they cannot establish
 holonomy's superiority to recurrence or softmax, length generalisation, or an S4 versus A5 complexity separation.
+
+### 7.3 Three-seed results and interpretation
+
+Predictions and training code were committed as **`5d5ddd2` before the main Modal app was created**. All 24 main
+runs completed without recorded errors. Table from `python3 research/swap_summary.py`, raw rows in
+`research/results/grp_swap.jsonl`; balanced accuracy %, mean (seeds 0, 1, 2):
+
+| Arm | Keyed swap-program execution |
+|---|---|
+| holonomy d = 2 (commuting) | 62.02 (61.94, 62.06, 62.07) |
+| holonomy d = 3 | 100.00 (100.00, 100.00, 100.00) |
+| holonomy d = 4 | 100.00 (100.00, 100.00, 100.00) |
+| Newton attention | 62.05 (61.75, 62.63, 61.77) |
+| softmax 1L, positions | 98.95 (99.80, 98.54, 98.50) |
+| softmax 2L, positions | 100.00 (100.00, 100.00, 100.00) |
+| softmax 3L, positions | 100.00 (100.00, 100.00, 100.00) |
+| orthogonal matrix-state RNN d = 6 | 100.00 (100.00, 100.00, 100.00) |
+| *Exact population order-blind Bayes ceiling* | *62.037... = 100 x 67/108* |
+
+| Prediction | Registered criterion, every seed | Outcome |
+|---|---|---|
+| S1 | Newton and holonomy d = 2 <= 64.04% | **holds** |
+| S2 | holonomy d = 3 and d = 4 >= 95% | **holds** |
+| S3 | orthogonal matrix-state RNN >= 95% | **holds** |
+| S4 | positional softmax at each of 1, 2, 3 layers >= 95% | **holds** |
+
+**What this adds.** The order-blind barrier transfers from ordered Match-3 to queried program execution: the two
+commuting arms finish within 0.02 percentage points of the exactly enumerated population ceiling in their
+three-seed means. A holonomy layer with non-commuting matrices learns the selected program's effect, with d = 3
+already sufficient. This is consistent with its algebra and the independently checked signed-standard S4
+construction. Accuracy alone does not establish that the trained matrices recovered that representation; we did
+not measure their S4 homomorphism errors here.
+
+**What it rules out as a broad claim.** Holonomy is not uniquely effective at this benchmark. A conventional
+orthogonal matrix-state recurrence solves it, positional softmax at two or three layers solves it, and even one
+positional softmax layer reaches 98.95%. This is a useful counterexample to interpreting “softmax composes nothing”
+as an architectural or general learning prohibition. The horizon is small (three relevant statements), the relevant
+program/query universe has only 864 possibilities per namespace, and these experiments do not distinguish an
+execution algorithm from learning that finite function. There is no test of longer programs, new variables,
+new namespaces, natural code or equal-FLOP efficiency. The short task establishes the symmetry barrier and successful
+transfer of holonomy, not a competitive advantage over the order-aware baselines.
+Training and test draws are independent, but are not deduplicated: the full input support has 7,464,960 streams
+(`6^6 * 20 * 8`), so exact training/test collisions are possible.
+
+**Reproducibility and cost.** `research/results/grp_swap_manifest.json` records the preregistration timestamp,
+Modal app creation/stopping times, SHA256 fingerprints of both raw result files and the three training source
+files, and verifies that those sources match the preregistration commit byte for byte. The pilot and main seed-0
+rows use identical argv and data seeds, but training was not forced bitwise deterministic: for example, Newton
+moves from 62.49% in the pilot to 61.75% on the rerun. The pilot is not included in the main mean. The historical
+harness did not record remote JAX/CUDA versions; the committed source and argv support rerunning, not bitwise replay.
+Reported training seconds include JIT compilation and evaluation and are not a throughput benchmark.
+
+The eight pilot and 24 main calls sum to **1,556.2 subprocess-wall seconds (0.432 L4-hours)**, a **$0.35 GPU-only
+list-price estimate**. Both apps are stopped. Their combined observed lifetime was 386 seconds; charging all eight
+possible containers for that entire interval gives 3,088 container-seconds. With a deliberately conservative
+accounting allowance of 16.125 physical CPU cores and 256 GiB host RAM per container, plus L4, that is **$3.09** at
+the fetched list rates, well within the $40 cap. This allowance covers CPU/RAM and startup/idle time generously;
+it is not measured resource usage, a configured hard RAM limit, or an invoice. Modal's
+[resource documentation](https://modal.com/docs/guide/resources) states that CPU and RAM billing uses the larger of
+requested and actual usage. No extra grids or training extensions were run.

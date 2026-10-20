@@ -152,6 +152,19 @@ def main():
         P[[a, b]] = P[[b, a]]
         swaps.append(-basis.T @ P @ basis)  # sign-twisted standard representation of S4
     rotations = np.asarray(swaps)
+    permutations = list(itertools.permutations(range(4)))
+    index = {p: i for i, p in enumerate(permutations)}
+    matrices = []
+    for p in permutations:
+        P = np.zeros((4, 4))
+        P[list(p), np.arange(4)] = 1
+        matrices.append((-1) ** groups._parity(p) * basis.T @ P @ basis)
+    matrices = np.asarray(matrices)
+    product_ids = np.asarray([[index[tuple(a[b[x]] for x in range(4))] for b in permutations] for a in permutations])
+    check("S4: the sign-twisted standard representation is a faithful SO(3) homomorphism",
+          np.allclose(np.linalg.det(matrices), 1)
+          and np.allclose(matrices[:, None] @ matrices[None], matrices[product_ids])
+          and len(np.unique(np.round(matrices, 10).reshape(24, 9), axis=0)) == 24)
     sample = tok[:32, :, 0]
     mats = np.zeros((32, sample.shape[1], 2, 3, 3))
     for h in range(2):
