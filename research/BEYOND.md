@@ -305,6 +305,13 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   are six conditions across three seeds, final/tuning text windows are not token- or document-disjoint,
   and PaTH's proposed value-update direction is explicitly credited. No experimental rule changed.
 
+- 2026-10-20 15:15 UTC — C's independent two-layer S5 confirmation failed the 95% threshold at
+  seeds 1 and 2: balanced second-half test accuracy 3.252958465% and 6.776395185%, respectively
+  (`7a10082a429e045e884c451b`, `1a94b1fef75adf22aa7c7992`). Both are completed, finite,
+  identity/accounting-audited results, not numerical or infrastructure failures. C cannot advance
+  under the registered all-cells rule. All remaining C/A jobs continue unchanged; complete
+  confirmation classification will be sealed after the entire grid closes. B remains eligible.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

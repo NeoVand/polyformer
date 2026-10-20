@@ -1,11 +1,13 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-15:01 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+15:15 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
 seeds. Its original-code outcome is **unconfirmed** because two
-standalone reference runs failed that code's additional accuracy floor. A and C's independent
-confirmations are pending; all three candidates reached 100% selected seed-0 validation in the
+standalone reference runs failed that code's additional accuracy floor. C fails the written rule:
+two-layer S5 seeds 1 and 2 score **3.25% and 6.78%**, below the 95% threshold. These are valid
+completed measurements; the remaining C/A grid is still running. A's outcome is pending.
+All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete, and no language quality sweep has begun.
 These results establish successful synthetic-task learning in this regime, not a language advantage.
 
@@ -99,7 +101,7 @@ These are selected seed-0 results, not independent confirmation.
 |---|---|---|---|---|
 | A | 100% in all six cells | Pending | Unconfirmed: reference floor | Pending |
 | B | 100% in all six cells | Passed: 100% in all 18 cells | Unconfirmed: reference floor | Eligible under written rule |
-| C | 100% in all six cells | Pending | Unconfirmed: reference floor | Pending |
+| C | 100% in all six cells | Failed S5 L2 seeds 1/2; remaining grid running | Reference-floor issue plus candidate failures; closure pending | Not eligible |
 
 A disclosed protocol discrepancy requires reporting both columns. The written gate required
 candidate accuracy of at least 90% on retrieval or 95% on second-half word positions, and no more
