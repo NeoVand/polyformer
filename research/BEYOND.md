@@ -113,6 +113,17 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   still pending. This supports testing the random initialization in all three candidates, before
   freezing the main screen. The shared-convolution implementation passes causal, reduction, gradient,
   shared-initialization and exact-cost checks; the legacy LOCAL.md test suite still passes.
+- 2026-10-20 13:34 UTC — Matched A5 controls complete: paired initialization scores 1.54% at update
+  1,000, 99.11% at 2,000, then 100% by 4,000; random starts at 95.19% at 1,000 and also reaches
+  100%. Both final independent tests are 100%. Thus random initialization speeds early learning here;
+  paired identity is not incapable of learning. Historical holonomy reproduces 100%, also at length 64.
+  All six recurrent runtime tests complete: GDN1 unroll 1/4/16 is .626/.439/.477 s/update;
+  DP4 is 1.439/1.060/1.249. Unroll 4 wins for both, but DP4 remains too slow for an affordable
+  full-budget comparison. An exact chunked-recurrence prototype is being checked offline, with its
+  additional arithmetic counted explicitly before any benchmark. Development settled estimate $3.035.
+  Convolution and combined-layer pilots launched from `45f8895` (predictions `5c706af`); logs
+  `/tmp/beyond-conv-learn.log` and `/tmp/beyond-combined-learn.log`. Current conservative total,
+  including outstanding reservations: $9.059.
 
 ## 1. Design registration (before training)
 
