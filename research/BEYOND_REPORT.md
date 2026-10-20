@@ -1,7 +1,7 @@
 # Beyond softmax and matrix-state RNNs — working report
 
 **Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-15:30 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+16:04 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
 seeds. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. C fails the written rule:
@@ -11,7 +11,8 @@ C's complete record has no other below-floor cells. A also fails two-layer S5 at
 All mandatory confirmations are complete and audited. **B is the sole candidate eligible for language.**
 All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete. B's language plan is frozen, and its
-18-trial language rate sweep is running; no language result is yet available.
+18-trial language rate sweep is complete. All arms select .008, and B trails both softmax controls
+and both recurrent controls at that short tuning budget. No final-seed language result is yet available.
 These results establish successful synthetic-task learning in this regime, not a language advantage.
 
 The question is whether one affordable layer can combine content selection, improved local
@@ -217,14 +218,61 @@ same validation file; windows may overlap within and between draws. This is neit
 nor document-disjoint evaluation. Sequence-level uncertainty is conditional on the trained model
 and may understate uncertainty when windows overlap.
 
-| Arm | Final loss, seed 1 | Seed 2 | Seed 3 | Parameters, tokens, runtime and cost |
-|---|---|---|---|---|
-| Raw softmax | Pending | Pending | Pending | Pending |
-| Convolved softmax | Pending | Pending | Pending | Pending |
-| Convolved Parallax | Pending | Pending | Pending | Pending |
-| Gated DeltaNet, one update | Pending | Pending | Pending | Pending |
-| Gated DeltaProduct, four updates | Pending | Pending | Pending | Pending |
-| B | Pending | Pending | Pending | Pending |
+All 18 tuning trials completed without numerical or execution failures. Final raw validation
+losses in nats/token are shown below; bold entries select rates. These are approximately
+100M-token runs at equal tokens, not the final compute-matched comparison.
+
+| Arm | Rate .002 | Rate .004 | Rate .008 |
+|---|---:|---:|---:|
+| Raw softmax | 3.964051 | 3.926675 | **3.916598** |
+| Convolved softmax | 3.941346 | 3.905269 | **3.897961** |
+| Convolved Parallax | 3.908794 | 3.875718 | **3.871201** |
+| B | 3.960137 | 3.922886 | **3.922844** |
+| Gated DeltaNet, one update | 3.914880 | 3.868362 | **3.855246** |
+| Gated DeltaProduct, four updates | 3.917680 | 3.860795 | **3.840066** |
+
+Every selected rate is at the upper grid boundary. The preregistered policy prohibits extension,
+so these results establish neither a global learning-rate optimum nor the final loss ordering.
+B's .008 advantage over .004 is only 0.000043 nats/token; the deterministic selector uses the
+unrounded means without treating this as a significant difference. The
+[sealed selection](results/beyond_language_selection.json) retains every trial and its provenance.
+
+The allocation is fixed before language results. Parameter counts include tied token embeddings;
+the non-embedding count excludes both token and positional embeddings. Historical references to
+the project's “19M” baseline mean non-embedding parameters. Parameter counts are not matched.
+Planned tokens below are per final seed and will be checked against completed-run counters.
+
+| Arm | Total parameters | Non-embedding parameters | Final updates | Planned tokens |
+|---|---:|---:|---:|---:|
+| Raw softmax | 44,933,120 | 18,915,328 | 13,540 | 443,678,720 |
+| Convolved softmax | 44,960,768 | 18,942,976 | 13,531 | 443,383,808 |
+| Convolved Parallax | 46,536,704 | 20,518,912 | 12,533 | 410,681,344 |
+| B | 47,650,256 | 21,632,464 | 12,207 | 399,998,976 |
+| Gated DeltaNet, one update | 48,157,280 | 22,139,488 | 13,105 | 429,424,640 |
+| Gated DeltaProduct, four updates | 58,930,784 | 32,912,992 | 10,277 | 336,756,736 |
+
+The four planned modeled-work totals, in units of `10^17` operations per final run, are:
+
+| Arm | Nominal | Nominal + recomputation | Source upper | Source upper + recomputation |
+|---|---:|---:|---:|---:|
+| Raw softmax | 1.230855 | 1.412596 | 1.273460 | 1.469403 |
+| Convolved softmax | 1.230773 | 1.412637 | 1.273349 | 1.469407 |
+| Convolved Parallax | 1.218153 | 1.412657 | 1.257967 | 1.465742 |
+| B | 1.213956 | 1.412564 | 1.252735 | 1.464269 |
+| Gated DeltaNet, one update | 1.264354 | 1.464277 | 1.264354 | 1.464277 |
+| Gated DeltaProduct, four updates | 1.252841 | 1.495962 | 1.252841 | 1.495962 |
+
+These are analytic sensitivity conventions, not measured hardware operations. Their definitions
+and exact, unrounded counts are in the frozen plan. All controls meet or exceed B in every column.
+
+| Arm | Final loss, seed 1 | Seed 2 | Seed 3 |
+|---|---|---|---|
+| Raw softmax | Pending | Pending | Pending |
+| Convolved softmax | Pending | Pending | Pending |
+| Convolved Parallax | Pending | Pending | Pending |
+| Gated DeltaNet, one update | Pending | Pending | Pending |
+| Gated DeltaProduct, four updates | Pending | Pending | Pending |
+| B | Pending | Pending | Pending |
 
 For each seed, the headline requires candidate loss at most 99% of the better raw/convolved
 softmax loss, and no higher than the better Gated DeltaNet/DeltaProduct loss. All three seeds and

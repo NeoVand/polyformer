@@ -1,0 +1,221 @@
+{
+  "final_arm_order": [
+    "rawS",
+    "convS",
+    "convP",
+    "B",
+    "GDN1",
+    "DP4"
+  ],
+  "invalid_arms": [],
+  "invalid_controls": [],
+  "manifest_sha256s": [
+    "efa020b36c2fbb22f7325ef3ab0bd9fb03739ea027eac874cc48646a7d9a9440"
+  ],
+  "note": "Only training-seed-0 final validation on sample seed 1234 selects rates; final/test/ablation fields are never read.",
+  "pending_job_ids": [],
+  "plan_sha256": "1c3aa0819d081dd233d289a0241e94b1141f4fae31ac8eff8cd2c8f046d3126e",
+  "rows": [
+    {
+      "arm": "rawS",
+      "job_id": "ad393fb8545b395f2946c1fb",
+      "lr": 0.002,
+      "status": "valid",
+      "validation_loss_raw": 3.964050522496109
+    },
+    {
+      "arm": "rawS",
+      "job_id": "d9ccc90a6481b79d074c1ec5",
+      "lr": 0.004,
+      "status": "valid",
+      "validation_loss_raw": 3.926674735666893
+    },
+    {
+      "arm": "rawS",
+      "job_id": "04ff39a931b72351b93fcc20",
+      "lr": 0.008,
+      "status": "valid",
+      "validation_loss_raw": 3.916597596631618
+    },
+    {
+      "arm": "convS",
+      "job_id": "10ecef8688ef7f415405d777",
+      "lr": 0.002,
+      "status": "valid",
+      "validation_loss_raw": 3.9413460991199827
+    },
+    {
+      "arm": "convS",
+      "job_id": "1995be6a7df2f25820321347",
+      "lr": 0.004,
+      "status": "valid",
+      "validation_loss_raw": 3.905269295501057
+    },
+    {
+      "arm": "convS",
+      "job_id": "8befdf44ca3e362df31c10b7",
+      "lr": 0.008,
+      "status": "valid",
+      "validation_loss_raw": 3.8979609274101676
+    },
+    {
+      "arm": "convP",
+      "job_id": "bbf5656e063b8cb9dc2076df",
+      "lr": 0.002,
+      "status": "valid",
+      "validation_loss_raw": 3.9087940902245464
+    },
+    {
+      "arm": "convP",
+      "job_id": "f0a17264ec6f6ca25eb75cc0",
+      "lr": 0.004,
+      "status": "valid",
+      "validation_loss_raw": 3.8757175168429967
+    },
+    {
+      "arm": "convP",
+      "job_id": "5f05915e65c6aa772c6e37af",
+      "lr": 0.008,
+      "status": "valid",
+      "validation_loss_raw": 3.8712014634074876
+    },
+    {
+      "arm": "B",
+      "job_id": "1cf129ef62147b12e63b8847",
+      "lr": 0.002,
+      "status": "valid",
+      "validation_loss_raw": 3.9601369766896823
+    },
+    {
+      "arm": "B",
+      "job_id": "c9ed7635311e59e3187d265c",
+      "lr": 0.004,
+      "status": "valid",
+      "validation_loss_raw": 3.922886402477161
+    },
+    {
+      "arm": "B",
+      "job_id": "02ae8f70919eb9ed301f2b4d",
+      "lr": 0.008,
+      "status": "valid",
+      "validation_loss_raw": 3.922843643609667
+    },
+    {
+      "arm": "GDN1",
+      "job_id": "38b07e2e8da9494e7b2d342e",
+      "lr": 0.002,
+      "status": "valid",
+      "validation_loss_raw": 3.914879880612716
+    },
+    {
+      "arm": "GDN1",
+      "job_id": "b6fa0e155be4584000255654",
+      "lr": 0.004,
+      "status": "valid",
+      "validation_loss_raw": 3.8683622269600164
+    },
+    {
+      "arm": "GDN1",
+      "job_id": "0d6bd2baaab5cbd309c43d78",
+      "lr": 0.008,
+      "status": "valid",
+      "validation_loss_raw": 3.855246148799779
+    },
+    {
+      "arm": "DP4",
+      "job_id": "680f858d0d2c0d7eb66461d5",
+      "lr": 0.002,
+      "status": "valid",
+      "validation_loss_raw": 3.917679974139901
+    },
+    {
+      "arm": "DP4",
+      "job_id": "a44403aadc45b26bf302ced8",
+      "lr": 0.004,
+      "status": "valid",
+      "validation_loss_raw": 3.86079517978942
+    },
+    {
+      "arm": "DP4",
+      "job_id": "9c778f7fc00e163ec8421bc0",
+      "lr": 0.008,
+      "status": "valid",
+      "validation_loss_raw": 3.8400658708706032
+    }
+  ],
+  "schema": "beyond_language_rate_selection",
+  "schema_version": 1,
+  "selected": {
+    "B": {
+      "job_id": "02ae8f70919eb9ed301f2b4d",
+      "lr": 0.008,
+      "validation_loss_raw": 3.922843643609667
+    },
+    "DP4": {
+      "job_id": "9c778f7fc00e163ec8421bc0",
+      "lr": 0.008,
+      "validation_loss_raw": 3.8400658708706032
+    },
+    "GDN1": {
+      "job_id": "0d6bd2baaab5cbd309c43d78",
+      "lr": 0.008,
+      "validation_loss_raw": 3.855246148799779
+    },
+    "convP": {
+      "job_id": "5f05915e65c6aa772c6e37af",
+      "lr": 0.008,
+      "validation_loss_raw": 3.8712014634074876
+    },
+    "convS": {
+      "job_id": "8befdf44ca3e362df31c10b7",
+      "lr": 0.008,
+      "validation_loss_raw": 3.8979609274101676
+    },
+    "rawS": {
+      "job_id": "04ff39a931b72351b93fcc20",
+      "lr": 0.008,
+      "validation_loss_raw": 3.916597596631618
+    }
+  },
+  "selection_metric": "val_loss_raw",
+  "sha256": "47689eb6ec2154b644fd106b3766499c943eaf43d3ff10579bb4d31065203541",
+  "source_hashes": {
+    "beyond_chunk_check.py": "f671fef1033410fc7bbf2d0e07138070304ecd595110797c27242c746d50cdf6",
+    "beyond_diag.py": "ab176f04bdf08a4ebcc650672929f2627c910e53b631fffde8d8ed96696f6a39",
+    "beyond_layers.py": "766d943ed44a21691a4101fd5cb5aca558a12058c8f495ac2fedbc24c4506411",
+    "beyond_modal.py": "9e80de399100fb76889285def14bf3e226a5a56de1e8a81dd5d8ffe4ef705bed",
+    "beyond_protocol.py": "45d36641f286333498bf94f4683e716e3fa5331a8c9d3bbd46cf0e6b16abf763",
+    "beyond_summary.py": "752ff5d12b315a1f73c3dbd4e5c4cdb5fad18c60c65b15f833eccf2b8eb682bc",
+    "charlaw.py": "696097299f79fc5f171b64f65cc28374167164b34bae899dd74c79d5681b009a",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "export_a5_irrep.py": "a656f64b9f223a702489fa1bc8a38da7fde21497d26a05642cb7fb38df117ba2",
+    "export_a5_modal.py": "27cc4eee7347e7842bd0bc1c97116eb198af00cdf9168f069e30f09413777508",
+    "figdata.py": "1ba8912630e4e998058ee99a2bb60220b99126184e19f01b743f47300a115190",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "grp_summary.py": "fd424f8dff0d61accc284a0014c394483d67cbe9c69e6c874f2aa6be76e72d40",
+    "lm.py": "d9cfad64cb8e4697b61549fdbea50efdaecc0f984f94baa0429cc7112a9aebff",
+    "local_summary.py": "695ae6726b5f4b3df80978d205d18c773f34f9b9a9f38000cf2a90e39cdadf06",
+    "modal_run.py": "5f0cb5babe8702def82fd904f522738078aa21a7ac3652190bd3b1f82bc15203",
+    "polybench.py": "3307ee31daf5d82b831c7ebe90a75bb057ab06022c39b54169c4edf106377b17",
+    "search_summary.py": "2d40635b2f6ab110ea3624ea8f83021d995dc3147c44a7d9a52d02bd902606dc",
+    "summarize.py": "14b3ae880107d4923f433a4e58d5d7693d91d9ab411ed6a8e0c98c437d16168c",
+    "swap_summary.py": "02e3be1148335ec01073321e8441838be45efe296d704117ae9682e8db74826f",
+    "test_beyond.py": "f2774f642c476abe27a7e052c1464cf516d06f1a5d1d56ce16206626822b7fff",
+    "test_beyond_conv.py": "38fb8e88a1ee46276fc9283d4b9d94416ae5ef4a48ec67fdc2c9a0e303cc9ff2",
+    "test_beyond_diag.py": "72bb1a44f14538d7338eaac78200baca286e669a10ed5ef7d3c9bd223829dc59",
+    "test_groups.py": "50b401a7cd202ff2c70e2a5e019799e5c28a7c61a0177cca5c1ef4c8686d6440",
+    "test_local.py": "e5f2cc39d43d99e72e4f55cb514f754a34997af8afaec169a81c7cf209403a17",
+    "test_sfa.py": "df436095a033e5ac9984ac0c21bbc1180b96df03ab01f8b8a6b510c192fb0717",
+    "test_theory.py": "fb140d3e8b97de1210fc29c712a2fc7588412e63df955f5b327bf5038c0b5461",
+    "theory_ceiling.py": "c34e78733b8761476b0710f7b625598fb9551da58ce4b7b5cd38121901b62128",
+    "verify_prior_art.py": "0a230c5d236c4528fd2930ee57ffe9228d9342ce47bd5a3341223950e1ee6c6b",
+    "wp_summary.py": "51a85ef347d3b24c03a72712a3e64e54609daf13d13a8d381fb90ede5511e673"
+  },
+  "status": "selected",
+  "stop_reasons": [],
+  "tuning_failure_policy_id": "5a2058cda5ad1d84b8bb9d8a6843514b641e81390dcee1c5a28fca4da4cb27e9",
+  "tuning_invalid_candidates": [],
+  "viable_candidates": [
+    "B"
+  ]
+}

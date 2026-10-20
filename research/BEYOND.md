@@ -387,6 +387,19 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   MSE relative to softmax by 3.6251% at one layer and 33.9387% at two, missing/clearing the
   informative 10% target respectively. This was never an advancement gate and changes no decision.
 
+- 2026-10-20 16:04 UTC — All 18 language tuning trials completed and passed source, runtime,
+  configuration, evaluation-mark and compute-accounting checks. The bounded launcher exited
+  successfully; global active calls are zero. Production selection
+  `results/beyond_language_selection.json` has seal
+  `47689eb6ec2154b644fd106b3766499c943eaf43d3ff10579bb4d31065203541`.
+  Every arm selects .008 from final raw validation loss: rawS 3.916597597,
+  convS 3.897960927, convP 3.871201463, B 3.922843644, GDN1 3.855246149,
+  DP4 3.840065871 nats/token. All rates lie at the registered grid edge; no extension is allowed.
+  These short tuning runs do not satisfy or reject the final three-seed gate. All six arms remain
+  required for fresh final seeds 1/2/3, using the frozen allocations and timeouts. Settled
+  language estimate is $17.302019 including timing pilots; total across all stages $43.658243.
+  The report now distinguishes total/non-embedding parameters and all four modeled-work totals.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
