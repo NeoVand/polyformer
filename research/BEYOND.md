@@ -76,6 +76,19 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   causal convolution and output gate. Timescales are excluded from weight decay. Independent audits
   caught and corrected a triangular-versus-dense attention FLOP mismatch before any comparison.
   Existing LOCAL.md tests still pass. No paid jobs launched.
+- 2026-10-20 13:05 UTC — Pilot manifests committed at `faf69bd` (implementation/predictions `6d117b9`);
+  both Modal apps launched, with four jobs each and eight total active slots. Diagnostic app
+  `ap-Inpw8DO8kXIjSkhydLg9iq`; timing app `ap-vIIocj6JAVowdQC2DuEMqv`. Local launch logs:
+  `/tmp/beyond-pilot-diag.log`, `/tmp/beyond-pilot-lm.log`. Durable worker logs/results are on
+  `polyformer-beyond-runs`; local ledger `results/beyond_budget.json`. All 31 jobs have an aggregate
+  maximum resource reservation of $8.634; results are pending.
+- 2026-10-20 13:12 UTC — All seven language timing runs completed with finite losses; 50-to-100-update
+  times are S 0.082 s, P 0.098 s, A 0.152 s, B/C 0.114 s, GDN1 0.626 s (DP4 to be tabulated).
+  This motivates one common confirmation FLOP budget rather than repeated nearly identical recurrent
+  controls; any final amendment will be committed before quality sweeps. Diagnostic pilots are ongoing.
+  At 1,000 updates, small MQAR scores are S 10.07%, P 9.96%, A/B/C 9.72/9.58/9.56%,
+  GDN1 99.69%, prefix 0.54%. The attention controls have not learned binding yet; the recurrent control
+  has a causal convolution. Before freezing the screen, register a control-learnability extension below.
 
 ## 1. Design registration (before training)
 
@@ -193,3 +206,12 @@ prediction commit are authoritative. These are development runs, not confirmator
   configuration is assumed to solve class-word tracking just because its transition algebra permits it.
   A candidate-specific numerical failure is investigated before freezing the main grid. We will not
   delete failed or timed-out results.
+
+**Control-learnability extension, registered after the 1,000-update MQAR pilot, before the extension.**
+Train softmax at 6,000 updates on small MQAR and small induction, separately at Muon rates 0.004 and 0.008,
+seed 0; all other diagnostic settings remain as above (256 validation, 512 test). Four L4 jobs with
+600-second timeout, maximum combined reservation $1.04, charged to the diagnostic cap. Prediction:
+at least one rate reaches 90% on both tasks; if it does not, the screen must distinguish failure to learn
+local key/value binding from failure of content selection. Do not call chance-level matching a pass.
+These control results may guide a documented task or common-backbone amendment before the main screen;
+they cannot support a confirmatory architectural claim.
