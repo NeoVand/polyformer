@@ -305,3 +305,28 @@ both groups; A may pay for its value coupling and C may learn more slowly becaus
 depend on attention. The standalone prefix separates combined-layer interference from a failure of
 the shared state component. These remain development runs; the final screen will use explicitly
 matched compute and independent confirmation seeds.
+
+**Exact chunk runtime extension, registered before GPU results.** The unrolled four-update recurrence
+still costs 1.060 seconds/update. Implement the established chunk/WY triangular-solve reformulation
+of the same delta updates, with chunk sizes 16 and 32 **microsteps**, preserving once-per-token decay
+and reading only after a token's final microstep. State products and solves remain float32 with
+highest matmul precision. This changes scheduling and redundant arithmetic, not the model recurrence.
+CPU forward/final-state/input-VJP checks pass, including near-collinear keys, beta near 2, severe decay,
+BF16-quantized inputs, padding and full length-512 states. Whole-layer BF16 gradient differences from
+rounding reach relative L2 3.1e-5; do not describe the implementation as bitwise identical.
+
+Run one H100 numerical proof (300-second timeout, maximum $0.56) before any chunk training benchmark.
+Its committed script fixes tolerances: output/final-state relative L2 <1e-4 and scaled absolute error
+<5e-4; all input-VJP relative L2 <2e-4 and scaled absolute error <3e-3. Report absolute errors.
+Only if it passes, run four 200-update S6 timing jobs, chunks 16/32 for GDN1/DP4, otherwise identical
+to the unroll timing grid (900-second timeout each, maximum $5.14). Charge all to development.
+Select by finite 100-to-200-update runtime only, including unroll-4 as a fallback. Prediction:
+chunking cuts recurrent latency by at least 2x versus the best unrolled implementation.
+
+Count dense Gram/query matrices, masked work, padding, triangular solves, state updates and scalar
+work in forward FLOPs. Also count the triangular-solve backward excess over the usual 3x-forward
+approximation. At S6, chunks 16/32 add forward FLOPs/token 222,141 / 619,198.5 for GDN1 and
+861,060 / 1,778,826 for DP4; additional backward charges beyond 3x-forward are
+117,504 / 228,096 and 470,016 / 912,384, respectively. `lm.training_flops_per_token` supplies
+the total used for language matching and reporting; unchanged arms remain exactly 3x-forward.
+Diagnostics retain the native/unrolled recurrence and reject chunk configuration explicitly.

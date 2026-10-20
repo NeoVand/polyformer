@@ -152,6 +152,8 @@ def model_config(args, context, vocab, default_pos):
         setattr(cfg, key, value)
     if cfg.d % cfg.heads:
         raise ValueError("d must be a multiple of heads")
+    if getattr(cfg, "delta_chunk", 0):
+        raise ValueError("Diagnostic budgets use the native/unrolled recurrence; delta_chunk must be 0")
     return cfg
 
 

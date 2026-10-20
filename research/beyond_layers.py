@@ -304,6 +304,156 @@ def gated_delta_scan(q, k, v, beta, decay, initial=None, unroll=1):
     return jnp.moveaxis(outputs, 0, 1)
 
 
+def gated_delta_chunk(q, k, v, beta, log_decay, initial=None, *, chunk_size=32,
+             dtype=jnp.float32, chunk_unroll=1):
+    """Exact gated recurrence using independent triangular solves per chunk.
+
+    q[B,T,H,K], k[B,T,H,nh,K], v[B,T,H,nh,V],
+    beta[B,T,H,nh], log_decay[B,T,H], initial[B,H,V,K].
+    The output and state always use ``dtype`` (FP32 by default), including when
+    inputs were quantized to BF16. All state products/solves use full precision.
+    """
+    q, k, v, beta, log_decay = (
+        jnp.asarray(x, dtype) for x in (q, k, v, beta, log_decay)
+    )
+    b, t, h, nh, dk = k.shape
+    dv = v.shape[-1]
+    c = int(chunk_size)
+    if c < 1 or c % nh:
+        raise ValueError("chunk_size must be a positive multiple of nh")
+    m = c // nh
+    chunks = math.ceil(t / m)
+    padded_t = chunks * m
+    pad = padded_t - t
+    if pad:
+        q = jnp.pad(q, ((0, 0), (0, pad), (0, 0), (0, 0)))
+        k = jnp.pad(k, ((0, 0), (0, pad), (0, 0), (0, 0), (0, 0)))
+        v = jnp.pad(v, ((0, 0), (0, pad), (0, 0), (0, 0), (0, 0)))
+        beta = jnp.pad(beta, ((0, 0), (0, pad), (0, 0), (0, 0)))
+        log_decay = jnp.pad(log_decay, ((0, 0), (0, pad), (0, 0)))
+    # A padded microstep is identity: k=v=beta=log_decay=0.
+    g_micro = jnp.zeros((b, padded_t, h, nh), dtype)
+    g_micro = g_micro.at[..., 0].set(log_decay)
+    q = q.transpose(0, 2, 1, 3).reshape(b, h, chunks, m, dk)
+    k = k.transpose(0, 2, 1, 3, 4).reshape(b, h, chunks, c, dk)
+    v = v.transpose(0, 2, 1, 3, 4).reshape(b, h, chunks, c, dv)
+    beta = beta.transpose(0, 2, 1, 3).reshape(b, h, chunks, c)
+    g = jnp.cumsum(
+        g_micro.transpose(0, 2, 1, 3).reshape(b, h, chunks, c), axis=-1
+    )
+    eg = jnp.exp(g)
+    idx = jnp.arange(c)
+    strict_lower = idx[:, None] > idx[None, :]
+    diagonal = idx[:, None] == idx[None, :]
+    # Crucially mask *before* exp. For non-positive decay, retained differences
+    # are non-positive; unused upper-triangle positive differences cannot overflow.
+    pair_decay = jnp.exp(jnp.where(strict_lower, g[..., :, None] - g[..., None, :], 0))
+    gram = jnp.matmul(k, jnp.swapaxes(k, -1, -2), precision=jax.lax.Precision.HIGHEST)
+    lower = jnp.where(strict_lower, beta[..., :, None] * gram * pair_decay, 0)
+    a = jnp.where(diagonal, jnp.asarray(1, dtype), lower)
+    rhs = jnp.concatenate(
+        (beta[..., None] * v, (beta * eg)[..., None] * k), axis=-1
+    )
+    uw = jax.lax.linalg.triangular_solve(
+        a, rhs, left_side=True, lower=True, unit_diagonal=True
+    )
+    u, w = uw[..., :dv], uw[..., dv:]
+
+    # Only original token queries are evaluated, after their last microstep.
+    query_idx = jnp.arange(m) * nh + (nh - 1)
+    gq = jnp.take(g, query_idx, axis=-1)
+    query_mask = query_idx[:, None] >= idx[None, :]
+    query_decay = jnp.exp(jnp.where(query_mask, gq[..., :, None] - g[..., None, :], 0))
+    qk = jnp.matmul(q, jnp.swapaxes(k, -1, -2), precision=jax.lax.Precision.HIGHEST)
+    coeff = jnp.where(query_mask, qk * query_decay, 0)
+    scaled_q = q * jnp.take(eg, query_idx, axis=-1)[..., None]
+    end_k = k * jnp.exp(g[..., -1, None] - g)[..., None]
+    end_decay = eg[..., -1]
+    if initial is None:
+        initial = jnp.zeros((b, h, dv, dk), dtype)
+    else:
+        initial = jnp.asarray(initial, dtype)
+
+    def step(state, inputs):
+        ut, wt, qt, ct, kt, at = inputs
+        st = jnp.swapaxes(state, -1, -2)
+        residual = ut - jnp.matmul(wt, st, precision=jax.lax.Precision.HIGHEST)
+        output = (
+            jnp.matmul(qt, st, precision=jax.lax.Precision.HIGHEST)
+            + jnp.matmul(ct, residual, precision=jax.lax.Precision.HIGHEST)
+        )
+        state = state * at[..., None, None] + jnp.matmul(
+            jnp.swapaxes(residual, -1, -2), kt,
+            precision=jax.lax.Precision.HIGHEST,
+        )
+        return state, output
+
+    final, output = jax.lax.scan(
+        step, initial,
+        tuple(jnp.moveaxis(x, 2, 0) for x in (u, w, scaled_q, coeff, end_k, end_decay)),
+        unroll=chunk_unroll,
+    )
+    output = jnp.moveaxis(output, 0, 2).reshape(b, h, padded_t, dv)
+    return output.transpose(0, 2, 1, 3)[:, :t], final
+
+
+def _delta_chunk_flops(t, nh, dk, dv, chunk_size=32):
+    """Explicit FP operations/head/sequence for the concrete dense prototype.
+
+    MAC=2; exp=1 elementary op; cumsum=C-1. Mask/select/cast/reshape/padding
+    cost no arithmetic. Full Gram and query matrices are charged, including
+    masked entries. Unit triangular solve costs C(C-1)*(K+V), from exact
+    forward substitution. This is an algorithmic count, not kernel profiling.
+    It includes padded tokens and returns the serial/log-decay count too.
+    """
+    c = int(chunk_size)
+    if c < 1 or c % nh:
+        raise ValueError("chunk_size must be a positive multiple of nh")
+    m = c // nh
+    n = math.ceil(t / m)
+    per_chunk = {
+        "cumulative_log_decay": c - 1,
+        "exp_cumulative_decay": c,
+        "key_gram": 2 * c * c * dk,
+        "gram_decay_differences_exp": 2 * c * c,
+        "gram_beta_decay_scaling": 2 * c * c,
+        "rhs_beta_value": c * dv,
+        "rhs_beta_decay_key": c + c * dk,
+        "unit_triangular_solve": c * (c - 1) * (dk + dv),
+        "query_key": 2 * m * c * dk,
+        "query_decay_differences_exp_scaling": 3 * m * c,
+        "query_state_scaling": m * dk,
+        "end_key_decay_differences_exp_scaling": 2 * c + c * dk,
+        "state_prediction": 2 * c * dk * dv,
+        "state_residual_subtraction": c * dv,
+        "query_initial_state": 2 * m * dk * dv,
+        "query_residual_values": 2 * m * c * dv,
+        "query_output_add": m * dv,
+        "state_update": 2 * c * dk * dv,
+        "state_scale_and_add": 2 * dk * dv,
+    }
+    serial = t * (nh * (4 * dk * dv + 2 * dv) + 3 * dk * dv + 1)
+    total = n * sum(per_chunk.values())
+    return {
+        "sequence_length": t,
+        "nh": nh,
+        "chunk_size_microsteps": c,
+        "chunks": n,
+        "padding_tokens": n * m - t,
+        "per_chunk": per_chunk,
+        "total_per_head": total,
+        "per_token_per_head": total / t,
+        "serial_total_per_head": serial,
+        "serial_per_token_per_head": serial / t,
+        "delta_per_token_per_head": (total - serial) / t,
+        # The solve's JAX VJP uses another solve plus a dense dA product.
+        # Its training work exceeds the harness's blanket 3*forward by this.
+        # Other primitives retain the harness approximation here.
+        "solve_vjp_extra_over_3x_forward_total_per_head": n * c * (c + 1) * (dk + dv),
+        "solve_vjp_extra_over_3x_forward_per_token_per_head": n * c * (c + 1) * (dk + dv) / t,
+    }
+
+
 def apply_layer(cfg, p, x, kind=None):
     kind = _kind(cfg, kind)
     if kind not in KINDS:
@@ -323,8 +473,13 @@ def apply_layer(cfg, p, x, kind=None):
         beta_logits = _lin(cfg, p["dbeta"], x).reshape(b, t, h, nh) + float(_get(cfg, "beta0", 0.0))
         beta = float(_get(cfg, "beta_max", 2.0)) * jax.nn.sigmoid(beta_logits)
         log_decay = -jnp.exp(p["A_log"]) * jax.nn.softplus(_lin(cfg, p["ddecay"], x) + p["dt_bias"])
-        decay = jnp.exp(log_decay).reshape(b, t, h)
-        out = gated_delta_scan(q, k, v, beta, decay, unroll=int(_get(cfg, "delta_unroll", 1)))
+        chunk_size = int(_get(cfg, "delta_chunk", 0))
+        if chunk_size:
+            out, _ = gated_delta_chunk(q, k, v, beta, log_decay.reshape(b, t, h),
+                                       chunk_size=chunk_size)
+        else:
+            decay = jnp.exp(log_decay).reshape(b, t, h)
+            out = gated_delta_scan(q, k, v, beta, decay, unroll=int(_get(cfg, "delta_unroll", 1)))
         out = out / jnp.sqrt((out * out).mean(-1, keepdims=True) + 1e-5) * p["delta_norm"]
         gate = jax.nn.silu(_lin(cfg, p["dgate"], x)).reshape(b, t, h, dv)
         return _lin(cfg, p["delta_out"], (out * gate).reshape(b, t, vd))
@@ -387,6 +542,12 @@ def forward_flops(cfg, kind=None, seq_len=None):
         conv = 2 * cw * ((1 + nh) * kd + nh * vd)
         activation_norm = 12 * ((1 + nh) * kd + nh * vd) + 12 * vd + 12 * h * (nh + 1)
         state = h * (nh * (4 * dv * dk + 2 * dv) + 3 * dv * dk)
+        chunk_size = int(_get(cfg, "delta_chunk", 0))
+        if chunk_size:
+            # Full dense Gram/query work, solve, padding, state updates, and
+            # scalar operations are charged. activation_norm already includes
+            # one per-token decay exp, so avoid charging that operation twice.
+            state = h * (_delta_chunk_flops(t, nh, dk, dv, chunk_size)["per_token_per_head"] - 1)
         return float(projection + conv + activation_norm + state)
     content = 0
     if kind != "prefix":
@@ -413,3 +574,22 @@ def forward_flops(cfg, kind=None, seq_len=None):
     if kind == "beyond_c" and _get(cfg, "ablate", "none") != "coupling":
         coupling = 3 * d
     return float(content + transition + prefix + short + readout + coupling)
+
+
+def training_extra_flops(cfg, kind=None, seq_len=None):
+    """Training FLOPs/token/component beyond the harness's 3*forward estimate.
+
+    A unit triangular solve's VJP contains another solve and a dense gradient
+    product. Charge its extra C(C+1)*(K+V) operations per head/chunk explicitly.
+    The LM caller multiplies this component count by the number of layers.
+    Serial/unrolled delta and all other architectures return zero.
+    """
+    kind = _kind(cfg, kind)
+    chunk_size = int(_get(cfg, "delta_chunk", 0))
+    if kind != "gated_delta" or not chunk_size:
+        return 0.0
+    dk, dv, _, _ = _delta_dims(cfg)
+    nh = int(_get(cfg, "nh", 4))
+    t = int(seq_len or cfg.ctx)
+    count = _delta_chunk_flops(t, nh, dk, dv, chunk_size)
+    return float(cfg.heads * count["solve_vjp_extra_over_3x_forward_per_token_per_head"])

@@ -625,6 +625,15 @@ def flops_per_token(cfg, T):
     return L * lyr + 2 * D * V
 
 
+def training_flops_per_token(cfg, T):
+    """Declared training arithmetic, including optional chunk-solve backward work."""
+    extra = 0.0
+    if cfg.arch in BEYOND_ARCHS:
+        import beyond_layers
+        extra = cfg.layers * beyond_layers.training_extra_flops(cfg, seq_len=T)
+    return 3 * flops_per_token(cfg, T) + extra
+
+
 def save_final_checkpoint(cfg, params, artifact_dir):
     """Write our own trusted final checkpoint; never load an external pickle."""
     os.makedirs(artifact_dir, exist_ok=True)
@@ -743,6 +752,8 @@ def main():
     ap.add_argument("--probe", type=int, default=0, help="repeated-random-token induction probe")
     ap.add_argument("--group_init", choices=("paired", "random"), default="paired")
     ap.add_argument("--delta_unroll", type=int, default=1)
+    ap.add_argument("--delta_chunk", type=int, default=0,
+                    help="exact recurrent chunk size in microsteps; 0 uses the native scan")
     ap.add_argument("--progress", type=int, default=0, help="emit evaluation progress to stderr for durable run logs")
     ap.add_argument("--save-final", type=int, default=0,
                     help="atomically save cfg and final parameters to BEYOND_ARTIFACT_DIR/final.pkl")
@@ -794,6 +805,7 @@ def main():
     opt = make_opt(cfg.opt, sched)
     st = opt.init(params)
     fpt = flops_per_token(cfg, T)
+    tfpt = training_flops_per_token(cfg, T)
 
     def loss_fn(p, x, y):
         lg = forward(cfg, p, x)
@@ -858,7 +870,7 @@ def main():
         params, st, l = step(params, st, x, y)
         if it + 1 in marks:
             tok = (it + 1) * cfg.batch * T
-            row = {"step": it + 1, "tokens": tok, "flops": 3 * fpt * tok, "train": round(float(l), 4)}
+            row = {"step": it + 1, "tokens": tok, "flops": tfpt * tok, "train": round(float(l), 4)}
             row.update(evaluate(params))
             row["secs"] = round(time.time() - t0, 1)
             curve.append(row)
@@ -916,7 +928,8 @@ def main():
            "chart_init": cfg.chart_init if cfg.arch == "lla" else None, "lam0": cfg.lam0 if cfg.arch == "lla" else None, "seed": cfg.seed, "params": nparams, "nonembed": nparams - nembed, "mlp": cfg.mlp,
            "layers": cfg.layers, "d": cfg.d, "rank": cfg.rank, "order": cfg.order, "vac": cfg.vac, "alpha0": cfg.alpha0,
            "cap": cfg.cap, "fscale": cfg.fscale, "hops": cfg.hops, "lookback": cfg.lookback, "lr": cfg.lr, "steps": cfg.steps,
-           "tokens": cfg.steps * cfg.batch * T, "flops_per_token": fpt, "train_flops": 3 * fpt * cfg.steps * cfg.batch * T,
+           "tokens": cfg.steps * cfg.batch * T, "flops_per_token": fpt,
+           "train_flops_per_token": tfpt, "train_flops": tfpt * cfg.steps * cfg.batch * T,
            "data": cfg.data, "val_loss": last["val"], "curve": curve, "secs": round(time.time() - t0, 1),
            "backend": jax.default_backend(), "versions": [jax.__version__, optax.__version__],
            "pos": cfg.pos, "gdim": cfg.gdim if cfg.arch in BEYOND_ARCHS else None,
