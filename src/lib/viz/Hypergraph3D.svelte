@@ -49,7 +49,7 @@
 	const N = $derived(layout.length);
 
 	interface GraphApi {
-		update(
+		syncFeatures(
 			q: number,
 			e: WeightedEdge[],
 			sel: { j: number; k: number } | null,
@@ -62,13 +62,15 @@
 	/** Container width, so labels near the right edge can sit on the node's left instead. */
 	let width = $state(0);
 
-	$effect(() => {
+	/** Synchronize reactive inputs with external Three.js meshes and material uniforms. */
+	function syncGraphFeatures() {
 		const q = query;
 		const e = edges;
 		const sel = selected;
 		const s = sets;
-		api?.update(q, e, sel, s);
-	});
+		api?.syncFeatures(q, e, sel, s);
+	}
+	$effect(syncGraphFeatures);
 
 	/** A fixed constellation: Fibonacci points on a flattened ellipsoid. */
 	function positions(count: number): [number, number, number][] {
@@ -325,7 +327,7 @@
 		}
 
 		return {
-			update(q, e, sel, s) {
+			syncFeatures(q, e, sel, s) {
 				const goals: Record<
 					string,
 					{ a: number; b: number; c: number; w: number; sel: number; attn: boolean }
@@ -426,6 +428,8 @@
 <style>
 	.graph {
 		position: relative;
+		/* Keep projected card depths inside this scene, below surrounding navigation. */
+		isolation: isolate;
 		width: 100%;
 		height: 100%;
 		min-height: 260px;

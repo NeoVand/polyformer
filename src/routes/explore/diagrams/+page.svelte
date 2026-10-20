@@ -66,7 +66,7 @@
 	/** The examples that have a recorded model: the first deal of each task. */
 	const RECORDED_SEED = 4;
 	let recorded = $state.raw<Record<TaskKey, Recording | null>>({ set: null, chase: null });
-	$effect(() => {
+	function loadRecordings() {
 		const get = (path: Parameters<typeof asset>[0]) =>
 			fetch(asset(path)).then((r) => (r.ok ? r.json() : null));
 		Promise.all([get('recorded/set-diagram.json'), get('recorded/chase-diagram.json')]).then(
@@ -74,7 +74,8 @@
 				(recorded = { set: set?.diagram ? set : null, chase: chase?.diagram ? chase : null }),
 			() => {}
 		);
-	});
+	}
+	$effect(loadRecordings);
 	const hasRecording = $derived(seed === RECORDED_SEED && !!recorded[task]);
 	const showingRecorded = $derived(source === 'recorded' && hasRecording);
 
@@ -94,13 +95,14 @@
 	let rootPick = $state<number | null>(null);
 	const root = $derived(rootPick ?? token);
 	// a new task or example starts from the ideal view until its first probe returns
-	$effect(() => {
+	function resetInspectedExample() {
 		void task;
 		void example;
 		trained = null;
 		rootPick = null;
-	});
-	$effect(() => {
+	}
+	$effect(resetInspectedExample);
+	function subscribeToDiagramProbe() {
 		if (source !== 'trained' || step === 0) return;
 		void checkpoint;
 		const b = bench;
@@ -114,7 +116,8 @@
 		return () => {
 			cancelled = true;
 		};
-	});
+	}
+	$effect(subscribeToDiagramProbe);
 
 	interface View {
 		head: DiagramHead;
@@ -200,7 +203,7 @@
 	// ── reveal: build the diagram from the values to the readout ─────────────
 	let reveal = $state(Infinity);
 	let playing = $state(false);
-	$effect(() => {
+	function runDiagramReveal() {
 		if (!playing) return;
 		const R = view.rounds;
 		const id = setInterval(() => {
@@ -209,7 +212,8 @@
 			if (next === R + 1) playing = false;
 		}, 850);
 		return () => clearInterval(id);
-	});
+	}
+	$effect(runDiagramReveal);
 	function play() {
 		if (playing) {
 			playing = false;
@@ -299,7 +303,8 @@
 	rail={[
 		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
 		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
-		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') }
+		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') },
+		{ id: 'groups', label: 'Holonomy', icon: Simplex, href: resolve('/explore/groups') }
 	]}
 	active="diagrams"
 >
@@ -1043,6 +1048,35 @@
 		}
 	}
 	@media (max-width: 640px) {
+		.screen {
+			grid-template-rows: auto auto auto auto;
+		}
+		.d-head {
+			flex-direction: column;
+			gap: 8px;
+		}
+		.status {
+			white-space: normal;
+		}
+		.panes {
+			grid-template-columns: minmax(0, 1fr);
+			gap: 26px;
+		}
+		.pane.every {
+			overflow: visible;
+			padding-right: 0;
+			border: 0;
+		}
+		.pane.every :global(.flow) {
+			flex: none;
+		}
+		.canvas {
+			flex: none;
+			height: 440px;
+		}
+		.cards {
+			flex-wrap: wrap;
+		}
 		h1 {
 			font-size: 26px;
 		}

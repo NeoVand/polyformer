@@ -80,7 +80,7 @@
 
 	/** Re-probe every 50 steps while training (steps arrive faster than a probe takes). */
 	const checkpoint = $derived(Math.floor(cubicStep / 50));
-	$effect(() => {
+	function subscribeToCubicProbe() {
 		if (source !== 'trained') return;
 		const l = layout;
 		void checkpoint;
@@ -95,7 +95,8 @@
 		return () => {
 			cancelled = true;
 		};
-	});
+	}
+	$effect(subscribeToCubicProbe);
 
 	const probe = $derived<ProbeResult>(source === 'trained' && trained ? trained : exact);
 	const hasScores = $derived(probe === exact);
@@ -189,11 +190,12 @@
 
 	// ── query tour ───────────────────────────────────────────────────────────
 	let touring = $state(false);
-	$effect(() => {
+	function runQueryTour() {
 		if (!touring) return;
 		const id = setInterval(() => step(1), 1400);
 		return () => clearInterval(id);
-	});
+	}
+	$effect(runQueryTour);
 	function setQuery(t: number) {
 		query = t;
 		pick = null;
@@ -237,7 +239,8 @@
 	rail={[
 		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
 		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
-		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') }
+		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') },
+		{ id: 'groups', label: 'Holonomy', icon: Simplex, href: resolve('/explore/groups') }
 	]}
 	active="tensor"
 >
@@ -267,17 +270,19 @@
 						<MathTex tex={shown === 'scores' ? 'A' : 'P'} /></span
 					>
 				</div>
-				<TensorCube
-					values={cubeValues}
-					n={C}
-					{query}
-					{selected}
-					onpick={(c) => {
-						query = c.i;
-						pick = { j: c.j, k: c.k };
-					}}
-					onanchor={(p) => (cubeAnchor = p)}
-				/>
+				<div class="cube-viewport">
+					<TensorCube
+						values={cubeValues}
+						n={C}
+						{query}
+						{selected}
+						onpick={(c) => {
+							query = c.i;
+							pick = { j: c.j, k: c.k };
+						}}
+						onanchor={(p) => (cubeAnchor = p)}
+					/>
+				</div>
 				<div class="view-foot">Drag to orbit. Click a bright voxel to select it.</div>
 			</div>
 			<div class="view graph-view" id="relations">
@@ -461,7 +466,7 @@
 		</section>
 
 		<footer class="transport" aria-label="Lab controls">
-			<div class="group">
+			<div class="group query-control">
 				<span class="t-label">Query <i>i</i></span>
 				<div class="stepper">
 					<button onclick={() => step(-1)} aria-label="Previous query"
@@ -487,7 +492,7 @@
 				/>
 				<span class="num val">{tau.toFixed(2)}</span>
 			</div>
-			<div class="group">
+			<div class="group source-control">
 				<span class="t-label">Head</span>
 				<div class="seg" role="group" aria-label="Head">
 					<button aria-pressed={source === 'exact'} onclick={() => (source = 'exact')}
@@ -608,6 +613,10 @@
 	}
 	.graph-view .view-label {
 		left: 12px;
+	}
+	.cube-viewport {
+		height: 100%;
+		min-height: 0;
 	}
 	.view-foot {
 		position: absolute;
@@ -880,6 +889,66 @@
 		}
 	}
 	@media (max-width: 640px) {
+		.lab {
+			--transport-h: 145px;
+		}
+		.cube-view {
+			display: grid;
+			grid-template-rows: minmax(260px, 1fr) auto;
+			gap: 12px;
+			padding-bottom: 8px;
+		}
+		.cube-view .view-foot {
+			position: static;
+			line-height: 1.4;
+		}
+		.transport {
+			height: auto;
+			min-height: 128px;
+			flex-wrap: wrap;
+			gap: 10px 14px;
+			padding: 10px 16px calc(8px + env(safe-area-inset-bottom));
+			overflow: visible;
+		}
+		.query-control {
+			order: 1;
+		}
+		.source-control {
+			order: 2;
+			margin-left: auto;
+			gap: 6px;
+		}
+		.source-control :global(.seg button) {
+			padding-inline: 8px;
+		}
+		.temp {
+			order: 3;
+			flex: 1 0 100%;
+			gap: 8px;
+		}
+		.temp input {
+			flex: 1;
+			min-width: 0;
+			width: auto;
+		}
+		.temp .val {
+			min-width: 28px;
+			text-align: right;
+		}
+		.keys {
+			order: 4;
+			gap: 0;
+		}
+		.key {
+			min-width: 43px;
+		}
+		.group.right {
+			order: 5;
+			margin-left: auto;
+		}
+		.group.right .t-label {
+			font-size: 9px;
+		}
 		h1 {
 			font-size: 24px;
 		}

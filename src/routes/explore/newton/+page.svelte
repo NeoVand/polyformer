@@ -60,14 +60,15 @@
 		history: [number, number, number][];
 	}
 	let recording = $state.raw<Recording | null>(null);
-	$effect(() => {
+	function loadRecording() {
 		fetch(asset('recorded/newton.json'))
 			.then((r) => (r.ok ? r.json() : null))
 			.then(
 				(j) => (recording = j?.strength ? j : null),
 				() => {}
 			);
-	});
+	}
+	$effect(loadRecording);
 
 	const step = $derived.by(() => {
 		void bench.version;
@@ -84,7 +85,7 @@
 	/** Re-probe every 50 steps, and knock arities out every 250 (six full evaluations). */
 	const checkpoint = $derived(Math.floor(step / 50));
 	const knockpoint = $derived(Math.floor(step / 250));
-	$effect(() => {
+	function subscribeToNewtonProbe() {
 		if (source !== 'live' || step === 0) return;
 		void checkpoint;
 		const l = layout;
@@ -96,8 +97,9 @@
 		return () => {
 			cancelled = true;
 		};
-	});
-	$effect(() => {
+	}
+	$effect(subscribeToNewtonProbe);
+	function subscribeToKnockouts() {
 		if (source !== 'live' || step === 0) return;
 		void knockpoint;
 		void training;
@@ -109,14 +111,16 @@
 		return () => {
 			cancelled = true;
 		};
-	});
+	}
+	$effect(subscribeToKnockouts);
 
 	const fits = $derived(probe ? fitChannels(probe) : []);
 	/** Characters found and accuracy at every live probe, for the chart. */
 	let liveHistory = $state.raw<[number, number, number][]>([]);
-	$effect(() => {
+	function resetLiveHistory() {
 		if (step === 0) liveHistory = [];
-	});
+	}
+	$effect(resetLiveHistory);
 	const liveBest = $derived.by(() => {
 		const best: (ChannelFit | null)[] = CLASSES.map(() => null);
 		for (const f of fits) if (!best[f.cls] || f.R > best[f.cls]!.R) best[f.cls] = f;
@@ -184,14 +188,15 @@
 
 	const found = $derived(view ? countFound(Float32Array.from(view.strength)) : 0);
 	// a live probe adds a point once its characters are counted
-	$effect(() => {
+	function recordLiveCheckpoint() {
 		const p = probe;
 		if (!p || !live) return;
 		const n = countFound(classStrength(fits));
 		const acc = bench.history[RUN].evalAccuracy.at(-1) ?? 0.5;
 		const last = untrack(() => liveHistory.at(-1));
 		if (!last || last[0] < p.step) liveHistory = [...untrack(() => liveHistory), [p.step, n, acc]];
-	});
+	}
+	$effect(recordLiveCheckpoint);
 
 	// ── found and accuracy through training, on one axis ─────────────────────
 	const CW = 420;
@@ -340,7 +345,8 @@
 	rail={[
 		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
 		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
-		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') }
+		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') },
+		{ id: 'groups', label: 'Holonomy', icon: Simplex, href: resolve('/explore/groups') }
 	]}
 	active="newton"
 >
