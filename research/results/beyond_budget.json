@@ -21,6 +21,21 @@
       "stage": "screen",
       "status": "complete"
     },
+    "03e4021046f8f423d8187aa2": {
+      "call_id": "fc-01M5CRQNVXNCNAVQNNZXNK50S7",
+      "gpu": "L4",
+      "id": "03e4021046f8f423d8187aa2",
+      "launched_at": "2026-10-20T13:41:39.427018+00:00",
+      "manifest": "beyond_conv_learn",
+      "manifest_sha256": "80c4b7e7e6aaef9b4bf2cb10d068626ffc54134cae909d1c9f38c3e88cee21a2",
+      "reserved_at": "2026-10-20T13:41:39.274657+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/03e4021046f8f423d8187aa2.json",
+      "settled_at": "2026-10-20T13:44:03.614589+00:00",
+      "settled_usd": 0.101836,
+      "stage": "screen",
+      "status": "complete"
+    },
     "08107cbfdf6e851fff61a230": {
       "call_id": "fc-01M5CQ1REWB6EGD8AD57NER681",
       "gpu": "L4",
@@ -60,8 +75,26 @@
       "manifest_sha256": "8899317c9d8ee6c388708edb08337c474ba4ff6df2e392070e1502949525132a",
       "reserved_at": "2026-10-20T13:29:39.842721+00:00",
       "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/1c87d28da80d9b2e8e929979.json",
+      "settled_at": "2026-10-20T13:35:36.770869+00:00",
+      "settled_usd": 0.087405,
       "stage": "screen",
-      "status": "running"
+      "status": "complete"
+    },
+    "1de37b95cfc1d7c7194fce9d": {
+      "call_id": "fc-01M5CRKJMH64W9DQFHZ42JS407",
+      "gpu": "H100",
+      "id": "1de37b95cfc1d7c7194fce9d",
+      "launched_at": "2026-10-20T13:39:24.985742+00:00",
+      "manifest": "beyond_chunk_runtime",
+      "manifest_sha256": "de32c7d32587c65a45d4e27125e608a4f97e3c0ccb393e55cd87c27ef0664b35",
+      "reserved_at": "2026-10-20T13:39:24.698151+00:00",
+      "reserved_usd": 1.283903,
+      "result_file": "results/beyond_runs/1de37b95cfc1d7c7194fce9d.json",
+      "settled_at": "2026-10-20T13:41:21.609103+00:00",
+      "settled_usd": 0.320785,
+      "stage": "development",
+      "status": "complete"
     },
     "2b1c0e117380da7fd1d44d3d": {
       "call_id": "fc-01M5CPN6TG4X2C1D9ME2MEMG5W",
@@ -93,6 +126,21 @@
       "stage": "screen",
       "status": "complete"
     },
+    "30babb6504275c483d96bd27": {
+      "call_id": "fc-01M5CRCDRD26GZRD5TF0NX0B0R",
+      "gpu": "L4",
+      "id": "30babb6504275c483d96bd27",
+      "launched_at": "2026-10-20T13:35:30.617678+00:00",
+      "manifest": "beyond_combined_learn",
+      "manifest_sha256": "8899317c9d8ee6c388708edb08337c474ba4ff6df2e392070e1502949525132a",
+      "reserved_at": "2026-10-20T13:35:30.519469+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/30babb6504275c483d96bd27.json",
+      "settled_at": "2026-10-20T13:37:24.794335+00:00",
+      "settled_usd": 0.091377,
+      "stage": "screen",
+      "status": "complete"
+    },
     "35175dfca3c54c5c7d0f8e29": {
       "call_id": "fc-01M5CQXRZ40Y65QBFWH1S41E7K",
       "gpu": "L4",
@@ -102,8 +150,11 @@
       "manifest_sha256": "80c4b7e7e6aaef9b4bf2cb10d068626ffc54134cae909d1c9f38c3e88cee21a2",
       "reserved_at": "2026-10-20T13:27:30.252813+00:00",
       "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/35175dfca3c54c5c7d0f8e29.json",
+      "settled_at": "2026-10-20T13:40:06.114482+00:00",
+      "settled_usd": 0.094493,
       "stage": "screen",
-      "status": "running"
+      "status": "complete"
     },
     "3a3c3f499bd2e2b3c5211da4": {
       "call_id": "fc-01M5CPSEVKVNDXGCAZZWGNPZJK",
@@ -300,6 +351,21 @@
       "stage": "screen",
       "status": "complete"
     },
+    "63bfd9fd58ee65555dd5d37a": {
+      "call_id": "fc-01M5CRMTWX45WW1KMMEFXEW0ZD",
+      "gpu": "L4",
+      "id": "63bfd9fd58ee65555dd5d37a",
+      "launched_at": "2026-10-20T13:40:06.226176+00:00",
+      "manifest": "beyond_conv_learn",
+      "manifest_sha256": "80c4b7e7e6aaef9b4bf2cb10d068626ffc54134cae909d1c9f38c3e88cee21a2",
+      "reserved_at": "2026-10-20T13:40:06.116700+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/63bfd9fd58ee65555dd5d37a.json",
+      "settled_at": "2026-10-20T13:41:56.739247+00:00",
+      "settled_usd": 0.08987,
+      "stage": "screen",
+      "status": "complete"
+    },
     "6a5ade0208f0c3a272fbafe5": {
       "call_id": "fc-01M5CQQAR4S634GRPHZAQSQT3G",
       "gpu": "H100",
@@ -405,6 +471,21 @@
       "stage": "screen",
       "status": "complete"
     },
+    "98e2cec6e9dc68f42e7fd207": {
+      "call_id": "fc-01M5CRKJMVX944K4A8X8FGM52R",
+      "gpu": "H100",
+      "id": "98e2cec6e9dc68f42e7fd207",
+      "launched_at": "2026-10-20T13:39:25.000124+00:00",
+      "manifest": "beyond_chunk_runtime",
+      "manifest_sha256": "de32c7d32587c65a45d4e27125e608a4f97e3c0ccb393e55cd87c27ef0664b35",
+      "reserved_at": "2026-10-20T13:39:24.700632+00:00",
+      "reserved_usd": 1.283903,
+      "result_file": "results/beyond_runs/98e2cec6e9dc68f42e7fd207.json",
+      "settled_at": "2026-10-20T13:42:39.430191+00:00",
+      "settled_usd": 0.412706,
+      "stage": "development",
+      "status": "complete"
+    },
     "990d4239e7be07e8862c4c11": {
       "call_id": "fc-01M5CQ1X6M69XCY7094Q72E4RY",
       "gpu": "L4",
@@ -435,6 +516,51 @@
       "stage": "development",
       "status": "complete"
     },
+    "9d6e7fdc1ed60e57a38256de": {
+      "call_id": "fc-01M5CRFT8D7XTMWPYACW4MW0GT",
+      "gpu": "L4",
+      "id": "9d6e7fdc1ed60e57a38256de",
+      "launched_at": "2026-10-20T13:37:21.721184+00:00",
+      "manifest": "beyond_combined_learn",
+      "manifest_sha256": "8899317c9d8ee6c388708edb08337c474ba4ff6df2e392070e1502949525132a",
+      "reserved_at": "2026-10-20T13:37:21.627906+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/9d6e7fdc1ed60e57a38256de.json",
+      "settled_at": "2026-10-20T13:39:04.243382+00:00",
+      "settled_usd": 0.086155,
+      "stage": "screen",
+      "status": "complete"
+    },
+    "a04972ff4c185ebd52583065": {
+      "call_id": "fc-01M5CRKJN5DQ8F76Z6SAY8QHQG",
+      "gpu": "H100",
+      "id": "a04972ff4c185ebd52583065",
+      "launched_at": "2026-10-20T13:39:25.028699+00:00",
+      "manifest": "beyond_chunk_runtime",
+      "manifest_sha256": "de32c7d32587c65a45d4e27125e608a4f97e3c0ccb393e55cd87c27ef0664b35",
+      "reserved_at": "2026-10-20T13:39:24.707073+00:00",
+      "reserved_usd": 1.283903,
+      "result_file": "results/beyond_runs/a04972ff4c185ebd52583065.json",
+      "settled_at": "2026-10-20T13:41:32.151325+00:00",
+      "settled_usd": 0.33168,
+      "stage": "development",
+      "status": "complete"
+    },
+    "a5ba73f388e762fa2aeabe91": {
+      "call_id": "fc-01M5CRJYFAJPJVZFKH19N3EMPS",
+      "gpu": "L4",
+      "id": "a5ba73f388e762fa2aeabe91",
+      "launched_at": "2026-10-20T13:39:04.345472+00:00",
+      "manifest": "beyond_combined_learn",
+      "manifest_sha256": "8899317c9d8ee6c388708edb08337c474ba4ff6df2e392070e1502949525132a",
+      "reserved_at": "2026-10-20T13:39:04.245758+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/a5ba73f388e762fa2aeabe91.json",
+      "settled_at": "2026-10-20T13:40:30.415836+00:00",
+      "settled_usd": 0.080347,
+      "stage": "screen",
+      "status": "complete"
+    },
     "af70bf3af59f83217c3f5fa7": {
       "call_id": "fc-01M5CPTGAPBK0EY83KEC82H84Z",
       "gpu": "L4",
@@ -459,8 +585,11 @@
       "manifest_sha256": "80c4b7e7e6aaef9b4bf2cb10d068626ffc54134cae909d1c9f38c3e88cee21a2",
       "reserved_at": "2026-10-20T13:27:30.255213+00:00",
       "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/b921b876295db69c9ce72202.json",
+      "settled_at": "2026-10-20T13:39:52.858674+00:00",
+      "settled_usd": 0.092055,
       "stage": "screen",
-      "status": "running"
+      "status": "complete"
     },
     "bf619267589fc11628ce3d97": {
       "call_id": "fc-01M5CPK6DX7EFYZS34XRATWB9C",
@@ -489,6 +618,36 @@
       "result_file": "results/beyond_runs/c4437655dfa38de1d1ec5c70.json",
       "settled_at": "2026-10-20T13:13:24.198818+00:00",
       "settled_usd": 0.071538,
+      "stage": "screen",
+      "status": "complete"
+    },
+    "c6a1e92a4936b0dfd1f6c5bf": {
+      "call_id": "fc-01M5CRGWDQ5M9R9CW1XX1FHZ2P",
+      "gpu": "H100",
+      "id": "c6a1e92a4936b0dfd1f6c5bf",
+      "launched_at": "2026-10-20T13:37:56.701723+00:00",
+      "manifest": "beyond_chunk_check",
+      "manifest_sha256": "912be9dac4b2210e84a426826d405725ce75038fb071192d84d9fd57696a4c04",
+      "reserved_at": "2026-10-20T13:37:56.350535+00:00",
+      "reserved_usd": 0.551639,
+      "result_file": "results/beyond_runs/c6a1e92a4936b0dfd1f6c5bf.json",
+      "settled_at": "2026-10-20T13:39:07.653536+00:00",
+      "settled_usd": 0.265331,
+      "stage": "development",
+      "status": "complete"
+    },
+    "c7406bc5d62f4ce35c27ff9c": {
+      "call_id": "fc-01M5CRFXBGF76G7E63P1Q10VXB",
+      "gpu": "L4",
+      "id": "c7406bc5d62f4ce35c27ff9c",
+      "launched_at": "2026-10-20T13:37:24.890132+00:00",
+      "manifest": "beyond_combined_learn",
+      "manifest_sha256": "8899317c9d8ee6c388708edb08337c474ba4ff6df2e392070e1502949525132a",
+      "reserved_at": "2026-10-20T13:37:24.797311+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/c7406bc5d62f4ce35c27ff9c.json",
+      "settled_at": "2026-10-20T13:39:20.173208+00:00",
+      "settled_usd": 0.091849,
       "stage": "screen",
       "status": "complete"
     },
@@ -531,8 +690,11 @@
       "manifest_sha256": "8899317c9d8ee6c388708edb08337c474ba4ff6df2e392070e1502949525132a",
       "reserved_at": "2026-10-20T13:29:39.845363+00:00",
       "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/d0222ed242988b7ab7d5df26.json",
+      "settled_at": "2026-10-20T13:35:30.516784+00:00",
+      "settled_usd": 0.087128,
       "stage": "screen",
-      "status": "running"
+      "status": "complete"
     },
     "d3c62aae67f9c03cbb2f8fcc": {
       "call_id": "fc-01M5CQQ994V8Q5AAZZ08ECENNC",
@@ -562,6 +724,21 @@
       "settled_at": "2026-10-20T13:18:08.050051+00:00",
       "settled_usd": 0.092989,
       "stage": "screen",
+      "status": "complete"
+    },
+    "d550ed4bf15bb8fc7eeb1354": {
+      "call_id": "fc-01M5CRKJMK2KKF2VJ72Z86HAK1",
+      "gpu": "H100",
+      "id": "d550ed4bf15bb8fc7eeb1354",
+      "launched_at": "2026-10-20T13:39:25.003795+00:00",
+      "manifest": "beyond_chunk_runtime",
+      "manifest_sha256": "de32c7d32587c65a45d4e27125e608a4f97e3c0ccb393e55cd87c27ef0664b35",
+      "reserved_at": "2026-10-20T13:39:24.704294+00:00",
+      "reserved_usd": 1.283903,
+      "result_file": "results/beyond_runs/d550ed4bf15bb8fc7eeb1354.json",
+      "settled_at": "2026-10-20T13:42:25.258617+00:00",
+      "settled_usd": 0.392951,
+      "stage": "development",
       "status": "complete"
     },
     "da1ce7ea9b318c3f4379e155": {
@@ -639,6 +816,21 @@
       "stage": "screen",
       "status": "complete"
     },
+    "ed557bff0df391849ad5dd80": {
+      "call_id": "fc-01M5CRCKVVQGJQR6GHSGKP7QH1",
+      "gpu": "L4",
+      "id": "ed557bff0df391849ad5dd80",
+      "launched_at": "2026-10-20T13:35:36.865702+00:00",
+      "manifest": "beyond_combined_learn",
+      "manifest_sha256": "8899317c9d8ee6c388708edb08337c474ba4ff6df2e392070e1502949525132a",
+      "reserved_at": "2026-10-20T13:35:36.773555+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/ed557bff0df391849ad5dd80.json",
+      "settled_at": "2026-10-20T13:37:21.625337+00:00",
+      "settled_usd": 0.086868,
+      "stage": "screen",
+      "status": "complete"
+    },
     "ef91ebcae32572c2c3a61a1a": {
       "call_id": "fc-01M5CQQ99H86V95GXNJVNPHBCE",
       "gpu": "L4",
@@ -711,6 +903,21 @@
       "result_file": "results/beyond_runs/fb3d1493591a72ba54a0b66f.json",
       "settled_at": "2026-10-20T13:14:47.541036+00:00",
       "settled_usd": 0.080611,
+      "stage": "screen",
+      "status": "complete"
+    },
+    "ff686e596435b28fb1bf818f": {
+      "call_id": "fc-01M5CRMDYP05H80K2JC1MN2D24",
+      "gpu": "L4",
+      "id": "ff686e596435b28fb1bf818f",
+      "launched_at": "2026-10-20T13:39:52.999365+00:00",
+      "manifest": "beyond_conv_learn",
+      "manifest_sha256": "80c4b7e7e6aaef9b4bf2cb10d068626ffc54134cae909d1c9f38c3e88cee21a2",
+      "reserved_at": "2026-10-20T13:39:52.861461+00:00",
+      "reserved_usd": 0.259771,
+      "result_file": "results/beyond_runs/ff686e596435b28fb1bf818f.json",
+      "settled_at": "2026-10-20T13:41:39.271941+00:00",
+      "settled_usd": 0.088732,
       "stage": "screen",
       "status": "complete"
     }

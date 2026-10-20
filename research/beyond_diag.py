@@ -400,6 +400,14 @@ def main():
     }
     if final is not None:
         output.update({name: final[name] for name in ("acc", "bal_acc", "bal_late", "mse", "normalized_mse") if name in final})
+        output["component_parameters"] = [
+            {
+                name: np.asarray(layer[name]).tolist()
+                for name in ("group_mix", "path_mix", "context_mix", "A_log", "dt_bias")
+                if name in layer
+            }
+            for layer in params["layers"]
+        ]
     if args.evallen and final is not None:
         group = args.task.split("_")[1].upper()
         extrapolation = lambda r, b: word(r, b, group, args.evallen)

@@ -1,0 +1,1780 @@
+{
+  "status": "pass",
+  "purpose": "Explanatory empirical position-prior control for causal Match-3; no token identities or group products enter prediction.",
+  "scope_limit": "This is a calibrated empirical baseline, not an analytic Bayes upper bound and not an architectural pass threshold.",
+  "task": "gmatch_a5_causal",
+  "sequence_length_including_bos": 17,
+  "group_elements_per_sequence": 16,
+  "group_order": 60,
+  "label_definition": "At element t, positive iff there exist i<j<t with g_i*g_j*g_t equal to identity in A5.",
+  "scored_sequence_indices_zero_based": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "scored_element_positions_one_based": [
+    3,
+    4,
+    5,
+    6,
+    7,
+    8,
+    9,
+    10,
+    11,
+    12,
+    13,
+    14,
+    15,
+    16
+  ],
+  "excluded_sequence_indices_zero_based": [
+    0,
+    1,
+    2
+  ],
+  "mask_note": "BOS and the first two group elements are unscored because no triple can end there. Each sequence contributes14 scored labels.",
+  "calibration": {
+    "seed": 99999,
+    "sequences": 100000,
+    "batch_size": 2048,
+    "rng": "numpy.random.default_rng (PCG64), one persistent generator across batches",
+    "positive_counts_by_sequence_index": [
+      0,
+      0,
+      0,
+      1689,
+      4840,
+      9629,
+      15535,
+      22261,
+      29785,
+      37635,
+      45005,
+      52810,
+      59914,
+      67018,
+      73149,
+      78089,
+      82721
+    ],
+    "scored_counts_by_sequence_index": [
+      0,
+      0,
+      0,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000,
+      100000
+    ],
+    "positive_probability_by_sequence_index": [
+      null,
+      null,
+      null,
+      0.01689,
+      0.0484,
+      0.09629,
+      0.15535,
+      0.22261,
+      0.29785,
+      0.37635,
+      0.45005,
+      0.5281,
+      0.59914,
+      0.67018,
+      0.73149,
+      0.78089,
+      0.82721
+    ],
+    "global_positive_prevalence_on_scored_positions": 0.4143428571428571,
+    "majority_label": 0
+  },
+  "decision_rules": {
+    "position_balanced_accuracy": "Predict1 iff estimated p_t > estimated global prevalence pi; ties predict0.",
+    "position_accuracy": "Predict1 iff estimated p_t >0.5; ties predict0.",
+    "constant_calibrated_majority": "Predict the calibration-set majority label at every scored position; balanced accuracy is exactly0.5 when both labels are present.",
+    "derivation": "BA=0.5*[sum_t w_t p_t h_t/pi + sum_t w_t(1-p_t)(1-h_t)/(1-pi)]. Setting h_t=1 improves this calibration objective iff p_t/pi > (1-p_t)/(1-pi), equivalently p_t>pi. Here w_t=1/14 over scored positions. Accuracy is sum_t w_t[p_t h_t+(1-p_t)(1-h_t)], optimized pointwise by p_t>0.5.",
+    "selection_note": "All decision rules are frozen from independent calibration. Heldout labels do not choose thresholds or positions."
+  },
+  "fixed_predictions_by_sequence_index": {
+    "position_balanced_accuracy": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "position_accuracy": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      1,
+      1,
+      1,
+      1,
+      1,
+      1
+    ],
+    "constant_calibrated_majority": [
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0,
+      0
+    ]
+  },
+  "fixed_positive_scored_positions": {
+    "position_balanced_accuracy": [
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "position_accuracy": [
+      11,
+      12,
+      13,
+      14,
+      15,
+      16
+    ],
+    "constant_calibrated_majority": []
+  },
+  "evaluation": {
+    "validation": {
+      "seeds": [
+        10000,
+        10001,
+        10002,
+        10003
+      ],
+      "sequences_per_seed": 1024,
+      "by_seed": [
+        {
+          "seed": 10000,
+          "sequences": 1024,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.7405831473214286,
+              "acc_se_sequences": 0.0034290276351162012,
+              "seq_acc": 0.01171875,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.9814453125,
+                0.9541015625,
+                0.8876953125,
+                0.873046875,
+                0.7861328125,
+                0.6943359375,
+                0.6318359375,
+                0.447265625,
+                0.5126953125,
+                0.59375,
+                0.6708984375,
+                0.7080078125,
+                0.7900390625,
+                0.8369140625
+              ],
+              "bal_acc": 0.7484947094428732,
+              "label_counts": [
+                8447,
+                5889
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41078404017857145,
+              "true_positive_rate": 0.7928340974698591,
+              "true_negative_rate": 0.7041553214158873,
+              "bal_acc_se_sequences": 0.0034251216545928263,
+              "bal_acc_95pct_normal_interval": [
+                0.7417814709998712,
+                0.7552079478858752
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  5948,
+                  2499
+                ],
+                [
+                  1220,
+                  4669
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7481166294642857,
+              "acc_se_sequences": 0.0034819437379634763,
+              "seq_acc": 0.0185546875,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.9814453125,
+                0.9541015625,
+                0.8876953125,
+                0.873046875,
+                0.7861328125,
+                0.6943359375,
+                0.6318359375,
+                0.552734375,
+                0.5126953125,
+                0.59375,
+                0.6708984375,
+                0.7080078125,
+                0.7900390625,
+                0.8369140625
+              ],
+              "bal_acc": 0.7431116695125156,
+              "label_counts": [
+                8447,
+                5889
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41078404017857145,
+              "true_positive_rate": 0.7150619799626422,
+              "true_negative_rate": 0.771161359062389,
+              "bal_acc_se_sequences": 0.0035935285361506134,
+              "bal_acc_95pct_normal_interval": [
+                0.7360683535816605,
+                0.7501549854433708
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  6514,
+                  1933
+                ],
+                [
+                  1678,
+                  4211
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.5892159598214286,
+              "acc_se_sequences": 0.0035609254264938025,
+              "seq_acc": 0.0,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.9814453125,
+                0.9541015625,
+                0.8876953125,
+                0.873046875,
+                0.7861328125,
+                0.6943359375,
+                0.6318359375,
+                0.552734375,
+                0.4873046875,
+                0.40625,
+                0.3291015625,
+                0.2919921875,
+                0.2099609375,
+                0.1630859375
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                8447,
+                5889
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41078404017857145,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  8447,
+                  0
+                ],
+                [
+                  5889,
+                  0
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "seed": 10001,
+          "sequences": 1024,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.74365234375,
+              "acc_se_sequences": 0.003451474582099709,
+              "seq_acc": 0.013671875,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.984375,
+                0.951171875,
+                0.896484375,
+                0.8603515625,
+                0.77734375,
+                0.6826171875,
+                0.64453125,
+                0.4541015625,
+                0.533203125,
+                0.611328125,
+                0.6787109375,
+                0.7353515625,
+                0.7705078125,
+                0.8310546875
+              ],
+              "bal_acc": 0.7508111249530014,
+              "label_counts": [
+                8379,
+                5957
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41552734375,
+              "true_positive_rate": 0.7931844888366627,
+              "true_negative_rate": 0.70843776106934,
+              "bal_acc_se_sequences": 0.0034492531460260374,
+              "bal_acc_95pct_normal_interval": [
+                0.7440505887867903,
+                0.7575716611192125
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  5936,
+                  2443
+                ],
+                [
+                  1232,
+                  4725
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7502092633928571,
+              "acc_se_sequences": 0.0034089339681820214,
+              "seq_acc": 0.013671875,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.984375,
+                0.951171875,
+                0.896484375,
+                0.8603515625,
+                0.77734375,
+                0.6826171875,
+                0.64453125,
+                0.5458984375,
+                0.533203125,
+                0.611328125,
+                0.6787109375,
+                0.7353515625,
+                0.7705078125,
+                0.8310546875
+              ],
+              "bal_acc": 0.7451386145403798,
+              "label_counts": [
+                8379,
+                5957
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41552734375,
+              "true_positive_rate": 0.7151250629511499,
+              "true_negative_rate": 0.7751521661296097,
+              "bal_acc_se_sequences": 0.0035053841748949903,
+              "bal_acc_95pct_normal_interval": [
+                0.7382680615575856,
+                0.7520091675231739
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  6495,
+                  1884
+                ],
+                [
+                  1697,
+                  4260
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.58447265625,
+              "acc_se_sequences": 0.0034914162682570518,
+              "seq_acc": 0.0,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.984375,
+                0.951171875,
+                0.896484375,
+                0.8603515625,
+                0.77734375,
+                0.6826171875,
+                0.64453125,
+                0.5458984375,
+                0.466796875,
+                0.388671875,
+                0.3212890625,
+                0.2646484375,
+                0.2294921875,
+                0.1689453125
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                8379,
+                5957
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41552734375,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  8379,
+                  0
+                ],
+                [
+                  5957,
+                  0
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "seed": 10002,
+          "sequences": 1024,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.744140625,
+              "acc_se_sequences": 0.0035661261427109166,
+              "seq_acc": 0.01171875,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.984375,
+                0.95703125,
+                0.9091796875,
+                0.8359375,
+                0.783203125,
+                0.6904296875,
+                0.6181640625,
+                0.44921875,
+                0.53515625,
+                0.595703125,
+                0.6884765625,
+                0.751953125,
+                0.7890625,
+                0.830078125
+              ],
+              "bal_acc": 0.7507763390924727,
+              "label_counts": [
+                8334,
+                6002
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41866629464285715,
+              "true_positive_rate": 0.7915694768410529,
+              "true_negative_rate": 0.7099832013438925,
+              "bal_acc_se_sequences": 0.0035548138962046586,
+              "bal_acc_95pct_normal_interval": [
+                0.7438089038559115,
+                0.7577437743290338
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  5917,
+                  2417
+                ],
+                [
+                  1251,
+                  4751
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7513950892857143,
+              "acc_se_sequences": 0.003526642209661871,
+              "seq_acc": 0.013671875,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.984375,
+                0.95703125,
+                0.9091796875,
+                0.8359375,
+                0.783203125,
+                0.6904296875,
+                0.6181640625,
+                0.55078125,
+                0.53515625,
+                0.595703125,
+                0.6884765625,
+                0.751953125,
+                0.7890625,
+                0.830078125
+              ],
+              "bal_acc": 0.7462930722956359,
+              "label_counts": [
+                8334,
+                6002
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41866629464285715,
+              "true_positive_rate": 0.714928357214262,
+              "true_negative_rate": 0.7776577873770099,
+              "bal_acc_se_sequences": 0.0036208575000804813,
+              "bal_acc_95pct_normal_interval": [
+                0.7391961915954781,
+                0.7533899529957937
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  6481,
+                  1853
+                ],
+                [
+                  1711,
+                  4291
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.5813337053571429,
+              "acc_se_sequences": 0.0036198053585382623,
+              "seq_acc": 0.0,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.984375,
+                0.95703125,
+                0.9091796875,
+                0.8359375,
+                0.783203125,
+                0.6904296875,
+                0.6181640625,
+                0.55078125,
+                0.46484375,
+                0.404296875,
+                0.3115234375,
+                0.248046875,
+                0.2109375,
+                0.169921875
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                8334,
+                6002
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.41866629464285715,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  8334,
+                  0
+                ],
+                [
+                  6002,
+                  0
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "seed": 10003,
+          "sequences": 1024,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.7447684151785714,
+              "acc_se_sequences": 0.0035861447658698,
+              "seq_acc": 0.017578125,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98828125,
+                0.939453125,
+                0.9169921875,
+                0.837890625,
+                0.771484375,
+                0.6806640625,
+                0.6376953125,
+                0.45703125,
+                0.52734375,
+                0.6181640625,
+                0.6943359375,
+                0.7236328125,
+                0.80078125,
+                0.8330078125
+              ],
+              "bal_acc": 0.7511774953699579,
+              "label_counts": [
+                8313,
+                6023
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.42013113839285715,
+              "true_positive_rate": 0.7913000166030217,
+              "true_negative_rate": 0.711054974136894,
+              "bal_acc_se_sequences": 0.0035565618884272465,
+              "bal_acc_95pct_normal_interval": [
+                0.7442066340686405,
+                0.7581483566712753
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  5911,
+                  2402
+                ],
+                [
+                  1257,
+                  4766
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7509068080357143,
+              "acc_se_sequences": 0.0034640964530513706,
+              "seq_acc": 0.015625,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98828125,
+                0.939453125,
+                0.9169921875,
+                0.837890625,
+                0.771484375,
+                0.6806640625,
+                0.6376953125,
+                0.54296875,
+                0.52734375,
+                0.6181640625,
+                0.6943359375,
+                0.7236328125,
+                0.80078125,
+                0.8330078125
+              ],
+              "bal_acc": 0.7457680219729499,
+              "label_counts": [
+                8313,
+                6023
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.42013113839285715,
+              "true_positive_rate": 0.713597874813216,
+              "true_negative_rate": 0.7779381691326838,
+              "bal_acc_se_sequences": 0.0035516234380104897,
+              "bal_acc_95pct_normal_interval": [
+                0.7388068400344493,
+                0.7527292039114505
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  6467,
+                  1846
+                ],
+                [
+                  1725,
+                  4298
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.5798688616071429,
+              "acc_se_sequences": 0.003491312733353774,
+              "seq_acc": 0.0,
+              "scored_tokens": 14336,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98828125,
+                0.939453125,
+                0.9169921875,
+                0.837890625,
+                0.771484375,
+                0.6806640625,
+                0.6376953125,
+                0.54296875,
+                0.47265625,
+                0.3818359375,
+                0.3056640625,
+                0.2763671875,
+                0.19921875,
+                0.1669921875
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                8313,
+                6023
+              ],
+              "sequences": 1024,
+              "positive_prevalence": 0.42013113839285715,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  8313,
+                  0
+                ],
+                [
+                  6023,
+                  0
+                ]
+              ]
+            }
+          }
+        }
+      ],
+      "pooled": {
+        "position_balanced_accuracy": {
+          "acc": 0.7432861328125,
+          "acc_se_sequences": 0.0017539712929525576,
+          "seq_acc": 0.013671875,
+          "scored_tokens": 57344,
+          "per_pos": [
+            0.0,
+            0.0,
+            0.0,
+            0.984619140625,
+            0.950439453125,
+            0.902587890625,
+            0.851806640625,
+            0.779541015625,
+            0.68701171875,
+            0.633056640625,
+            0.451904296875,
+            0.527099609375,
+            0.604736328125,
+            0.68310546875,
+            0.729736328125,
+            0.78759765625,
+            0.832763671875
+          ],
+          "bal_acc": 0.7503041676013422,
+          "label_counts": [
+            33473,
+            23871
+          ],
+          "sequences": 4096,
+          "positive_prevalence": 0.41627720424107145,
+          "true_positive_rate": 0.7922164970047337,
+          "true_negative_rate": 0.7083918381979506,
+          "bal_acc_se_sequences": 0.0017477963809393456,
+          "bal_acc_95pct_normal_interval": [
+            0.7468784866947011,
+            0.7537298485079833
+          ],
+          "confusion_matrix_true_rows_pred_cols": [
+            [
+              23712,
+              9761
+            ],
+            [
+              4960,
+              18911
+            ]
+          ]
+        },
+        "position_accuracy": {
+          "acc": 0.7501569475446429,
+          "acc_se_sequences": 0.0017348045649840525,
+          "seq_acc": 0.015380859375,
+          "scored_tokens": 57344,
+          "per_pos": [
+            0.0,
+            0.0,
+            0.0,
+            0.984619140625,
+            0.950439453125,
+            0.902587890625,
+            0.851806640625,
+            0.779541015625,
+            0.68701171875,
+            0.633056640625,
+            0.548095703125,
+            0.527099609375,
+            0.604736328125,
+            0.68310546875,
+            0.729736328125,
+            0.78759765625,
+            0.832763671875
+          ],
+          "bal_acc": 0.7450677645333641,
+          "label_counts": [
+            33473,
+            23871
+          ],
+          "sequences": 4096,
+          "positive_prevalence": 0.41627720424107145,
+          "true_positive_rate": 0.7146747098990407,
+          "true_negative_rate": 0.7754608191676874,
+          "bal_acc_se_sequences": 0.0017833065184855465,
+          "bal_acc_95pct_normal_interval": [
+            0.7415724837571325,
+            0.7485630453095957
+          ],
+          "confusion_matrix_true_rows_pred_cols": [
+            [
+              25957,
+              7516
+            ],
+            [
+              6811,
+              17060
+            ]
+          ]
+        },
+        "constant_calibrated_majority": {
+          "acc": 0.5837227957589286,
+          "acc_se_sequences": 0.0017708718103477867,
+          "seq_acc": 0.0,
+          "scored_tokens": 57344,
+          "per_pos": [
+            0.0,
+            0.0,
+            0.0,
+            0.984619140625,
+            0.950439453125,
+            0.902587890625,
+            0.851806640625,
+            0.779541015625,
+            0.68701171875,
+            0.633056640625,
+            0.548095703125,
+            0.472900390625,
+            0.395263671875,
+            0.31689453125,
+            0.270263671875,
+            0.21240234375,
+            0.167236328125
+          ],
+          "bal_acc": 0.5,
+          "label_counts": [
+            33473,
+            23871
+          ],
+          "sequences": 4096,
+          "positive_prevalence": 0.41627720424107145,
+          "true_positive_rate": 0.0,
+          "true_negative_rate": 1.0,
+          "bal_acc_se_sequences": 0.0,
+          "bal_acc_95pct_normal_interval": [
+            0.5,
+            0.5
+          ],
+          "confusion_matrix_true_rows_pred_cols": [
+            [
+              33473,
+              0
+            ],
+            [
+              23871,
+              0
+            ]
+          ]
+        }
+      },
+      "seed_mean_balanced_accuracy": {
+        "position_balanced_accuracy": 0.7503149172145762,
+        "position_accuracy": 0.7450778445803703,
+        "constant_calibrated_majority": 0.5
+      },
+      "seed_sample_std_balanced_accuracy": {
+        "position_balanced_accuracy": 0.0012269650464165928,
+        "position_accuracy": 0.0013931571601546555,
+        "constant_calibrated_majority": 0.0
+      }
+    },
+    "test": {
+      "seeds": [
+        20000,
+        20001,
+        20002,
+        20003
+      ],
+      "sequences_per_seed": 2048,
+      "by_seed": [
+        {
+          "seed": 20000,
+          "sequences": 2048,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.7404436383928571,
+              "acc_se_sequences": 0.0025164554380188568,
+              "seq_acc": 0.01220703125,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.986328125,
+                0.95166015625,
+                0.9111328125,
+                0.8330078125,
+                0.76318359375,
+                0.7138671875,
+                0.6279296875,
+                0.4384765625,
+                0.5498046875,
+                0.59228515625,
+                0.6787109375,
+                0.7158203125,
+                0.771484375,
+                0.83251953125
+              ],
+              "bal_acc": 0.7478241598730433,
+              "label_counts": [
+                16810,
+                11862
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41371372767857145,
+              "true_positive_rate": 0.7905918057663126,
+              "true_negative_rate": 0.705056513979774,
+              "bal_acc_se_sequences": 0.002510679026172603,
+              "bal_acc_95pct_normal_interval": [
+                0.742903228981745,
+                0.7527450907643416
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  11852,
+                  4958
+                ],
+                [
+                  2484,
+                  9378
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7492327008928571,
+              "acc_se_sequences": 0.002497138393151448,
+              "seq_acc": 0.0205078125,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.986328125,
+                0.95166015625,
+                0.9111328125,
+                0.8330078125,
+                0.76318359375,
+                0.7138671875,
+                0.6279296875,
+                0.5615234375,
+                0.5498046875,
+                0.59228515625,
+                0.6787109375,
+                0.7158203125,
+                0.771484375,
+                0.83251953125
+              ],
+              "bal_acc": 0.7441780254806138,
+              "label_counts": [
+                16810,
+                11862
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41371372767857145,
+              "true_positive_rate": 0.7148878772551003,
+              "true_negative_rate": 0.7734681737061273,
+              "bal_acc_se_sequences": 0.002571115466552824,
+              "bal_acc_95pct_normal_interval": [
+                0.7391386391661703,
+                0.7492174117950574
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  13002,
+                  3808
+                ],
+                [
+                  3382,
+                  8480
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.5862862723214286,
+              "acc_se_sequences": 0.0025638982237151412,
+              "seq_acc": 0.0,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.986328125,
+                0.95166015625,
+                0.9111328125,
+                0.8330078125,
+                0.76318359375,
+                0.7138671875,
+                0.6279296875,
+                0.5615234375,
+                0.4501953125,
+                0.40771484375,
+                0.3212890625,
+                0.2841796875,
+                0.228515625,
+                0.16748046875
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                16810,
+                11862
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41371372767857145,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  16810,
+                  0
+                ],
+                [
+                  11862,
+                  0
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "seed": 20001,
+          "sequences": 2048,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.7396065848214286,
+              "acc_se_sequences": 0.0024535965993005455,
+              "seq_acc": 0.0126953125,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98095703125,
+                0.9501953125,
+                0.9033203125,
+                0.8427734375,
+                0.7890625,
+                0.70166015625,
+                0.62255859375,
+                0.44775390625,
+                0.525390625,
+                0.59814453125,
+                0.671875,
+                0.705078125,
+                0.79052734375,
+                0.8251953125
+              ],
+              "bal_acc": 0.747196295910775,
+              "label_counts": [
+                16848,
+                11824
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41238839285714285,
+              "true_positive_rate": 0.7905108254397835,
+              "true_negative_rate": 0.7038817663817664,
+              "bal_acc_se_sequences": 0.002438543053705811,
+              "bal_acc_95pct_normal_interval": [
+                0.7424167515255116,
+                0.7519758402960384
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  11859,
+                  4989
+                ],
+                [
+                  2477,
+                  9347
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7470703125,
+              "acc_se_sequences": 0.0024421407301151205,
+              "seq_acc": 0.01318359375,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98095703125,
+                0.9501953125,
+                0.9033203125,
+                0.8427734375,
+                0.7890625,
+                0.70166015625,
+                0.62255859375,
+                0.55224609375,
+                0.525390625,
+                0.59814453125,
+                0.671875,
+                0.705078125,
+                0.79052734375,
+                0.8251953125
+              ],
+              "bal_acc": 0.741984047126131,
+              "label_counts": [
+                16848,
+                11824
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41238839285714285,
+              "true_positive_rate": 0.712956698240866,
+              "true_negative_rate": 0.771011396011396,
+              "bal_acc_se_sequences": 0.0025138095144321693,
+              "bal_acc_95pct_normal_interval": [
+                0.737056980477844,
+                0.746911113774418
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  12990,
+                  3858
+                ],
+                [
+                  3394,
+                  8430
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.5876116071428571,
+              "acc_se_sequences": 0.002556645944957209,
+              "seq_acc": 0.0009765625,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98095703125,
+                0.9501953125,
+                0.9033203125,
+                0.8427734375,
+                0.7890625,
+                0.70166015625,
+                0.62255859375,
+                0.55224609375,
+                0.474609375,
+                0.40185546875,
+                0.328125,
+                0.294921875,
+                0.20947265625,
+                0.1748046875
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                16848,
+                11824
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41238839285714285,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  16848,
+                  0
+                ],
+                [
+                  11824,
+                  0
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "seed": 20002,
+          "sequences": 2048,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.7432338169642857,
+              "acc_se_sequences": 0.0025170070099820516,
+              "seq_acc": 0.01318359375,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.9794921875,
+                0.95361328125,
+                0.9072265625,
+                0.82421875,
+                0.779296875,
+                0.70654296875,
+                0.62109375,
+                0.455078125,
+                0.515625,
+                0.63232421875,
+                0.6943359375,
+                0.71630859375,
+                0.796875,
+                0.8232421875
+              ],
+              "bal_acc": 0.7498332417054803,
+              "label_counts": [
+                16666,
+                12006
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41873604910714285,
+              "true_positive_rate": 0.7904381142761953,
+              "true_negative_rate": 0.7092283691347654,
+              "bal_acc_se_sequences": 0.002505205062252066,
+              "bal_acc_95pct_normal_interval": [
+                0.7449230397834662,
+                0.7547434436274943
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  11820,
+                  4846
+                ],
+                [
+                  2516,
+                  9490
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7496512276785714,
+              "acc_se_sequences": 0.002453922086177957,
+              "seq_acc": 0.01318359375,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.9794921875,
+                0.95361328125,
+                0.9072265625,
+                0.82421875,
+                0.779296875,
+                0.70654296875,
+                0.62109375,
+                0.544921875,
+                0.515625,
+                0.63232421875,
+                0.6943359375,
+                0.71630859375,
+                0.796875,
+                0.8232421875
+              ],
+              "bal_acc": 0.7445006545889022,
+              "label_counts": [
+                16666,
+                12006
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41873604910714285,
+              "true_positive_rate": 0.7128102615358988,
+              "true_negative_rate": 0.7761910476419057,
+              "bal_acc_se_sequences": 0.0025177478905324797,
+              "bal_acc_95pct_normal_interval": [
+                0.7395658687234585,
+                0.749435440454346
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  12936,
+                  3730
+                ],
+                [
+                  3448,
+                  8558
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.5812639508928571,
+              "acc_se_sequences": 0.0024567024643683583,
+              "seq_acc": 0.0,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.9794921875,
+                0.95361328125,
+                0.9072265625,
+                0.82421875,
+                0.779296875,
+                0.70654296875,
+                0.62109375,
+                0.544921875,
+                0.484375,
+                0.36767578125,
+                0.3056640625,
+                0.28369140625,
+                0.203125,
+                0.1767578125
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                16666,
+                12006
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.41873604910714285,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  16666,
+                  0
+                ],
+                [
+                  12006,
+                  0
+                ]
+              ]
+            }
+          }
+        },
+        {
+          "seed": 20003,
+          "sequences": 2048,
+          "metrics": {
+            "position_balanced_accuracy": {
+              "acc": 0.7420828683035714,
+              "acc_se_sequences": 0.002466015264662503,
+              "seq_acc": 0.01220703125,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98095703125,
+                0.94580078125,
+                0.89794921875,
+                0.8388671875,
+                0.77685546875,
+                0.703125,
+                0.6337890625,
+                0.462890625,
+                0.5263671875,
+                0.603515625,
+                0.6884765625,
+                0.7373046875,
+                0.7646484375,
+                0.82861328125
+              ],
+              "bal_acc": 0.748985634180372,
+              "label_counts": [
+                16723,
+                11949
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.416748046875,
+              "true_positive_rate": 0.7904427148715374,
+              "true_negative_rate": 0.7075285534892065,
+              "bal_acc_se_sequences": 0.0024575644837409962,
+              "bal_acc_95pct_normal_interval": [
+                0.7441688077922397,
+                0.7538024605685043
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  11832,
+                  4891
+                ],
+                [
+                  2504,
+                  9445
+                ]
+              ]
+            },
+            "position_accuracy": {
+              "acc": 0.7473842075892857,
+              "acc_se_sequences": 0.002427319669404018,
+              "seq_acc": 0.0126953125,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98095703125,
+                0.94580078125,
+                0.89794921875,
+                0.8388671875,
+                0.77685546875,
+                0.703125,
+                0.6337890625,
+                0.537109375,
+                0.5263671875,
+                0.603515625,
+                0.6884765625,
+                0.7373046875,
+                0.7646484375,
+                0.82861328125
+              ],
+              "bal_acc": 0.7422058784016528,
+              "label_counts": [
+                16723,
+                11949
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.416748046875,
+              "true_positive_rate": 0.711105531843669,
+              "true_negative_rate": 0.7733062249596364,
+              "bal_acc_se_sequences": 0.0024945844024757647,
+              "bal_acc_95pct_normal_interval": [
+                0.7373164929728002,
+                0.7470952638305053
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  12932,
+                  3791
+                ],
+                [
+                  3452,
+                  8497
+                ]
+              ]
+            },
+            "constant_calibrated_majority": {
+              "acc": 0.583251953125,
+              "acc_se_sequences": 0.0024491899221050243,
+              "seq_acc": 0.0,
+              "scored_tokens": 28672,
+              "per_pos": [
+                0.0,
+                0.0,
+                0.0,
+                0.98095703125,
+                0.94580078125,
+                0.89794921875,
+                0.8388671875,
+                0.77685546875,
+                0.703125,
+                0.6337890625,
+                0.537109375,
+                0.4736328125,
+                0.396484375,
+                0.3115234375,
+                0.2626953125,
+                0.2353515625,
+                0.17138671875
+              ],
+              "bal_acc": 0.5,
+              "label_counts": [
+                16723,
+                11949
+              ],
+              "sequences": 2048,
+              "positive_prevalence": 0.416748046875,
+              "true_positive_rate": 0.0,
+              "true_negative_rate": 1.0,
+              "bal_acc_se_sequences": 0.0,
+              "bal_acc_95pct_normal_interval": [
+                0.5,
+                0.5
+              ],
+              "confusion_matrix_true_rows_pred_cols": [
+                [
+                  16723,
+                  0
+                ],
+                [
+                  11949,
+                  0
+                ]
+              ]
+            }
+          }
+        }
+      ],
+      "pooled": {
+        "position_balanced_accuracy": {
+          "acc": 0.7413417271205357,
+          "acc_se_sequences": 0.001244087230198912,
+          "seq_acc": 0.0125732421875,
+          "scored_tokens": 114688,
+          "per_pos": [
+            0.0,
+            0.0,
+            0.0,
+            0.98193359375,
+            0.9503173828125,
+            0.9049072265625,
+            0.834716796875,
+            0.777099609375,
+            0.706298828125,
+            0.6263427734375,
+            0.4510498046875,
+            0.529296875,
+            0.6065673828125,
+            0.683349609375,
+            0.7186279296875,
+            0.7808837890625,
+            0.827392578125
+          ],
+          "bal_acc": 0.7484552422577095,
+          "label_counts": [
+            67047,
+            47641
+          ],
+          "sequences": 8192,
+          "positive_prevalence": 0.4153965541294643,
+          "true_positive_rate": 0.7904955815369115,
+          "true_negative_rate": 0.7064149029785076,
+          "bal_acc_se_sequences": 0.0012389106752089983,
+          "bal_acc_95pct_normal_interval": [
+            0.7460269773342999,
+            0.7508835071811192
+          ],
+          "confusion_matrix_true_rows_pred_cols": [
+            [
+              47363,
+              19684
+            ],
+            [
+              9981,
+              37660
+            ]
+          ]
+        },
+        "position_accuracy": {
+          "acc": 0.7483346121651786,
+          "acc_se_sequences": 0.0012274719020427493,
+          "seq_acc": 0.014892578125,
+          "scored_tokens": 114688,
+          "per_pos": [
+            0.0,
+            0.0,
+            0.0,
+            0.98193359375,
+            0.9503173828125,
+            0.9049072265625,
+            0.834716796875,
+            0.777099609375,
+            0.706298828125,
+            0.6263427734375,
+            0.5489501953125,
+            0.529296875,
+            0.6065673828125,
+            0.683349609375,
+            0.7186279296875,
+            0.7808837890625,
+            0.827392578125
+          ],
+          "bal_acc": 0.7432117957789879,
+          "label_counts": [
+            67047,
+            47641
+          ],
+          "sequences": 8192,
+          "positive_prevalence": 0.4153965541294643,
+          "true_positive_rate": 0.7129363363489432,
+          "true_negative_rate": 0.7734872552090325,
+          "bal_acc_se_sequences": 0.0012620349703554806,
+          "bal_acc_95pct_normal_interval": [
+            0.7407382072370912,
+            0.7456853843208846
+          ],
+          "confusion_matrix_true_rows_pred_cols": [
+            [
+              51860,
+              15187
+            ],
+            [
+              13676,
+              33965
+            ]
+          ]
+        },
+        "constant_calibrated_majority": {
+          "acc": 0.5846034458705357,
+          "acc_se_sequences": 0.0012536661677438022,
+          "seq_acc": 0.000244140625,
+          "scored_tokens": 114688,
+          "per_pos": [
+            0.0,
+            0.0,
+            0.0,
+            0.98193359375,
+            0.9503173828125,
+            0.9049072265625,
+            0.834716796875,
+            0.777099609375,
+            0.706298828125,
+            0.6263427734375,
+            0.5489501953125,
+            0.470703125,
+            0.3934326171875,
+            0.316650390625,
+            0.2813720703125,
+            0.2191162109375,
+            0.172607421875
+          ],
+          "bal_acc": 0.5,
+          "label_counts": [
+            67047,
+            47641
+          ],
+          "sequences": 8192,
+          "positive_prevalence": 0.4153965541294643,
+          "true_positive_rate": 0.0,
+          "true_negative_rate": 1.0,
+          "bal_acc_se_sequences": 0.0,
+          "bal_acc_95pct_normal_interval": [
+            0.5,
+            0.5
+          ],
+          "confusion_matrix_true_rows_pred_cols": [
+            [
+              67047,
+              0
+            ],
+            [
+              47641,
+              0
+            ]
+          ]
+        }
+      },
+      "seed_mean_balanced_accuracy": {
+        "position_balanced_accuracy": 0.7484598329174176,
+        "position_accuracy": 0.7432171513993249,
+        "constant_calibrated_majority": 0.5
+      },
+      "seed_sample_std_balanced_accuracy": {
+        "position_balanced_accuracy": 0.001178038575168027,
+        "position_accuracy": 0.0013056133503884966,
+        "constant_calibrated_majority": 0.0
+      }
+    }
+  },
+  "uncertainty_note": "Standard errors cluster all14 scored labels within each independent sequence; balanced-accuracy influence combines the two class-recall ratio influences. Intervals are normal approximations, not selection criteria.",
+  "provenance": {
+    "created_utc": "2026-10-20T13:40:09.978770+00:00",
+    "git_commit_at_execution": "6ebec8200cfb6ba722dc91e93e4d2785499c8c1a",
+    "python": "3.12.12",
+    "numpy": "2.5.4",
+    "paid_compute": false,
+    "generator_and_metrics_source": "research/beyond_diag.py:gmatch_a5_causal,causal_match_labels,metrics",
+    "source_sha256": {
+      "research/beyond_diag.py": "24fa1494612fe8c4bda53f6d745574c72766530efa95efca1be3c4696c58f814",
+      "research/groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754"
+    },
+    "analysis_script_path": "/tmp/beyond_match3_position_baseline.py",
+    "analysis_script_sha256": "f0d7c417393e53aaa468e11fe376dc6f0279e1e5e69a524abe309d476c754525"
+  }
+}

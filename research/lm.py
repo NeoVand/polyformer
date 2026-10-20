@@ -924,7 +924,7 @@ def main():
             }
             for layer in params["layers"]
         ]
-    out = {"arch": cfg.arch, "opt": cfg.opt, "plx_norm": cfg.plx_norm if cfg.arch == "plx" else None, "chart": cfg.chart if cfg.arch == "lla" else None,
+    out = {"arch": cfg.arch, "config": vars(cfg), "opt": cfg.opt, "plx_norm": cfg.plx_norm if cfg.arch == "plx" else None, "chart": cfg.chart if cfg.arch == "lla" else None,
            "chart_init": cfg.chart_init if cfg.arch == "lla" else None, "lam0": cfg.lam0 if cfg.arch == "lla" else None, "seed": cfg.seed, "params": nparams, "nonembed": nparams - nembed, "mlp": cfg.mlp,
            "layers": cfg.layers, "d": cfg.d, "rank": cfg.rank, "order": cfg.order, "vac": cfg.vac, "alpha0": cfg.alpha0,
            "cap": cfg.cap, "fscale": cfg.fscale, "hops": cfg.hops, "lookback": cfg.lookback, "lr": cfg.lr, "steps": cfg.steps,

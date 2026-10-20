@@ -1,0 +1,206 @@
+{
+  "arms": {
+    "A": [
+      "beyond_a",
+      {
+        "group_init": "random",
+        "qkv_conv": 3
+      }
+    ],
+    "B": [
+      "beyond_b",
+      {
+        "group_init": "random",
+        "qkv_conv": 3
+      }
+    ],
+    "C": [
+      "beyond_c",
+      {
+        "group_init": "random",
+        "qkv_conv": 3
+      }
+    ],
+    "DP4": [
+      "gated_delta",
+      {
+        "beta_max": 2.0,
+        "delta_chunk": 0,
+        "delta_unroll": 4,
+        "nh": 4,
+        "qkv_conv": 0
+      }
+    ],
+    "GDN1": [
+      "gated_delta",
+      {
+        "beta_max": 1.0,
+        "delta_chunk": 0,
+        "delta_unroll": 4,
+        "nh": 1,
+        "qkv_conv": 0
+      }
+    ],
+    "LLA": [
+      "lla",
+      {
+        "qkv_conv": 0
+      }
+    ],
+    "P": [
+      "plx",
+      {
+        "qkv_conv": 3
+      }
+    ],
+    "S": [
+      "gpt",
+      {
+        "qkv_conv": 3
+      }
+    ],
+    "prefix": [
+      "prefix",
+      {
+        "group_init": "random",
+        "qkv_conv": 0
+      }
+    ]
+  },
+  "batch": 64,
+  "budget": "Launcher enforces settled + outstanding + new reservations <= $25. No development-budget transfer; uncompleted confirmations remain unconfirmed.",
+  "common_settings": {
+    "branch_scale": 0.1,
+    "conv_width": 4,
+    "delta_key_ratio": 0.75,
+    "delta_v_expand": 2.0,
+    "gdim": 5,
+    "gheads": 4,
+    "group_nh": 4,
+    "group_order": 2
+  },
+  "confirm_seeds": [
+    1,
+    2,
+    3
+  ],
+  "confirmation_priority": [
+    "B",
+    "C",
+    "A"
+  ],
+  "d": 128,
+  "descriptive_cells": [
+    [
+      "mqar_small",
+      1
+    ],
+    [
+      "induction_small",
+      1
+    ],
+    [
+      "gmatch_a5_causal",
+      1
+    ],
+    [
+      "gmatch_a5_causal",
+      2
+    ],
+    [
+      "regression",
+      1
+    ],
+    [
+      "regression",
+      2
+    ]
+  ],
+  "evals": 6,
+  "evalset": 1024,
+  "execution_priority": [
+    "primary_and_required_alternates",
+    "shared_references",
+    "B_confirmations",
+    "48_mandatory_descriptives",
+    "C_confirmations",
+    "A_confirmations",
+    "optional_LLA"
+  ],
+  "first_lr": 0.004,
+  "heads": 4,
+  "mlp": 512,
+  "name": "beyond-stage1-adaptive-v1",
+  "opt": "muon",
+  "primary_cells": [
+    [
+      "wp_s5_16",
+      1
+    ],
+    [
+      "wp_a5_16",
+      1
+    ],
+    [
+      "mqar_small",
+      2
+    ],
+    [
+      "induction_small",
+      2
+    ],
+    [
+      "wp_s5_16",
+      2
+    ],
+    [
+      "wp_a5_16",
+      2
+    ]
+  ],
+  "protocol_id": "829e3a8f2bbdce4b2a2b1fdd602f0565704750cb3ce6e69b1fa96bbe408fab63",
+  "reference_arm": "B",
+  "reference_fpt": {
+    "gmatch_a5_causal": {
+      "1": 506060.23529411765,
+      "2": 996504.4705882353
+    },
+    "induction_small": {
+      "1": 582161.6875,
+      "2": 1131555.375
+    },
+    "mqar_small": {
+      "1": 614929.6875,
+      "2": 1164323.375
+    },
+    "regression": {
+      "1": 491483.29411764705,
+      "2": 981927.5294117647
+    },
+    "wp_a5_16": {
+      "1": 506060.23529411765,
+      "2": 996504.4705882353
+    },
+    "wp_s5_16": {
+      "1": 521420.23529411765,
+      "2": 1011864.4705882353
+    }
+  },
+  "reference_margin": 0.03,
+  "reference_steps": 6000,
+  "reference_tie_priority": [
+    "prefix",
+    "GDN1",
+    "DP4"
+  ],
+  "retrieval_alternate_lr": 0.008,
+  "retrieval_threshold": 0.9,
+  "saturation_validation": 0.97,
+  "schema": 1,
+  "selection": "Final validation only; never test or intermediate curves. First rate .004; eligible alternate only below .97 or after a terminal invalid first run. Select highest final validation among authorized executed rates, lower LR on ties.",
+  "testset": 2048,
+  "threshold_tolerance": 1e-12,
+  "wd": 0.1,
+  "word_alternate_lr": 0.002,
+  "word_threshold": 0.95
+}

@@ -124,6 +124,31 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   Convolution and combined-layer pilots launched from `45f8895` (predictions `5c706af`); logs
   `/tmp/beyond-conv-learn.log` and `/tmp/beyond-combined-learn.log`. Current conservative total,
   including outstanding reservations: $9.059.
+- 2026-10-20 13:44 UTC — Combined one-layer pilots complete: A/B/C all score 100% A5 test;
+  S5 scores are A 2.91%, B 100%, C 100%, standalone prefix 99.95%. Both convolved two-layer
+  softmax MQAR controls (.004/.008) score 100% validation and test, resolving the observed binding
+  plateau in this common backbone. The remaining one-layer/induction convolution controls are pending.
+  L4 capacity queues explain their elapsed launch delay; subprocess runtimes remain about two minutes.
+  The independently calibrated position-only causal Match-3 baseline scores 74.85% balanced test
+  accuracy; report this alongside model scores rather than equating any above-chance result with
+  learned composition.
+- 2026-10-20 13:44 UTC — GPU chunk proof passes all 20 cases: worst output/final-state absolute
+  errors 8.01e-5 / 1.03e-4; worst input-VJP absolute error .00470 and relative L2 1.45e-5, within
+  preregistered tolerances. Timing selects chunk 32 for both variants: GDN1 .153 s/update, DP4 .361,
+  versus best unrolled .439 / 1.060. Chunk-16 times are .169 / .439. All four timing runs are finite.
+  This now makes full three-seed language comparisons against **both** modern recurrent variants
+  affordable, removing the need to select only one from short runs. The final language registration
+  will freeze that stronger comparison before quality sweeps. Development settled estimate $4.759.
+
+
+- 2026-10-20 13:48 UTC — All 61 development jobs are complete. Every convolved softmax retrieval
+  pilot scores 100% validation/test, including one-layer MQAR at both rates and two-layer induction.
+  Settled conservative estimates: screen $3.737, language $2.326, development $4.759, total $10.821.
+  Freeze the main diagnostic registration below and its deterministic planner: 46 primary jobs,
+  validation-triggered alternate rates, independent seeds 1/2/3, and 48 descriptive cells.
+  Planner self-tests cover 18 invariants; all 96 arm/task/depth compute counts were independently
+  checked. JSON reporting now preserves diagnostic component parameters and the full language config;
+  these additions do not change training. No main diagnostic result has been observed.
 
 ## 1. Design registration (before training)
 
@@ -330,3 +355,82 @@ approximation. At S6, chunks 16/32 add forward FLOPs/token 222,141 / 619,198.5 f
 117,504 / 228,096 and 470,016 / 912,384, respectively. `lm.training_flops_per_token` supplies
 the total used for language matching and reporting; unchanged arms remain exactly 3x-forward.
 Diagnostics retain the native/unrolled recurrence and reject chunk configuration explicitly.
+
+## 4. Main diagnostic registration
+
+The development pilots are not confirmation. They establish usable controls and motivate the two
+explicit refinements: independent-random matrix initialization and a shared local-binding convolution.
+Freeze the following protocol before the main diagnostic manifests. No further layer parameters or
+backbone changes will be selected from these main results.
+
+**Arms and common recipe.** S, P, A, B, C, standalone prefix, GDN1 and DP4, all width 128, four
+attention heads, MLP 512, batch 64, Muon, weight decay .1, six evaluations, 1,024 validation and
+2,048 disjoint final-test sequences. S/P/A/B/C use width-3 QKV convolution. A/B/C/prefix use four
+dimension-5 matrix heads, four Householders, short order 2, random initialization; candidate branch
+scale remains .1 and prefix scale 1. GDN1 uses one update/beta_max 1; DP4 uses four/beta_max 2;
+both keep native width-4 convolution, key width .75D, value width 1.5D, and unroll 4 (no chunking).
+Positions follow the task definition: enabled for retrieval, disabled for group words and regression.
+Every arm uses the same data and evaluation seed streams.
+
+**Equal compute.** Each task/depth gets the compute of B at 6,000 updates. Execute
+`floor(6000 * B_forward_flops_per_token / own_forward_flops_per_token)` updates, each with its own
+complete warmup/cosine schedule. All widths remain fixed; the mismatch is less than one update.
+There is no reason to increase every arm's budget to that of the most expensive recurrent variant.
+Exact common forward-FLOP targets (training is 3x-forward for these unchunked diagnostic arms):
+
+| Task | One layer | Two layers |
+|---|---:|---:|
+| MQAR | 614929.6875 | 1164323.375 |
+| Induction | 582161.6875 | 1131555.375 |
+| A5 words | 506060.23529411765 | 996504.4705882353 |
+| S5 words | 521420.23529411765 | 1011864.4705882353 |
+| Causal ordered Match-3 | 506060.23529411765 | 996504.4705882353 |
+| Affine regression | 491483.29411764705 | 981927.5294117647 |
+
+**Saturation screen, seed 0, validation only.** The six primary cells are two-layer MQAR and induction,
+and A5/S5 words at both depths. Start all arms at .004; omit prefix's two-layer retrieval cells.
+On word cells S/P are fixed-rate descriptive controls. For every other primary arm/cell, run one
+alternate rate only if final validation accuracy is below 97% (or the first run is invalid):
+.002 for words, .008 for retrieval. Choose the highest finite final validation score among the
+executed rates, ties going to the lower rate. This is an **at-most-two-rate saturation screen**,
+not a complete rate sweep. Do not select checkpoints, rates or continuation from seed-0 test scores.
+
+For retrieval, S is the reference. For each word cell, select the strongest final-validation result
+among prefix/GDN1/DP4, ties preferring prefix, then GDN1, then DP4. A candidate is screen-positive
+only if all six validation cells meet the original absolute thresholds (90% retrieval, 95% word
+second-half balanced accuracy) and lie no more than 3 percentage points below their references.
+Freeze selected rates, reference identities and all seed-0 decisions in a committed selection artifact.
+
+**Independent confirmation.** Screen-positive candidates and their shared references run seeds 1, 2
+and 3 on the six primary cells, at their frozen rates and exactly the same compute budgets.
+A candidate advances only if every final-test gate holds on all three seeds. Report all individual
+scores and sequence-cluster uncertainty, including the easier all-position word score separately.
+Confirmation priority is B, then C, then A, fixed by simplicity and cost rather than language results.
+References run once and are shared; missing confirmations are labeled unconfirmed, never passed.
+
+**Descriptive mechanism map.** All eight arms also run one-layer MQAR/induction and one-/two-layer
+causal ordered Match-3 and affine regression, seed 0, fixed .004, the same matched-compute rule.
+These 48 cells are reported even for candidates rejected by the primary screen. Match-3 reports
+balanced accuracy and positional results against an independently calibrated position-only classifier:
+position alone reaches about 74.85% balanced test accuracy on this task. Regression reports MSE,
+normalized MSE, sequence-level uncertainty and the mean-value baseline. A 10% MSE reduction versus S
+is an informative estimation target, not an advancement gate or cross-seed reliability claim.
+Two optional LLA regression controls may run only after the mandatory work fits the budget.
+
+**Predictions.** B passes the six-cell screen and three-seed confirmation. C should also pass but may
+show more seed variation from its conditioned transitions. A is at risk on S5: its one-layer pilot
+scored only 2.91% late-position test accuracy while B/C were 100%; the formal matched-compute screen
+still tests its alternate rate. S/P should preserve retrieval but fail class-word tracking. GDN1
+should retrieve well; neither query-read recurrent variant is assumed to match the full-matrix word
+reader. P and the candidates should improve one-layer affine estimation over S, while depth may
+narrow that gap. No Match-3 success is inferred from word tracking: the branch exposes short sectors
+only through arity 2, while the task asks about arbitrary ordered triples.
+
+**Budget and ordering.** All jobs use L4 and a 600-second subprocess timeout; the existing ledger
+enforces the $25 screen cap including every pilot/failure/reservation. Run primary first-rate cells,
+triggered alternates, shared references and B confirmation, then the descriptive map and remaining
+candidate confirmations in the fixed priority order; finish these before optional additions.
+Expected mandatory cost with three saturating
+candidates is approximately $18.7 plus pilots, but this is not a spending guarantee. If the cap binds,
+report the exact missing cells and unconfirmed status; do not borrow from another stage or silently
+reduce evaluation sizes, steps, seeds or thresholds.
