@@ -6,6 +6,22 @@ landing page. It currently tells the older story ("higher-order attention, arity
 the arc ends where the research ended, and so a reader who knows neural networks but no group theory follows every
 step. This is what Neo will show in interviews; polish matters as much as content.
 
+## Neo's latest instructions (verbatim intent, binding)
+
+Neo wants the result **live** in the morning and said: "ask astra to visually check things, we might even need to
+change the title and landing page and the narrative slightly." So:
+
+- You have licence to change the site title, the report title, the landing page and the narrative so they fit the
+  new story (composition and group representations, with higher order as the road that led there). Propose the
+  title in your final message with one alternative.
+- **Check everything visually, yourself, repeatedly**: after each page you change, build, serve the production build,
+  take Playwright screenshots (1440x900 and 390x844, light and dark), open the images and look at them critically
+  against the design rules: overlaps, clipped labels, labels on lines, boxes or double strokes, uneven spacing,
+  empty quadrants, unreadable contrast, animation glitches (capture two frames ~1 s apart for animated views). Fix
+  and re-shoot until clean. Keep the final shots in `briefs/shots/` with a short `briefs/shots/README.md` saying what
+  each shows.
+- Claude will publish (push to main) after its own review; you still never push.
+
 ## Read first
 
 - `OVERNIGHT.md`, `research/GROUPS.md`, `research/THEORY.md`, `research/PRIOR_ART.md` (and the word-problem section
