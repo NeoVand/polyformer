@@ -375,6 +375,8 @@ TASKS = {
     "g3_a4": (lambda r, B: groups.task_gmatch(r, B, "A4", 6, 3), [13], 2, False),
     "g3_z60": (lambda r, B: groups.task_gmatch(r, B, "Z60", 11, 3), [61], 2, False),
     "g3_a5": (lambda r, B: groups.task_gmatch(r, B, "A5", 11, 3), [61], 2, False),
+    # Two independent four-variable swap programs, three swaps each, then a namespace/variable query.
+    "swap3": (groups.task_swap_program, [21], 4, False),
 }
 
 # ----------------------------------------------------------------------------- model
@@ -451,6 +453,10 @@ def init(key, cfg, vocabs, C, T):
             d, K = cfg.gdim, cfg.order
             a = {"s": dense(next(ks), D, H * d * d), "g": dense(next(ks), D, H),
                  "o": dense(next(ks), H * d * d, D), "alpha": jnp.ones((K, D))}
+        if cfg.model == "orthornn":
+            # Input-dependent orthogonal matrix-state recurrence, a standard composition baseline.
+            d = cfg.gdim
+            a = {"s": dense(next(ks), D, H * d * d), "o": dense(next(ks), H * d * d, D)}
         if cfg.model == "sfa":
             # subset attention: one softmax per head selects, Newton's identities read every arity from it
             r, K = cfg.rank, cfg.order
@@ -650,6 +656,17 @@ def holo_mats(cfg, a, x):
     return jax.scipy.linalg.expm((S - jnp.swapaxes(S, -1, -2)) * (cfg.phase / 2))
 
 
+def orthogonal_prefix(U):
+    """U: [B,T,H,d,d] -> H_t = U_t H_{t-1}, H_0 = I, at every position."""
+    B, _, H, d, _ = U.shape
+    initial = jnp.broadcast_to(jnp.eye(d, dtype=U.dtype), (B, H, d, d))
+    def step(state, matrix):
+        state = matrix @ state
+        return state, state
+    _, states = jax.lax.scan(step, initial, jnp.swapaxes(U, 0, 1))
+    return jnp.swapaxes(states, 0, 1)
+
+
 def attention(cfg, a, x):
     B, T, D = x.shape
     H = cfg.heads; dh = getattr(cfg, "dh", 0) or D // H
@@ -657,6 +674,10 @@ def attention(cfg, a, x):
         return sum(attention(sub, a[sub.model + str(sub.plen)], x) for sub in mix_cfgs(cfg))
     def heads(t, w=dh):
         return t.reshape(B, T, H, -1).transpose(0, 2, 1, 3)
+    if cfg.model == "orthornn":
+        states = orthogonal_prefix(holo_mats(cfg, a, x))
+        # Orthogonal matrices have entrywise RMS 1/sqrt(d), independent of sequence length.
+        return lin(a["o"], states.reshape(B, T, -1) * math.sqrt(cfg.gdim))
     if cfg.model == "newton":
         # Newton attention. Channel features phi_i = g_i exp(i theta_i) (a character is one linear map away).
         # For every query q and m < K, the elementary symmetric polynomial e_m of the OTHER tokens (a sum over
@@ -1089,6 +1110,8 @@ def main():
     tag = cfg.model + (f"_p{cfg.plen}" if cfg.model in ("chain", "path", "branch", "branchg", "dpa", "dspa", "dspa2", "dspa3", "dspa4", "dspa5") else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_raw" if cfg.rawphase else "") + ("_shared" if cfg.readout == "shared" else "") + ("_fnorm" if cfg.fnorm else "") if cfg.model == "newton" else "") + (f"_K{cfg.order}_r{cfg.rank}" + ("_bose" if cfg.stats == "bose" else "") + ("" if cfg.vpath else "_novp") + ("" if cfg.qzero else "_qrand") + (f"_v{cfg.vac:g}" if cfg.vac != 0.2 else "") + (f"_c{cfg.cap:g}" if cfg.cap else "") + (f"_w{cfg.hops}" if cfg.hops else "") if cfg.model == "sfa" else "") + ("_lin" if cfg.nocubic else "") + (f"_r{cfg.recur}" if cfg.recur > 1 else "")
     if cfg.model == "holo":
         tag = f"holo_d{cfg.gdim}_h{cfg.heads}_K{cfg.order}" + ("_fnorm" if cfg.fnorm else "")
+    if cfg.model == "orthornn":
+        tag = f"orthornn_d{cfg.gdim}_h{cfg.heads}"
     if cfg.embed != "table":
         tag += f"_{cfg.embed}"
     out = {"task": cfg.task, "model": tag, "layers": cfg.layers, "seed": cfg.seed, "d": cfg.d, "pos": cfg.pos,

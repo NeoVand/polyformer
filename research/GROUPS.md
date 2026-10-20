@@ -294,3 +294,90 @@ any claim of novelty.
    with rotations (the non-abelian subset attention).
 3. **Real data**: a holonomy branch in the S6 language-model harness at equal FLOPs under Muon, and on code, where
    scopes and stacks are non-commutative.
+
+## 7. Second benchmark: execute interleaved swap programs
+
+### 7.1 Task and protocol
+
+**Why this benchmark.** Tracking variable values through `swap` statements is a recognisable elementary program
+execution task in which statement order changes the answer. Interleaving two independent namespaces and querying
+one variable adds selection of the relevant instructions; unlike the separate A5/S5 running-product experiment,
+the required answer is a query-conditioned action on a selected subsequence, not the complete prefix group element.
+
+`swap3` starts two namespaces, A and B, each with four variables holding values `[0, 1, 2, 3]`. It samples exactly
+three uniformly random unordered swaps in each namespace, interleaves those six instructions uniformly, and ends
+with a uniform query `read(namespace, variable)`. The target is that variable's final value, one of four classes;
+only the final query is scored. An example is `BOS; A.swap(0,1); B.swap(1,3); A.swap(1,2); B.swap(0,2);
+A.swap(2,3); B.swap(0,1); read(A,0)`, whose answer is `1`. Instructions, queries and BOS are 21 categorical tokens,
+shared by all arms; there is no supplied permutation representation. This is a controlled synthetic program task,
+not a standard natural-code dataset or evidence of long-program generalisation.
+
+Each namespace composes in S4. Its ordinary three-dimensional standard representation lies in O(3); multiplying
+it by the permutation sign gives a faithful SO(3) representation (the cube's rotation group), so the SO(3) arm has
+sufficient matrix dimension. The SO(6) RNN can hold both namespaces' SO(3) blocks. At a query, a gated holonomy
+head selecting one namespace has an arity-four sector equal to the ordered product of its three instructions
+and the query's identity matrix. This hand construction is checked against the interpreter, independently of
+whether training finds it.
+
+**Protocol.** `research/test_groups.py` checks all 216 possible length-three single-namespace instruction strings
+at all four query variables against a literal interpreter, verifies distractor-namespace isolation, and checks the
+matrix-state recurrence against explicit products. Reversing the six instructions changes 43.1% of answers in its
+1,024-example diagnostic. The exact order-blind Bayes accuracy is **67/108 = 62.037...%**: enumerate all
+`6^3 * 4 = 864` equally likely relevant-program/query pairs, group by the instruction multiset and queried variable,
+and sum the majority-label counts (536). Uniform query variables and variable-relabel symmetry make the four
+classes equiprobable, so the population accuracy and balanced-accuracy ceilings coincide. Independent distractor
+instructions cannot improve this ceiling.
+
+All arms use width 64, learned token tables, the same residual MLP, AdamW at 2e-3 with cosine decay, 6,000 steps,
+batch 128, fresh training programs, and 2,048 held-out programs per seed (`10_000 + seed`). Holonomy d = 2, 3, 4
+has 128, 85, 64 heads, respectively, arities 1..4 and shared normalised read-out. Newton uses four heads of 64
+complex channels and the same four arities. Both have no positions. Softmax uses learned positions and one, two or
+three layers. The prior-art baseline is a learned input-dependent orthogonal matrix-state linear RNN,
+`H_t = U(x_t) H_(t-1)`, `H_0 = I`, with 42 heads of dimension six; its query-position matrix state is projected
+into the same residual MLP, which also sees the query token. It has no positional embeddings, no supplied group
+elements, and no additive input state. This is a generic orthogonal recurrence baseline, not a claimed reproduction
+of DeltaNet, DeltaProduct or a published implementation. Heads-times-dimension is roughly 256 for the matrix
+arms; this is not a parameter- or FLOP-matched comparison (counts are reported below).
+
+Run order is brute-force tests, seed-0 pilot (`grp_swap_pilot`), committed predictions, then the three-seed
+`grp_swap` grid. The main grid reruns seed 0 from scratch; it is a reproducibility check, not a fourth independent
+seed. All jobs use L4 in `research/modal_run.py`, with a twenty-minute timeout per call and at most eight concurrent
+containers. The 32 planned calls have a maximum 10.67 L4-hours even if every call times out; at the
+[Modal L4 list price](https://modal.com/pricing) fetched 20 October 2026 ($0.000222/second), GPU charges alone would
+be $8.53 at that timeout bound, leaving ample room under the authorised $40 cap. Actual recorded wall time and the
+GPU-only estimate are reported with the results; they are not an invoice.
+
+### 7.2 Pilot and predictions (frozen before the main grid)
+
+Seed-0 pilot, 6,000 steps, from `research/results/grp_swap_pilot.jsonl`:
+
+| Arm | Balanced accuracy % | Parameters | Training seconds |
+|---|---|---|---|
+| holonomy d = 2 | 61.79 | 109,764 | 37.7 |
+| holonomy d = 3 | 100.00 | 139,606 | 53.8 |
+| holonomy d = 4 | 100.00 | 171,652 | 63.1 |
+| Newton | 62.49 | 101,444 | 21.4 |
+| softmax 1L, positions | 99.70 | 52,228 | 20.8 |
+| softmax 2L, positions | 100.00 | 102,212 | 28.2 |
+| softmax 3L, positions | 100.00 | 152,196 | 31.0 |
+| orthogonal matrix RNN d = 6 | 100.00 | 230,188 | 69.5 |
+
+The pilot shows this short program is learnable by **every order-aware arm, including one-layer positional
+softmax**. We retain it as a useful boundary on the Match-k interpretation, rather than changing the task after
+seeing that outcome. Newton's 0.45-point excess over the population ceiling is consistent with finite-test noise;
+the ceiling concerns expected accuracy, not an absolute bound on every held-out sample.
+
+**Predictions registered after the pilot and before launching `grp_swap`**, each criterion required on seeds
+0, 1 and 2 at 6,000 steps, with the protocol and architecture fixed:
+
+- **S1, symmetry ceiling:** Newton and holonomy d = 2 remain at or below 64.04% balanced accuracy (the exact
+  population ceiling plus two percentage points for finite-sample variation).
+- **S2, ordered subset construction learns:** holonomy d = 3 and d = 4 each reach at least 95%.
+- **S3, a prior recurrence also suffices:** the orthogonal matrix-state RNN reaches at least 95%.
+- **S4, no softmax separation at this horizon:** positional softmax at each of 1, 2 and 3 layers reaches at least
+  95%. Failure at a depth makes that depth's prediction false; it would not establish an expressivity limit.
+
+No extra training, learning-rate adjustment, architecture change or harder-task replacement is planned after the
+main grid. The seed-0 main row repeats the pilot's deterministic training/evaluation streams and is reported only
+once in the three-seed mean. Results may support an order-sensitive inductive bias, but they cannot establish
+holonomy's superiority to recurrence or softmax, length generalisation, or an S4 versus A5 complexity separation.

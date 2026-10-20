@@ -12,6 +12,8 @@ Checks for GROUPS.md, run before any Modal grid:
    with commuting 2 x 2 rotations it is Newton attention's phi_i e_m(others).
 6. The frozen character embedding has one-hot geometry (Gram = 81/2 I - 1/2 per copy), the rotated one
    the same Gram, and the models run forward and backward without NaN.
+7. Interleaved swap programs match a literal interpreter, their order-blind Bayes ceiling is exact,
+   a hand-built SO(3) gated sector executes the queried namespace, and the matrix-state baseline is correct.
 """
 
 import argparse
@@ -111,6 +113,62 @@ def main():
     check("reversing the sequence changes A5 labels, never Z60 labels", (a != b).mean() > 0.05 and (za == zb).all(),
           f"A5 labels changed on {(a != b).mean():.1%} of positions")
 
+    # Swap-program benchmark: exhaustive short-program interpreter, key isolation, exact Bayes ceiling.
+    pairs = list(itertools.combinations(range(4), 2))
+    programs = np.asarray(list(itertools.product(range(6), repeat=3)))
+    worst_swap = 0
+    for q in range(4):
+        got = groups.swap_program_labels(programs, np.full(len(programs), q), namespaces=1)
+        ref = []
+        for program in programs:
+            state = dict(enumerate(range(4)))
+            for instruction in program:
+                a, b = pairs[instruction]
+                state[a], state[b] = state[b], state[a]
+            ref.append(state[q])
+        worst_swap += np.count_nonzero(got != ref)
+    check("swap3: all 216 single-namespace programs x four queries match a literal interpreter", worst_swap == 0)
+    tok, tgt, msk = groups.task_swap_program(rng, 1024)
+    instructions, query = tok[:, 1:-1, 0], tok[:, -1, 0] - 12
+    key = query // 4
+    selected = np.stack([row[row // 6 == k] % 6 for row, k in zip(instructions, key)])
+    ref = groups.swap_program_labels(selected, query % 4, namespaces=1)
+    check("swap3: distractor namespace never changes query answer; BOS/instructions unscored",
+          np.array_equal(tgt[:, -1], ref) and (msk[:, :-1] == 0).all() and (msk[:, -1] == 1).all()
+          and (tok[:, 0, 0] == 20).all())
+    reverse = groups.swap_program_labels(instructions[:, ::-1], query)
+    check("swap3: instruction order changes answers", (reverse != tgt[:, -1]).mean() > 0.1,
+          f"reversal changes {(reverse != tgt[:, -1]).mean():.1%}")
+    num, den = groups.swap_order_blind_ceiling()
+    check("swap3: exact order-blind Bayes ceiling is 67/108 = 62.037...%",
+          num * 108 == den * 67, f"{num}/{den} = {num / den:.9f}")
+    # A hand-built SO(3) head selects one namespace. At the query its arity-four sector is
+    # precisely the three selected swaps' product, including when distractors are interleaved.
+    basis, _ = np.linalg.qr(np.eye(4)[:, :3] - np.eye(4)[:, 3, None])
+    perm = np.eye(4)[np.arange(4)]
+    swaps = []
+    for a, b in pairs:
+        P = perm.copy()
+        P[[a, b]] = P[[b, a]]
+        swaps.append(-basis.T @ P @ basis)  # sign-twisted standard representation of S4
+    rotations = np.asarray(swaps)
+    sample = tok[:32, :, 0]
+    mats = np.zeros((32, sample.shape[1], 2, 3, 3))
+    for h in range(2):
+        for i in range(1, sample.shape[1] - 1):
+            ids = sample[:, i]
+            mats[:, i, h] = rotations[ids % 6] * (ids // 6 == h)[:, None, None]
+        mats[:, -1, h] = np.eye(3)
+    sector = np.asarray(pb.holonomy_sectors(jnp.asarray(mats), 4)[3])[:, -1]
+    decoded = []
+    for b in range(len(sample)):
+        q = int(query[b])
+        # There are three transpositions, hence sign=-1; restore the trivial coordinate.
+        P = -basis @ sector[b, q // 4] @ basis.T + np.ones((4, 4)) / 4
+        decoded.append(int(P[:, q % 4].argmax()))
+    check("swap3: hand-built SO(3) gated arity-four heads exactly execute both namespaces",
+          np.array_equal(decoded, tgt[:32, -1]) and np.allclose(np.linalg.det(rotations), 1))
+
     # 5. holonomy_sectors against explicit subsets, float64
     B, T, H, d, K = 2, 6, 2, 3, 4
     M = jnp.asarray(rng.normal(size=(B, T, H, d, d)))
@@ -143,6 +201,15 @@ def main():
         worst = max(worst, float(np.abs(np.asarray(F2[m])[..., 0, 0] - z.real).max()), float(np.abs(np.asarray(F2[m])[..., 1, 0] - z.imag).max()))
     check("with commuting 2 x 2 rotations the sectors are Newton attention's phi_i e_m(others)", worst < 1e-10, f"max error {worst:.1e}")
 
+    prefix = np.asarray(pb.orthogonal_prefix(M))
+    ref = np.broadcast_to(np.eye(d), (B, H, d, d)).copy()
+    worst = 0.0
+    for t in range(T):
+        ref = Mn[:, t] @ ref
+        worst = max(worst, float(np.max(np.abs(prefix[:, t] - ref))))
+    check("matrix-state baseline recurrence agrees with explicit left-multiplied prefix products",
+          worst < 1e-10, f"max error {worst:.1e}")
+
     # 6. character embedding geometry
     cards = np.array([[(v // 3 ** a) % 3 for a in range(4)] for v in range(81)])
     tok = jnp.asarray(np.concatenate([np.full((1, 4), 3), cards])[None])
@@ -159,7 +226,8 @@ def main():
     for task, extra in (("g3_a5", dict(model="holo", gdim=5, heads=8, order=3, pos=0, embed="table", d=64)),
                         ("g3_z12", dict(model="holo", gdim=2, heads=16, order=3, pos=0, embed="table", d=64)),
                         ("zs4", dict(model="sa", embed="char", pos=0, d=192)),
-                        ("g3_z60", dict(model="newton", rank=16, order=3, readout="shared", fnorm=1, pos=0, embed="table", d=64))):
+                        ("g3_z60", dict(model="newton", rank=16, order=3, readout="shared", fnorm=1, pos=0, embed="table", d=64)),
+                        ("swap3", dict(model="orthornn", gdim=6, heads=4, pos=0, embed="table", d=64))):
         cfg = argparse.Namespace(task=task, layers=1, heads=4, phase=2.0, fnorm=1, ffn=1, repeat=0, recur=1, rawphase=0,
                                  readout="shared", rank=32, order=6, wide=4, vdim=8, plen=3, modes=16, nocubic=0, dh=0)
         for k, v in extra.items():

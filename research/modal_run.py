@@ -63,6 +63,12 @@ def run_h100(argv: list[str]) -> dict:
     return _run(argv)
 
 
+@app.function(image=image, gpu="L4", timeout=20 * 60, max_containers=8)
+def run_swap(argv: list[str]) -> dict:
+    """Bound the second benchmark's spend: 32 planned calls, each at most twenty L4 minutes."""
+    return _run(argv)
+
+
 @app.function(image=lm_image, gpu="H100", timeout=3 * 3600)
 def run_lm(argv: list[str]) -> dict:
     return _run(argv, "/root/lm.py")
@@ -491,6 +497,20 @@ def grp_e1(seeds: list[int], tasks: list[str], steps: int = 6000) -> list[list[s
     return runs
 
 
+def swap_arms(seeds: list[int], steps: int = 6000) -> list[list[str]]:
+    """GROUPS.md second benchmark: interleaved keyed swap programs; every arm sees identical tokens."""
+    runs = []
+    for d in (2, 3, 4):
+        args = {**holo_args(d), "order": 4}
+        runs += grid(["swap3"], ["holo"], seeds, steps=steps, diag=0, **args)
+    runs += grid(["swap3"], ["newton"], seeds, steps=steps, diag=0, **{**NEWTON_G, "order": 4})
+    for L in (1, 2, 3):
+        runs += grid(["swap3"], ["sa"], seeds, steps=steps, layers=L, diag=0)
+    # Each namespace's S4 fits faithfully in SO(3); SO(6) can hold their direct sum.
+    runs += grid(["swap3"], ["orthornn"], seeds, steps=steps, gdim=6, heads=42, pos=0, diag=0)
+    return runs
+
+
 GRIDS = {
     "smoke": grid(["set"], ["cubic", "sa"], [0], steps=300),
     "baseline": baseline(),
@@ -564,13 +584,15 @@ GRIDS = {
     "grp_e2": [r for t in ("g3_z12", "g3_a4", "g3_z60", "g3_a5") for r in grp_arms(t, [0, 1, 2], [2, 3, 4, 5, 8])],
     # experiment 2, exploratory (after the registered decision): is d = 3 on A5 slow or capped? 20,000 steps
     "grp_e2_long": grid(["g3_a5"], ["holo"], [0, 1, 2], steps=20000, **holo_args(3)),
+    "grp_swap_pilot": swap_arms([0]),
+    "grp_swap": swap_arms([0, 1, 2]),
 }
 
 
 @app.local_entrypoint()
 def main(grid: str = "smoke", gpu: str = "L4"):
     runs = GRIDS[grid]
-    fn = run_diag if grid.startswith("diag_") else run_tok if grid.startswith("tok_") else run_lm if grid.startswith("lm_") else run_h100 if gpu.upper() == "H100" else run_l4
+    fn = run_swap if grid.startswith("grp_swap") else run_diag if grid.startswith("diag_") else run_tok if grid.startswith("tok_") else run_lm if grid.startswith("lm_") else run_h100 if gpu.upper() == "H100" else run_l4
     out = pathlib.Path(__file__).parent / "results" / f"{grid}.jsonl"
     t0 = time.time()
     with out.open("a") as f:

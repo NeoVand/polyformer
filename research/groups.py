@@ -162,6 +162,64 @@ def task_gmatch(rng, B, name, n, k=3):
     return tok, tgt, msk
 
 
+def swap_program_labels(instructions, query, variables=4, namespaces=2):
+    """Execute swap instructions in independent namespaces and read one queried variable.
+
+    Instruction id = namespace * binom(variables, 2) + lexicographic unordered pair id.
+    Query id = namespace * variables + variable. Each namespace starts as [0, ..., variables-1].
+    """
+    instructions, query = np.asarray(instructions), np.asarray(query)
+    pairs = np.asarray(list(itertools.combinations(range(variables), 2)))
+    B = len(instructions)
+    state = np.broadcast_to(np.arange(variables), (B, namespaces, variables)).copy()
+    rows = np.arange(B)
+    for t in range(instructions.shape[1]):
+        ids = instructions[:, t]
+        key, pair = ids // len(pairs), pairs[ids % len(pairs)]
+        a, b = pair[:, 0], pair[:, 1]
+        old = state[rows, key, a].copy()
+        state[rows, key, a] = state[rows, key, b]
+        state[rows, key, b] = old
+    return state[rows, query // variables, query % variables].astype(np.int32)
+
+
+def task_swap_program(rng, B, per_namespace=3, variables=4, namespaces=2):
+    """BOS, an interleaving of keyed swaps, then a query; only its four-way answer is scored.
+
+    Exactly per_namespace independently uniform swaps per namespace; their interleaving and the
+    queried namespace/variable are uniform. All arms get the identical categorical token stream.
+    """
+    pairs = math.comb(variables, 2)
+    keys = np.broadcast_to(np.repeat(np.arange(namespaces), per_namespace), (B, namespaces * per_namespace))
+    keys = np.take_along_axis(keys, np.argsort(rng.random(keys.shape), axis=1), axis=1)
+    instructions = keys * pairs + rng.integers(pairs, size=keys.shape)
+    query = rng.integers(namespaces * variables, size=B)
+    bos = namespaces * (pairs + variables)
+    tokens = np.concatenate([np.full((B, 1), bos), instructions, (namespaces * pairs + query)[:, None]], axis=1)
+    targets = np.zeros_like(tokens, dtype=np.int32)
+    targets[:, -1] = swap_program_labels(instructions, query, variables, namespaces)
+    mask = np.zeros_like(tokens, dtype=np.float32)
+    mask[:, -1] = 1
+    return tokens[..., None], targets, mask
+
+
+def swap_order_blind_ceiling(per_namespace=3, variables=4):
+    """Exact accuracy ceiling from the instruction multiset and query, as an integer ratio.
+
+    Distractor namespaces carry no information. Uniform queried variables and permutation symmetry
+    make the target classes equiprobable, so accuracy and balanced accuracy have the same Bayes optimum.
+    """
+    from collections import Counter, defaultdict
+    counts = defaultdict(Counter)
+    pairs = math.comb(variables, 2)
+    for seq in itertools.product(range(pairs), repeat=per_namespace):
+        instructions = np.broadcast_to(seq, (variables, per_namespace))
+        labels = swap_program_labels(instructions, np.arange(variables), variables, 1)
+        for q, y in enumerate(labels):
+            counts[(tuple(sorted(seq)), q)][int(y)] += 1
+    return sum(max(c.values()) for c in counts.values()), variables * pairs ** per_namespace
+
+
 def order_blind_ceiling(name, n, k=3, samples=4000, perms=64, seed=0):
     """
     The best balanced accuracy of any predictor that sees a position's element and the multiset of the others
