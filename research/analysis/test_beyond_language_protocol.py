@@ -1,7 +1,9 @@
 """CPU-only tests for frozen planning, source identity, and held-out selection."""
 
 import copy
+from fractions import Fraction
 import importlib.util
+import itertools
 import json
 from pathlib import Path
 import subprocess
@@ -116,14 +118,15 @@ class ProtocolTests(unittest.TestCase):
         return p.select_rates(self.plan, [self.manifest], self.results)
 
     def test_registered_compute_and_fresh_schedules(self):
-        expected = dict(rawS=13356, convS=13348, convP=12491, B=12209,
-                        C=12207, GDN1=12584, DP4=9959)
+        expected = dict(rawS=13542, convS=13533, convP=12535, B=12209,
+                        C=12207, GDN1=13108, DP4=10278)
         self.assertEqual({a: x["main_steps"] for a, x in self.plan["arms"].items()}, expected)
         self.assertEqual(len(self.plan["tuning_jobs"]), 21)
         self.assertEqual(self.plan["final_seeds"], [1, 2, 3])
-        self.assertAlmostEqual(self.plan["budget"]["forecast_total_usd"], 76.237598, places=5)
+        self.assertAlmostEqual(self.plan["budget"]["forecast_total_usd"], 77.090639, places=5)
         self.assertLess(self.plan["budget"]["all_timeout_total_usd"], 100)
-        self.assertTrue(all(0 <= a["excess_updates"] < 1 for a in self.plan["arms"].values()))
+        self.assertTrue(all(0 <= a["rounding_excess_updates"] < 1 for a in self.plan["arms"].values()))
+        self.assertTrue(all(self.plan["arms"][a]["added_updates"] == 0 for a in ("B", "C")))
         for arm in expected:
             cfg = p.expected_config(self.plan, arm, "tuning", .004, 0)
             self.assertEqual((cfg["steps"], cfg["warmup"], cfg["tokens"]), (3051, 305, 0))
@@ -485,13 +488,89 @@ class ProtocolTests(unittest.TestCase):
 
     def test_all_three_survivors_use_larger_common_budget(self):
         plan = p.build_plan(ROOT, ["C", "A", "B"], BUDGET)
-        expected = dict(rawS=14202, convS=14193, convP=13283, A=12207,
-                        B=12982, C=12981, GDN1=13381, DP4=10590)
+        expected = dict(rawS=14902, convS=14892, convP=13829, A=12207,
+                        B=12982, C=12981, GDN1=14474, DP4=11217)
         self.assertEqual({a: x["main_steps"] for a, x in plan["arms"].items()}, expected)
         self.assertEqual(plan["target_arm"], "A")
         self.assertTrue(plan["budget"]["rolling_reservations_required"])
         self.assertLess(plan["budget"]["forecast_total_usd"], 100)
+        self.assertAlmostEqual(plan["budget"]["forecast_total_usd"], 94.264480, places=5)
         self.assertEqual(len(plan["tuning_jobs"]), 24)
+
+    def test_four_work_conventions_preserve_original_counters_and_include_no_cse_A(self):
+        plan = p.build_plan(ROOT, ["A", "B", "C"], BUDGET)
+        expected = {
+            "rawS": (277420392, 318382560, 287023104, 331186176),
+            "convS": (277586280, 318603744, 287188992, 331407360),
+            "convP": (296617536, 343978752, 306312192, 356904960),
+            "A": (322745274.5625, 378815736.75, 341858394.5625, 404299896.75),
+            "B": (303489882.5625, 353141880.75, 313184538.5625, 366068088.75),
+            "C": (303517530.5625, 353178744.75, 313212186.5625, 366104952.75),
+            "GDN1": (294429883.5, 340985850, 294429883.5, 340985850),
+            "DP4": (372031326, 444226344, 372031326, 444226344),
+        }
+        for arm, values in expected.items():
+            row = plan["arms"][arm]
+            self.assertEqual(tuple(row["work_fpt"][k] for k in p.WORK_CONVENTIONS), values)
+            self.assertEqual(row["training_fpt"], BUDGET["arms"][arm]["training_fpt"])
+            self.assertEqual(row["forward_fpt"], BUDGET["arms"][arm]["forward_fpt"])
+        self.assertEqual(plan["arms"]["A"]["source_upper_forward_adjustment"], 6371040)
+        self.assertEqual(plan["arms"]["A"]["main_steps"], 12207)
+        self.assertEqual(plan["arms"]["B"]["main_steps"], 12982)
+        self.assertEqual(plan["arms"]["C"]["main_steps"], 12981)
+
+    def test_every_subset_controls_dominate_all_candidates_and_are_minimal(self):
+        expected_controls = {
+            ("A",): (14902, 14892, 13829, 14474, 11217),
+            ("B",): (13540, 13531, 12533, 13105, 10277),
+            ("C",): (13542, 13532, 12534, 13107, 10278),
+            ("A", "B"): (14902, 14892, 13829, 14474, 11217),
+            ("A", "C"): (14902, 14892, 13829, 14474, 11217),
+            ("B", "C"): (13542, 13533, 12535, 13108, 10278),
+            ("A", "B", "C"): (14902, 14892, 13829, 14474, 11217),
+        }
+        inequalities = witnesses = 0
+        for size in (1, 2, 3):
+            for survivors in itertools.combinations(("A", "B", "C"), size):
+                plan = p.build_plan(ROOT, list(survivors), BUDGET)
+                self.assertEqual(tuple(plan["arms"][a]["main_steps"] for a in p.CONTROL_ARMS),
+                                 expected_controls[survivors])
+                for control in p.CONTROL_ARMS:
+                    row = plan["arms"][control]
+                    for candidate in survivors:
+                        for convention in p.WORK_CONVENTIONS:
+                            achieved = row["main_steps"] * Fraction(str(row["work_fpt"][convention]))
+                            needed = plan["arms"][candidate]["main_steps"] * Fraction(
+                                str(plan["arms"][candidate]["work_fpt"][convention]))
+                            self.assertGreaterEqual(achieved, needed)
+                            inequalities += 1
+                    self.assertTrue(row["binding_requirements"])
+                    witness = row["binding_requirements"][0]
+                    c, k = witness["candidate"], witness["convention"]
+                    self.assertLess(
+                        (row["main_steps"] - 1) * Fraction(str(row["work_fpt"][k])),
+                        plan["arms"][c]["main_steps"] * Fraction(str(plan["arms"][c]["work_fpt"][k])),
+                    )
+                    witnesses += 1
+                    self.assertLessEqual(row["main_timeout_seconds"], 7200)
+                self.assertLess(plan["budget"]["forecast_total_usd"], 100)
+        self.assertEqual((inequalities, witnesses), (240, 35))
+
+    def test_allowance_proof_or_schedule_tampering_rejected_after_rehash(self):
+        for mode in ("policy", "proof", "steps", "work", "candidate_steps"):
+            bad = copy.deepcopy(self.plan)
+            if mode == "policy":
+                bad["control_allowance"]["policy_id"] = "f" * 64
+            elif mode == "proof":
+                bad["control_allowance"]["allocations"]["GDN1"]["dominance_proof"]["nominal"]["target_flops_fraction"][0] += 1
+            elif mode == "steps":
+                bad["arms"]["convS"]["main_steps"] -= 1
+            elif mode == "work":
+                bad["arms"]["DP4"]["work_fpt"]["source_upper_remat"] += 1
+            else:
+                bad["arms"]["B"]["main_steps"] += 1
+            with self.subTest(mode=mode), self.assertRaises(p.ProtocolError):
+                p.verify_plan(p.seal(bad))
 
 
 if __name__ == "__main__":

@@ -1,257 +1,1321 @@
 {
-  "rate_per_second": 0.00122044,
-  "spent_language_usd": 2.326004,
+  "arms": {
+    "A": {
+      "forecast_seconds_per_update": 0.17479999999999998,
+      "forward_fpt": 107581758.1875,
+      "measured_seconds_per_update_without_conv": 0.152,
+      "setup_seconds": 156.61,
+      "sweep_3rates_estimated_usd": 3.192395708736,
+      "sweep_3rates_max_reservation_usd": 4.21784064,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 1000,
+      "sweep_wall_seconds": 719.9248,
+      "training_fpt": 322745274.5625
+    },
+    "B": {
+      "forecast_seconds_per_update": 0.1311,
+      "forward_fpt": 101163294.1875,
+      "measured_seconds_per_update_without_conv": 0.114,
+      "setup_seconds": 146.405,
+      "sweep_3rates_estimated_usd": 2.666872902252,
+      "sweep_3rates_max_reservation_usd": 3.48557664,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 800,
+      "sweep_wall_seconds": 576.3910999999999,
+      "training_fpt": 303489882.5625
+    },
+    "C": {
+      "forecast_seconds_per_update": 0.1311,
+      "forward_fpt": 101172510.1875,
+      "measured_seconds_per_update_without_conv": 0.114,
+      "setup_seconds": 136.78199999999998,
+      "sweep_3rates_estimated_usd": 2.631640019892,
+      "sweep_3rates_max_reservation_usd": 3.48557664,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 800,
+      "sweep_wall_seconds": 566.7681,
+      "training_fpt": 303517530.5625
+    },
+    "DP4": {
+      "forecast_seconds_per_update": 0.361,
+      "forward_fpt": 123706314.0,
+      "measured_seconds_per_update_without_conv": 0.361,
+      "setup_seconds": 97.775,
+      "sweep_3rates_estimated_usd": 5.056963925520001,
+      "sweep_3rates_max_reservation_usd": 6.41463264,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 1600,
+      "sweep_wall_seconds": 1229.1860000000001,
+      "training_fpt": 372031326.0
+    },
+    "GDN1": {
+      "forecast_seconds_per_update": 0.153,
+      "forward_fpt": 98067262.5,
+      "measured_seconds_per_update_without_conv": 0.153,
+      "setup_seconds": 89.171,
+      "sweep_3rates_estimated_usd": 2.7019589656800003,
+      "sweep_3rates_max_reservation_usd": 3.48557664,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 800,
+      "sweep_wall_seconds": 585.974,
+      "training_fpt": 294429883.5
+    },
+    "convP": {
+      "forecast_seconds_per_update": 0.1127,
+      "forward_fpt": 98872512.0,
+      "measured_seconds_per_update_without_conv": 0.098,
+      "setup_seconds": 79.726,
+      "sweep_3rates_estimated_usd": 2.2171990992839996,
+      "sweep_3rates_max_reservation_usd": 2.75331264,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 600,
+      "sweep_wall_seconds": 453.5737,
+      "training_fpt": 296617536.0
+    },
+    "convS": {
+      "forecast_seconds_per_update": 0.0943,
+      "forward_fpt": 92528760.0,
+      "measured_seconds_per_update_without_conv": 0.082,
+      "setup_seconds": 74.092,
+      "sweep_3rates_estimated_usd": 1.9910305757159998,
+      "sweep_3rates_max_reservation_usd": 2.75331264,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 600,
+      "sweep_wall_seconds": 391.80129999999997,
+      "training_fpt": 277586280.0
+    },
+    "rawS": {
+      "forecast_seconds_per_update": 0.082,
+      "forward_fpt": 92473464.0,
+      "measured_seconds_per_update_without_conv": 0.082,
+      "setup_seconds": 44.092,
+      "sweep_3rates_estimated_usd": 1.74379152168,
+      "sweep_3rates_max_reservation_usd": 2.38718064,
+      "sweep_steps": 3051,
+      "sweep_timeout_seconds": 500,
+      "sweep_wall_seconds": 324.274,
+      "training_fpt": 277420392.0
+    }
+  },
+  "control_allowance_policy_id": "3a340829e3fa07d6808280c240992af63283088ac92a3d68d7935cb7822d0991",
+  "control_allowance_scenarios": {
+    "A": {
+      "budget": {
+        "added_control_allowance_forecast_usd": 2.117802,
+        "added_control_allowance_reservations_usd": 2.562924,
+        "all_timeout_before_control_allowance_usd": 91.01782,
+        "all_timeout_total_usd": 93.580744,
+        "already_spent_usd": 2.326004,
+        "forecast_before_control_allowance_usd": 70.478636,
+        "forecast_total_usd": 72.596438,
+        "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": false,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds"
+      },
+      "candidate_steps": {
+        "A": 12207
+      },
+      "controls": {
+        "DP4": {
+          "added_three_seed_forecast_usd": 0.828729,
+          "added_three_seed_reservations_usd": 1.098396,
+          "added_tokens": 20545536,
+          "added_updates": 627,
+          "added_wall_forecast_seconds": 226.3470000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper",
+              "previous_update_deficit_flops_fraction": [
+                11864310036480,
+                1
+              ],
+              "required_updates_fraction": [
+                2472927657733,
+                220463008
+              ]
+            }
+          ],
+          "main_steps": 11217,
+          "main_timeout_seconds": 5500,
+          "nominal_main_steps": 10590,
+          "nominal_main_timeout_seconds": 5200
+        },
+        "GDN1": {
+          "added_three_seed_forecast_usd": 0.612279,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 35815424,
+          "added_updates": 1093,
+          "added_wall_forecast_seconds": 167.22899999999981,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                6574328291328,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                454647800
+              ]
+            }
+          ],
+          "main_steps": 14474,
+          "main_timeout_seconds": 3100,
+          "nominal_main_steps": 13381,
+          "nominal_main_timeout_seconds": 2900
+        },
+        "convP": {
+          "added_three_seed_forecast_usd": 0.225296,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 17891328,
+          "added_updates": 546,
+          "added_wall_forecast_seconds": 61.534200000000055,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                231104421888,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                475873280
+              ]
+            }
+          ],
+          "main_steps": 13829,
+          "main_timeout_seconds": 2300,
+          "nominal_main_steps": 13283,
+          "nominal_main_timeout_seconds": 2200
+        },
+        "convS": {
+          "added_three_seed_forecast_usd": 0.241338,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 22904832,
+          "added_updates": 699,
+          "added_wall_forecast_seconds": 65.91570000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9890754306048,
+                1
+              ],
+              "required_updates_fraction": [
+                75636610569,
+                5079040
+              ]
+            }
+          ],
+          "main_steps": 14892,
+          "main_timeout_seconds": 2000,
+          "nominal_main_steps": 14193,
+          "nominal_main_timeout_seconds": 2000
+        },
+        "rawS": {
+          "added_three_seed_forecast_usd": 0.21016,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 22937600,
+          "added_updates": 700,
+          "added_wall_forecast_seconds": 57.399999999999864,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9294022287360,
+                1
+              ],
+              "required_updates_fraction": [
+                2193461706501,
+                147193856
+              ]
+            }
+          ],
+          "main_steps": 14902,
+          "main_timeout_seconds": 1800,
+          "nominal_main_steps": 14202,
+          "nominal_main_timeout_seconds": 1700
+        }
+      },
+      "survivors": [
+        "A"
+      ]
+    },
+    "A+B": {
+      "budget": {
+        "added_control_allowance_forecast_usd": 2.117802,
+        "added_control_allowance_reservations_usd": 2.562924,
+        "all_timeout_before_control_allowance_usd": 105.311613,
+        "all_timeout_total_usd": 107.874537,
+        "already_spent_usd": 2.326004,
+        "forecast_before_control_allowance_usd": 81.34813,
+        "forecast_total_usd": 83.465932,
+        "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": true,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds"
+      },
+      "candidate_steps": {
+        "A": 12207,
+        "B": 12982
+      },
+      "controls": {
+        "DP4": {
+          "added_three_seed_forecast_usd": 0.828729,
+          "added_three_seed_reservations_usd": 1.098396,
+          "added_tokens": 20545536,
+          "added_updates": 627,
+          "added_wall_forecast_seconds": 226.3470000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper",
+              "previous_update_deficit_flops_fraction": [
+                11864310036480,
+                1
+              ],
+              "required_updates_fraction": [
+                2472927657733,
+                220463008
+              ]
+            }
+          ],
+          "main_steps": 11217,
+          "main_timeout_seconds": 5500,
+          "nominal_main_steps": 10590,
+          "nominal_main_timeout_seconds": 5200
+        },
+        "GDN1": {
+          "added_three_seed_forecast_usd": 0.612279,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 35815424,
+          "added_updates": 1093,
+          "added_wall_forecast_seconds": 167.22899999999981,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                6574328291328,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                454647800
+              ]
+            }
+          ],
+          "main_steps": 14474,
+          "main_timeout_seconds": 3100,
+          "nominal_main_steps": 13381,
+          "nominal_main_timeout_seconds": 2900
+        },
+        "convP": {
+          "added_three_seed_forecast_usd": 0.225296,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 17891328,
+          "added_updates": 546,
+          "added_wall_forecast_seconds": 61.534200000000055,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                231104421888,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                475873280
+              ]
+            }
+          ],
+          "main_steps": 13829,
+          "main_timeout_seconds": 2300,
+          "nominal_main_steps": 13283,
+          "nominal_main_timeout_seconds": 2200
+        },
+        "convS": {
+          "added_three_seed_forecast_usd": 0.241338,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 22904832,
+          "added_updates": 699,
+          "added_wall_forecast_seconds": 65.91570000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9890754306048,
+                1
+              ],
+              "required_updates_fraction": [
+                75636610569,
+                5079040
+              ]
+            }
+          ],
+          "main_steps": 14892,
+          "main_timeout_seconds": 2000,
+          "nominal_main_steps": 14193,
+          "nominal_main_timeout_seconds": 2000
+        },
+        "rawS": {
+          "added_three_seed_forecast_usd": 0.21016,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 22937600,
+          "added_updates": 700,
+          "added_wall_forecast_seconds": 57.399999999999864,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9294022287360,
+                1
+              ],
+              "required_updates_fraction": [
+                2193461706501,
+                147193856
+              ]
+            }
+          ],
+          "main_steps": 14902,
+          "main_timeout_seconds": 1800,
+          "nominal_main_steps": 14202,
+          "nominal_main_timeout_seconds": 1700
+        }
+      },
+      "survivors": [
+        "A",
+        "B"
+      ]
+    },
+    "A+B+C": {
+      "budget": {
+        "added_control_allowance_forecast_usd": 2.117802,
+        "added_control_allowance_reservations_usd": 2.562924,
+        "all_timeout_before_control_allowance_usd": 119.605406,
+        "all_timeout_total_usd": 122.16833,
+        "already_spent_usd": 2.326004,
+        "forecast_before_control_allowance_usd": 92.146677,
+        "forecast_total_usd": 94.26448,
+        "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": true,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds"
+      },
+      "candidate_steps": {
+        "A": 12207,
+        "B": 12982,
+        "C": 12981
+      },
+      "controls": {
+        "DP4": {
+          "added_three_seed_forecast_usd": 0.828729,
+          "added_three_seed_reservations_usd": 1.098396,
+          "added_tokens": 20545536,
+          "added_updates": 627,
+          "added_wall_forecast_seconds": 226.3470000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper",
+              "previous_update_deficit_flops_fraction": [
+                11864310036480,
+                1
+              ],
+              "required_updates_fraction": [
+                2472927657733,
+                220463008
+              ]
+            }
+          ],
+          "main_steps": 11217,
+          "main_timeout_seconds": 5500,
+          "nominal_main_steps": 10590,
+          "nominal_main_timeout_seconds": 5200
+        },
+        "GDN1": {
+          "added_three_seed_forecast_usd": 0.612279,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 35815424,
+          "added_updates": 1093,
+          "added_wall_forecast_seconds": 167.22899999999981,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                6574328291328,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                454647800
+              ]
+            }
+          ],
+          "main_steps": 14474,
+          "main_timeout_seconds": 3100,
+          "nominal_main_steps": 13381,
+          "nominal_main_timeout_seconds": 2900
+        },
+        "convP": {
+          "added_three_seed_forecast_usd": 0.225296,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 17891328,
+          "added_updates": 546,
+          "added_wall_forecast_seconds": 61.534200000000055,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                231104421888,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                475873280
+              ]
+            }
+          ],
+          "main_steps": 13829,
+          "main_timeout_seconds": 2300,
+          "nominal_main_steps": 13283,
+          "nominal_main_timeout_seconds": 2200
+        },
+        "convS": {
+          "added_three_seed_forecast_usd": 0.241338,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 22904832,
+          "added_updates": 699,
+          "added_wall_forecast_seconds": 65.91570000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9890754306048,
+                1
+              ],
+              "required_updates_fraction": [
+                75636610569,
+                5079040
+              ]
+            }
+          ],
+          "main_steps": 14892,
+          "main_timeout_seconds": 2000,
+          "nominal_main_steps": 14193,
+          "nominal_main_timeout_seconds": 2000
+        },
+        "rawS": {
+          "added_three_seed_forecast_usd": 0.21016,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 22937600,
+          "added_updates": 700,
+          "added_wall_forecast_seconds": 57.399999999999864,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9294022287360,
+                1
+              ],
+              "required_updates_fraction": [
+                2193461706501,
+                147193856
+              ]
+            }
+          ],
+          "main_steps": 14902,
+          "main_timeout_seconds": 1800,
+          "nominal_main_steps": 14202,
+          "nominal_main_timeout_seconds": 1700
+        }
+      },
+      "survivors": [
+        "A",
+        "B",
+        "C"
+      ]
+    },
+    "A+C": {
+      "budget": {
+        "added_control_allowance_forecast_usd": 2.117802,
+        "added_control_allowance_reservations_usd": 2.562924,
+        "all_timeout_before_control_allowance_usd": 105.311613,
+        "all_timeout_total_usd": 107.874537,
+        "already_spent_usd": 2.326004,
+        "forecast_before_control_allowance_usd": 81.277184,
+        "forecast_total_usd": 83.394986,
+        "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": true,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds"
+      },
+      "candidate_steps": {
+        "A": 12207,
+        "C": 12981
+      },
+      "controls": {
+        "DP4": {
+          "added_three_seed_forecast_usd": 0.828729,
+          "added_three_seed_reservations_usd": 1.098396,
+          "added_tokens": 20545536,
+          "added_updates": 627,
+          "added_wall_forecast_seconds": 226.3470000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper",
+              "previous_update_deficit_flops_fraction": [
+                11864310036480,
+                1
+              ],
+              "required_updates_fraction": [
+                2472927657733,
+                220463008
+              ]
+            }
+          ],
+          "main_steps": 11217,
+          "main_timeout_seconds": 5500,
+          "nominal_main_steps": 10590,
+          "nominal_main_timeout_seconds": 5200
+        },
+        "GDN1": {
+          "added_three_seed_forecast_usd": 0.612279,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 35815424,
+          "added_updates": 1093,
+          "added_wall_forecast_seconds": 167.22899999999981,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                6574328291328,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                454647800
+              ]
+            }
+          ],
+          "main_steps": 14474,
+          "main_timeout_seconds": 3100,
+          "nominal_main_steps": 13381,
+          "nominal_main_timeout_seconds": 2900
+        },
+        "convP": {
+          "added_three_seed_forecast_usd": 0.225296,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 17891328,
+          "added_updates": 546,
+          "added_wall_forecast_seconds": 61.534200000000055,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                231104421888,
+                1
+              ],
+              "required_updates_fraction": [
+                6580385119503,
+                475873280
+              ]
+            }
+          ],
+          "main_steps": 13829,
+          "main_timeout_seconds": 2300,
+          "nominal_main_steps": 13283,
+          "nominal_main_timeout_seconds": 2200
+        },
+        "convS": {
+          "added_three_seed_forecast_usd": 0.241338,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 22904832,
+          "added_updates": 699,
+          "added_wall_forecast_seconds": 65.91570000000002,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9890754306048,
+                1
+              ],
+              "required_updates_fraction": [
+                75636610569,
+                5079040
+              ]
+            }
+          ],
+          "main_steps": 14892,
+          "main_timeout_seconds": 2000,
+          "nominal_main_steps": 14193,
+          "nominal_main_timeout_seconds": 2000
+        },
+        "rawS": {
+          "added_three_seed_forecast_usd": 0.21016,
+          "added_three_seed_reservations_usd": 0.366132,
+          "added_tokens": 22937600,
+          "added_updates": 700,
+          "added_wall_forecast_seconds": 57.399999999999864,
+          "binding_requirements": [
+            {
+              "candidate": "A",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                9294022287360,
+                1
+              ],
+              "required_updates_fraction": [
+                2193461706501,
+                147193856
+              ]
+            }
+          ],
+          "main_steps": 14902,
+          "main_timeout_seconds": 1800,
+          "nominal_main_steps": 14202,
+          "nominal_main_timeout_seconds": 1700
+        }
+      },
+      "survivors": [
+        "A",
+        "C"
+      ]
+    },
+    "B": {
+      "budget": {
+        "added_control_allowance_forecast_usd": 0.849541,
+        "added_control_allowance_reservations_usd": 1.464528,
+        "all_timeout_before_control_allowance_usd": 84.793576,
+        "all_timeout_total_usd": 86.258104,
+        "already_spent_usd": 2.326004,
+        "forecast_before_control_allowance_usd": 65.807991,
+        "forecast_total_usd": 66.657532,
+        "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": false,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds"
+      },
+      "candidate_steps": {
+        "B": 12207
+      },
+      "controls": {
+        "DP4": {
+          "added_three_seed_forecast_usd": 0.420312,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 10420224,
+          "added_updates": 318,
+          "added_wall_forecast_seconds": 114.79799999999977,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "source_upper",
+              "previous_update_deficit_flops_fraction": [
+                1630413010944,
+                1
+              ],
+              "required_updates_fraction": [
+                2265507355397,
+                220463008
+              ]
+            }
+          ],
+          "main_steps": 10277,
+          "main_timeout_seconds": 5100,
+          "nominal_main_steps": 9959,
+          "nominal_main_timeout_seconds": 4900
+        },
+        "GDN1": {
+          "added_three_seed_forecast_usd": 0.292415,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 17104896,
+          "added_updates": 522,
+          "added_wall_forecast_seconds": 79.86599999999999,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                10308189265920,
+                1
+              ],
+              "required_updates_fraction": [
+                1191624842499,
+                90929560
+              ]
+            }
+          ],
+          "main_steps": 13105,
+          "main_timeout_seconds": 2900,
+          "nominal_main_steps": 12583,
+          "nominal_main_timeout_seconds": 2700
+        },
+        "convP": {
+          "added_three_seed_forecast_usd": 0.017743,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 1409024,
+          "added_updates": 43,
+          "added_wall_forecast_seconds": 4.846100000000206,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                2005999656960,
+                1
+              ],
+              "required_updates_fraction": [
+                442133634699,
+                35279872
+              ]
+            }
+          ],
+          "main_steps": 12533,
+          "main_timeout_seconds": 2100,
+          "nominal_main_steps": 12490,
+          "nominal_main_timeout_seconds": 2100
+        },
+        "convS": {
+          "added_three_seed_forecast_usd": 0.063528,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 6029312,
+          "added_updates": 184,
+          "added_wall_forecast_seconds": 17.351199999999835,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                3089432420352,
+                1
+              ],
+              "required_updates_fraction": [
+                1915912417029,
+                141601664
+              ]
+            }
+          ],
+          "main_steps": 13531,
+          "main_timeout_seconds": 1900,
+          "nominal_main_steps": 13347,
+          "nominal_main_timeout_seconds": 1900
+        },
+        "rawS": {
+          "added_three_seed_forecast_usd": 0.055542,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 6062080,
+          "added_updates": 185,
+          "added_wall_forecast_seconds": 15.169999999999845,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                7256751316992,
+                1
+              ],
+              "required_updates_fraction": [
+                1915912417029,
+                141503360
+              ]
+            }
+          ],
+          "main_steps": 13540,
+          "main_timeout_seconds": 1600,
+          "nominal_main_steps": 13355,
+          "nominal_main_timeout_seconds": 1600
+        }
+      },
+      "survivors": [
+        "B"
+      ]
+    },
+    "B+C": {
+      "budget": {
+        "added_control_allowance_forecast_usd": 0.853041,
+        "added_control_allowance_reservations_usd": 1.464528,
+        "all_timeout_before_control_allowance_usd": 98.355105,
+        "all_timeout_total_usd": 99.819633,
+        "already_spent_usd": 2.326004,
+        "forecast_before_control_allowance_usd": 76.237598,
+        "forecast_total_usd": 77.090639,
+        "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": false,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds"
+      },
+      "candidate_steps": {
+        "B": 12209,
+        "C": 12207
+      },
+      "controls": {
+        "DP4": {
+          "added_three_seed_forecast_usd": 0.421634,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 10452992,
+          "added_updates": 319,
+          "added_wall_forecast_seconds": 115.15899999999965,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "source_upper",
+              "previous_update_deficit_flops_fraction": [
+                9964552439808,
+                1
+              ],
+              "required_updates_fraction": [
+                6797635611217,
+                661389024
+              ]
+            }
+          ],
+          "main_steps": 10278,
+          "main_timeout_seconds": 5100,
+          "nominal_main_steps": 9959,
+          "nominal_main_timeout_seconds": 4900
+        },
+        "GDN1": {
+          "added_three_seed_forecast_usd": 0.293535,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 17170432,
+          "added_updates": 524,
+          "added_wall_forecast_seconds": 80.17199999999957,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                778554531840,
+                1
+              ],
+              "required_updates_fraction": [
+                1191820078813,
+                90929560
+              ]
+            }
+          ],
+          "main_steps": 13108,
+          "main_timeout_seconds": 2900,
+          "nominal_main_steps": 12584,
+          "nominal_main_timeout_seconds": 2700
+        },
+        "convP": {
+          "added_three_seed_forecast_usd": 0.018156,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 1441792,
+          "added_updates": 44,
+          "added_wall_forecast_seconds": 4.958799999999883,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                2606514462720,
+                1
+              ],
+              "required_updates_fraction": [
+                5748678962769,
+                458638336
+              ]
+            }
+          ],
+          "main_steps": 12535,
+          "main_timeout_seconds": 2100,
+          "nominal_main_steps": 12491,
+          "nominal_main_timeout_seconds": 2100
+        },
+        "convS": {
+          "added_three_seed_forecast_usd": 0.063874,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 6062080,
+          "added_updates": 185,
+          "added_wall_forecast_seconds": 17.44549999999981,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                5352923750400,
+                1
+              ],
+              "required_updates_fraction": [
+                66076769687,
+                4882816
+              ]
+            }
+          ],
+          "main_steps": 13533,
+          "main_timeout_seconds": 1900,
+          "nominal_main_steps": 13348,
+          "nominal_main_timeout_seconds": 1900
+        },
+        "rawS": {
+          "added_three_seed_forecast_usd": 0.055842,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 6094848,
+          "added_updates": 186,
+          "added_wall_forecast_seconds": 15.251999999999953,
+          "binding_requirements": [
+            {
+              "candidate": "B",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                9534738161664,
+                1
+              ],
+              "required_updates_fraction": [
+                1916226320923,
+                141503360
+              ]
+            }
+          ],
+          "main_steps": 13542,
+          "main_timeout_seconds": 1600,
+          "nominal_main_steps": 13356,
+          "nominal_main_timeout_seconds": 1600
+        }
+      },
+      "survivors": [
+        "B",
+        "C"
+      ]
+    },
+    "C": {
+      "budget": {
+        "added_control_allowance_forecast_usd": 0.851723,
+        "added_control_allowance_reservations_usd": 1.464528,
+        "all_timeout_before_control_allowance_usd": 84.793576,
+        "all_timeout_total_usd": 86.258104,
+        "already_spent_usd": 2.326004,
+        "forecast_before_control_allowance_usd": 65.739143,
+        "forecast_total_usd": 66.590866,
+        "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
+        "rate_per_second": 0.00122044,
+        "resource_overhead_seconds_per_job": 152,
+        "rolling_reservations_required": false,
+        "stage_cap_usd": 100,
+        "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds"
+      },
+      "candidate_steps": {
+        "C": 12207
+      },
+      "controls": {
+        "DP4": {
+          "added_three_seed_forecast_usd": 0.421634,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 10452992,
+          "added_updates": 319,
+          "added_wall_forecast_seconds": 115.15899999999965,
+          "binding_requirements": [
+            {
+              "candidate": "C",
+              "convention": "source_upper",
+              "previous_update_deficit_flops_fraction": [
+                498862209024,
+                1
+              ],
+              "required_updates_fraction": [
+                2265707354885,
+                220463008
+              ]
+            }
+          ],
+          "main_steps": 10278,
+          "main_timeout_seconds": 5100,
+          "nominal_main_steps": 9959,
+          "nominal_main_timeout_seconds": 4900
+        },
+        "GDN1": {
+          "added_three_seed_forecast_usd": 0.292975,
+          "added_three_seed_reservations_usd": 0.732264,
+          "added_tokens": 17137664,
+          "added_updates": 523,
+          "added_wall_forecast_seconds": 80.01899999999978,
+          "binding_requirements": [
+            {
+              "candidate": "C",
+              "convention": "source_upper_remat",
+              "previous_update_deficit_flops_fraction": [
+                2706902851584,
+                1
+              ],
+              "required_updates_fraction": [
+                5958724210959,
+                454647800
+              ]
+            }
+          ],
+          "main_steps": 13107,
+          "main_timeout_seconds": 2900,
+          "nominal_main_steps": 12584,
+          "nominal_main_timeout_seconds": 2700
+        },
+        "convP": {
+          "added_three_seed_forecast_usd": 0.017743,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 1409024,
+          "added_updates": 43,
+          "added_wall_forecast_seconds": 4.846100000000206,
+          "binding_requirements": [
+            {
+              "candidate": "C",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                5480066162688,
+                1
+              ],
+              "required_updates_fraction": [
+                442179788427,
+                35279872
+              ]
+            }
+          ],
+          "main_steps": 12534,
+          "main_timeout_seconds": 2100,
+          "nominal_main_steps": 12491,
+          "nominal_main_timeout_seconds": 2100
+        },
+        "convS": {
+          "added_three_seed_forecast_usd": 0.063528,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 6029312,
+          "added_updates": 184,
+          "added_wall_forecast_seconds": 17.351199999999835,
+          "binding_requirements": [
+            {
+              "candidate": "C",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                7394987188224,
+                1
+              ],
+              "required_updates_fraction": [
+                1916112416517,
+                141601664
+              ]
+            }
+          ],
+          "main_steps": 13532,
+          "main_timeout_seconds": 1900,
+          "nominal_main_steps": 13348,
+          "nominal_main_timeout_seconds": 1900
+        },
+        "rawS": {
+          "added_three_seed_forecast_usd": 0.055842,
+          "added_three_seed_reservations_usd": 0.0,
+          "added_tokens": 6094848,
+          "added_updates": 186,
+          "added_wall_forecast_seconds": 15.251999999999953,
+          "binding_requirements": [
+            {
+              "candidate": "C",
+              "convention": "nominal_remat",
+              "previous_update_deficit_flops_fraction": [
+                1136794116096,
+                1
+              ],
+              "required_updates_fraction": [
+                1916112416517,
+                141503360
+              ]
+            }
+          ],
+          "main_steps": 13542,
+          "main_timeout_seconds": 1600,
+          "nominal_main_steps": 13356,
+          "nominal_main_timeout_seconds": 1600
+        }
+      },
+      "survivors": [
+        "C"
+      ]
+    }
+  },
   "notes": [
     "15% runtime allowance and30s extra compilation for width3conv arms",
     "30% subprocess timeout headroom, rounded to100s",
     "main end allowance240s per candidate includes ablations/save;60s controls includes save;30s sweep end",
     "152s resource overhead charged per job by ledger;no newlaunch"
   ],
-  "arms": {
-    "rawS": {
-      "forward_fpt": 92473464.0,
-      "training_fpt": 277420392.0,
-      "measured_seconds_per_update_without_conv": 0.082,
-      "forecast_seconds_per_update": 0.082,
-      "setup_seconds": 44.092,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 324.274,
-      "sweep_timeout_seconds": 500,
-      "sweep_3rates_estimated_usd": 1.74379152168,
-      "sweep_3rates_max_reservation_usd": 2.38718064
-    },
-    "convS": {
-      "forward_fpt": 92528760.0,
-      "training_fpt": 277586280.0,
-      "measured_seconds_per_update_without_conv": 0.082,
-      "forecast_seconds_per_update": 0.0943,
-      "setup_seconds": 74.092,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 391.80129999999997,
-      "sweep_timeout_seconds": 600,
-      "sweep_3rates_estimated_usd": 1.9910305757159998,
-      "sweep_3rates_max_reservation_usd": 2.75331264
-    },
-    "convP": {
-      "forward_fpt": 98872512.0,
-      "training_fpt": 296617536.0,
-      "measured_seconds_per_update_without_conv": 0.098,
-      "forecast_seconds_per_update": 0.1127,
-      "setup_seconds": 79.726,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 453.5737,
-      "sweep_timeout_seconds": 600,
-      "sweep_3rates_estimated_usd": 2.2171990992839996,
-      "sweep_3rates_max_reservation_usd": 2.75331264
-    },
-    "A": {
-      "forward_fpt": 107581758.1875,
-      "training_fpt": 322745274.5625,
-      "measured_seconds_per_update_without_conv": 0.152,
-      "forecast_seconds_per_update": 0.17479999999999998,
-      "setup_seconds": 156.61,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 719.9248,
-      "sweep_timeout_seconds": 1000,
-      "sweep_3rates_estimated_usd": 3.192395708736,
-      "sweep_3rates_max_reservation_usd": 4.21784064
-    },
-    "B": {
-      "forward_fpt": 101163294.1875,
-      "training_fpt": 303489882.5625,
-      "measured_seconds_per_update_without_conv": 0.114,
-      "forecast_seconds_per_update": 0.1311,
-      "setup_seconds": 146.405,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 576.3910999999999,
-      "sweep_timeout_seconds": 800,
-      "sweep_3rates_estimated_usd": 2.666872902252,
-      "sweep_3rates_max_reservation_usd": 3.48557664
-    },
-    "C": {
-      "forward_fpt": 101172510.1875,
-      "training_fpt": 303517530.5625,
-      "measured_seconds_per_update_without_conv": 0.114,
-      "forecast_seconds_per_update": 0.1311,
-      "setup_seconds": 136.78199999999998,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 566.7681,
-      "sweep_timeout_seconds": 800,
-      "sweep_3rates_estimated_usd": 2.631640019892,
-      "sweep_3rates_max_reservation_usd": 3.48557664
-    },
-    "GDN1": {
-      "forward_fpt": 98067262.5,
-      "training_fpt": 294429883.5,
-      "measured_seconds_per_update_without_conv": 0.153,
-      "forecast_seconds_per_update": 0.153,
-      "setup_seconds": 89.171,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 585.974,
-      "sweep_timeout_seconds": 800,
-      "sweep_3rates_estimated_usd": 2.7019589656800003,
-      "sweep_3rates_max_reservation_usd": 3.48557664
-    },
-    "DP4": {
-      "forward_fpt": 123706314.0,
-      "training_fpt": 372031326.0,
-      "measured_seconds_per_update_without_conv": 0.361,
-      "forecast_seconds_per_update": 0.361,
-      "setup_seconds": 97.775,
-      "sweep_steps": 3051,
-      "sweep_wall_seconds": 1229.1860000000001,
-      "sweep_timeout_seconds": 1600,
-      "sweep_3rates_estimated_usd": 5.056963925520001,
-      "sweep_3rates_max_reservation_usd": 6.41463264
-    }
-  },
+  "rate_per_second": 0.00122044,
+  "scenario_scope": "scenarios retains the historical nominal-only forecasts; control_allowance_scenarios records the prospective four-convention comparator allowance.",
   "scenarios": {
-    "B+C": {
-      "survivors": [
-        "B",
-        "C"
-      ],
-      "per_main_run_target_training_flops": 1.214067014230487e+17,
+    "A+B+C": {
+      "estimated_language_total_usd": 90.40288597458799,
+      "if_every_job_hits_timeout_usd": 117.2182256,
       "main": {
-        "rawS": {
-          "steps": 13356,
-          "tokens": 437649408,
-          "main_wall_seconds": 1199.284,
-          "main_timeout_seconds": 1600,
-          "main_3seeds_estimated_usd": 4.947483134880001,
-          "main_3seeds_max_reservation_usd": 6.41463264
-        },
-        "convS": {
-          "steps": 13348,
-          "tokens": 437387264,
-          "main_wall_seconds": 1392.8084000000001,
-          "main_timeout_seconds": 1900,
-          "main_3seeds_estimated_usd": 5.656037891088,
-          "main_3seeds_max_reservation_usd": 7.51302864
-        },
-        "convP": {
-          "steps": 12491,
-          "tokens": 409305088,
-          "main_wall_seconds": 1547.4616999999998,
-          "main_timeout_seconds": 2100,
-          "main_3seeds_estimated_usd": 6.222273111443999,
-          "main_3seeds_max_reservation_usd": 8.24529264
+        "A": {
+          "main_3seeds_estimated_usd": 9.821101335552,
+          "main_3seeds_max_reservation_usd": 12.63887664,
+          "main_timeout_seconds": 3300,
+          "main_wall_seconds": 2530.3936,
+          "steps": 12207,
+          "tokens": 399998976
         },
         "B": {
-          "steps": 12209,
-          "tokens": 400064512,
-          "main_wall_seconds": 1987.0049,
-          "main_timeout_seconds": 2600,
-          "main_3seeds_estimated_usd": 7.831581420468,
-          "main_3seeds_max_reservation_usd": 10.07595264
+          "main_3seeds_estimated_usd": 8.202620687664,
+          "main_3seeds_max_reservation_usd": 10.80821664,
+          "main_timeout_seconds": 2800,
+          "main_wall_seconds": 2088.3451999999997,
+          "steps": 12982,
+          "tokens": 425394176
         },
         "C": {
-          "steps": 12207,
-          "tokens": 399998976,
-          "main_wall_seconds": 1977.1197,
-          "main_timeout_seconds": 2600,
-          "main_3seeds_estimated_usd": 7.795388540004001,
-          "main_3seeds_max_reservation_usd": 10.07595264
-        },
-        "GDN1": {
-          "steps": 12584,
-          "tokens": 412352512,
-          "main_wall_seconds": 2074.523,
-          "main_timeout_seconds": 2700,
-          "main_3seeds_estimated_usd": 8.15201319036,
-          "main_3seeds_max_reservation_usd": 10.442084640000001
+          "main_3seeds_estimated_usd": 8.166907806251999,
+          "main_3seeds_max_reservation_usd": 10.80821664,
+          "main_timeout_seconds": 2800,
+          "main_wall_seconds": 2078.5910999999996,
+          "steps": 12981,
+          "tokens": 425361408
         },
         "DP4": {
-          "steps": 9959,
-          "tokens": 326336512,
-          "main_wall_seconds": 3752.974,
-          "main_timeout_seconds": 4900,
-          "main_3seeds_estimated_usd": 14.29735940568,
-          "main_3seeds_max_reservation_usd": 18.49698864
+          "main_3seeds_estimated_usd": 15.131375149799998,
+          "main_3seeds_max_reservation_usd": 19.59538464,
+          "main_timeout_seconds": 5200,
+          "main_wall_seconds": 3980.765,
+          "steps": 10590,
+          "tokens": 347013120
+        },
+        "GDN1": {
+          "main_3seeds_estimated_usd": 8.59847821248,
+          "main_3seeds_max_reservation_usd": 11.17434864,
+          "main_timeout_seconds": 2900,
+          "main_wall_seconds": 2196.464,
+          "steps": 13381,
+          "tokens": 438468608
+        },
+        "convP": {
+          "main_3seeds_estimated_usd": 6.549076676532,
+          "main_3seeds_max_reservation_usd": 8.61142464,
+          "main_timeout_seconds": 2200,
+          "main_wall_seconds": 1636.7201,
+          "steps": 13283,
+          "tokens": 435257344
+        },
+        "convS": {
+          "main_3seeds_estimated_usd": 5.947784683308,
+          "main_3seeds_max_reservation_usd": 7.87916064,
+          "main_timeout_seconds": 2000,
+          "main_wall_seconds": 1472.4919,
+          "steps": 14193,
+          "tokens": 465076224
+        },
+        "rawS": {
+          "main_3seeds_estimated_usd": 5.2014762259200005,
+          "main_3seeds_max_reservation_usd": 6.78076464,
+          "main_timeout_seconds": 1700,
+          "main_wall_seconds": 1268.6560000000002,
+          "steps": 14202,
+          "tokens": 465371136
         }
       },
-      "estimated_language_total_usd": 74.493806182268,
-      "with_fresh_rawS_3rate_total_usd": 76.237597703948,
-      "if_every_job_hits_timeout_usd": 95.96792432000001,
-      "timeout_total_with_fresh_rawS_usd": 98.35510496
-    },
-    "A+B+C": {
+      "per_main_run_target_training_flops": 1.2909777933383885e+17,
       "survivors": [
         "A",
         "B",
         "C"
       ],
-      "per_main_run_target_training_flops": 1.2909777933383885e+17,
+      "timeout_total_with_fresh_rawS_usd": 119.60540624,
+      "with_fresh_rawS_3rate_total_usd": 92.14667749626798
+    },
+    "B+C": {
+      "estimated_language_total_usd": 74.493806182268,
+      "if_every_job_hits_timeout_usd": 95.96792432000001,
       "main": {
-        "rawS": {
-          "steps": 14202,
-          "tokens": 465371136,
-          "main_wall_seconds": 1268.6560000000002,
-          "main_timeout_seconds": 1700,
-          "main_3seeds_estimated_usd": 5.2014762259200005,
-          "main_3seeds_max_reservation_usd": 6.78076464
-        },
-        "convS": {
-          "steps": 14193,
-          "tokens": 465076224,
-          "main_wall_seconds": 1472.4919,
-          "main_timeout_seconds": 2000,
-          "main_3seeds_estimated_usd": 5.947784683308,
-          "main_3seeds_max_reservation_usd": 7.87916064
-        },
-        "convP": {
-          "steps": 13283,
-          "tokens": 435257344,
-          "main_wall_seconds": 1636.7201,
-          "main_timeout_seconds": 2200,
-          "main_3seeds_estimated_usd": 6.549076676532,
-          "main_3seeds_max_reservation_usd": 8.61142464
-        },
-        "A": {
-          "steps": 12207,
-          "tokens": 399998976,
-          "main_wall_seconds": 2530.3936,
-          "main_timeout_seconds": 3300,
-          "main_3seeds_estimated_usd": 9.821101335552,
-          "main_3seeds_max_reservation_usd": 12.63887664
-        },
         "B": {
-          "steps": 12982,
-          "tokens": 425394176,
-          "main_wall_seconds": 2088.3451999999997,
-          "main_timeout_seconds": 2800,
-          "main_3seeds_estimated_usd": 8.202620687664,
-          "main_3seeds_max_reservation_usd": 10.80821664
+          "main_3seeds_estimated_usd": 7.831581420468,
+          "main_3seeds_max_reservation_usd": 10.07595264,
+          "main_timeout_seconds": 2600,
+          "main_wall_seconds": 1987.0049,
+          "steps": 12209,
+          "tokens": 400064512
         },
         "C": {
-          "steps": 12981,
-          "tokens": 425361408,
-          "main_wall_seconds": 2078.5910999999996,
-          "main_timeout_seconds": 2800,
-          "main_3seeds_estimated_usd": 8.166907806251999,
-          "main_3seeds_max_reservation_usd": 10.80821664
-        },
-        "GDN1": {
-          "steps": 13381,
-          "tokens": 438468608,
-          "main_wall_seconds": 2196.464,
-          "main_timeout_seconds": 2900,
-          "main_3seeds_estimated_usd": 8.59847821248,
-          "main_3seeds_max_reservation_usd": 11.17434864
+          "main_3seeds_estimated_usd": 7.795388540004001,
+          "main_3seeds_max_reservation_usd": 10.07595264,
+          "main_timeout_seconds": 2600,
+          "main_wall_seconds": 1977.1197,
+          "steps": 12207,
+          "tokens": 399998976
         },
         "DP4": {
-          "steps": 10590,
-          "tokens": 347013120,
-          "main_wall_seconds": 3980.765,
-          "main_timeout_seconds": 5200,
-          "main_3seeds_estimated_usd": 15.131375149799998,
-          "main_3seeds_max_reservation_usd": 19.59538464
+          "main_3seeds_estimated_usd": 14.29735940568,
+          "main_3seeds_max_reservation_usd": 18.49698864,
+          "main_timeout_seconds": 4900,
+          "main_wall_seconds": 3752.974,
+          "steps": 9959,
+          "tokens": 326336512
+        },
+        "GDN1": {
+          "main_3seeds_estimated_usd": 8.15201319036,
+          "main_3seeds_max_reservation_usd": 10.442084640000001,
+          "main_timeout_seconds": 2700,
+          "main_wall_seconds": 2074.523,
+          "steps": 12584,
+          "tokens": 412352512
+        },
+        "convP": {
+          "main_3seeds_estimated_usd": 6.222273111443999,
+          "main_3seeds_max_reservation_usd": 8.24529264,
+          "main_timeout_seconds": 2100,
+          "main_wall_seconds": 1547.4616999999998,
+          "steps": 12491,
+          "tokens": 409305088
+        },
+        "convS": {
+          "main_3seeds_estimated_usd": 5.656037891088,
+          "main_3seeds_max_reservation_usd": 7.51302864,
+          "main_timeout_seconds": 1900,
+          "main_wall_seconds": 1392.8084000000001,
+          "steps": 13348,
+          "tokens": 437387264
+        },
+        "rawS": {
+          "main_3seeds_estimated_usd": 4.947483134880001,
+          "main_3seeds_max_reservation_usd": 6.41463264,
+          "main_timeout_seconds": 1600,
+          "main_wall_seconds": 1199.284,
+          "steps": 13356,
+          "tokens": 437649408
         }
       },
-      "estimated_language_total_usd": 90.40288597458799,
-      "with_fresh_rawS_3rate_total_usd": 92.14667749626798,
-      "if_every_job_hits_timeout_usd": 117.2182256,
-      "timeout_total_with_fresh_rawS_usd": 119.60540624
+      "per_main_run_target_training_flops": 1.214067014230487e+17,
+      "survivors": [
+        "B",
+        "C"
+      ],
+      "timeout_total_with_fresh_rawS_usd": 98.35510496,
+      "with_fresh_rawS_3rate_total_usd": 76.237597703948
     }
-  }
+  },
+  "spent_language_usd": 2.326004
 }

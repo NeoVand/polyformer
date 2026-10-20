@@ -67,6 +67,32 @@ RESOURCE_OVERHEAD_SECONDS = 152
 STAGE1_PROTOCOL_ID = "829e3a8f2bbdce4b2a2b1fdd602f0565704750cb3ce6e69b1fa96bbe408fab63"
 RECONCILIATION_POLICY_ID = "59e1b83139fbb148de0132005de781486a86aa79cd4a2c5d675ca21416863d46"
 STRICT_SELECTION_PATH = "research/results/beyond_stage1_selection_strict.json"
+CONTROL_ARMS = ("rawS", "convS", "convP", "GDN1", "DP4")
+WORK_CONVENTIONS = ("nominal", "nominal_remat", "source_upper", "source_upper_remat")
+CONTROL_ALLOWANCE_POLICY = {
+    "name": "beyond-language-conservative-control-allowance-v1",
+    "scope": "Before language quality results; all five controls and every independently confirmed candidate.",
+    "candidate_rule": "Keep original nominal common-target ceiling steps unchanged.",
+    "control_rule": "ceil(max over included candidates i and conventions k of candidate_steps_i * work_fpt_i_k / work_fpt_control_k)",
+    "nominal": "N = original training_flops_per_token = 3*F + chunk_solve_backward_extra",
+    "nominal_remat": "N + F - H_vocab",
+    "source_upper": "N + 3*delta_forward",
+    "source_upper_remat": "N + F - H_vocab + 4*delta_forward",
+    "vocabulary_projection": "H_vocab = 2*D*vocab = 51511296; outside whole-block checkpoint.",
+    "source_forward_adjustment": {
+        "rawS_convS": "L*(T-(T+1)/2)*(4*D+5*heads)",
+        "convP_B_C": "L*((T-(T+1)/2)*(8*D+8*heads)-2*T*D)",
+        "A": "L*((T-(T+1)/2)*(8*D+8*heads+4*padded_value_width)-2*T*padded_value_width)",
+        "GDN1_DP4": "0; retain already-counted dense chunk work and solve backward surcharge",
+    },
+    "source_scope": "Full dense attention; credit explicitly combined corrected-weight value products; do not credit common-subexpression sharing of A's duplicate ordinary value product.",
+    "remat_scope": "One extra counted whole-block forward; exclude vocabulary projection and do not duplicate the backward-only chunk solve surcharge.",
+    "unchanged": ["worker sources", "original FLOP counter", "candidate steps", "rate sweeps",
+                  "rates", "seeds", "evaluation samples", "warmup", "complete fresh schedules",
+                  "budget caps"],
+    "rounding": "Exact rational ratios; smallest whole update count satisfying every declared convention.",
+    "limitation": "Conservative allowance for four specified arithmetic conventions; not a measurement or guarantee of equal hardware-executed GPU FLOPs.",
+}
 
 
 class ProtocolError(ValueError):
@@ -89,6 +115,9 @@ def check_seal(value):
     if value.get("sha256") != digest({k: v for k, v in value.items() if k != "sha256"}):
         raise ProtocolError("artifact checksum mismatch")
     return value
+
+
+CONTROL_ALLOWANCE_POLICY_ID = digest(CONTROL_ALLOWANCE_POLICY)
 
 
 def write_immutable(path, value):
@@ -227,6 +256,131 @@ def make_job(plan, arm, phase, lr, seed):
     job["id"] = digest(identity)[:24]
     job["reserved_usd"] = round(RATE_PER_SECOND * (seconds + RESOURCE_OVERHEAD_SECONDS), 6)
     return job
+
+
+def fraction_pair(value):
+    value = Fraction(value)
+    return [value.numerator, value.denominator]
+
+
+def source_forward_adjustment(arm, config):
+    shape = tuple(config[k] for k in ("ctx", "d", "heads", "layers", "vocab", "gdim"))
+    if shape != (512, 512, 8, 6, 50304, 5):
+        raise ProtocolError("the registered control allowance applies only to the frozen S6 dimensions")
+    t, d, h, layers, _, gd = shape
+    ta = Fraction(t + 1, 2)
+    if arm in ("rawS", "convS"):
+        return layers * (t - ta) * (4 * d + 5 * h)
+    if arm in ("GDN1", "DP4"):
+        return Fraction(0)
+    if arm in ("convP", "B", "C"):
+        return layers * ((t - ta) * (8 * d + 8 * h) - 2 * t * d)
+    if arm == "A":
+        padded = h * math.ceil((d // h) / gd) * gd
+        # The explicit second ordinary W@V is charged without assuming CSE.
+        # Its cost cancels the ordinary Parallax surplus-value-pass credit.
+        return layers * ((t - ta) * (8 * d + 8 * h + 4 * padded) - 2 * t * padded)
+    raise ProtocolError(f"unknown allowance arm: {arm}")
+
+
+def control_allowance(survivors, counts, configs):
+    """Minimal control budgets that dominate every fixed candidate in four models."""
+    survivors = sorted(survivors)
+    order = ["rawS", "convS", "convP", *survivors, "GDN1", "DP4"]
+    if set(counts) != set(order) or set(configs) != set(order):
+        raise ProtocolError("control allowance must cover all registered arms")
+    nominal_fpt = {a: Fraction(str(counts[a]["training_fpt"])) for a in order}
+    target_arm = max(survivors, key=lambda a: (nominal_fpt[a], a))
+    target = nominal_fpt[target_arm] * REFERENCE_STEPS * BATCH_TOKENS
+    nominal_steps = {a: math.ceil(target / (nominal_fpt[a] * BATCH_TOKENS)) for a in order}
+    work, deltas = {}, {}
+    for arm in order:
+        fwd = Fraction(str(counts[arm]["forward_fpt"]))
+        nominal = nominal_fpt[arm]
+        vocabulary = 2 * configs[arm]["d"] * configs[arm]["vocab"]
+        delta = source_forward_adjustment(arm, configs[arm])
+        deltas[arm] = delta
+        work[arm] = {
+            "nominal": nominal,
+            "nominal_remat": nominal + fwd - vocabulary,
+            "source_upper": nominal + 3 * delta,
+            "source_upper_remat": nominal + fwd - vocabulary + 4 * delta,
+        }
+        if any(value <= 0 for value in work[arm].values()):
+            raise ProtocolError("nonpositive modeled work per token")
+    maxima = {}
+    for convention in WORK_CONVENTIONS:
+        candidate = max(survivors, key=lambda a: (nominal_steps[a] * work[a][convention], a))
+        total = nominal_steps[candidate] * BATCH_TOKENS * work[candidate][convention]
+        maxima[convention] = {
+            "candidate": candidate, "training_flops": float(total),
+            "training_flops_fraction": fraction_pair(total),
+        }
+    allocations = {}
+    for arm in order:
+        requirements = [
+            (nominal_steps[candidate] * work[candidate][convention] / work[arm][convention],
+             candidate, convention)
+            for candidate in survivors for convention in WORK_CONVENTIONS
+        ] if arm in CONTROL_ARMS else []
+        required = max(x[0] for x in requirements) if requirements else (
+            target / (nominal_fpt[arm] * BATCH_TOKENS)
+        )
+        steps = math.ceil(required)
+        if arm in survivors and steps != nominal_steps[arm]:
+            raise ProtocolError("control allowance changed a candidate schedule")
+        if steps < nominal_steps[arm] or not 0 <= steps - required < 1:
+            raise ProtocolError("invalid conservative control ceiling")
+        binding = []
+        for ratio, candidate, convention in requirements:
+            if ratio == required:
+                binding.append({
+                    "candidate": candidate, "convention": convention,
+                    "required_updates_fraction": fraction_pair(ratio),
+                    "previous_update_deficit_flops_fraction": fraction_pair(
+                        (nominal_steps[candidate] * work[candidate][convention]
+                         - (steps - 1) * work[arm][convention]) * BATCH_TOKENS
+                    ),
+                })
+        proof = {}
+        if arm in CONTROL_ARMS:
+            for convention in WORK_CONVENTIONS:
+                achieved = steps * BATCH_TOKENS * work[arm][convention]
+                maximum = Fraction(*maxima[convention]["training_flops_fraction"])
+                slack = achieved - maximum
+                if slack < 0:
+                    raise ProtocolError("control fails a declared work convention")
+                proof[convention] = {
+                    "maximum_candidate": maxima[convention]["candidate"],
+                    "target_flops_fraction": fraction_pair(maximum),
+                    "control_flops_fraction": fraction_pair(achieved),
+                    "nonnegative_slack_flops_fraction": fraction_pair(slack),
+                }
+        allocations[arm] = {
+            "nominal_main_steps": nominal_steps[arm], "main_steps": steps,
+            "added_updates": steps - nominal_steps[arm],
+            "added_tokens": (steps - nominal_steps[arm]) * BATCH_TOKENS,
+            "source_upper_forward_adjustment": float(deltas[arm]),
+            "work_fpt": {k: float(v) for k, v in work[arm].items()},
+            "modeled_training_flops": {
+                k: float(steps * BATCH_TOKENS * v) for k, v in work[arm].items()
+            },
+            "modeled_training_flops_fractions": {
+                k: fraction_pair(steps * BATCH_TOKENS * v) for k, v in work[arm].items()
+            },
+            "required_updates_fraction": fraction_pair(required),
+            "rounding_excess_updates": float(steps - required),
+            "binding_requirements": binding,
+            "dominance_proof": proof,
+        }
+    return {
+        "policy_id": CONTROL_ALLOWANCE_POLICY_ID, "policy": copy.deepcopy(CONTROL_ALLOWANCE_POLICY),
+        "nominal_target_arm": target_arm,
+        "nominal_target_training_flops_fraction": fraction_pair(target),
+        "conventions": list(WORK_CONVENTIONS),
+        "maximum_candidate_training_work": maxima,
+        "allocations": allocations,
+    }
 
 
 def reconciliation_adapter():
@@ -404,8 +558,11 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
                             evidence_commit=evidence_commit)
         if "val_loss_raw" not in (root / "lm.py").read_text():
             raise ProtocolError("apply and audit the unrounded reporting amendment before freezing")
-    target_arm = max(survivors, key=lambda a: (counts[a]["training_fpt"], a))
-    target = Fraction(str(counts[target_arm]["training_fpt"])) * REFERENCE_STEPS * BATCH_TOKENS
+        if CONTROL_ALLOWANCE_POLICY_ID not in language_registration((root / "BEYOND.md").read_text()).decode():
+            raise ProtocolError("commit the conservative control-allowance registration before freezing")
+    allowance = control_allowance(survivors, counts, configs)
+    target_arm = allowance["nominal_target_arm"]
+    target = Fraction(*allowance["nominal_target_training_flops_fraction"])
     plan = {
         "schema": "beyond_language_plan", "schema_version": 1,
         "status": "frozen" if confirmation is not None else "draft",
@@ -433,6 +590,7 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
         "arm_order": order, "survivors": survivors, "target_arm": target_arm,
         "target_training_flops": float(target),
         "target_training_flops_fraction": [target.numerator, target.denominator],
+        "control_allowance": allowance,
         "rates": list(RATES), "tuning_seed": 0, "final_seeds": list(FINAL_SEEDS),
         "selection_metric": "val_loss_raw", "selection_curve_metric": "val_raw",
         "selection_rule": "minimum finite final validation loss; exact ties choose lower rate; all jobs terminal",
@@ -453,22 +611,41 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
         if any(data[key] != counts[arm][key] for key in ("forward_fpt", "training_fpt")):
             raise ProtocolError(f"budget counters are stale for {arm}")
         per_update = Fraction(str(counts[arm]["training_fpt"])) * BATCH_TOKENS
-        steps = math.ceil(target / per_update)
+        allocation = allowance["allocations"][arm]
+        steps = allocation["main_steps"]
         excess = steps * per_update - target
-        if not 0 <= excess < per_update:
-            raise ProtocolError("compute matching violated the one-update excess bound")
+        if excess < 0 or (arm in survivors and excess >= per_update):
+            raise ProtocolError("candidate matching or conservative control budget violated")
         tick, setup = data["forecast_seconds_per_update"], data["setup_seconds"]
         end = 240 if arm in survivors else 60
         main_wall = steps * tick + setup + end
+        nominal_main_wall = allocation["nominal_main_steps"] * tick + setup + end
         sweep_wall = SWEEP_STEPS * tick + setup + 30
         plan["arms"][arm] = {
-            **counts[arm], "main_steps": steps, "main_tokens": steps * BATCH_TOKENS,
+            **counts[arm], **allocation, "main_tokens": steps * BATCH_TOKENS,
             "main_training_flops": float(steps * per_update),
             "excess_training_flops": float(excess), "excess_updates": float(excess / per_update),
+            "excess_scope": "Nominal target excess includes the explicit control allowance; rounding_excess_updates alone is below one.",
             "main_wall_forecast_seconds": main_wall, "sweep_wall_forecast_seconds": sweep_wall,
+            "nominal_main_wall_forecast_seconds": nominal_main_wall,
+            "added_wall_forecast_seconds": main_wall - nominal_main_wall,
             "main_timeout_seconds": math.ceil(1.3 * main_wall / 100) * 100,
+            "nominal_main_timeout_seconds": math.ceil(1.3 * nominal_main_wall / 100) * 100,
             "sweep_timeout_seconds": math.ceil(1.3 * sweep_wall / 100) * 100,
         }
+        row = plan["arms"][arm]
+        if max(row["main_timeout_seconds"], row["sweep_timeout_seconds"]) > 7200:
+            raise ProtocolError("planned timeout exceeds the bounded worker maximum")
+        row["main_reservation_per_seed_usd"] = round(
+            RATE_PER_SECOND * (row["main_timeout_seconds"] + RESOURCE_OVERHEAD_SECONDS), 6
+        )
+        row["nominal_main_reservation_per_seed_usd"] = round(
+            RATE_PER_SECOND * (row["nominal_main_timeout_seconds"] + RESOURCE_OVERHEAD_SECONDS), 6
+        )
+        row["added_three_seed_forecast_usd"] = round(3 * RATE_PER_SECOND * row["added_wall_forecast_seconds"], 6)
+        row["added_three_seed_reservations_usd"] = round(
+            3 * RATE_PER_SECOND * (row["main_timeout_seconds"] - row["nominal_main_timeout_seconds"]), 6
+        )
     plan["tuning_jobs"] = [
         {"arm": arm, "lr": lr, "job": make_job(plan, arm, "tuning", lr, 0)}
         for arm in order for lr in RATES
@@ -484,10 +661,20 @@ def build_plan(root, survivors, budget, *, confirmation=None, bridge=None, evide
                               + 2 * RESOURCE_OVERHEAD_SECONDS)
         for a in plan["arms"].values()
     )
+    added_forecast = sum(3 * RATE_PER_SECOND * a["added_wall_forecast_seconds"]
+                         for a in plan["arms"].values())
+    added_reservations = sum(
+        3 * RATE_PER_SECOND * (a["main_timeout_seconds"] - a["nominal_main_timeout_seconds"])
+        for a in plan["arms"].values()
+    )
     plan["budget"] = {
         "stage_cap_usd": 100, "already_spent_usd": spent,
         "forecast_total_usd": round(forecast, 6), "all_timeout_total_usd": round(maximum, 6),
         "rolling_reservations_required": maximum > 100,
+        "forecast_before_control_allowance_usd": round(forecast - added_forecast, 6),
+        "added_control_allowance_forecast_usd": round(added_forecast, 6),
+        "all_timeout_before_control_allowance_usd": round(maximum - added_reservations, 6),
+        "added_control_allowance_reservations_usd": round(added_reservations, 6),
         "rate_per_second": RATE_PER_SECOND, "resource_overhead_seconds_per_job": RESOURCE_OVERHEAD_SECONDS,
         "timeout_policy": "1.30 * (forecast updates + compilation + final work), rounded up to 100 seconds",
         "notes": "15% conv runtime allowance and 30s extra compile are in budget inputs; no stage transfers",
@@ -521,6 +708,21 @@ def verify_plan(plan):
         raise ProtocolError("rates/seeds differ from the registered protocol")
     if plan.get("model_source_hashes") != model_sources(plan["source_hashes"]):
         raise ProtocolError("frozen model source subset differs from full source map")
+    order = ["rawS", "convS", "convP", *sorted(plan["survivors"]), "GDN1", "DP4"]
+    if plan["arm_order"] != order or set(plan["arms"]) != set(order):
+        raise ProtocolError("frozen arms differ from controls plus all confirmed candidates")
+    counts = {a: {k: plan["arms"][a][k] for k in ("forward_fpt", "training_fpt")} for a in order}
+    expected_allowance = control_allowance(plan["survivors"], counts, plan["expected_configs"]["tuning"])
+    if plan.get("control_allowance") != expected_allowance:
+        raise ProtocolError("control allowance differs from the registered exact max-ceiling rule")
+    if (plan["target_arm"] != expected_allowance["nominal_target_arm"]
+            or plan["target_training_flops_fraction"] != expected_allowance["nominal_target_training_flops_fraction"]):
+        raise ProtocolError("control allowance changed the original nominal candidate target")
+    for arm, allocation in expected_allowance["allocations"].items():
+        if any(plan["arms"][arm].get(key) != value for key, value in allocation.items()):
+            raise ProtocolError(f"{arm} allocation differs from the frozen conservative allowance")
+        if plan["arms"][arm]["main_tokens"] != allocation["main_steps"] * BATCH_TOKENS:
+            raise ProtocolError(f"{arm} tokens differ from its whole-update schedule")
     expected = [(arm, lr) for arm in plan["arm_order"] for lr in RATES]
     if [(row["arm"], row["lr"]) for row in plan["tuning_jobs"]] != expected:
         raise ProtocolError("tuning grid differs from the complete registered grid")
@@ -686,21 +888,37 @@ def read_results(directory):
 def table(plan):
     lines = [
         f"Status: {plan['status']}; survivors: {', '.join(plan['survivors'])}; final seeds: 1, 2, 3.",
-        f"Common training FLOPs/run: {plan['target_training_flops']:.15g}.",
+        f"Nominal candidate reference budget: {plan['target_training_flops']:.15g} training FLOPs/run.",
+        "Controls receive the smallest whole-update allowance covering every candidate under all four declared arithmetic conventions.",
+        f"Allowance policy: `{plan['control_allowance']['policy_id']}`.",
         "",
-        "| Arm | Forward FLOPs/token | Training FLOPs/token | Main updates | Main tokens | Excess updates | Sweep timeout | Main timeout |",
-        "|---|---:|---:|---:|---:|---:|---:|---:|",
+        "| Arm | Nominal forward/token | Nominal training/token | Nominal + remat | Source upper | Source upper + remat |",
+        "|---|---:|---:|---:|---:|---:|",
     ]
     for arm in plan["arm_order"]:
         a = plan["arms"][arm]
-        lines.append(f"| {arm} | {a['forward_fpt']} | {a['training_fpt']} | {a['main_steps']} | "
-                     f"{a['main_tokens']} | {a['excess_updates']:.6f} | "
-                     f"{a['sweep_timeout_seconds']}s | {a['main_timeout_seconds']}s |")
+        w = a["work_fpt"]
+        lines.append(f"| {arm} | {a['forward_fpt']} | {w['nominal']} | {w['nominal_remat']} | "
+                     f"{w['source_upper']} | {w['source_upper_remat']} |")
+    lines += [
+        "",
+        "| Arm | Original nominal updates | Added control updates | Final updates | Final tokens | Binding requirement | Rounding excess | Sweep/final timeout |",
+        "|---|---:|---:|---:|---:|---|---:|---:|",
+    ]
+    for arm in plan["arm_order"]:
+        a = plan["arms"][arm]
+        binding = ", ".join(f"{r['candidate']} / {r['convention']}" for r in a["binding_requirements"]) or "fixed candidate schedule"
+        lines.append(f"| {arm} | {a['nominal_main_steps']} | {a['added_updates']} | {a['main_steps']} | "
+                     f"{a['main_tokens']} | {binding} | {a['rounding_excess_updates']:.6f} | "
+                     f"{a['sweep_timeout_seconds']}s / {a['main_timeout_seconds']}s |")
     b = plan["budget"]
     lines += ["", f"Forecast including earlier language spend: ${b['forecast_total_usd']:.2f}; "
               f"aggregate timeout maximum: ${b['all_timeout_total_usd']:.2f}.",
+              f"The control allowance adds ${b['added_control_allowance_forecast_usd']:.2f} forecast "
+              f"and ${b['added_control_allowance_reservations_usd']:.2f} aggregate timeout reservations.",
               "All arms receive three fresh 3,051-update seed-0 rate trials; finals start fresh.",
-              "Inference ablations and final losses never select rates or additional runs."]
+              "Inference ablations and final losses never select rates or additional runs.",
+              "These are conservative declared arithmetic estimates, not equal measured GPU-executed FLOPs."]
     return "\n".join(lines)
 
 

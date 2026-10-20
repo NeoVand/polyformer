@@ -243,6 +243,19 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   container starts logged broken pipes, but API call graphs showed pending allocation, not failed
   model executions; the original calls continue without duplicate dispatch or changed hardware.
 
+
+- 2026-10-20 14:40 UTC — Prospectively registered the language control allowance in Section 5,
+  policy `3a340829e3fa07d6808280c240992af63283088ac92a3d68d7935cb7822d0991`.
+  Candidate schedules and all sweeps stay fixed. Each of five comparators receives the minimum
+  whole updates needed to cover every included candidate under four declared arithmetic models:
+  nominal, nominal plus block recomputation, source-dense upper (no A sharing credit), and that
+  source estimate plus recomputation. Independent audits verify all seven survivor subsets,
+  240 dominance inequalities and 35 minimal ceilings; planner tests pass. Forecasts are $77.09
+  with B/C or $94.26 with A/B/C, within the unchanged $100 cap subject to rolling settlements.
+  This is not measured GPU-FLOP equality; report all four estimates, tokens and runtime. No language
+  quality results have been observed. The final language reporter passes 26 tests, preserves both
+  Stage-1 policies, and distinguishes training-seed variation from conditional sequence uncertainty.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
@@ -596,13 +609,13 @@ mean in nats/token and retain the individual sequence losses. It comes from the 
 corpus as the tuning sample, so this is sample separation, not a new-corpus generalization test.
 Save final checkpoints before extra diagnostics. No main run continues a tuning checkpoint.
 
-**One shared training-compute budget.** Amend the literal per-candidate 400M-token recipe to one
-common budget equal to the most expensive surviving candidate trained for 12,207 updates
-(399,998,976 tokens). This avoids repeatedly training nearly identical controls at slightly different
-budgets. For every other arm use `ceil(F_target / (32768 * training_flops_per_token))` updates;
-the resulting excess is strictly below one update and is reported. Thus controls never receive less
-nominal compute than the target candidate. Match training FLOPs, including the chunk solve's extra
-backward cost; do not silently use 3x-forward for chunked recurrence.
+**One nominal candidate budget, with conservative comparator allowances.** Amend the literal
+per-candidate 400M-token recipe to one nominal reference budget equal to the most expensive
+surviving candidate trained for 12,207 updates (399,998,976 tokens). Other candidates use
+`ceil(F_target / (32768 * training_flops_per_token))` updates, with less than one update of rounding
+excess. This avoids repeated controls at nearly identical budgets. Include the chunk solve's extra
+backward cost; do not silently use 3x-forward for chunked recurrence. The prospective allowance
+below supersedes nominal-only control schedules and records intentional added work separately.
 
 | Arm | Forward FLOPs/token | Training FLOPs/token |
 |---|---:|---:|
@@ -616,13 +629,94 @@ backward cost; do not silently use 3x-forward for chunked recurrence.
 | DP4, chunk 32 | 123,706,314 | 372,031,326 |
 
 If B/C survive and A does not, the target is 1.214067014230487e17 training FLOPs/run.
-Updates for raw S / convolved S / convolved P / B / C / GDN1 / DP4 are respectively
+For audit, nominal-only updates for raw S / convolved S / convolved P / B / C / GDN1 / DP4 would be
 13,356 / 13,348 / 12,491 / 12,209 / 12,207 / 12,584 / 9,959. If A survives, the target becomes
-1.2909777933383885e17; corresponding updates including A are
+1.2909777933383885e17; nominal-only updates including A would be
 14,202 / 14,193 / 13,283 / A 12,207 / B 12,982 / C 12,981 / GDN1 13,381 / DP4 10,590.
-Other survivor subsets use the same formula. The immutable executable plan records the exact case.
+The actual control schedules receive the additional allowance below. Other survivor subsets use
+the same fixed rules. The immutable executable plan records the exact case.
 Report parameter counts, tokens, measured runtime and estimated cost alongside nominal FLOPs;
 optimizer and rematerialization arithmetic remain outside this analytic convention.
+
+**Prospective conservative control allowance, fixed before language quality results.**
+The original analytic worker counter uses ideal triangular causal attention and the historical
+two-value-product Parallax convention; the JAX implementation materializes dense attention and
+combines corrected weights before its value product. Chunked recurrence already counts its dense
+masked work. Whole-block checkpointing introduces another implementation sensitivity. Address these
+identified differences prospectively by giving every comparator a conservative compute allowance.
+The original worker counters continue to report their registered nominal values.
+
+Let `F_a` be an arm's original forward FLOPs/token and `N_a` its original training FLOPs/token,
+including the chunk solve's extra backward cost. Let `H_vocab = 2 * 512 * 50304 = 51,511,296`,
+the tied vocabulary projection outside the checkpointed transformer blocks. Define the source-upper
+forward adjustment `delta_a` as follows:
+
+| Arm | Forward adjustment |
+|---|---:|
+| Raw or convolved softmax | 3,200,904 |
+| Convolved Parallax, B or C | 3,231,552 |
+| A, without compiler-sharing credit | 6,371,040 |
+| GDN1 or DP4 | 0 |
+
+At `T=512, D=512, heads=8, L=6`, with `t_c=(T+1)/2` and A's padded value width `p=520`,
+these adjustments are `L*(T-t_c)*(4D+5heads)` for softmax,
+`L*((T-t_c)*(8D+8heads)-2TD)` for Parallax/B/C, and
+`L*((T-t_c)*(8D+8heads+4p)-2Tp)` for A. Credit the explicitly combined corrected-weight
+value products, but charge A's duplicate ordinary `W@V` call without relying on common-subexpression
+elimination. Keep the already-counted dense recurrent chunk work and solve backward surcharge.
+
+Use all four declared training-work estimates per token:
+
+1. Nominal: `W_a,0 = N_a`.
+2. Nominal plus one whole-block recomputation: `W_a,1 = N_a + F_a - H_vocab`.
+3. Source upper: `W_a,2 = N_a + 3*delta_a`.
+4. Source upper plus one whole-block recomputation: `W_a,3 = N_a + F_a - H_vocab + 4*delta_a`.
+
+Candidate schedules retain the original nominal common-target ceiling rule. For every control
+`j` in raw softmax, convolved softmax, convolved Parallax, GDN1 and DP4, set
+
+    updates_j = ceil(max_{included candidates i, conventions k}
+                     updates_i * W_i,k / W_j,k).
+
+This gives every control at least each included candidate's total modeled training work under
+every declared convention. Batch tokens cancel from the ratio. Compute the ratios exactly using
+rational arithmetic, and record the binding candidate/convention and all nonnegative work margins.
+The intentional allowance is separate from ceiling roundoff; only the latter is below one update.
+All rate sweeps remain three fresh 3,051-update runs. Final runs retain seeds 1/2/3, fresh complete
+schedules, 400 warmup updates, evaluation samples, selected-rate procedure and headline loss gates.
+Timeouts below are fixed prospectively, before any language quality job.
+
+| Control | B/C: original → final updates | B/C final timeout | A/B/C: original → final updates | A/B/C final timeout |
+|---|---:|---:|---:|---:|
+| Raw softmax | 13,356 → 13,542 | 1,600s | 14,202 → 14,902 | 1,800s |
+| Convolved softmax | 13,348 → 13,533 | 1,900s | 14,193 → 14,892 | 2,000s |
+| Convolved Parallax | 12,491 → 12,535 | 2,100s | 13,283 → 13,829 | 2,300s |
+| GDN1 | 12,584 → 13,108 | 2,900s | 13,381 → 14,474 | 3,100s |
+| DP4 | 9,959 → 10,278 | 5,100s | 10,590 → 11,217 | 5,500s |
+
+Candidate updates remain B 12,209/C 12,207 in the B/C case and A 12,207/B 12,982/C 12,981
+in the A/B/C case. Other survivor subsets use the same fixed formula. The executable plan retains
+the original nominal reference budget, all four per-token and total modeled counts, original/final
+updates, added tokens, binding requirements, exact ratio proofs, forecasts and reservations.
+
+The B/C language forecast becomes **$77.09**, including earlier timing pilots; aggregate timeout
+reservations are **$99.82**. The A/B/C forecast becomes **$94.26**, with aggregate timeout
+reservations **$122.17**, so rolling settlement remains necessary. Added forecast/maximum reservation
+costs are $0.853041/$1.464528 for B/C and $2.117802/$2.562924 for A/B/C. The $100 language
+cap, $150 total cap and no-transfer rule remain in force; forecasts do not guarantee completion.
+
+This is a conservative comparator allowance under four specified arithmetic conventions, **not
+a measurement or guarantee of equal hardware-executed GPU FLOPs**. Scalar costs remain estimates,
+compiler behavior and precision affect execution, and actual autodiff may avoid some whole-block
+recomputation. Optimizer arithmetic remains excluded. Report nominal work, these sensitivity
+estimates, tokens, parameters, measured runtime and estimated spend distinctly. A positive outcome
+would satisfy the preregistered loss gates against controls given at least the candidate's modeled
+work under every stated convention.
+
+The allowance policy identifier is
+`3a340829e3fa07d6808280c240992af63283088ac92a3d68d7935cb7822d0991`.
+Independent rational audits cover all seven survivor subsets, 240 dominance inequalities and
+35 minimal-ceiling checks; the original counter audit is retained alongside this amendment.
 
 **Headline and interpretation.** For each seed s in {1,2,3}, an advancing candidate X must satisfy
 
@@ -654,9 +748,10 @@ synthetic retrieval or group-word performance. No zeroed-component or final-test
 architectures, rates or additional confirmatory runs.
 
 **Budget.** Stage 2 remains capped at $100 including the $2.326 language timing pilots. With B/C,
-all fresh three-rate sweeps and all seven arms at three final seeds forecast $76.24, including a 15%
-convolution runtime allowance; the sum of full timeout reservations is $98.36. If A also advances,
-the forecast is $92.15 and the aggregate timeout maximum $119.61, so only rolling reservations
+all fresh three-rate sweeps and all seven arms at three final seeds forecast $77.09, including a 15%
+convolution runtime allowance and the conservative control updates; full timeout reservations sum
+to $99.82. If A also advances, the forecast is $94.26 and aggregate timeout maximum $122.17,
+so only rolling reservations
 backed by actual settlement can fit; the ledger still refuses any over-cap launch. Tune all included
 arms, then execute complete seed blocks in seed order, keeping paired comparisons together. If the
 cap prevents completion, report the exact absent runs and no three-seed headline. No funds transfer

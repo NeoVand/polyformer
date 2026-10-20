@@ -121,9 +121,11 @@ trained probe actually learns.
 Language, if candidates qualify, uses FineWeb-Edu, GPT-2 tokens, six layers of width 512, context
 512, batch 64, BF16 and Muon. Every included arm receives three fresh approximately 100M-token
 rate trials at {.002, .004, .008}. Only final unrounded validation loss selects the rate.
-Fresh seeds 1/2/3 then train at one common nominal compute budget: the most expensive surviving
-candidate's approximately 400M-token budget. Controls receive enough complete updates to meet
-that budget, with less than one update excess. Final evaluation uses 1,024 fixed held-out sequences,
+Fresh seeds 1/2/3 use candidate schedules set by the most expensive surviving candidate's
+approximately 400M-token nominal budget. Before any language quality results, a conservative
+allowance gives each control enough complete updates to cover every candidate under four declared
+arithmetic conventions, including dense attention and whole-block recomputation estimates. These
+intentional additions are reported separately from whole-update rounding. Final evaluation uses 1,024 fixed held-out sequences,
 separate from tuning samples but drawn from the same validation corpus.
 
 | Arm | Final loss, seed 1 | Seed 2 | Seed 3 | Parameters, tokens, runtime and cost |
@@ -147,7 +149,13 @@ scans, convolutions and transport, but excludes optimizer and rematerialization 
 is charged under an ideal causal triangular
 convention even though the JAX implementation materializes dense scores; the registered Parallax
 count includes two value passes although corrected weights can combine them. Thus the headline
-budget is an algorithmic convention, not a measurement of executed GPU arithmetic. Recurrent
+budget is an algorithmic convention, not a measurement of executed GPU arithmetic. The prospective
+[control allowance](BEYOND.md#5-main-language-registration-before-quality-sweeps) covers each candidate's
+modeled work under nominal, nominal-plus-recomputation, source-dense upper and source-dense-plus-
+recomputation conventions. It charges A without compiler-sharing credit and adds updates to all
+controls as needed. A positive result would therefore beat controls given at least its modeled
+work under all four conventions. A negative result would not prove inferiority at an exact equal-
+compute point. Additional control updates also increase data exposure. Recurrent
 chunking preserves the mathematical recurrence, within tested floating-point tolerances, and its
 extra Gram matrices, triangular solves and backward work are charged. Runtime-only tests selected
 chunk 32: GDN1/DP4 took .153/.361 seconds per update versus .439/1.060 for their best unrolled

@@ -7,7 +7,7 @@ The planner lives below `research/analysis/`, so it does not change the frozen t
 Paths below are relative to the worktree:
 
 - `research/analysis/beyond_language_protocol.py`: planner, validation-only rate selector, final-block exporter.
-- `research/analysis/test_beyond_language_protocol.py`: 24 CPU tests.
+- `research/analysis/test_beyond_language_protocol.py`: 27 CPU tests, including all seven survivor subsets.
 - `research/results/beyond_language_planning/proof.json`: artifact hashes, test output and portability checks.
 - `research/results/beyond_language_planning/tables.md`: B/C and A/B/C draft planning tables.
 - `research/results/beyond_language_planning/budget.json`: timing inputs and previously settled language spend.
@@ -29,26 +29,57 @@ No rounded loss, intermediate validation, final held-out loss, test field, or ab
 
 Final seeds are 1/2/3, each with a fresh complete schedule, warmup400, 16 evaluation marks,
 vseqs1024/vbig1024 and final checkpoint saving. Candidates additionally run inference ablations.
-All arms receive the ceiling of one common training-FLOP target, with less than one update excess.
-Both GDN1 and DP4 receive all three final seeds. All earlier seed-block jobs must be terminal before
+Candidate schedules use the original common nominal training-FLOP target. Each of the five controls
+receives the smallest whole-update count covering every candidate under all four declared arithmetic
+conventions. Intentional additional work is separate from ceiling roundoff; only the latter is below
+one update. Both GDN1 and DP4 receive all three final seeds. All earlier seed-block jobs must be terminal before
 exporting the next block. Failures remain failures; a failed comparator cannot satisfy the headline.
 
 Stage-1 closure must contain all passed candidates and no pending/integrity-invalid candidate.
 An explicit audited unconfirmed closure can retain numerical failures, reference-floor failures, or
 budget deferrals without advancing that candidate. The plan copies closed candidate statuses and
-budget-deferral provenance; it never reclassifies Stage-1 outcomes.
+budget-deferral provenance; it never reclassifies Stage-1 outcomes. The active written-rule policy
+must be exactly the prospectively registered policy. The original strict selection is checked at its
+registration commit, and full strict-code confirmation outcomes remain alongside the active outcomes.
 
 The plan freezes every top-level research Python hash, all five model hashes, the exact full argparse
 configuration, JAX/Optax/NumPy versions, Section5 registration hash, compute counters, timeouts,
-Stage-1 closure hash, reporting bridge hash, and planner hash. Result selection checks job, manifest,
+Stage-1 closure hash, reporting bridge hash, planner hash and gate-policy adapter hash. Result selection checks job, manifest,
 source, runtime, configuration, completed steps, tokens, FLOPs and final raw validation identity.
 It allows BEYOND Log updates outside Section5; a Section5 change invalidates exports.
+
+## Conservative control allowance
+
+Policy ID: `3a340829e3fa07d6808280c240992af63283088ac92a3d68d7935cb7822d0991`.
+
+Let F be the original forward FLOPs/token, N the original training FLOPs/token including the chunk
+solve backward surcharge, and H=51,511,296 the vocabulary projection outside the checkpointed blocks.
+Let Δ be the registered source-upper forward adjustment: 3,200,904 for either softmax,
+3,231,552 for Parallax/B/C, 6,371,040 for A, and zero for either RNN. The A adjustment explicitly
+charges its duplicate ordinary value product without assuming compiler sharing.
+
+The four training-work estimates/token are N, N+F−H, N+3Δ, and N+F−H+4Δ.
+For each control j, use
+
+`steps_j = ceil(max over candidates i and conventions k of steps_i * W_ik / W_jk)`.
+
+Candidate steps and all rate sweeps retain their original schedules. Every final control has at least
+every candidate's total work under each declared convention. The planner uses exact rational
+arithmetic and records every per-token count, total, binding requirement, nonnegative slack and
+minimal-ceiling witness. Tests independently check 240 dominance inequalities and 35 minimality
+witnesses across all seven nonempty candidate subsets.
+
+These estimates cover specified attention and whole-block recomputation sensitivities. They are
+not measurements or guarantees of equal hardware-executed GPU FLOPs. The original counter audit
+remains available under `proof.json.counter_sensitivity_read_only`; it includes the earlier CSE
+estimate for A and must not be confused with the more conservative no-CSE allowance.
 
 ## Freeze after Stage1 and the reporting amendment
 
 Commit the planner, the reporting amendment, the Stage-1 closure artifact, the source bridge and
 the Section5 registration before freezing. Keep the planner in its nested analysis location.
 It hashes all top-level research Python files and separately records its own source hash.
+Section5 must contain the control-allowance policy ID above before freezing is permitted.
 
 The source bridge is a canonical JSON object sealed with the planner's `seal()` function. It contains:
 
@@ -129,11 +160,16 @@ registered arm. No rerun, larger timeout, rate extension or dropped comparator i
 
 ## Budget
 
-B/C plus five controls: $76.24 forecast including $2.326004 settled language pilots;
-$98.36 sum of all timeout reservations. A/B/C plus five controls: $92.15 forecast,
-$119.61 sum of timeout reservations, so actual settlement must release reservations between batches.
+B/C plus five controls: $77.09 forecast including $2.326004 settled language pilots;
+$99.82 sum of all timeout reservations. A/B/C plus five controls: $94.26 forecast,
+$122.17 sum of timeout reservations, so actual settlement must release reservations between batches.
 Neither estimate authorizes exceeding the $100 language cap. All cases require the runner's ledger
 check at launch, at most eight globally active jobs, and no budget transfers.
+
+The allowance adds $0.853041 forecast/$1.464528 maximum reservations in the B/C case and
+$2.117802 forecast/$2.562924 maximum reservations in the A/B/C case. Original nominal-only
+scenarios are preserved in budget.json as historical inputs; current scenario forecasts are recorded
+separately. The current tables and frozen plan distinguish original updates from added control work.
 
 Forecasts include a 15% convolution runtime allowance, compilation allowance, final evaluation,
 checkpoint and candidate-ablation allowance, 30% timeout headroom rounded to100 seconds, and
