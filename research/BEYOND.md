@@ -484,6 +484,14 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   $14.708122; cumulative language is $32.010141 and all-stage total $58.366365.
   Commit this complete block before exporting seed 2; all later runs remain unchanged.
 
+- 2026-10-20 17:10 UTC — All six seed-1 model checkpoints are independently downloaded and
+  verified: 1,164,701,548 bytes retained under `/tmp/beyond-checkpoints`. Completed evidence
+  `results/beyond_language_checkpoint_fingerprints_seed1.json` has seal
+  `443da6da646691ba5e2a25e59b22c1185b1a35fd41bf0efb4aea09c2a05629ac`.
+  Exact file sizes, stream/readback hashes, stable volume metadata and source-result hashes
+  agree. The official exporter accepts the closed prior block and generates all six seed-2
+  jobs with unchanged rates, allocations and timeouts; maximum reservation $20.884170.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
