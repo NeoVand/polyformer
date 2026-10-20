@@ -25,7 +25,7 @@ what commuting layers cannot. The smallest faithful irrep suffices.
 | 0 | Claude session `holonomy-attention-on-a5` (worktree `groups-words`) | A5/S5 word problems vs matrix-state linear RNNs (GROUPS.md section 6, step 1) | running |
 | 1 | Astra (Codex) | A: separation theorems; B: verified prior-art positioning; C: a second benchmark. Brief: `briefs/astra-phase1.md` | complete; handoff `briefs/astra-phase1.out.md` |
 | 2 | Claude | merge phase 0 and phase 1 branches into `claude/story-wrapup`; check numbers | pending |
-| 3 | Astra | app, paper (report route), Learn, landing, visuals for the new story. Brief: `briefs/astra-phase2.md` | pending |
+| 3 | Astra | app, paper (report route), Learn, landing, visuals for the new story. Brief: `briefs/astra-phase2.md` | complete; visual handoff `briefs/shots/README.md` |
 | 4 | Claude | review build, screenshots at 1440x900 and phone width, fix, commit; report to Neo | pending |
 
 Rules for everyone: work only in this worktree (or your own worktree cut from this branch); commit often, messages
@@ -57,3 +57,18 @@ phase 4's review passes (build, check, tests, screenshots). Astra never pushes.
 3. Faithful dimension is not necessary: joint preservation of noncommuting pairs is the exact homomorphic Match-3 criterion with sufficient token gates; fixed-length softmax expressivity is explicitly proved.
 4. **36 arXiv citations verified**; Seq2Tens already supplies ordered-subsequence sums, so novelty is narrowed to the marked matrix realization, task-specific theorems, and measured learning behavior.
 5. Three-seed swap programs: commuting models ≈**62.04%**, holo d=3/4 and matrix RNN **100%**, positional softmax 1L **98.95%**, 2L/3L **100%**; all predictions hold, no superiority claim, **$0.35** GPU-only estimate.
+
+- **Phase 3 done (Astra/Codex).** The app now tells the progression from higher-order synthetic wins, through the language-model limits, to composition and learned group representations. Title used: **Learning to compose**, with the report subtitle **From higher-order attention to group representations**. Alternative title: **Attention as composition**.
+  - `e0aa26b`: shared, sourced group results and the accuracy-ladder / supplied-character figures.
+  - `24aff05`: reproducible A5 d=3 seed-0 training and `static/recorded/a5-irrep.json`; all 60 learned matrices, computed ideal matrices, alignment and provenance.
+  - `92b42ed`: Holonomy Explore lab, ideal/recorded switch, all 60 rotations, order demo and mathematical tests.
+  - `259823c`: restructured report, exact result tables, qualified theorems, second benchmark and bibliography.
+  - `be953f7`: Learn group prerequisites and composition chapters, definitions, provenance and interactive figures.
+  - `62f0e63`: landing narrative and rotation tile, recorded-only Groups comparison and clearer shared typography.
+  - `0bc00e1`: mobile lab layouts and controls, caption clearance and local stacking for graph labels.
+  - `6a58054`: updated browser tests, portable static-server/capture scripts and 260 reviewed production screenshots.
+- The fresh A5 recording reaches **99.17%** held-out balanced accuracy, with mean homomorphism error **0.101096** across all 3,600 pairs for the selected head. It is labelled as a fresh run, distinct from the original three-seed benchmark. The training app is stopped.
+- The theory keeps its conditions: faithful is sufficient, not necessary; the token-only Match-3 and positional Match-k constructions are separate; softmax failure is measured learning behavior, not an expressivity impossibility. Seq2Tens and path development are the closest predecessors. Swap programs show the order distinction and **no advantage over the order-aware baselines**.
+- Validation passed: `pnpm check` (0 errors, 0 warnings), `pnpm test` (39 unit tests and 4 browser tests), default `pnpm build`, and `BASE_PATH=/polyformer pnpm build`. A static production smoke check loaded all eight prefixed routes and the A5 recording without failures. A real WASM baseline trained ten steps and paused without browser errors. Edited Svelte files pass the autofixer without issues or suggestions.
+- Visual handoff: `briefs/shots/README.md`, 1440×900 and 390×844, light/dark browser preferences, with second animation frames about one second apart. The existing fixed dark palette is intentional in both preferences. Repeated image inspection corrected mobile tables, labels, captions, controls, plot contrast and figure spacing; final runtime/geometry audits are clean.
+- Only the requested **WORD-PROBLEMS** placeholders remain pending: one short report subsection and one Learn sentence, both marked for Claude. Work is committed on `claude/story-wrapup`; nothing was pushed or merged. Claude's review and publication remain Phase 4.
