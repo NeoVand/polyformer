@@ -1,0 +1,32 @@
+{
+  "after_commit": "c55c3bd6e31e15bbab69d356a924e35eea121dcc",
+  "allowed_changed_files": [
+    "lm.py"
+  ],
+  "audit": {
+    "proof_path": "research/results/beyond_reporting_patch/stage0.json",
+    "proof_sha256": "cf406f2b1ce9e3bea31b518d8029a37580ee902ade2395e530c1b468ba46ec80",
+    "unchanged_training": true
+  },
+  "before_commit": "c65001b1297089447f59650e7570f451f09018a7",
+  "classification": "report_only",
+  "diff": "",
+  "diff_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+  "new_model_source_hashes": {
+    "beyond_diag.py": "ab176f04bdf08a4ebcc650672929f2627c910e53b631fffde8d8ed96696f6a39",
+    "beyond_layers.py": "766d943ed44a21691a4101fd5cb5aca558a12058c8f495ac2fedbc24c4506411",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "lm.py": "d9cfad64cb8e4697b61549fdbea50efdaecc0f984f94baa0429cc7112a9aebff"
+  },
+  "old_model_source_hashes": {
+    "beyond_diag.py": "ab176f04bdf08a4ebcc650672929f2627c910e53b631fffde8d8ed96696f6a39",
+    "beyond_layers.py": "766d943ed44a21691a4101fd5cb5aca558a12058c8f495ac2fedbc24c4506411",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "lm.py": "f962a571b97835b4243d8685c39d7830bd3ce7a4ebadc21d45a70936898ebab5"
+  },
+  "schema": "stage2_source_bridge",
+  "schema_version": 1,
+  "sha256": "a8fcc9df1d7981dddcb7df9c048f2556a841ba85d0420d221fda743ce2070b39"
+}
