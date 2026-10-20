@@ -1,0 +1,28 @@
+{
+  "status": "pass",
+  "tests_run": 26,
+  "failures": 0,
+  "errors": 0,
+  "command": "python research/analysis/test_beyond_language_report.py -q",
+  "test_runtime_seconds": 7.09,
+  "scope": "Synthetic in-memory fixtures and temporary exports only; no real language experiment result generated.",
+  "checks": [
+    "Exact unrounded three-seed gates against both softmax and both RNN controls",
+    "Invalid/missing evidence cannot pass; valid observed inequality failure can reject",
+    "Frozen rates, configurations, sources, manifests, versions, steps, tokens and compute",
+    "Complete fixed-order 1024-sequence sample and scalar/array consistency",
+    "Checkpoint save metadata plus worker artifact listing; optional local bytes checked without loading pickle",
+    "Paired sequence SE preserves correlation; overlap and training-seed caveats",
+    "Original strict Stage1 outcome retained beside written-rule outcome",
+    "Ablation pairing and missing diagnostic reporting without adding headline gates",
+    "Frozen control allowance copied and per-arm allocation audited",
+    "Ledger identity, reproducible JSON/TSV, immutable outputs and portable CLI",
+    "Standalone PNG/PDF plots generated; synthetic previews visually inspected"
+  ],
+  "source_sha256": {
+    "analysis/beyond_language_report.py": "3778d516ef888de789c7be836808860c3676c20f4102c80c4ce55657fbb90add",
+    "analysis/test_beyond_language_report.py": "4b640c4f020a1cca99b47f96596741879cbf8ab2c5798978dbf0eeb5bd86071c",
+    "analysis/beyond_language_protocol.py": "95dcc71a2281f6414139d63fa02d513aef454b52f11fef91607d1704f636309c"
+  },
+  "control_allowance_policy_id": "3a340829e3fa07d6808280c240992af63283088ac92a3d68d7935cb7822d0991"
+}
