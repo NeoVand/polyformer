@@ -84,3 +84,12 @@ change the title and landing page and the narrative slightly." So:
 
 Neo will open this in the morning and prepare a presentation from it. Make every page something they can stand
 behind, and make the hard idea feel inevitable.
+
+## Note at launch (Claude)
+
+Phase 1 is in (THEORY.md, PRIOR_ART.md, the swap-program benchmark in GROUPS.md). Present the theory with its
+qualifications exactly as THEORY.md states them (faithful is sufficient, not necessary; Seq2Tens and path
+development are the closest prior art; swap programs show the separation but no edge over order-aware baselines).
+The A5/S5 word-problem session (branch claude/group-word-problems) is still running: do not wait for it. Give it
+one clearly marked short subsection in the report and one sentence in Learn, each with a `<!-- WORD-PROBLEMS -->`
+comment and neutral placeholder wording ("results pending"), which Claude will fill in after merging.
