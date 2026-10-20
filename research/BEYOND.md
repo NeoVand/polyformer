@@ -452,6 +452,18 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   of the still-running DP4 result. Five of six final seed-1 results are valid; no execution failures.
   The later complete seed blocks remain mandatory.
 
+- 2026-10-20 16:53 UTC — Completed a positions-only replay of the frozen validation sampler,
+  without token contents, inference or loss inspection. Artifact
+  `results/beyond_language_window_overlap.json` has seal
+  `b72c3ca8c10978c1533f607ab2c78ca436c5cef572f64472d69c65634b3a4f2c`.
+  The exact extracted sampler and independent position enumeration agree under pinned NumPy 2.5.4.
+  Each draw has 1,024 distinct starts and 524,288 target occurrences. Periodic seed 1234 covers
+  505,658 distinct positions; final seed 5678 covers 509,772, with 2.7687% redundant final
+  occurrences. Across draws, 28,484 target positions overlap (5.5876% of final distinct positions),
+  with 133 overlapping window pairs and no identical windows. This reconstructs the frozen
+  recipe, not saved worker indices; it does not establish document independence or correct
+  the reported standard errors. No training, selection or gate change follows.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

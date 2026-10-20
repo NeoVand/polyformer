@@ -229,9 +229,14 @@ allowance gives each control enough complete updates to cover every candidate un
 arithmetic conventions, including dense attention and whole-block recomputation estimates. These
 intentional additions are reported separately from whole-update rounding. Final evaluation uses a
 fresh fixed draw of 1,024 windows (seed 5678), while rate selection uses seed 1234. Both sample the
-same validation file; windows may overlap within and between draws. This is neither token-disjoint
-nor document-disjoint evaluation. Sequence-level uncertainty is conditional on the trained model
-and may understate uncertainty when windows overlap.
+same validation file. A [replay of the frozen sampler](results/beyond_language_window_overlap.json)
+finds 509,772 distinct target positions among the final draw's 524,288 target occurrences:
+2.7687% are redundant occurrences. The two draws share 28,484 target positions, or 5.5876% of
+the final draw's distinct positions, despite having no identical windows. This is reconstruction
+from the recorded recipe rather than saved worker window IDs. It measures token-position overlap,
+not document independence or a corrected effective sample size. Evaluation is neither token-disjoint
+nor document-disjoint across these draws. Sequence-level uncertainty is conditional on the trained
+model and may understate uncertainty when windows or documents overlap.
 
 All 18 tuning trials completed without numerical or execution failures. Final raw validation
 losses in nats/token are shown below; bold entries select rates. These are approximately
@@ -345,6 +350,11 @@ The frozen B-only language comparison forecasts $66.657532 including its timing 
 timeout maximum is $86.258104. These are resource estimates, not invoice totals.
 The [ledger](results/beyond_budget.json), immutable manifests and [registration log](BEYOND.md)
 remain authoritative. Budget exhaustion leaves missing runs explicitly unconfirmed.
+
+Final runs persist model weights, configuration and version metadata. The independent download
+audit checks volume metadata, byte counts and SHA-256 fingerprints without deserializing the files.
+These model checkpoints omit optimizer and data-RNG state, so they support later inference
+analysis rather than exact continuation of the original training trajectory.
 
 The final report must replace the pending entries with verified results, both gate policies,
 per-seed losses and uncertainty, compute/runtime accounting, and component ablations. A negative
