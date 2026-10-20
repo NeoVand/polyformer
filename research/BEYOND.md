@@ -434,6 +434,17 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   Both saved checkpoints have been independently downloaded and byte-fingerprinted without
   deserialization. B and the other three arms remain active; no final candidate decision yet.
 
+- 2026-10-20 16:32 UTC — Seed-1 convP and B completed and passed the full final-result audit.
+  ConvP loss is 3.6071916222572327; B is 3.6423895806074142 nats/token. B is 0.5235% better
+  than rawS but 0.8232% worse than convS, missing the registered 1% threshold 3.5765227546.
+  This valid measured failure rejects the required three-for-three headline; all remaining
+  registered runs still proceed unchanged. B also trails convP by .0351979584 nats/token.
+  Same-checkpoint removal raises B loss by .0345962793 for the whole composition branch and
+  1.7672338933 for precision, showing dependence without an architectural gain over convP.
+  Whole-branch/content RMS spans .077–.402 across layers; nonzero commutators do not identify
+  useful noncommutativity. ConvP/B wall times are 1,309.290s/1,519.875s. Both checkpoints are
+  downloaded and fingerprinted. GDN1/DP4 remain active without errors; later seeds remain required.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

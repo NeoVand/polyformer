@@ -1,7 +1,12 @@
 # Beyond softmax and matrix-state RNNs — working report
 
-**Experiments are running. This is not the final result.** Evidence snapshot: 20 October 2026,
-16:25 UTC. B passes the prospectively reconciled written Stage-1 rule with **100% final test
+**Experiments are running; the registered headline criterion has already failed.** Evidence snapshot:
+20 October 2026, 16:32 UTC. B's seed-1 final loss is **3.642390 nats/token**, versus **3.612649**
+for convolved softmax and **3.607192** for convolved Parallax. B misses the required softmax
+threshold of **3.576523**. The remaining runs will complete the planned comparison and quantify
+training-seed variation; they cannot restore the required three-for-three pass.
+
+B passes the prospectively reconciled written Stage-1 rule with **100% final test
 accuracy in all 18 held-out confirmation cells**—six task/depth conditions across three training
 seeds. Its original-code outcome is **unconfirmed** because two
 standalone reference runs failed that code's additional accuracy floor. C fails the written rule:
@@ -12,9 +17,9 @@ All mandatory confirmations are complete and audited. **B is the sole candidate 
 All three candidates reached 100% selected seed-0 validation in the
 six primary cells. The descriptive grid is complete. B's language plan is frozen, and its
 18-trial language rate sweep is complete. All arms select .008, and B trails both softmax controls
-and both recurrent controls at that short tuning budget. The first seed's raw/convolved softmax
-final losses are 3.661557/3.612649 nats/token; all candidate final results remain pending.
-These results establish successful synthetic-task learning in this regime, not a language advantage.
+and both recurrent controls at that short tuning budget. Seed-1 recurrent results and all seed-2/3
+results remain pending. B demonstrates successful synthetic-task learning in this regime, but
+its first final language result does not beat the stronger attention controls.
 
 The question is whether one affordable layer can combine content selection, improved local
 estimation and order-sensitive composition, then beat both softmax and modern matrix-state RNNs
@@ -278,10 +283,15 @@ and exact, unrounded counts are in the frozen plan. All controls meet or exceed 
 |---|---|---|---|
 | Raw softmax | 3.661557 | Pending | Pending |
 | Convolved softmax | 3.612649 | Pending | Pending |
-| Convolved Parallax | Pending | Pending | Pending |
+| Convolved Parallax | 3.607192 | Pending | Pending |
 | Gated DeltaNet, one update | Pending | Pending | Pending |
 | Gated DeltaProduct, four updates | Pending | Pending | Pending |
-| B | Pending | Pending | Pending |
+| B | 3.642390 | Pending | Pending |
+
+At seed 1, B is 0.5235% below raw softmax, short of the required 1%, and 0.8232% above convolved
+softmax. Its loss is also 0.035198 nats/token above convolved Parallax. The registered three-for-three
+headline criterion is therefore rejected even while the remaining seed blocks are pending.
+Those blocks are retained exactly as planned.
 
 For each seed, the headline requires candidate loss at most 99% of the better raw/convolved
 softmax loss, and no higher than the better Gated DeltaNet/DeltaProduct loss. All three seeds and
@@ -300,6 +310,14 @@ not directly comparable. Transition and adjacent-commutator statistics are unnor
 norms; random initialization already gives nonidentity, noncommuting transitions. Activity uses
 only four validation sequences, with no uncertainty estimate. Learned sector coefficients are
 signed and unconstrained; their magnitudes are affected by readout rescaling and cancellation.
+
+On B's first checkpoint, removing composition raises loss by **0.034596 nats/token**; removing
+the precision correction raises it by **1.767234**. Thus the trained network uses both components,
+yet the full model still loses to convolved Parallax. An entirely unused branch is not an adequate
+explanation of this checkpoint's result. These interventions do not establish beneficial training
+effects or identify which matrix sector is useful. Across its six layers, the whole-matrix/content
+RMS ratio is 0.077–0.402 and the adjacent commutator norm is 2.943–3.014 on the small activity sample.
+The remaining seeds will test whether these observations recur.
 
 Equal nominal FLOPs are not equal runtime. The analytic convention counts added projections,
 scans, convolutions and transport, but excludes optimizer and rematerialization work. Attention

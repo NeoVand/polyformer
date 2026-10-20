@@ -120,8 +120,11 @@
       "manifest_sha256": "885508c42fb45ae88553cc76089f95cb372e8f2e4d10cbfb7f1980bb1604c9e9",
       "reserved_at": "2026-10-20T16:04:39.435521+00:00",
       "reserved_usd": 3.358651,
+      "result_file": "results/beyond_runs/040a5eb3251977f31b553d59.json",
+      "settled_at": "2026-10-20T16:30:06.934890+00:00",
+      "settled_usd": 2.040423,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "04ff39a931b72351b93fcc20": {
       "call_id": "fc-01M5CYYB71WC715G6Z03G588KS",
@@ -2832,8 +2835,11 @@
       "manifest_sha256": "885508c42fb45ae88553cc76089f95cb372e8f2e4d10cbfb7f1980bb1604c9e9",
       "reserved_at": "2026-10-20T16:04:39.424759+00:00",
       "reserved_usd": 2.748431,
+      "result_file": "results/beyond_runs/bd9deea7c5be733c954bf890.json",
+      "settled_at": "2026-10-20T16:26:37.175455+00:00",
+      "settled_usd": 1.783417,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "be0ba3271f8f6b132242fca9": {
       "call_id": "fc-01M5CWXRXY3GJSC07NAD1K20TW",
