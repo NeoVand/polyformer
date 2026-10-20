@@ -1,0 +1,92 @@
+{
+  "status": "pass",
+  "cases": {
+    "gpt": {
+      "legacy_loss_raw": 4.113965715680804,
+      "new_loss_raw": 4.11396581476385,
+      "raw_vs_sequence_mean_abs": 3.4679066018838967e-07,
+      "sequence_count": 11,
+      "partial_batch": true,
+      "ablation_modes": [],
+      "unchanged_forward_gradient_update": true
+    },
+    "beyond_b": {
+      "legacy_loss_raw": 4.1157765574269485,
+      "new_loss_raw": 4.1157765574269485,
+      "raw_vs_sequence_mean_abs": 1.1146842648912525e-07,
+      "sequence_count": 11,
+      "partial_batch": true,
+      "ablation_modes": [
+        "composition",
+        "precision"
+      ],
+      "unchanged_forward_gradient_update": true
+    },
+    "beyond_c": {
+      "legacy_loss_raw": 4.116175961184811,
+      "new_loss_raw": 4.116175961184811,
+      "raw_vs_sequence_mean_abs": 1.6720264017777708e-07,
+      "sequence_count": 11,
+      "partial_batch": true,
+      "ablation_modes": [
+        "composition",
+        "precision",
+        "coupling"
+      ],
+      "unchanged_forward_gradient_update": true
+    },
+    "gpt_cli": {
+      "identical_final_parameters": true,
+      "identical_legacy_metrics": true,
+      "final_sequences": 11,
+      "train_steps": 3,
+      "raw_vs_sequence_mean_abs": 4.334883296763792e-08
+    },
+    "beyond_b_cli": {
+      "identical_final_parameters": true,
+      "identical_legacy_metrics": true,
+      "final_sequences": 1024,
+      "train_steps": 3,
+      "raw_vs_sequence_mean_abs": 7.450580596923828e-09
+    }
+  },
+  "training_source_audit": {
+    "changed_existing_functions": [
+      "final_ablation_losses",
+      "main"
+    ],
+    "added_functions": [
+      "final_loss_statistics"
+    ],
+    "identical_nested_functions": [
+      "loss_fn",
+      "step",
+      "poslosses",
+      "batch"
+    ],
+    "all_other_module_functions_identical": true
+  },
+  "backend": "cpu",
+  "base_commit": "c65001b1297089447f59650e7570f451f09018a7",
+  "versions": {
+    "python": "3.12.12",
+    "jax": "0.12.0",
+    "numpy": "2.5.4",
+    "optax": "0.2.8"
+  },
+  "source_sha256": {
+    "old_lm": "f962a571b97835b4243d8685c39d7830bd3ce7a4ebadc21d45a70936898ebab5",
+    "new_lm": "d9cfad64cb8e4697b61549fdbea50efdaecc0f984f94baa0429cc7112a9aebff",
+    "patch": "7b3c399a447a1e9b1298bd02738c8e18d51fa14c5cba5c853b583697e55b72e9",
+    "beyond_layers": "766d943ed44a21691a4101fd5cb5aca558a12058c8f495ac2fedbc24c4506411",
+    "test": "99a2d2032cf1c50adb95668d16406422b42138791b69475b81bceeb6acdfe1cb"
+  },
+  "bridge_note": "Only final/reporting paths change. No layer, initializer, optimizer, sampler, gradient, update, model setting, or FLOP count changes. The Stage1 runner does not call the changed LM main or final-report functions.",
+  "reduction_note": "Legacy scalar reduction order and rounded keys are retained. Additional JIT outputs can change floating-point rounding. Sequence means come from the same forward pass; the proof measures the scalar-versus-sequence reduction discrepancy.",
+  "reproduction": {
+    "command": "python research/analysis/test_beyond_lm_reporting.py",
+    "source_recovery": "git show <base_commit>:research/{lm,beyond_layers}.py",
+    "patch": "research/results/beyond_reporting_patch/lm.patch",
+    "temporary_files": "TemporaryDirectory, removed automatically"
+  }
+}

@@ -160,6 +160,23 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   Language registration below is written before any quality sweep: independent seeds 1/2/3,
   three fresh rates for every arm, both raw/convolved softmax and both modern RNN controls.
 
+
+- 2026-10-20 14:01 UTC — All three candidates reach 100% seed-0 two-layer MQAR validation;
+  GDN1/DP4 reach 99.976%/99.927%. One-layer word reversals were audited against the pilot:
+  candidate paths, optimizer, initialization and generators are unchanged; compute matching changes
+  A's schedule substantially and C's slightly, and even B's identical schedule shows some run variation.
+  The evidence establishes optimization/run sensitivity, not an isolated causal effect of the schedule.
+  The fixed descriptive manifest is committed at `dc6029a`; it remains queued behind primary selection
+  and B/reference confirmations. A strict artifact-integrity and final-test confirmation evaluator is
+  saved under `analysis/`, outside the immutable worker sources.
+- 2026-10-20 14:01 UTC — The language reporting-only patch and portable CPU proof are saved under
+  `results/beyond_reporting_patch/` and `analysis/test_beyond_lm_reporting.py`. Reconstructed old/new
+  CLI runs give bitwise-identical final GPT/B parameters and unchanged legacy rounded metrics;
+  direct GPT/B/C forward/gradient/update checks also agree. New raw scalar versus legacy reduction
+  differences are at most 9.91e-8, and raw scalar versus sequence-mean differences at most 3.47e-7.
+  The patch is **not applied** to the frozen diagnostic worker sources; apply and record its source
+  bridge only after Stage 1 finishes. No language quality sweep has begun.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance

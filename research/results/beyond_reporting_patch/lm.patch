@@ -1,0 +1,135 @@
+--- a/research/lm.py
++++ b/research/lm.py
+@@ -660,11 +660,47 @@
+     return {"path": destination, "bytes": os.path.getsize(destination), "schema": 1}
+ 
+ 
+-def final_ablation_losses(cfg, params, bx, by, batch_size):
++def final_loss_statistics(cfg, params, bx, by, batch_size, *, reduction="positions"):
++    """One final-evaluation pass, preserving legacy scalar reduction order.
++
++    Sequence losses are per-token means, in the input sample order. Their
++    float64 host mean may differ from the legacy scalar by FP32 reduction
++    rounding. No token sampling, parameter update, or model setting changes.
++    ``positions`` matches val_big; ``all`` matches historical ablations.
++    """
++    if reduction not in ("positions", "all"):
++        raise ValueError("final loss reduction must be positions or all")
++    if batch_size < 1 or len(bx) == 0 or bx.shape != by.shape:
++        raise ValueError("final evaluation requires matching nonempty batches")
++
++    @jax.jit
++    def score(p, x, y):
++        logits = forward(cfg, p, x)
++        losses = optax.softmax_cross_entropy_with_integer_labels(logits, y)
++        legacy = losses.sum(0) if reduction == "positions" else losses.sum()
++        return legacy, losses.mean(-1)
++
++    total, sequences = 0.0, []
++    for start in range(0, len(bx), batch_size):
++        legacy, per_sequence = score(params, bx[start:start + batch_size], by[start:start + batch_size])
++        total += float(np.asarray(legacy).sum())
++        sequences.append(np.asarray(per_sequence, dtype=np.float64))
++    sequence_losses = np.concatenate(sequences)
++    value = total / (len(bx) * bx.shape[1])
++    if not math.isfinite(value) or not np.isfinite(sequence_losses).all():
++        raise FloatingPointError("nonfinite final held-out loss")
++    return {"loss": round(value, 5), "loss_raw": value,
++            "sequence_losses": sequence_losses.tolist(),
++            "sequence_mean_raw": float(sequence_losses.mean())}
++
++
++def final_ablation_losses(cfg, params, bx, by, batch_size, *, return_details=False):
+     """Final-only interventions on exactly the original val_big sample.
+ 
+     Reuse trained parameters without selecting a rate, checkpoint or seed.
+-    B has no coupling operation to remove.
++    B has no coupling operation to remove. The default return value preserves
++    the historical mode -> rounded loss API; return_details adds unrounded
++    scalars and sequence means from exactly the same sample and forward pass.
+     """
+     if not cfg.arch.startswith("beyond_"):
+         return {}
+@@ -675,23 +711,11 @@
+     for mode in modes:
+         ablated_cfg = argparse.Namespace(**{**vars(cfg), "ablate": mode})
+ 
+-        def make_losses(config):
+-            @jax.jit
+-            def losses(p, x, y):
+-                logits = forward(config, p, x)
+-                return optax.softmax_cross_entropy_with_integer_labels(logits, y).sum()
+-            return losses
+-
+-        score = make_losses(ablated_cfg)
+-        total = 0.0
+-        for start in range(0, len(bx), batch_size):
+-            total += float(score(params, bx[start:start + batch_size], by[start:start + batch_size]))
+-        value = total / (len(bx) * bx.shape[1])
+-        if not math.isfinite(value):
+-            raise FloatingPointError(f"nonfinite final {mode} ablation loss")
+-        results[mode] = round(value, 5)
++        detail = final_loss_statistics(ablated_cfg, params, bx, by, batch_size, reduction="all")
++        results[mode] = detail if return_details else detail["loss"]
+         if getattr(cfg, "progress", 0):
+-            print(json.dumps({"final_ablation": mode, "val_big": results[mode],
++            print(json.dumps({"final_ablation": mode, "val_big": detail["loss"],
++                              "val_big_raw": detail["loss_raw"],
+                               "arch": cfg.arch, "seed": cfg.seed}), file=sys.stderr, flush=True)
+     return results
+ 
+@@ -847,7 +871,8 @@
+         for i in range(0, len(vx), vb):
+             per += np.asarray(poslosses(p, vx[i : i + vb], vy[i : i + vb]))
+         per /= len(vx)
+-        out = {"val": round(float(per.mean()), 4)}
++        value = float(per.mean())
++        out = {"val": round(value, 4), "val_raw": value}
+         if T >= 512:
+             # in-context learning score (Olsson et al.): loss at token 50 minus loss at token 500
+             out["icl"] = round(float(per[40:60].mean() - per[490:510].mean()), 4)
+@@ -887,15 +912,29 @@
+     if cfg.vbig:
+         # a larger held-out set drawn with its own generator, scored once at the end (LOCAL.md's gate metric)
+         bx, by = batch(val, np.random.default_rng(5678), cfg.vbig)
+-        tot = 0.0
+-        for i in range(0, len(bx), vb):
+-            tot += float(np.asarray(poslosses(params, bx[i : i + vb], by[i : i + vb])).sum())
+-        extra["val_big"] = round(tot / (len(bx) * T), 5)
++        detail = final_loss_statistics(cfg, params, bx, by, vb)
++        extra.update(val_big=detail["loss"], val_big_raw=detail["loss_raw"],
++                     val_big_sequence_losses=detail["sequence_losses"],
++                     val_big_sequence_mean_raw=detail["sequence_mean_raw"],
++                     val_big_sample={"seed": 5678, "sequences": len(bx),
++                                     "tokens_per_sequence": T, "order": "generator draw order"})
+         if cfg.ablations and cfg.arch.startswith("beyond_"):
+-            extra["ablation_val_big"] = final_ablation_losses(cfg, params, bx, by, vb)
++            ablations = final_ablation_losses(cfg, params, bx, by, vb, return_details=True)
++            extra["ablation_val_big"] = {name: row["loss"] for name, row in ablations.items()}
++            extra["ablation_val_big_raw"] = {name: row["loss_raw"] for name, row in ablations.items()}
++            extra["ablation_val_big_sequence_losses"] = {
++                name: row["sequence_losses"] for name, row in ablations.items()
++            }
+             extra["ablation_delta_val_big"] = {
+                 name: round(value - extra["val_big"], 5)
+                 for name, value in extra["ablation_val_big"].items()
++            }
++            extra["ablation_delta_val_big_raw"] = {
++                name: row["loss_raw"] - extra["val_big_raw"] for name, row in ablations.items()
++            }
++            extra["ablation_delta_val_big_sequence_losses"] = {
++                name: (np.asarray(row["sequence_losses"]) - np.asarray(detail["sequence_losses"])).tolist()
++                for name, row in ablations.items()
+             }
+     if cfg.arch in ("lla", "plx"):
+         # what the trained layers use: gates, ridges and chart scale (lla), probe weight norm (plx), and the
+@@ -930,7 +969,8 @@
+            "cap": cfg.cap, "fscale": cfg.fscale, "hops": cfg.hops, "lookback": cfg.lookback, "lr": cfg.lr, "steps": cfg.steps,
+            "tokens": cfg.steps * cfg.batch * T, "flops_per_token": fpt,
+            "train_flops_per_token": tfpt, "train_flops": tfpt * cfg.steps * cfg.batch * T,
+-           "data": cfg.data, "val_loss": last["val"], "curve": curve, "secs": round(time.time() - t0, 1),
++           "data": cfg.data, "val_loss": last["val"], "val_loss_raw": last["val_raw"],
++           "curve": curve, "secs": round(time.time() - t0, 1),
+            "backend": jax.default_backend(), "versions": [jax.__version__, optax.__version__],
+            "pos": cfg.pos, "gdim": cfg.gdim if cfg.arch in BEYOND_ARCHS else None,
+            "nh": cfg.nh if cfg.arch in BEYOND_ARCHS else None,
