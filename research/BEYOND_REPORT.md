@@ -98,6 +98,9 @@ Each task/depth receives B's nominal compute at 6,000 updates; other arms receiv
 updates and complete schedules. Final validation uses 1,024 sequences and final test 2,048.
 
 The six primary cells are two-layer MQAR and induction, plus A5/S5 word tracking at both depths.
+Word inputs contain a BOS token and 16 uniform group elements; the target at each position is
+the running product, classified among 60 or 120 group elements. The gate averages class recall
+over positions 9–16, avoiding the easier short prefixes.
 The registered tuning rule starts at rate .004 and allows one alternate only below 97% final
 validation: .002 for words, .008 for retrieval. All 46 first-rate runs and 13 triggered alternates
 completed. Every candidate and selected reference reached 100% validation in every cell.

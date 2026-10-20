@@ -418,6 +418,14 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   headline or replace the frozen final-result comparison. Interpretation notes now explicitly
   distinguish whole-branch activity/removal from isolated noncommuting-prefix utility.
 
+- 2026-10-20 16:19 UTC — Offline learning-curve reporter
+  `analysis/beyond_language_dynamics.py` is ready, with deterministic synthetic mean/SD and
+  missing-seed checks plus visual inspection of both plot types. Source SHA
+  `e9a681912dc3dc73e0ebd2013b28aece499621d9a05a76412004533c4925cb45`.
+  It requires all 18 audited final runs and verifies their exact 16 evaluation marks and
+  provenance before creating real-data plots. No experimental curves were inspected during
+  development. B and both softmax controls have passed halfway; all six seed-1 jobs remain healthy.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
