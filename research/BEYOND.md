@@ -234,6 +234,15 @@ Append a line to the Log at each milestone. Final message: which candidate (if a
   has not been measured. The audit is in `results/beyond_language_planning/proof.json`; no counters,
   worker sources, training schedules or quality jobs changed. Resolve this before freezing language.
 
+
+- 2026-10-20 14:33 UTC — Ten of 36 reference/B confirmations are complete. One-layer S5 prefix
+  reference seed 1 scores 6.624% second-half balanced test accuracy at its frozen .002 rate;
+  seeds 2/3 score 100%. Thus the original executable reference-floor restriction is material in
+  confirmation, and must be reported beside the prospectively reconciled written rule. No candidate
+  is yet confirmed, no rates change, and the failed reference is retained. Several early Modal
+  container starts logged broken pipes, but API call graphs showed pending allocation, not failed
+  model executions; the original calls continue without duplicate dispatch or changed hardware.
+
 ## 1. Design registration (before training)
 
 This is a test of combinations and how they learn, not a claim to have invented selection, covariance
