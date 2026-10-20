@@ -1,0 +1,26 @@
+{
+  "status": "pass",
+  "policy_id": "59e1b83139fbb148de0132005de781486a86aa79cd4a2c5d675ca21416863d46",
+  "checks": [
+    "candidate100/reference94 strict/reconciled divergence",
+    "original unchanged and strict outcomes retained",
+    "same rates/references/protocol/source identity",
+    "72 compatible frozen confirmation jobs",
+    "missing/pending/nonfinite reference never passes",
+    "candidate below absolute floor fails",
+    "unchanged3pp margin and all-six-cells requirement",
+    "incomplete reference rejected",
+    "test-field independence",
+    "immutable seal validation",
+    "no repeated reconciliation",
+    "exact policy contents checked independently of claimed policy ID",
+    "full existing commit required; abbreviated and uncommitted SHA rejected",
+    "committed registration document must contain section4.1 and exact policy ID",
+    "original seal reconstructed; forged strict outcomes and rates rejected",
+    "exact derivation checked; forged reconciled gates rejected"
+  ],
+  "adoption_status": "isolated synthetic fixture only; no production selection derived",
+  "registration_fixture": "temporary Git repository containing one committed unit-test registration",
+  "adapter_sha256": "5cbbe98a3659fc5871d8a29054dbe1cc8e6839dbc0a3db35da5b2124f55b6f5f",
+  "protocol_sha256": "45d36641f286333498bf94f4683e716e3fa5331a8c9d3bbd46cf0e6b16abf763"
+}
