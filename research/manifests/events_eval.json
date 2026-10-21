@@ -1,0 +1,169 @@
+{
+  "created": "2026-10-21T15:23:30.652925+00:00",
+  "jobs": [
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/1d0954406e86f17a7cc99b45/final.pkl,/runs/1d6df1308cba322f02d0d5b8/final.pkl,/runs/37c7dee7bab8153b389a0031/final.pkl,/runs/38e77c389209854cb125b054/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "L4",
+      "id": "6678dd6207270645696bdaeb",
+      "max_seconds": 2400,
+      "reserved_usd": 0.881563,
+      "script": "loops_eval.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/4209f1ebb7599d10a7c10542/final.pkl,/runs/43179b62ca6ad05528d1288b/final.pkl,/runs/43a350f2e6716e4c34f593e6/final.pkl,/runs/44dd4ef319ea9300822f288f/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "L4",
+      "id": "bae4f0d7a39ba0b7b1956fa8",
+      "max_seconds": 2400,
+      "reserved_usd": 0.881563,
+      "script": "loops_eval.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/5097525d2087453b8eafd198/final.pkl,/runs/65209f033824dae1cc1e98b3/final.pkl,/runs/6a6f7611b396aab8625764ac/final.pkl,/runs/a1ac5da86cffa76257019332/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "L4",
+      "id": "21023e840dc23a4f4b93593e",
+      "max_seconds": 2400,
+      "reserved_usd": 0.881563,
+      "script": "loops_eval.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/a5332a690f65c6a70446f18f/final.pkl,/runs/a76c32b69612b860302b82ff/final.pkl,/runs/b344aee3ef4f573be9acbd92/final.pkl,/runs/b9d45b7c64fb7274fb6fc24b/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "L4",
+      "id": "af70e61179b0ab6bc1372126",
+      "max_seconds": 2400,
+      "reserved_usd": 0.881563,
+      "script": "loops_eval.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/c37c07d73ca2710951c32108/final.pkl,/runs/c5c8bce2012984e592bd315c/final.pkl,/runs/c8f1aa4ecf0baa0e3de041e9/final.pkl,/runs/cbb3b56ecc50330cc8aa41f6/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "L4",
+      "id": "f38761ff956ef238b89c0065",
+      "max_seconds": 2400,
+      "reserved_usd": 0.881563,
+      "script": "loops_eval.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/daf20b9e8de3e3855d4e9066/final.pkl,/runs/e25e427553702177456968e8/final.pkl,/runs/e7d844cd130f87d0adde85d5/final.pkl,/runs/f4726588a8955ab43254bca7/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "L4",
+      "id": "f887cb8551b28635da65708c",
+      "max_seconds": 2400,
+      "reserved_usd": 0.881563,
+      "script": "loops_eval.py"
+    }
+  ],
+  "max_reserved_usd": 5.289378,
+  "name": "events_eval",
+  "prediction_commit": "487d0e9540d9ff66b0b501c680332264f71c2467",
+  "prediction_sha256": "348c2d280fd6ff6a1a0550b355b225d56427b33d3abc764e9d202cfefad95a8e",
+  "pricing_url": "https://modal.com/pricing",
+  "resources": {
+    "cpu_limit": 4,
+    "cpu_request": 2,
+    "max_concurrency": 10,
+    "ram_limit_mib": 32768,
+    "ram_request_mib": 8192,
+    "scaledown_seconds": 2,
+    "startup_timeout_seconds": 120
+  },
+  "runtime_versions": {
+    "jax": "0.12.0",
+    "numpy": "2.5.4",
+    "optax": "0.2.8"
+  },
+  "schema": 1,
+  "sha256": "1164b7a5e99240c3cd08ddca37379b9a33042db065181af277a7fd33071062c4",
+  "source_hashes": {
+    "algebraic_arc.py": "a3f4c1705ab80b9b013a29785dfc3ce5f4be059f864afa5d53b7fb956bfd4aaa",
+    "beyond_chunk_check.py": "f671fef1033410fc7bbf2d0e07138070304ecd595110797c27242c746d50cdf6",
+    "beyond_diag.py": "308b7722e576215de18f31a6a7067eab1a91e12209c3a378b5efa9c062fe6ef2",
+    "beyond_layers.py": "766d943ed44a21691a4101fd5cb5aca558a12058c8f495ac2fedbc24c4506411",
+    "beyond_modal.py": "9e80de399100fb76889285def14bf3e226a5a56de1e8a81dd5d8ffe4ef705bed",
+    "beyond_protocol.py": "45d36641f286333498bf94f4683e716e3fa5331a8c9d3bbd46cf0e6b16abf763",
+    "beyond_summary.py": "752ff5d12b315a1f73c3dbd4e5c4cdb5fad18c60c65b15f833eccf2b8eb682bc",
+    "charlaw.py": "696097299f79fc5f171b64f65cc28374167164b34bae899dd74c79d5681b009a",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "dilution.py": "031533e5f0a21967d3de5565d6ce3791ab642fb4065ab8bbbf7e663904f5ad5f",
+    "export_a5_irrep.py": "a656f64b9f223a702489fa1bc8a38da7fde21497d26a05642cb7fb38df117ba2",
+    "export_a5_modal.py": "27cc4eee7347e7842bd0bc1c97116eb198af00cdf9168f069e30f09413777508",
+    "figdata.py": "1ba8912630e4e998058ee99a2bb60220b99126184e19f01b743f47300a115190",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "grp_summary.py": "fd424f8dff0d61accc284a0014c394483d67cbe9c69e6c874f2aa6be76e72d40",
+    "lm.py": "da161dd45631e91255edaf2fba4492cdb4b41d9355ed4588108144861fcf478b",
+    "local_summary.py": "695ae6726b5f4b3df80978d205d18c773f34f9b9a9f38000cf2a90e39cdadf06",
+    "loops_eval.py": "1a6474d1dfb635779d1f6c35f00f1b27305f2ee367febb9c00c5a913033f5764",
+    "loops_gate.py": "35b2c307d8da0543475eb0e5cd0ff685d13d540e644666bbe58bf6f6ff4b5f90",
+    "loops_jobs.py": "4e46c24611e2c62875033a95677d8fb16d40a0a2f8bdbe961e8989808281c9bd",
+    "loops_layers.py": "3faeee6763190e00273758285e50a0c24e3cb6a5c9c34372b2c5092f173bd0bf",
+    "loops_modal.py": "53bf25255902fe3a916c14f429b21875878f33608c6c07ff9e73528ea8c9e749",
+    "loops_probe.py": "a804b844ca8f4625eb4cb17eb308a9d2c298e818aba832e9cd08523c9de0d127",
+    "loops_summary.py": "488bb1a77ffcf7457559482efd3cf40783d4c3dca0dcfb68a48897a14cdb3e88",
+    "modal_run.py": "5f0cb5babe8702def82fd904f522738078aa21a7ac3652190bd3b1f82bc15203",
+    "next_modal.py": "d91bfbd0c17e2e7112bed80fffce0751b831ee91621c2900487d5cd47a6dda8f",
+    "polybench.py": "3307ee31daf5d82b831c7ebe90a75bb057ab06022c39b54169c4edf106377b17",
+    "search_summary.py": "2d40635b2f6ab110ea3624ea8f83021d995dc3147c44a7d9a52d02bd902606dc",
+    "summarize.py": "14b3ae880107d4923f433a4e58d5d7693d91d9ab411ed6a8e0c98c437d16168c",
+    "swap_summary.py": "02e3be1148335ec01073321e8441838be45efe296d704117ae9682e8db74826f",
+    "test_algebraic_arc.py": "aa7c604a8a2390a17bc1589f4163fa3b3af27aea32ebbc5de4f2375b24a06586",
+    "test_beyond.py": "f2774f642c476abe27a7e052c1464cf516d06f1a5d1d56ce16206626822b7fff",
+    "test_beyond_conv.py": "38fb8e88a1ee46276fc9283d4b9d94416ae5ef4a48ec67fdc2c9a0e303cc9ff2",
+    "test_beyond_diag.py": "72bb1a44f14538d7338eaac78200baca286e669a10ed5ef7d3c9bd223829dc59",
+    "test_dilution.py": "d189622b1f251baacc7eb2dd712c7df91257be0a1df064dfecc633d1a7bed9cb",
+    "test_groups.py": "50b401a7cd202ff2c70e2a5e019799e5c28a7c61a0177cca5c1ef4c8686d6440",
+    "test_local.py": "e5f2cc39d43d99e72e4f55cb514f754a34997af8afaec169a81c7cf209403a17",
+    "test_loops.py": "f61f46825e153de9bbd0bf898d650c80722fecd081019f65265cb1b919e90bbe",
+    "test_next_modal.py": "b8413e14b33921b54a513196aebb3efd119abbdf942d17dd901f40841d412e2d",
+    "test_sfa.py": "df436095a033e5ac9984ac0c21bbc1180b96df03ab01f8b8a6b510c192fb0717",
+    "test_theory.py": "fb140d3e8b97de1210fc29c712a2fc7588412e63df955f5b327bf5038c0b5461",
+    "theory_ceiling.py": "c34e78733b8761476b0710f7b625598fb9551da58ce4b7b5cd38121901b62128",
+    "verify_prior_art.py": "0a230c5d236c4528fd2930ee57ffe9228d9342ce47bd5a3341223950e1ee6c6b",
+    "wp_summary.py": "51a85ef347d3b24c03a72712a3e64e54609daf13d13a8d381fb90ede5511e673"
+  },
+  "stage": "development"
+}
