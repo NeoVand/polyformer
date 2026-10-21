@@ -12,6 +12,12 @@ block-causal attention), `research/lm.py`, jobs `research/loops_jobs.py`, launch
 **Budget:** $300 Modal cap for LOOPS and EVENTS together; $262.91 spent in total, $187.49 of it on
 EVENTS (conservative resource estimates, not an invoice).
 
+**Status.** Everything below is final. The paper's new Part IX, "Memory on text", reports it and is
+live at https://neovand.github.io/polyformer/paper#part-memory (with a corrected Part VIII and a new
+"what next"). One follow-up has started in a separate session: the frames × recurrence 2×2 below at
+three seeds and at 16k. It is waiting on a new budget, since the $300 is nearly used. **Section 7
+lists where we most need your judgement**; sections 1–6 are the evidence.
+
 ## 1. Summary
 
 1. **At context 512, the published parts erase the hybrid's lead.** With gated attention output and
@@ -27,9 +33,9 @@ EVENTS (conservative resource estimates, not an invoice).
    with RoPE instead of holonomy frames is only −0.21% (seed 1); the frames are worth −0.51% inside
    the hybrid (paired t −16.5), against −0.21% at 2,048 and about −0.1% at 512. They help on every
    token that appeared earlier in the window, at every distance, and not at all on new tokens; the
-   recurrent layers help on new tokens and far repeats and cost on near repeats. With frames but no recurrent layers, softmax gains only −0.07%: the frames help far repeats
-   and cost near ones. The two parts interact: frames alone −0.07%, recurrence alone −0.21%, both −0.72%
-   (seed 1).
+   recurrent layers help on new tokens and far repeats and cost on near repeats. With frames but no
+   recurrent layers, softmax gains only −0.07%: the frames help far repeats and cost near ones. The
+   two parts interact: frames alone −0.07%, recurrence alone −0.21%, both −0.72% (seed 1).
 4. **It does not grow with size on one seed.** At three times the non-embedding parameters the 8,192
    margin is −0.46%, against −0.72% at base size on the same seed.
 5. **The event model failed.** Built H-Net-style (a learned router, attention over event vectors), it
@@ -233,8 +239,6 @@ below chance), and the event models, which are mostly recurrent once the router 
 most recent mention (0.64–0.77). At 22M non-embedding parameters and 443M tokens, none of these models
 tracks entities; E4 fails on these probes and on the loss buckets.
 
-
-
 ## 5. Predictions and how they fared
 
 Registered in EVENTS.md before the runs they predict (H1–H2, R1 and A1 after the development screens,
@@ -277,15 +281,60 @@ as confirmations).
 - **Probes.** Entity and variable tracking are beyond these models; the probes separate heuristics
   (first mention vs most recent mention), not tracking ability.
 
-## 7. Questions for the reviewer
+## 7. Where we need your judgement
 
-1. The hybrid's long-context margin is the one result that survived. Is the right next step a scaling
-   study of that slope (sizes to ~1B, contexts to 32k, real kernels, RULER-style evaluations), or is
-   the effect too well known from the hybrid literature to be worth the money?
-2. The event model failed on two counts: the router drifted, and the bottleneck loses exact tokens.
-   Is there a version worth one more try (events beside token-level attention, as a third memory,
-   rather than instead of it)?
-3. The holonomy frames pay only at long context and only beside recurrent layers (frames alone
-   −0.07%, recurrence alone −0.21%, both −0.72% at 8,192, one seed). Is the interaction worth a
-   dedicated study: what drives the frames (the recurrent state rather than the token), three seeds of
-   all four cells, and the same 2×2 at 16k?
+The one claim that survived is narrow but clean. At long context, content-driven non-commuting frames
+plus a recurrent memory beat a strengthened softmax model, and the frames' share grows with the
+context. Each question below gives our current reading and the experiment that would separate the
+alternatives. We would value being told that a reading is wrong, or that the answer is already known.
+
+**Q1. Why do the frames pay only beside recurrence?** At 8,192, seed 1: frames alone −0.07%,
+recurrence alone −0.21%, both −0.72%. In softmax the frames help far repeats and cost near ones (1–32
+tokens back: +0.82%); in the hybrid they help at every distance (−1.08% at 1–32). Two readings:
+
+- (a) *What drives the frames.* A frame's increment is computed from the layer's input. In the
+  hybrid, that input comes out of recurrent layers that already summarise the past, so the frame
+  becomes a learned "position in the content". In softmax the first frames are driven by token
+  embeddings, which makes local positions noisy and costs near repeats. Test: drive softmax's frame
+  increments from a cheap recurrent summary (a causal convolution or a small Gated DeltaNet state)
+  and see whether the gain returns without recurrent layers in the stack.
+- (b) *Division of labour.* The recurrent layers take over local copying, freeing the attention heads
+  to spend their frames on far retrieval. Test: per-layer frame ablation in the hybrid, and the
+  near-repeat bucket with frames only in the late attention layers.
+
+Which reading do you find more plausible? Is this interaction known? The closest prior art we know is
+PaTH (data-dependent Householder position encodings), contextual position encoding (CoPE) and the
+Forgetting Transformer. We have not seen the frames × recurrence interaction reported.
+
+**Q2. Does it shrink with size?** The margin was −0.72% at base size and −0.46% at three times the
+non-embedding parameters (seed 1 each; t −21.7 and −12.3). Architecture gains that shrink with scale are
+common, so this may be the real trend rather than noise. What evidence would you need before spending
+on scale? Our proposal is two more sizes (about 150M and 400M) at 8k and 16k with three seeds at the
+middle size, run as a slope test like the context slope. Is that the right design?
+
+**Q3. Is wall-clock parity worth building first?** Every gain is at equal modeled FLOPs, and our
+pure-JAX hybrid takes 1.35× the softmax wall clock at 8k. A fused kernel for frame-carrying attention
+(the frames are a cumulative product of small rotations, so the scores are a scan) would settle
+whether the gain survives at equal time. Would you fund the kernel before the scale study, or after
+it?
+
+**Q4. Is the event idea dead, or was our version wrong?** It failed twice over. The learned router
+drifted to almost no boundaries in long runs. With fixed punctuation boundaries the loss was identical
+(3.5495 vs 3.5493), so the bottleneck itself loses the exact tokens that copying needs. Two versions
+remain untried:
+
+- events as a third memory *beside* token-level attention, rather than instead of it;
+- a router regularised to hold its rate (a stronger ratio loss, no decoder state cut).
+
+Is either worth $15 of screens, or should the event idea be dropped for text?
+
+**Q5. What long-range evaluation would you trust at 20–100M parameters?** Our entity- and
+variable-tracking probes sat at chance or followed heuristics: attention copied the first mention,
+recurrence the most recent. The per-distance loss buckets were the most informative instrument. Would
+you accept buckets plus a synthetic associative recall with distractors at 8–16k as the evaluation, or
+is there a small-model benchmark you would rather see?
+
+**Q6. Framing.** We read the work as a careful, pre-registered decomposition: resets explain the
+short-context gains, which published parts give softmax for free, and frames × recurrence explain the
+long-context gain. It is not a new architecture that wins. Does that reading match yours? If you were
+choosing, which one experiment would most change the paper's standing?
