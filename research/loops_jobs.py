@@ -117,6 +117,8 @@ LONG.update({
     "soft": ["--arch", "loop", "--posenc", "rope", "--forget", "1"] + STRONG,
     "hyb": ["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA", "--vtrans", "1",
             "--vtrans_heads", "1", "--delta_precision", "high"] + STRONG,
+    "soft_holo": ["--arch", "loop", "--posenc", "holo", "--forget", "1", "--vtrans", "1", "--vtrans_heads", "1"]
+    + STRONG,
     "hyb_rope": ["--arch", "loop", "--posenc", "rope", "--forget", "1", "--pattern", "GAGAGA",
                  "--delta_precision", "high"] + STRONG,
     "ev_l8": EV + ["--ev_len", "8"],
@@ -130,7 +132,7 @@ LONG.update({
 })
 # measured steady seconds per update at 32,768 tokens per update (events_timing3/4), with margin for the
 # parts added since; used only for timeouts and reservations
-STEP_SECONDS = {8192: {"soft": 0.30, "hyb": 0.34, "hyb_rope": 0.33, "ev": 0.30},
+STEP_SECONDS = {8192: {"soft": 0.30, "hyb": 0.34, "hyb_rope": 0.33, "ev": 0.30, "soft_holo": 0.40},
                 2048: {"soft": 0.14, "hyb": 0.22, "hyb_rope": 0.21, "ev": 0.17}}
 
 

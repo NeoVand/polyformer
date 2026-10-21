@@ -320,3 +320,12 @@ in the $300.
 - **Registered before launch (A1):** `hyb_rope` at 8,192, seed 1, equal FLOPs: which part of the 8k
   gain is the frames? Prediction: hyb_rope is below soft by at least 0.4% (most of the gain is the
   second memory and the forget gate, not the holonomy frames), and above hyb by at most 0.25%.
+- **R1 result:** the fixed-boundary event model ends at 3.5495 (`val_big`, seed 1), +3.14% above soft
+  and level with the collapsed learned router (3.5493). R1 fails narrowly on "between" (it is not
+  better than the collapsed router) and holds on "above soft". The router collapse did not decide the
+  event model's loss; the event bottleneck did.
+- **Registered before launch (A2):** softmax with holonomy frames, forget gate, gate, value residual
+  and one transport head (`soft_holo`), 8,192, seed 1, equal FLOPs. Mid-training, the RoPE hybrid
+  (A1) is level with soft while the holonomy hybrid is 0.5% ahead, which suggests the 8k gain is in
+  the frames. A2 tests the frames without recurrent layers. Prediction: soft_holo is below soft by at
+  least 0.3% (the frames carry long-context gain in attention alone). Either outcome is logged.
