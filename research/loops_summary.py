@@ -24,15 +24,28 @@ def arm(argv):
         return "abs" if flag(argv, "--qkv_conv") == "3" else "abs_raw"
     if a == "gated_delta":
         return "gdn" if flag(argv, "--nh") == "1" else "deltaproduct"
+    if a == "events":
+        name = f"events l={flag(argv, '--ev_len', '8')} {flag(argv, '--ev_posenc', 'holo')}"
+        ctx = flag(argv, "--ctx", "512")
+        return name + (f" ctx{ctx}" if ctx != "512" else "")
     name = flag(argv, "--posenc", "abs")
     if flag(argv, "--forget", "0") == "1":
         name += "+forget"
     if flag(argv, "--vtrans", "0") == "1":
-        name += "+vtrans"
+        name += "+vtrans" + (f"{flag(argv, '--vtrans_heads')}h" if flag(argv, "--vtrans_heads", "0") != "0" else "")
+    if flag(argv, "--gate_out", "0") == "1":
+        name += "+gate"
+    if flag(argv, "--vres", "0") == "1":
+        name += "+vres"
+    ctx = flag(argv, "--ctx", "512")
+    if ctx != "512":
+        name += f" ctx{ctx}"
     if flag(argv, "--pattern"):
         name = f"hybrid[{flag(argv, '--pattern')}] " + name
     if flag(argv, "--loop_order"):
         name = f"loop[{flag(argv, '--loop_order')}] " + name
+    if flag(argv, "--mlp", "2048") != "2048" and flag(argv, "--d", "512") == "512":
+        name += f" mlp{flag(argv, '--mlp')}"
     return name
 
 
