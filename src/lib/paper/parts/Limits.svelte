@@ -105,9 +105,17 @@
 			was worth 1.1% to 1.3% to softmax, more than any change to attention in this project. And on
 			the one seed that finished, the two recurrent networks, which compose matrices along the
 			sequence, had the lowest losses of all: 1.0% and 1.3% below convolved softmax, at slightly
-			more compute and with more parameters. That is a single seed, and we stopped before confirming
-			it. But it is the one place in this project where composition paid on language, and it paid as
-			recurrence, not as attention.
+			more compute and with more parameters.
+		</p>
+		<p>
+			A later three-seed study under the same protocol corrected that reading. Every softmax model
+			here learns its positions as one vector per slot; with rotary positions instead, the softmax
+			baseline improves by 0.9%, and the recurrent networks lead it by only 0.07% (Gated DeltaNet)
+			and 0.30% (DeltaProduct). Most of their apparent advantage was the baseline's positions. What
+			did pay was a hybrid: recurrent layers alternating with attention beat rotary softmax by 0.8%
+			to 0.9% on every seed, and every recurrent or attention model alone. The study is
+			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link -->
+			<a href={`${repo}research/LOOPS_REPORT.md`}>LOOPS</a>.
 		</p>
 	</section>
 

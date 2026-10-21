@@ -92,11 +92,11 @@
 		<p class="src"><span class="mark new"></span>Open directions</p>
 		<ol class="list">
 			<li>
-				<strong>Finish the recurrent comparison.</strong> The one sign of composition paying on
-				language came from matrix-state recurrent networks, on a single seed (section {number(
+				<strong>Go past the hybrid.</strong> The recurrent comparison is finished (section {number(
 					'combined'
-				)}). Two more seeds, at matched parameters as well as compute, would settle whether it is
-				real.
+				)}): against rotary softmax, recurrence alone wins by 0.1–0.3% and a hybrid of recurrence
+				and attention by 0.8–0.9%. Its trained gates segment text into sentences and clauses on
+				their own, which suggests making events, not tokens, the unit of memory.
 			</li>
 			<li>
 				<strong>Infer operators from examples.</strong> Parallax-style layers fit a small linear model

@@ -134,9 +134,10 @@ def plan(name, stage, jobs_path):
     if not name or pathlib.Path(name).name != name or not all(c.isalnum() or c in "_-" for c in name):
         raise ValueError("name must contain only letters, digits, underscores or hyphens")
     prediction_commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=ROOT, text=True).strip()
-    committed = subprocess.check_output(["git", "show", f"{prediction_commit}:research/LOOPS.md"], cwd=ROOT)
-    if committed != (ROOT / "LOOPS.md").read_bytes():
-        raise ValueError("Commit LOOPS.md predictions before creating the manifest")
+    for registry in ("LOOPS.md", "EVENTS.md"):
+        committed = subprocess.check_output(["git", "show", f"{prediction_commit}:research/{registry}"], cwd=ROOT)
+        if committed != (ROOT / registry).read_bytes():
+            raise ValueError(f"Commit {registry} predictions before creating the manifest")
     source_hashes = sources()
     raw = json.loads(pathlib.Path(jobs_path).read_text())
     if not isinstance(raw, list) or not raw:

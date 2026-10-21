@@ -68,10 +68,10 @@
 			</li>
 			<li>
 				<span
-					>On language, nothing higher-order cleared our bar of 1% lower loss at equal compute. The
-					best change to attention was 0.75%, from a published method. The only models past 1%, on
-					the one seed we finished, were recurrent networks that multiply matrices along the
-					sequence.</span
+					>On language, nothing higher-order cleared our bar of 1% lower loss at equal compute. Once
+					the softmax baseline uses rotary positions, recurrent networks that multiply matrices
+					along the sequence beat it by only 0.1–0.3%; a hybrid of recurrence and attention beats it
+					by 0.8–0.9% on three seeds.</span
 				>
 			</li>
 			<li>
