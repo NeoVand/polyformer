@@ -305,3 +305,18 @@ in the $300.
   equal modeled FLOPs (307.0M per token, 19,048 updates). Prediction: it lands between soft and the
   collapsed ev_l8 (3.4414 < x < 3.5493), and stays above soft: memory over events loses exact
   copying, which the development screens already showed at a working router (+1.6% at 100M tokens).
+- **Headline cell** (`events_8k`, 8,192, base, 443M softmax tokens, 256 `val_big` windows):
+  soft 3.4418 (seeds 1–3); hyb 3.4192, **−0.66%** (−0.72 / −0.72 / −0.53, paired t −23.0); ev_l8
+  3.6097 (+4.87%; +3.15 / +6.59, seeds 1–2, collapsed router); ev_l8_rope 3.5493 (+3.14%, seed 1).
+  **H1 holds** (below soft on every seed, mean 0.66% ≥ 0.5%). **E2 fails.** Wall per run: soft 3,872 s,
+  hyb 5,218 s (1.35×), events 5,600–5,900 s.
+- **Context 2,048** (`events_2k_b`, seeds 1–2, 1,024 windows): soft 3.4415; hyb 3.4391, −0.07%
+  (−0.07 / −0.08, t −4.2); hyb_rope +0.14% (seed 1); ev_l8 +3.63%. **H2 holds** (margin 0.07% at 2,048
+  against 0.66% at 8,192: 0.59 points). **E1 fails** (events 3.7% above hyb). E3's context half has the
+  registered sign (events −3.6% at 2,048, −3.1% at 8,192 on seed 1) but both are collapsed routers.
+- **Code** (`events_code_b`, 2,048, seed 1): soft 0.9061; hyb −0.17% (t −2.3); hyb_rope −0.18%;
+  ev_l8 +13.7% (router collapsed to one event per 341 tokens). **E6 fails**: frames gain 0.21 points
+  on prose at 2,048 (hyb against hyb_rope) and −0.01 on code.
+- **Registered before launch (A1):** `hyb_rope` at 8,192, seed 1, equal FLOPs: which part of the 8k
+  gain is the frames? Prediction: hyb_rope is below soft by at least 0.4% (most of the gain is the
+  second memory and the forget gate, not the holonomy frames), and above hyb by at most 0.25%.
