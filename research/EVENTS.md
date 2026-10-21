@@ -329,3 +329,7 @@ in the $300.
   (A1) is level with soft while the holonomy hybrid is 0.5% ahead, which suggests the 8k gain is in
   the frames. A2 tests the frames without recurrent layers. Prediction: soft_holo is below soft by at
   least 0.3% (the frames carry long-context gain in attention alone). Either outcome is logged.
+- **Large size** (`events_8k_large`, 8,192, width 768, 8 layers, 12 heads, seed 1; event arm
+  cancelled): soft 3.3047, hyb 3.2893, **−0.46%** (paired t −12.3), against −0.72% for the base size on
+  seed 1. The margin does not grow with size on this seed (61.6M vs 65.0M non-embedding parameters;
+  wall 7,732 s vs 9,036 s, 1.17×).
