@@ -284,3 +284,6 @@ in the $300.
   residual in both arms, the candidate is above the control on every seed, and above the
   equal-parameter control by 0.30%, at 1.48 times the wall clock. At context 512 the hybrid's 0.64%
   over rope+forget in LOOPS was something the published parts give softmax for free.
+- `events_2k` and `events_code` were planned before a change to `loops_jobs.py` and refused to launch
+  (sources changed since planning); nothing ran. The same job lists are re-planned as `events_2k_b`
+  and `events_code_b`.
