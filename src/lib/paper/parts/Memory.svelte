@@ -73,9 +73,10 @@
 		<h2>Memory on text</h2>
 		<p class="part-lede">
 			Composition did not pay on text, but one model in that comparison did. This part asks why, how
-			far it goes, and what it learns. The answer is about memory more than about attention: a
-			second, recurrent memory beside attention helps once the context is long, and the models
-			organise that memory into events on their own.
+			far it goes, and what it learns. At short range a stronger softmax baseline erases the gain.
+			At long range it returns, and it comes from two parts: a recurrent memory that predicts new
+			tokens better, and content-driven frames that retrieve repeated ones better, by more as the
+			context grows. Along the way the models organise their memory into events on their own.
 		</p>
 	</header>
 
@@ -198,7 +199,7 @@
 	</section>
 
 	<section class="chapter" id="context">
-		<h3><span class="n">{number('context')}</span>Where the second memory pays</h3>
+		<h3><span class="n">{number('context')}</span>What pays at long context</h3>
 		<p class="src">
 			<span class="mark measured"></span>Contexts 512, 2,048 and 8,192; three seeds at 8,192,
 			predictions committed first (EVENTS)
@@ -248,8 +249,23 @@
 		</p>
 		<p>
 			The gain is largest on tokens that last occurred 1,000 to 4,000 positions back. At 2,048 the
-			hybrid wins on the far tokens too but loses on the near ones, which recurrence keeps less
-			sharply than attention; at 8,192 the far tokens weigh more and the near deficit disappears.
+			hybrid wins on the far tokens too but loses on the near ones; at 8,192 the far tokens weigh
+			more and the near deficit disappears.
+		</p>
+		<p>
+			<strong>Which part pays.</strong> The same hybrid with rotary positions in place of the carried
+			frames (seed 1) is only 0.21% below softmax at 8,192, against 0.72% for the hybrid with frames on
+			the same seed. So most of the long-context gain is the frames: 0.51% at 8,192 (paired t = −16.5),
+			against 0.21% at 2,048 and about 0.1% at 512. The two parts help different tokens. The recurrent
+			layers predict tokens not seen earlier in the window better (−0.7%) and cost on near repeats (+0.7%);
+			the frames help on every token that has appeared before, by 0.6% to 1.4% at every distance, and
+			not at all on new ones. Frames that depend on the content make repeated content easier to find again,
+			and the longer the window, the more there is to find.
+		</p>
+		<p>
+			At three times the parameters (width 768, eight layers, one seed) the hybrid's margin at 8,192
+			is 0.46%, against 0.72% for the base size on the same seed: in this one comparison it does not
+			grow with size.
 		</p>
 	</section>
 
@@ -305,10 +321,10 @@
 				id="starfree"
 			/>. Every part that paid on text is a reset: the forget gate, the output gate, the recurrent
 			layers' decay, and the event cuts the models learn for themselves. The group part, the
-			non-commuting frames, is used by the trained models (switching it off raises the loss by 0.1
-			to 0.2%) but not rewarded, because ordinary prose rarely needs order kept exactly over long
-			spans. Where it does, as in tracking <MathTex tex="A_5" />, the group part is the whole
-			answer.
+			non-commuting frames, is used by the trained models but rewarded only at long range: worth
+			about 0.1% at 512 tokens and 0.5% at 8,192, all of it on tokens that repeat, where finding the
+			earlier occurrence depends on the order of what came between. Where order is the whole task,
+			as in tracking <MathTex tex="A_5" />, the group part is the whole answer.
 		</p>
 		<p>
 			The full record, with every registered prediction and how it fared, is in

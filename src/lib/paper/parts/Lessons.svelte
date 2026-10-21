@@ -92,11 +92,12 @@
 		<p class="src"><span class="mark new"></span>Open directions</p>
 		<ol class="list">
 			<li>
-				<strong>Scale the long-context result.</strong> A second, recurrent memory beats a
-				strengthened softmax model only once the context is long, and by more as it grows (section
-				{number('context')}). The claim worth testing is that slope: more sizes, contexts of 16,000
-				tokens and beyond, real kernels, and evaluations that need long-range recall. Events as the
-				unit of memory need a router that does not drift and a way to keep exact tokens (section
+				<strong>Scale the long-context result.</strong> A recurrent memory with content-driven
+				frames beats a strengthened softmax model only once the context is long, and the frames'
+				share grows with it (section {number('context')}). The claim worth testing is that slope:
+				more sizes, contexts of 16,000 tokens and beyond, real kernels, and evaluations that need
+				long-range recall. Events as the unit of memory need a router that does not drift and a way
+				to keep exact tokens (section
 				{number('event-model')}).
 			</li>
 			<li>
