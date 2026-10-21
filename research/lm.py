@@ -45,7 +45,31 @@ import numpy as np
 import optax
 
 BEYOND_ARCHS = ("beyond_a", "beyond_b", "beyond_c", "gated_delta", "prefix")
-QKV_CONV_ARCHS = ("gpt", "plx", "beyond_a", "beyond_b", "beyond_c")
+QKV_CONV_ARCHS = ("gpt", "plx", "beyond_a", "beyond_b", "beyond_c", "loop")
+
+
+def loop_pattern(cfg):
+    """LOOPS: one letter per distinct block: A attention (loops_layers), G Gated DeltaNet (one update),
+    D DeltaProduct (four updates). Empty means all attention."""
+    pattern = getattr(cfg, "pattern", "") or "A" * cfg.layers
+    if len(pattern) != cfg.layers or set(pattern) - set("AGD"):
+        raise ValueError("pattern needs one of A/G/D per layer")
+    return pattern
+
+
+def loop_order(cfg):
+    """LOOPS depth loop: the order in which the distinct blocks are applied (default: each once)."""
+    order = getattr(cfg, "loop_order", "") or ""
+    seq = [int(i) for i in order.split(",")] if order else list(range(cfg.layers))
+    if any(i < 0 or i >= cfg.layers for i in seq):
+        raise ValueError("loop_order indexes the distinct blocks")
+    return seq
+
+
+def delta_cfg(cfg, letter):
+    """The BEYOND recurrent controls' settings for a G or D block inside a loop model."""
+    nh, beta_max = (1, 1.0) if letter == "G" else (4, 2.0)
+    return argparse.Namespace(**{**vars(cfg), "arch": "gated_delta", "nh": nh, "beta_max": beta_max})
 
 
 def qkv_conv_width(cfg):
@@ -107,7 +131,7 @@ def init(key, cfg):
          "lnf": ln_init(D), "layers": []}
     for _ in range(L):
         lyr = {"ln1": ln_init(D), "ln2": ln_init(D)}
-        if cfg.arch in ("gpt", "hybrid", "sfa", "lla", "plx") + BEYOND_ARCHS:
+        if cfg.arch in ("gpt", "hybrid", "sfa", "lla", "plx", "loop") + BEYOND_ARCHS:
             lyr["qkv"] = dense(next(ks), D, 3 * D)
             lyr["o"] = dense(next(ks), D, D, scale=1 / math.sqrt(2 * L))
         if cfg.arch == "sfa":
@@ -167,13 +191,31 @@ def init(key, cfg):
                 lyr.pop("qkv")
                 lyr.pop("o")
                 lyr.update({k: v for k, v in extra.items() if k in ("qkv", "o")})
+    if cfg.arch == "loop":
+        import beyond_layers
+        import loops_layers
+        # Own key streams, so qkv/o, MLP and the shared convolution draw exactly as in gpt at this seed.
+        frame_keys = jax.random.split(jax.random.fold_in(key, 811), L)
+        delta_keys = jax.random.split(jax.random.fold_in(key, 812), L)
+        for lyr, letter, fk, dk in zip(p["layers"], loop_pattern(cfg), frame_keys, delta_keys):
+            if letter == "A":
+                lyr.update(loops_layers.init_extra(fk, cfg))
+            else:
+                lyr.pop("qkv")
+                lyr.pop("o")
+                lyr.update(beyond_layers.init_layer(dk, delta_cfg(cfg, letter), kind="gated_delta"))
+        if getattr(cfg, "loop_order", ""):
+            # input injection: a learned per-channel gate re-adds the first block's output each time
+            # the order returns to an earlier block (zero at init)
+            p["inject"] = jnp.zeros(D)
     if conv_width:
         import beyond_layers
         # Separate shared seed stream, after BEYOND extras: S/P/A/B/C receive
         # identical kernels, and every pre-existing model parameter is unchanged.
         conv_keys = jax.random.split(jax.random.fold_in(key, 703), L)
         for lyr, conv_key in zip(p["layers"], conv_keys):
-            lyr["qkv_conv"] = beyond_layers.init_qkv_conv(conv_key, D, conv_width)
+            if "qkv" in lyr:
+                lyr["qkv_conv"] = beyond_layers.init_qkv_conv(conv_key, D, conv_width)
     return p
 
 
@@ -501,6 +543,15 @@ def block(cfg, lyr, x, stats=None):
                     record["adjacent_commutator_frob_mean"] = jnp.asarray(0.0)
             stats.append(record)
         x = x + update
+    if cfg.arch == "loop":
+        import beyond_layers
+        import loops_layers
+        normed = ln(lyr["ln1"], x)
+        if "dbeta" in lyr:
+            letter = "G" if lyr["dbeta"]["w"].shape[1] == cfg.heads else "D"
+            x = x + beyond_layers.apply_layer(delta_cfg(cfg, letter), lyr, normed, kind="gated_delta")
+        else:
+            x = x + loops_layers.attention(cfg, lyr, normed, project_qkv)
     if cfg.arch == "sfa":
         x = x + sfa_attention(cfg, lyr, ln(lyr["ln1"], x))
     if cfg.arch in ("gpt", "hybrid"):
@@ -518,8 +569,18 @@ def forward(cfg, p, idx, stats=None):
     if getattr(cfg, "pos", 1):
         x = x + p["pos"][None, :T]
     f = jax.checkpoint(lambda lyr, x: block(cfg, lyr, x)) if getattr(cfg, "remat", 0) else (lambda lyr, x: block(cfg, lyr, x))
-    for lyr in p["layers"]:
-        x = f(lyr, x) if stats is None else block(cfg, lyr, x, stats)
+    if cfg.arch == "loop" and getattr(cfg, "loop_order", ""):
+        seen, first = set(), None
+        for i in loop_order(cfg):
+            if i in seen:
+                x = x + p["inject"] * first          # input injection on every return
+            x = f(p["layers"][i], x)
+            if first is None:
+                first = x
+            seen.add(i)
+    else:
+        for lyr in p["layers"]:
+            x = f(lyr, x) if stats is None else block(cfg, lyr, x, stats)
     x = ln(p["lnf"], x)
     return mm(x, p["emb"].T)
 
@@ -586,6 +647,21 @@ def flops_per_token(cfg, T):
     if cfg.arch in BEYOND_ARCHS:
         import beyond_layers
         return L * (beyond_layers.forward_flops(cfg, cfg.arch, T) + 4 * D * cfg.mlp) + 2 * D * V
+    if cfg.arch == "loop":
+        import beyond_layers
+        import loops_layers
+        ta = (T + 1) / 2
+        per = []
+        for letter in loop_pattern(cfg):
+            if letter == "A":
+                attn = 2 * 4 * D * D + 2 * 2 * ta * D + 5 * ta * H + 6 * conv_width * D
+                attn += loops_layers.extra_flops(cfg, T)
+            else:
+                attn = beyond_layers.forward_flops(delta_cfg(cfg, letter), "gated_delta", T)
+            per.append(attn + 4 * D * cfg.mlp)
+        order = loop_order(cfg)
+        inject = D * sum(1 for n, i in enumerate(order) if i in order[:n])
+        return sum(per[i] for i in order) + inject + 2 * D * V
     ta = (T + 1) / 2
     lyr = 2 * (4 * D * D + 2 * D * cfg.mlp) + 2 * 2 * ta * D + 5 * ta * H        # projections, MLP, QK, AV, softmax
     # BEYOND arms count this in beyond_layers.forward_flops above; count it
@@ -631,6 +707,11 @@ def training_flops_per_token(cfg, T):
     if cfg.arch in BEYOND_ARCHS:
         import beyond_layers
         extra = cfg.layers * beyond_layers.training_extra_flops(cfg, seq_len=T)
+    if cfg.arch == "loop":
+        import beyond_layers
+        pattern = loop_pattern(cfg)
+        extra = sum(beyond_layers.training_extra_flops(delta_cfg(cfg, pattern[i]), "gated_delta", T)
+                    for i in loop_order(cfg) if pattern[i] != "A")
     return 3 * flops_per_token(cfg, T) + extra
 
 
@@ -756,6 +837,17 @@ def main():
     ap.add_argument("--delta_key_ratio", type=float, default=0.75, help="Gated DeltaNet key width / model width")
     ap.add_argument("--delta_v_expand", type=float, default=2.0, help="Gated DeltaNet value width / key width")
     ap.add_argument("--ablate", default="none", help="BEYOND component ablation")
+    # LOOPS (LOOPS.md): frames carried along the sequence, gates, hybrids and depth loops
+    ap.add_argument("--posenc", default="abs", help="loop: abs | rope | grid | holo")
+    ap.add_argument("--holo", type=int, default=16, help="loop holo: non-abelian dims per head (4-d blocks)")
+    ap.add_argument("--modules", type=int, default=4, help="loop grid/holo: velocity modules per head")
+    ap.add_argument("--holo_init", type=float, default=0.05, help="loop holo: content-rotation weight scale")
+    ap.add_argument("--rope_base", type=float, default=10000.0)
+    ap.add_argument("--forget", type=int, default=0, help="loop: Forgetting Transformer gate")
+    ap.add_argument("--forget_bias", type=float, default=5.0)
+    ap.add_argument("--vtrans", type=int, default=0, help="loop holo: transport values on the holonomy dims")
+    ap.add_argument("--pattern", default="", help="loop: A/G/D per distinct block, e.g. GAGAGA")
+    ap.add_argument("--loop_order", default="", help="loop: depth loop order of distinct blocks, e.g. 0,1,2,1,2,3")
     ap.add_argument("--ctx", type=int, default=256)
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--micro", type=int, default=1, help="split each batch into this many accumulated micro-batches")
@@ -800,7 +892,7 @@ def main():
         newton = 2 * D * H * r + 2 * H * r * D
         attn = 4 * D * D
         per_layer = attn + 8 * D * D
-        if cfg.arch in ("gpt", "lla", "plx") + BEYOND_ARCHS:
+        if cfg.arch in ("gpt", "lla", "plx", "loop") + BEYOND_ARCHS:
             cfg.mlp = 4 * D
         elif cfg.arch in ("hybrid", "sfa"):
             if cfg.arch == "sfa":
@@ -808,6 +900,8 @@ def main():
             cfg.mlp = max(D, int((per_layer - attn - newton) / (2 * D)))
         else:
             cfg.mlp = max(D, int((per_layer - newton) / (2 * D)))
+    if cfg.arch == "loop" and cfg.posenc != "abs":
+        cfg.pos = 0  # a rotary frame replaces the learned absolute positions
     train, val = load(cfg.data)
     T = cfg.ctx
     if cfg.tokens:

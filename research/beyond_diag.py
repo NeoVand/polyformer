@@ -42,7 +42,7 @@ import diag  # noqa: E402
 import groups  # noqa: E402
 import lm  # noqa: E402
 
-ARCHS = ("gpt", "lla", "plx", "beyond_a", "beyond_b", "beyond_c", "gated_delta", "prefix")
+ARCHS = ("gpt", "lla", "plx", "beyond_a", "beyond_b", "beyond_c", "gated_delta", "prefix", "loop")
 
 
 def induction_small(rng, B, T=128, Q=8, V=128):
