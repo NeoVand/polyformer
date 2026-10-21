@@ -450,8 +450,11 @@
       "manifest_sha256": "ec00b94ab6976d9139b51830841c8b1148fd58415d5d9fd9e3902342f0b412ef",
       "reserved_at": "2026-10-21T07:42:36.096363+00:00",
       "reserved_usd": 8.303874,
+      "result_file": "results/loops_runs/a5332a690f65c6a70446f18f.json",
+      "settled_at": "2026-10-21T08:45:09.569613+00:00",
+      "settled_usd": 4.759831,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "a76c32b69612b860302b82ff": {
       "call_id": "fc-01M5EK21DNXW5AWZVP0KKC2GN5",

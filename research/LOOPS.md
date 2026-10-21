@@ -7,14 +7,14 @@ Predictions are written and committed before the runs they predict.
 ## Result in brief (written after the runs; the plan and predictions below were registered first)
 
 **What was asked:** a path forward from the review, through loops, symmetry and neuroscience, that
-can beat softmax on language. **Budget:** $100 of Modal; about $75 spent (conservative resource estimate).
+can beat softmax on language. **Budget:** $100 of Modal; $75.33 spent (conservative resource estimate; 50 runs, none failed).
 
 1. **Language: a two-memory model beats every control on every seed, but by less than the
    registered 1%.** Gated DeltaNet layers alternating with attention whose frames are carried along
    the sequence and which has a forget gate (GAGAGA holo+forget): 3.5479 nats/token (mean of three
    seeds, about 443M tokens, equal modeled compute). Against RoPE softmax −0.89% (−0.97, −0.82,
    −0.88), against the Forgetting Transformer −0.65%, against Gated DeltaNet −0.82%, against
-   DeltaProduct −0.53% and −0.64% on seeds 2 and 3 (seed 1 below), against learned-position softmax −1.82%. The registered headline (≥1%
+   DeltaProduct −0.59% (−0.61, −0.53, −0.64), against learned-position softmax −1.82%. The registered headline (≥1%
    below the better softmax control on all three seeds) **fails**, by 0.03–0.18 points. The ordering
    is not noise: the candidate's three seeds span 0.06%, the controls' 0.1–0.4%.
 2. **Symmetry is a window onto state, not onto text.** Frames transported by content-dependent
@@ -345,4 +345,9 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   pending). The candidate is 0.53% and 0.64% below it; with BEYOND's seed-1 DeltaProduct
   (3.564820, 10,277 updates) as a stand-in, 0.44%. S3-4 holds on the seeds so far.
 - Spend: $70.65 settled plus one running DeltaProduct run (about $4.7); no failed runs.
+- DeltaProduct seed 1: 3.570849. All three seeds: 3.570849, 3.566316, 3.569971 (mean 3.569045). The
+  candidate is below it by 0.61%, 0.53%, 0.64%: **S3-4 holds on all three seeds**. The candidate has
+  the lowest loss of every arm on every seed, recurrent controls included.
+- Final spend: $75.33 settled across 50 runs (stage 1 $0.53, screens $13.96, language $60.84), none
+  failed. Modal apps stopped. Everything is committed on branch `claude/loops`; nothing pushed.
 
