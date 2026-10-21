@@ -9,12 +9,41 @@ block-causal attention), `research/lm.py`, jobs `research/loops_jobs.py`, launch
 `research/events_paired.py`, `research/events_report.py`. Raw per-run JSON:
 `research/results/loops_runs/`.
 
-**Budget:** $300 Modal cap for LOOPS and EVENTS together; ⟨SPEND⟩ spent in total, ⟨EVSPEND⟩ of it on
+**Budget:** $300 Modal cap for LOOPS and EVENTS together; $262.91 spent in total, $187.49 of it on
 EVENTS (conservative resource estimates, not an invoice).
 
 ## 1. Summary
 
-⟨SUMMARY⟩
+1. **At context 512, the published parts erase the hybrid's lead.** With gated attention output and
+   the value residual in both arms, the LOOPS hybrid is 0.12% *above* the strengthened softmax control
+   (+0.04 / +0.11 / +0.22 on three seeds, paired t +5.6) and 0.30% above an equal-parameter softmax
+   control. The parts lower softmax's loss by 1.33% and the hybrid's by 0.57%: the gate is a reset,
+   and the model without resets gains most from it. C4 fails.
+2. **At long context the lead returns and grows with the context.** Same models, same parts, equal
+   modeled FLOPs: +0.12% at 512, −0.07% at 2,048, **−0.66% at 8,192** (−0.72 / −0.72 / −0.53, paired t
+   −23). H1 and H2, registered after the development screens, hold. The gain is largest on tokens that
+   last appeared 1,000–4,000 positions back (−1.7%).
+3. **Most of the 8,192 gain is the content-driven frames, not the second memory.** The same hybrid
+   with RoPE instead of holonomy frames is only −0.21% (seed 1); the frames are worth −0.51% inside
+   the hybrid (paired t −16.5), against −0.21% at 2,048 and about −0.1% at 512. They help on every
+   token that appeared earlier in the window, at every distance, and not at all on new tokens; the
+   recurrent layers help on new tokens and far repeats and cost on near repeats. With frames but no recurrent layers, softmax gains only −0.07%: the frames help far repeats
+   and cost near ones. The two parts interact: frames alone −0.07%, recurrence alone −0.21%, both −0.72%
+   (seed 1).
+4. **It does not grow with size on one seed.** At three times the non-embedding parameters the 8,192
+   margin is −0.46%, against −0.72% at base size on the same seed.
+5. **The event model failed.** Built H-Net-style (a learned router, attention over event vectors), it
+   is 3.6% above softmax at 2,048 and 3.1–6.6% above at 8,192. Its router collapsed in long runs
+   (boundaries nearly vanished), but a fixed-boundary version lands at the same loss (3.5495 vs
+   3.5493): the event bottleneck loses exact tokens, and copying needs them. Where the router held, it
+   found clauses without supervision (53.5% of boundaries at punctuation, newlines or clause words,
+   against 25.8% of tokens).
+6. **Order-dense data did not change the picture.** On Python code the frames are worth nothing over
+   RoPE (−0.17% vs −0.18% for the two hybrids), though the trained model depends on them (+3.8% when
+   removed). Entity- and variable-tracking probes are beyond 22M-parameter models: every arm is at
+   chance or follows a heuristic (attention copies the first mention, recurrence the most recent).
+7. **Wall clock.** Every gain is at equal modeled FLOPs; in our kernels the 8,192 hybrid takes 1.35×
+   the softmax wall clock.
 
 ## 2. What changed from LOOPS
 
@@ -98,10 +127,11 @@ softmax control at 13,531 updates (443M tokens), exact block-causal attention, `
 | 2,048 | ev_l8 | 3.5664 | +3.63% | +3.55 / +3.71 | +80 | |
 | 8,192 | soft | 3.4418 | | (seeds 1–3) | | 3,872 s |
 | 8,192 | **hyb** | **3.4192** | **−0.66%** | −0.72 / −0.72 / −0.53 | **−23.0** | 1.35× |
-| 8,192 | hyb_rope | ⟨A1⟩ | | seed 1 | | |
+| 8,192 | hyb_rope | 3.4342 | −0.21% | seed 1 | −7.9 | 1.29× |
 | 8,192 | ev_l8 | 3.6097 | +4.87% | +3.15 / +6.59 (seed 3 cancelled) | +68 | 1.5× |
 | 8,192 | ev_l8_rope | 3.5493 | +3.14% | seed 1 | +47 | |
-| 8,192 | ev_punct (fixed boundaries) | ⟨R1⟩ | | seed 1 | | |
+| 8,192 | ev_punct (fixed boundaries) | 3.5495 | +3.14% | seed 1 | | 1.52× |
+| 8,192 | soft_holo (softmax with holonomy frames) | 3.4390 | −0.07% | seed 1 | −2.0 | 1.10× |
 
 The hybrid's margin over the strengthened softmax grows with context: +0.12% at 512, −0.07% at 2,048,
 −0.66% at 8,192 (H1 and H2, registered after the development screens, hold).
@@ -123,7 +153,32 @@ At 2,048 the hybrid wins the far buckets (1,025–4,096: −1.44%) but loses on 
 (+0.65%), netting to −0.07%; at 512 the same pattern (385+: −0.95%; 1–32: +0.58%). Setting the
 holonomy moves to the RoPE step at inference raises the 8,192 hybrid's loss by 0.18% (2,048: 0.14%).
 
-### 4.4 Size (8,192, width 768, 8 layers, seed 1)
+### 4.4 Which part pays at 8,192 (seed 1)
+
+| Last seen, tokens back | soft | hyb_rope | hyb (holonomy) | recurrence (hyb_rope vs soft) | frames (hyb vs hyb_rope) |
+|---|---|---|---|---|---|
+| never | 5.6153 | 5.5783 | 5.5771 | −0.66% | −0.02% |
+| 1–32 | 1.6419 | 1.6537 | 1.6358 | +0.72% | −1.08% |
+| 33–128 | 2.1523 | 2.1674 | 2.1541 | +0.70% | −0.61% |
+| 129–256 | 2.8643 | 2.8745 | 2.8516 | +0.36% | −0.80% |
+| 257–384 | 3.2699 | 3.2701 | 3.2436 | +0.01% | −0.81% |
+| 385–1,024 | 3.7223 | 3.7138 | 3.6712 | −0.23% | −1.15% |
+| 1,025–4,096 | 4.4162 | 4.3877 | 4.3260 | −0.65% | −1.41% |
+| over 4,096 | 4.8744 | 4.8491 | 4.8100 | −0.52% | −0.81% |
+| all (`val_big`) | 3.4414 | 3.4342 | 3.4166 | −0.21% (t −7.9) | −0.51% (t −16.5) |
+
+The recurrent layers predict new tokens better and repeats past 384 better, and cost on near repeats.
+The holonomy frames (with one transport head) help on every token that has appeared before, at every
+distance, and not on new ones. Inside the hybrid, holonomy over RoPE is worth about −0.10% at 512
+(LOOPS, forget gate also differing), −0.21% at 2,048 and −0.51% at 8,192 (seed 1 each): the frames'
+value grows with context.
+
+Softmax with the same frames and no recurrent layers (A2, seed 1) is −0.07% (t −2.0). By distance,
+the frames in softmax help far repeats (129–256: −0.38%; 1,025–4,096: −1.43%) and cost near repeats
+(1–32: +0.82%) and new tokens (+0.11%). Inside the hybrid the near-repeat cost disappears (−1.08%). At
+8,192 on seed 1: frames alone −0.07%, recurrence alone −0.21%, both −0.72%; the parts interact.
+
+### 4.5 Size (8,192, width 768, 8 layers, seed 1)
 
 | Arm | val_big | vs soft | paired t | non-emb. params | wall |
 |---|---|---|---|---|---|
@@ -131,9 +186,9 @@ holonomy moves to the RoPE step at inference raises the 8,192 hybrid's loss by 0
 | hyb (GAGAGAGA) | 3.2893 | −0.46% | −12.3 | 65.0M | 9,036 s (1.17×) |
 
 On seed 1 the base-size margin is −0.72%; at three times the non-embedding parameters it is −0.46%.
-The margin does not grow with size here (one seed each; the large event arm was cancelled, see 4.5).
+The margin does not grow with size here (one seed each; the large event arm was cancelled, see 4.6).
 
-### 4.5 The event model
+### 4.6 The event model
 
 - **Router collapse.** The learned router held one event per ~9 tokens for 100M tokens and then
   drifted: at the end of the long runs its mean boundary probability is 0.4992–0.4996, just under the
@@ -150,9 +205,11 @@ The margin does not grow with size here (one seed each; the large event arm was 
 - **Exact tokens are lost.** The development screens' in-context copying probe: 0.18 for events
   against 0.23–0.25 for the token arms at 8,192; in the long runs the event models are worst on every
   repeat-distance bucket, including tokens never seen in the window.
-- **Fixed boundaries** (R1, after punctuation or a newline, at least every 16 tokens): ⟨R1TEXT⟩
+- **Fixed boundaries** (R1, after punctuation or a newline, at least every 16 tokens): 3.5495, level
+  with the collapsed learned router (3.5493) and 3.14% above softmax. The router's collapse did not
+  decide the event model's loss; the event bottleneck did.
 
-### 4.6 Code (CodeParrot-clean Python, 2,048, seed 1)
+### 4.7 Code (CodeParrot-clean Python, 2,048, seed 1)
 
 | Arm | val_big | vs soft | paired t |
 |---|---|---|---|
@@ -165,7 +222,7 @@ On code the holonomy frames are worth nothing over RoPE (E6 fails: frames gain 0
 2,048 and −0.01 on code). The trained hybrid depends on its frames far more on code (holonomy off at
 inference: +3.8%, against +0.14% on prose), so the frames are used, not rewarded.
 
-### 4.7 Entity tracking and variable tracking (answer tokens, multiple choice)
+### 4.8 Entity tracking and variable tracking (answer tokens, multiple choice)
 
 Prompts: four keyed facts then up to 4,096 tokens of held-out text then the question (variable
 tracking); three objects in boxes or people holding objects, k transfers, then where a moved object is
@@ -198,8 +255,9 @@ as confirmations).
 | E6 | Frames gain more over RoPE on code than on prose | **Fails** (−0.01 pt on code, 0.21 on prose) |
 | H1 | 8,192: hybrid below soft on every seed, ≥ 0.5% mean | **Holds** (−0.72 / −0.72 / −0.53) |
 | H2 | Hybrid margin at 2,048 smaller by ≥ 0.5 pt | **Holds** (0.07% vs 0.66%) |
-| R1 | Fixed-boundary events between soft and collapsed events, above soft | ⟨R1V⟩ |
-| A1 | 8,192 hybrid with RoPE ≥ 0.4% below soft, ≤ 0.25% above hybrid | ⟨A1V⟩ |
+| R1 | Fixed-boundary events between soft and collapsed events, above soft | Fails on "between" (3.5495 vs 3.5493); holds on "above soft" |
+| A1 | 8,192 hybrid with RoPE ≥ 0.4% below soft, ≤ 0.25% above hybrid | **Fails** (−0.21%; 0.51% above the holonomy hybrid): the frames carry most of the gain |
+| A2 | Softmax with holonomy frames ≥ 0.3% below soft at 8,192 | **Fails** (−0.07%): the frames pay only beside recurrent layers |
 
 ## 6. Caveats
 
@@ -227,5 +285,7 @@ as confirmations).
 2. The event model failed on two counts: the router drifted, and the bottleneck loses exact tokens.
    Is there a version worth one more try (events beside token-level attention, as a third memory,
    rather than instead of it)?
-3. The frames are used (+0.18% when removed at 8,192, +3.8% on code) but not rewarded. Do you read
-   that as "the group atom is unneeded on text" or as "the training budget never makes it pay"?
+3. The holonomy frames pay only at long context and only beside recurrent layers (frames alone
+   −0.07%, recurrence alone −0.21%, both −0.72% at 8,192, one seed). Is the interaction worth a
+   dedicated study: what drives the frames (the recurrent state rather than the token), three seeds of
+   all four cells, and the same 2×2 at 16k?

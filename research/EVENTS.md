@@ -339,3 +339,9 @@ in the $300.
   frames, not the second memory. Inside the hybrid, holonomy over RoPE is worth −0.10% at 512 (LOOPS,
   with the forget gate also differing), −0.21% at 2,048 (seed 1) and −0.51% at 8,192 (seed 1): the
   frames' value grows with context.
+- **A2 result** (`events_8k_softholo`, seed 1): softmax with holonomy frames 3.4390, −0.07% against
+  soft (paired t −2.0). **A2 fails**: in attention alone the frames help far repeats (129+ tokens back:
+  −0.4% to −1.4%) and cost near repeats (1–32: +0.82%) and new tokens (+0.11%), netting to nothing.
+  Inside the hybrid they help at every distance including near repeats (1–32: −1.08%). At 8,192, seed 1:
+  frames alone −0.07%, recurrence alone −0.21%, both −0.72%: the two interact; the sum of the parts
+  would be −0.28%.

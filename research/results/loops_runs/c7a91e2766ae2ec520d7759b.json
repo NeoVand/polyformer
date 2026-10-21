@@ -1,0 +1,170 @@
+{
+  "argv": [
+    "--ckpts",
+    "/runs/f588d4ff4a1fe5832ceae7de/final.pkl",
+    "--data",
+    "/data/fineweb_edu"
+  ],
+  "artifacts": [],
+  "backend": "gpu",
+  "gpu_actual": "NVIDIA H100 80GB HBM3",
+  "gpu_requested": "H100",
+  "installed_versions": {
+    "jax": "0.12.0",
+    "numpy": "2.5.4",
+    "optax": "0.2.8"
+  },
+  "job_id": "c7a91e2766ae2ec520d7759b",
+  "log_directory": "c7a91e2766ae2ec520d7759b",
+  "log_volume": "polyformer-loops-runs",
+  "manifest": "events_probe1",
+  "manifest_sha256": "a3eec20f3b31b1c4b7fef1fabbd7480d10b8ee94d14dadeaffdea243af4030fd",
+  "prediction_commit": "51b8ce88a27903a6c1cf7f69932065bc45ab3cf8",
+  "probe": [
+    {
+      "cfg": {
+        "arch": "loop",
+        "ctx": 2048,
+        "d": 512,
+        "data": "/data/fineweb_edu",
+        "ev_dmain": 0,
+        "ev_len": 8.0,
+        "ev_posenc": "holo",
+        "forget": 1,
+        "layers": 6,
+        "pattern": "",
+        "posenc": "rope",
+        "seed": 1
+      },
+      "ckpt": "/runs/f588d4ff4a1fe5832ceae7de/final.pkl",
+      "probes": {
+        "boxes_k0": {
+          "acc": 0.4296875,
+          "chance": 0.3333333333333333,
+          "loss": 1.9658841346390545,
+          "n": 128
+        },
+        "boxes_k1": {
+          "acc": 0.2578125,
+          "chance": 0.3333333333333333,
+          "loss": 2.0775864482857287,
+          "n": 128
+        },
+        "boxes_k2": {
+          "acc": 0.3125,
+          "chance": 0.3333333333333333,
+          "loss": 1.8749779611825943,
+          "n": 128
+        },
+        "boxes_k3": {
+          "acc": 0.2890625,
+          "chance": 0.3333333333333333,
+          "loss": 1.8414630619809031,
+          "n": 128
+        },
+        "kv_d0": {
+          "acc": 0.28125,
+          "chance": 0.25,
+          "loss": 4.8513838946819305,
+          "n": 128
+        },
+        "kv_d1024": {
+          "acc": 0.3046875,
+          "chance": 0.25,
+          "loss": 12.161773558706045,
+          "n": 128
+        },
+        "kv_d256": {
+          "acc": 0.265625,
+          "chance": 0.25,
+          "loss": 6.132223447668366,
+          "n": 128
+        },
+        "owners_k0": {
+          "acc": 0.28125,
+          "chance": 0.3333333333333333,
+          "loss": 4.621280583553016,
+          "n": 128
+        },
+        "owners_k1": {
+          "acc": 0.765625,
+          "chance": 0.3333333333333333,
+          "loss": 2.4200958041474223,
+          "n": 128
+        },
+        "owners_k2": {
+          "acc": 0.4296875,
+          "chance": 0.3333333333333333,
+          "loss": 2.6480360629502684,
+          "n": 128
+        },
+        "owners_k3": {
+          "acc": 0.5234375,
+          "chance": 0.3333333333333333,
+          "loss": 2.418449663557112,
+          "n": 128
+        }
+      }
+    }
+  ],
+  "python_version": "3.12.10",
+  "remote_completed_at": "2026-10-21T19:42:24.404481+00:00",
+  "script": "events_probe.py",
+  "secs": 35.6,
+  "source_hashes": {
+    "algebraic_arc.py": "a3f4c1705ab80b9b013a29785dfc3ce5f4be059f864afa5d53b7fb956bfd4aaa",
+    "beyond_chunk_check.py": "f671fef1033410fc7bbf2d0e07138070304ecd595110797c27242c746d50cdf6",
+    "beyond_diag.py": "308b7722e576215de18f31a6a7067eab1a91e12209c3a378b5efa9c062fe6ef2",
+    "beyond_layers.py": "2e42b143633a6bb7e09edfea5a9ba9da91f8ed17b86ea63984a3be6062e048c1",
+    "beyond_modal.py": "9e80de399100fb76889285def14bf3e226a5a56de1e8a81dd5d8ffe4ef705bed",
+    "beyond_protocol.py": "45d36641f286333498bf94f4683e716e3fa5331a8c9d3bbd46cf0e6b16abf763",
+    "beyond_summary.py": "752ff5d12b315a1f73c3dbd4e5c4cdb5fad18c60c65b15f833eccf2b8eb682bc",
+    "charlaw.py": "696097299f79fc5f171b64f65cc28374167164b34bae899dd74c79d5681b009a",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "dilution.py": "031533e5f0a21967d3de5565d6ce3791ab642fb4065ab8bbbf7e663904f5ad5f",
+    "events_data.py": "49804426f2767ae10808b1114a7670d9791b47bf27cb06ed5076a03cdc666c6e",
+    "events_model.py": "ec865596a65be6b3ce6cfaa0c8e3c156007dd7027b0d1bafaea915997a4fd47c",
+    "events_paired.py": "2411e2530a9d110b2294fbb2356816bf9fae00df7fd8f8ae57c6ffdda7086975",
+    "events_probe.py": "2a2f99a5735e87ba20d1f46f951ecfbfdd28655c1810dd30dce5c904dfc335bc",
+    "events_report.py": "1adba2117c2cd3b803dbcfc09765e0f4c4b4e60d88c7d33f245571b5c3a11666",
+    "events_tokens.py": "5ef58373fd05029c3a18c49496ebd0af14906ee20b07fef6defed9bd882c8cd2",
+    "export_a5_irrep.py": "a656f64b9f223a702489fa1bc8a38da7fde21497d26a05642cb7fb38df117ba2",
+    "export_a5_modal.py": "27cc4eee7347e7842bd0bc1c97116eb198af00cdf9168f069e30f09413777508",
+    "figdata.py": "1ba8912630e4e998058ee99a2bb60220b99126184e19f01b743f47300a115190",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "grp_summary.py": "fd424f8dff0d61accc284a0014c394483d67cbe9c69e6c874f2aa6be76e72d40",
+    "lm.py": "8133792a84fa11aff059942426ffb64de40cac100ea8e432a9e80050bdb658e6",
+    "local_summary.py": "695ae6726b5f4b3df80978d205d18c773f34f9b9a9f38000cf2a90e39cdadf06",
+    "loops_eval.py": "43ba626fff11aa2642b5b90de83cf9ac2bc58410952f08ff7a1480b01ca07630",
+    "loops_gate.py": "35b2c307d8da0543475eb0e5cd0ff685d13d540e644666bbe58bf6f6ff4b5f90",
+    "loops_jobs.py": "6e6cc1b4fab4f9127fd2aa27d104144bea81ee8a8ff5faa0a429f35dce28925e",
+    "loops_layers.py": "aa69346c3d7dce6d38006df1ed870065e8c0e1517dc283a2216e52034b0ea366",
+    "loops_modal.py": "3435309ed606e6fb292ce2086b0aaf8b920055953de812459930b0a8fc99f1d6",
+    "loops_probe.py": "a804b844ca8f4625eb4cb17eb308a9d2c298e818aba832e9cd08523c9de0d127",
+    "loops_summary.py": "c462676ec93446c6e633e2f1f8ce5bf038f21fc21598fdd9a8a5da60690d6ba5",
+    "modal_run.py": "5f0cb5babe8702def82fd904f522738078aa21a7ac3652190bd3b1f82bc15203",
+    "next_modal.py": "d91bfbd0c17e2e7112bed80fffce0751b831ee91621c2900487d5cd47a6dda8f",
+    "polybench.py": "3307ee31daf5d82b831c7ebe90a75bb057ab06022c39b54169c4edf106377b17",
+    "search_summary.py": "2d40635b2f6ab110ea3624ea8f83021d995dc3147c44a7d9a52d02bd902606dc",
+    "summarize.py": "14b3ae880107d4923f433a4e58d5d7693d91d9ab411ed6a8e0c98c437d16168c",
+    "swap_summary.py": "02e3be1148335ec01073321e8441838be45efe296d704117ae9682e8db74826f",
+    "test_algebraic_arc.py": "aa7c604a8a2390a17bc1589f4163fa3b3af27aea32ebbc5de4f2375b24a06586",
+    "test_beyond.py": "f2774f642c476abe27a7e052c1464cf516d06f1a5d1d56ce16206626822b7fff",
+    "test_beyond_conv.py": "38fb8e88a1ee46276fc9283d4b9d94416ae5ef4a48ec67fdc2c9a0e303cc9ff2",
+    "test_beyond_diag.py": "72bb1a44f14538d7338eaac78200baca286e669a10ed5ef7d3c9bd223829dc59",
+    "test_dilution.py": "d189622b1f251baacc7eb2dd712c7df91257be0a1df064dfecc633d1a7bed9cb",
+    "test_groups.py": "50b401a7cd202ff2c70e2a5e019799e5c28a7c61a0177cca5c1ef4c8686d6440",
+    "test_local.py": "e5f2cc39d43d99e72e4f55cb514f754a34997af8afaec169a81c7cf209403a17",
+    "test_loops.py": "3f5a7cbbcb58c2bf6215326f69898362f27eb6794269158da812ca43d25fa924",
+    "test_next_modal.py": "b8413e14b33921b54a513196aebb3efd119abbdf942d17dd901f40841d412e2d",
+    "test_sfa.py": "df436095a033e5ac9984ac0c21bbc1180b96df03ab01f8b8a6b510c192fb0717",
+    "test_theory.py": "fb140d3e8b97de1210fc29c712a2fc7588412e63df955f5b327bf5038c0b5461",
+    "theory_ceiling.py": "c34e78733b8761476b0710f7b625598fb9551da58ce4b7b5cd38121901b62128",
+    "verify_prior_art.py": "0a230c5d236c4528fd2930ee57ffe9228d9342ce47bd5a3341223950e1ee6c6b",
+    "wp_summary.py": "51a85ef347d3b24c03a72712a3e64e54609daf13d13a8d381fb90ede5511e673"
+  },
+  "stage": "screen",
+  "stderr_tail": "{\"progress\": \"/runs/f588d4ff4a1fe5832ceae7de/final.pkl\", \"secs\": 35.6}\n",
+  "stdout_tail": "{\"probe\": [{\"ckpt\": \"/runs/f588d4ff4a1fe5832ceae7de/final.pkl\", \"cfg\": {\"arch\": \"loop\", \"posenc\": \"rope\", \"pattern\": \"\", \"forget\": 1, \"d\": 512, \"layers\": 6, \"seed\": 1, \"ctx\": 2048, \"ev_len\": 8.0, \"ev_posenc\": \"holo\", \"ev_dmain\": 0, \"data\": \"/data/fineweb_edu\"}, \"probes\": {\"kv_d0\": {\"acc\": 0.28125, \"loss\": 4.8513838946819305, \"n\": 128, \"chance\": 0.25}, \"kv_d256\": {\"acc\": 0.265625, \"loss\": 6.132223447668366, \"n\": 128, \"chance\": 0.25}, \"kv_d1024\": {\"acc\": 0.3046875, \"loss\": 12.161773558706045, \"n\": 128, \"chance\": 0.25}, \"boxes_k0\": {\"acc\": 0.4296875, \"loss\": 1.9658841346390545, \"n\": 128, \"chance\": 0.3333333333333333}, \"boxes_k1\": {\"acc\": 0.2578125, \"loss\": 2.0775864482857287, \"n\": 128, \"chance\": 0.3333333333333333}, \"boxes_k2\": {\"acc\": 0.3125, \"loss\": 1.8749779611825943, \"n\": 128, \"chance\": 0.3333333333333333}, \"boxes_k3\": {\"acc\": 0.2890625, \"loss\": 1.8414630619809031, \"n\": 128, \"chance\": 0.3333333333333333}, \"owners_k0\": {\"acc\": 0.28125, \"loss\": 4.621280583553016, \"n\": 128, \"chance\": 0.3333333333333333}, \"owners_k1\": {\"acc\": 0.765625, \"loss\": 2.4200958041474223, \"n\": 128, \"chance\": 0.3333333333333333}, \"owners_k2\": {\"acc\": 0.4296875, \"loss\": 2.6480360629502684, \"n\": 128, \"chance\": 0.3333333333333333}, \"owners_k3\": {\"acc\": 0.5234375, \"loss\": 2.418449663557112, \"n\": 128, \"chance\": 0.3333333333333333}}}], \"secs\": 35.6, \"backend\": \"gpu\"}\n",
+  "wall": 36.561
+}

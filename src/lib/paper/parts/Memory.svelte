@@ -260,7 +260,9 @@
 			layers predict tokens not seen earlier in the window better (−0.7%) and cost on near repeats (+0.7%);
 			the frames help on every token that has appeared before, by 0.6% to 1.4% at every distance, and
 			not at all on new ones. Frames that depend on the content make repeated content easier to find again,
-			and the longer the window, the more there is to find.
+			and the longer the window, the more there is to find. They pay only beside the recurrent layers:
+			softmax given the same frames gains 0.07%, because there they help far repeats but cost near ones
+			(1 to 32 tokens back: +0.8%). Frames alone 0.07%, recurrence alone 0.21%, both together 0.72%.
 		</p>
 		<p>
 			At three times the parameters (width 768, eight layers, one seed) the hybrid's margin at 8,192
@@ -321,10 +323,11 @@
 				id="starfree"
 			/>. Every part that paid on text is a reset: the forget gate, the output gate, the recurrent
 			layers' decay, and the event cuts the models learn for themselves. The group part, the
-			non-commuting frames, is used by the trained models but rewarded only at long range: worth
-			about 0.1% at 512 tokens and 0.5% at 8,192, all of it on tokens that repeat, where finding the
-			earlier occurrence depends on the order of what came between. Where order is the whole task,
-			as in tracking <MathTex tex="A_5" />, the group part is the whole answer.
+			non-commuting frames, is used by the trained models but rewarded only at long range and only
+			beside a recurrent memory: worth about 0.1% at 512 tokens and 0.5% at 8,192, all of it on
+			tokens that repeat, where finding the earlier occurrence depends on the order of what came
+			between. Where order is the whole task, as in tracking <MathTex tex="A_5" />, the group part
+			is the whole answer.
 		</p>
 		<p>
 			The full record, with every registered prediction and how it fared, is in
