@@ -1,0 +1,143 @@
+{
+  "created": "2026-10-21T21:01:14.045814+00:00",
+  "jobs": [
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/1185e753825d1797fe5bfe78/final.pkl,/runs/4d5440267a01b7b20b6cda60/final.pkl,/runs/936ab015540976fc527802e2/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--seqs",
+        "256",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "H100",
+      "id": "4c6524ab61d1ff064c267df8",
+      "max_seconds": 2400,
+      "reserved_usd": 3.114563,
+      "script": "loops_eval.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/1185e753825d1797fe5bfe78/final.pkl,/runs/4d5440267a01b7b20b6cda60/final.pkl,/runs/936ab015540976fc527802e2/final.pkl",
+        "--data",
+        "/data/fineweb_edu"
+      ],
+      "attempt": 0,
+      "gpu": "H100",
+      "id": "42e2d763e91563f72e68a4f0",
+      "max_seconds": 2400,
+      "reserved_usd": 3.114563,
+      "script": "events_probe.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/ea7cd5cee551efae9d6db5d2/final.pkl",
+        "--data",
+        "/data/fineweb_edu",
+        "--seqs",
+        "256",
+        "--ablate",
+        "1"
+      ],
+      "attempt": 0,
+      "gpu": "H100",
+      "id": "f3bf661efbbe4a1f5375d2fa",
+      "max_seconds": 2400,
+      "reserved_usd": 3.114563,
+      "script": "loops_eval.py"
+    },
+    {
+      "argv": [
+        "--ckpts",
+        "/runs/ea7cd5cee551efae9d6db5d2/final.pkl",
+        "--data",
+        "/data/fineweb_edu"
+      ],
+      "attempt": 0,
+      "gpu": "H100",
+      "id": "2bce1cddd4ea33a5de4ca112",
+      "max_seconds": 2400,
+      "reserved_usd": 3.114563,
+      "script": "events_probe.py"
+    }
+  ],
+  "max_reserved_usd": 12.458252,
+  "name": "events_probe2",
+  "prediction_commit": "2a001eae4642a561c83df0e6f3b2a6789fd7f4e5",
+  "prediction_sha256": "bf968d1677a56a844c7e8e7a66a782ae97473462715b883f3a44245adcc8c190",
+  "pricing_url": "https://modal.com/pricing",
+  "resources": {
+    "cpu_limit": 4,
+    "cpu_request": 2,
+    "max_concurrency": 10,
+    "ram_limit_mib": 32768,
+    "ram_request_mib": 8192,
+    "scaledown_seconds": 2,
+    "startup_timeout_seconds": 120
+  },
+  "runtime_versions": {
+    "jax": "0.12.0",
+    "numpy": "2.5.4",
+    "optax": "0.2.8"
+  },
+  "schema": 1,
+  "sha256": "6bd53b12b2fd114c3a0dcb13c14fb8bc108c14739fed64e0d9027621b3ed0364",
+  "source_hashes": {
+    "algebraic_arc.py": "a3f4c1705ab80b9b013a29785dfc3ce5f4be059f864afa5d53b7fb956bfd4aaa",
+    "beyond_chunk_check.py": "f671fef1033410fc7bbf2d0e07138070304ecd595110797c27242c746d50cdf6",
+    "beyond_diag.py": "308b7722e576215de18f31a6a7067eab1a91e12209c3a378b5efa9c062fe6ef2",
+    "beyond_layers.py": "2e42b143633a6bb7e09edfea5a9ba9da91f8ed17b86ea63984a3be6062e048c1",
+    "beyond_modal.py": "9e80de399100fb76889285def14bf3e226a5a56de1e8a81dd5d8ffe4ef705bed",
+    "beyond_protocol.py": "45d36641f286333498bf94f4683e716e3fa5331a8c9d3bbd46cf0e6b16abf763",
+    "beyond_summary.py": "752ff5d12b315a1f73c3dbd4e5c4cdb5fad18c60c65b15f833eccf2b8eb682bc",
+    "charlaw.py": "696097299f79fc5f171b64f65cc28374167164b34bae899dd74c79d5681b009a",
+    "diag.py": "a175dd8b01f173d483be698c17902733369f1496aab1058e8bcc79f37f11dad6",
+    "dilution.py": "031533e5f0a21967d3de5565d6ce3791ab642fb4065ab8bbbf7e663904f5ad5f",
+    "events_data.py": "49804426f2767ae10808b1114a7670d9791b47bf27cb06ed5076a03cdc666c6e",
+    "events_model.py": "ec865596a65be6b3ce6cfaa0c8e3c156007dd7027b0d1bafaea915997a4fd47c",
+    "events_paired.py": "2411e2530a9d110b2294fbb2356816bf9fae00df7fd8f8ae57c6ffdda7086975",
+    "events_probe.py": "2a2f99a5735e87ba20d1f46f951ecfbfdd28655c1810dd30dce5c904dfc335bc",
+    "events_report.py": "1adba2117c2cd3b803dbcfc09765e0f4c4b4e60d88c7d33f245571b5c3a11666",
+    "events_tokens.py": "5ef58373fd05029c3a18c49496ebd0af14906ee20b07fef6defed9bd882c8cd2",
+    "export_a5_irrep.py": "a656f64b9f223a702489fa1bc8a38da7fde21497d26a05642cb7fb38df117ba2",
+    "export_a5_modal.py": "27cc4eee7347e7842bd0bc1c97116eb198af00cdf9168f069e30f09413777508",
+    "figdata.py": "1ba8912630e4e998058ee99a2bb60220b99126184e19f01b743f47300a115190",
+    "groups.py": "a562b425f43261975694db2c68fc745de18d522a4a6e9908ad4b0f838ebf9754",
+    "grp_summary.py": "fd424f8dff0d61accc284a0014c394483d67cbe9c69e6c874f2aa6be76e72d40",
+    "lm.py": "8133792a84fa11aff059942426ffb64de40cac100ea8e432a9e80050bdb658e6",
+    "local_summary.py": "695ae6726b5f4b3df80978d205d18c773f34f9b9a9f38000cf2a90e39cdadf06",
+    "loops_eval.py": "43ba626fff11aa2642b5b90de83cf9ac2bc58410952f08ff7a1480b01ca07630",
+    "loops_gate.py": "35b2c307d8da0543475eb0e5cd0ff685d13d540e644666bbe58bf6f6ff4b5f90",
+    "loops_jobs.py": "a9603295ba8e80817f55c445e1deec71ed992e3e7b5dac7a8060825e0f08b58b",
+    "loops_layers.py": "aa69346c3d7dce6d38006df1ed870065e8c0e1517dc283a2216e52034b0ea366",
+    "loops_modal.py": "3435309ed606e6fb292ce2086b0aaf8b920055953de812459930b0a8fc99f1d6",
+    "loops_probe.py": "a804b844ca8f4625eb4cb17eb308a9d2c298e818aba832e9cd08523c9de0d127",
+    "loops_summary.py": "c462676ec93446c6e633e2f1f8ce5bf038f21fc21598fdd9a8a5da60690d6ba5",
+    "modal_run.py": "5f0cb5babe8702def82fd904f522738078aa21a7ac3652190bd3b1f82bc15203",
+    "next_modal.py": "d91bfbd0c17e2e7112bed80fffce0751b831ee91621c2900487d5cd47a6dda8f",
+    "polybench.py": "3307ee31daf5d82b831c7ebe90a75bb057ab06022c39b54169c4edf106377b17",
+    "search_summary.py": "2d40635b2f6ab110ea3624ea8f83021d995dc3147c44a7d9a52d02bd902606dc",
+    "summarize.py": "14b3ae880107d4923f433a4e58d5d7693d91d9ab411ed6a8e0c98c437d16168c",
+    "swap_summary.py": "02e3be1148335ec01073321e8441838be45efe296d704117ae9682e8db74826f",
+    "test_algebraic_arc.py": "aa7c604a8a2390a17bc1589f4163fa3b3af27aea32ebbc5de4f2375b24a06586",
+    "test_beyond.py": "f2774f642c476abe27a7e052c1464cf516d06f1a5d1d56ce16206626822b7fff",
+    "test_beyond_conv.py": "38fb8e88a1ee46276fc9283d4b9d94416ae5ef4a48ec67fdc2c9a0e303cc9ff2",
+    "test_beyond_diag.py": "72bb1a44f14538d7338eaac78200baca286e669a10ed5ef7d3c9bd223829dc59",
+    "test_dilution.py": "d189622b1f251baacc7eb2dd712c7df91257be0a1df064dfecc633d1a7bed9cb",
+    "test_groups.py": "50b401a7cd202ff2c70e2a5e019799e5c28a7c61a0177cca5c1ef4c8686d6440",
+    "test_local.py": "e5f2cc39d43d99e72e4f55cb514f754a34997af8afaec169a81c7cf209403a17",
+    "test_loops.py": "3f5a7cbbcb58c2bf6215326f69898362f27eb6794269158da812ca43d25fa924",
+    "test_next_modal.py": "b8413e14b33921b54a513196aebb3efd119abbdf942d17dd901f40841d412e2d",
+    "test_sfa.py": "df436095a033e5ac9984ac0c21bbc1180b96df03ab01f8b8a6b510c192fb0717",
+    "test_theory.py": "fb140d3e8b97de1210fc29c712a2fc7588412e63df955f5b327bf5038c0b5461",
+    "theory_ceiling.py": "c34e78733b8761476b0710f7b625598fb9551da58ce4b7b5cd38121901b62128",
+    "verify_prior_art.py": "0a230c5d236c4528fd2930ee57ffe9228d9342ce47bd5a3341223950e1ee6c6b",
+    "wp_summary.py": "51a85ef347d3b24c03a72712a3e64e54609daf13d13a8d381fb90ede5511e673"
+  },
+  "stage": "screen"
+}
