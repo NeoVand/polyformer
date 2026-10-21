@@ -550,8 +550,8 @@
 				{#if showing === 'ideal'}
 					<p class="note">
 						Built by hand, not learned: one channel per character of the deck, and a read-out of the
-						arity-4 count alone, as in Theorem 5 of the report. Recorded and Live show what gradient
-						descent finds.
+						arity-4 count alone, the construction in the paper's Newton's shortcut section. Recorded
+						and Live show what gradient descent finds.
 					</p>
 				{:else if showing === 'recorded' && recording}
 					<p class="note">

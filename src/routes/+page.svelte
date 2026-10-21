@@ -146,11 +146,11 @@
 			symmetries of an icosahedron. The route from token pairs to those rotations is the story here.
 		</p>
 		<p class="small">
-			A course, working paper and experiments. Browser-trained baselines; recorded group results.
+			One article with live figures, and two labs where you can open up and train the models.
 		</p>
 		<div class="ctas">
-			<a class="cta primary" href={resolve('/learn')}>Read how it works</a>
-			<a class="cta" href={resolve('/report')}>Read the paper</a>
+			<a class="cta primary" href={resolve('/paper')}>Read the paper</a>
+			<a class="cta" href={resolve('/explore')}>Open a trained layer</a>
 		</div>
 	</section>
 

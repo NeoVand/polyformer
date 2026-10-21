@@ -131,7 +131,7 @@
 			aria-label="A labelled triangle turned then flipped ends differently from the same triangle flipped then turned"
 		>
 			{#each arrangements as row, r (row.id)}
-				<text x="10" y={18 + r * 164} class="quiet">{row.label}</text>
+				<text x="10" y={13 + r * 164} class="quiet">{row.label}</text>
 				{#each ['Start', 'First move', 'Both moves'] as label, c (label)}
 					{@const positions = c === 0 ? [0, 1, 2] : c === 1 ? row.first : row.last}
 					<g transform={`translate(${76 + c * 164} ${89 + r * 164})`}>
@@ -252,7 +252,8 @@
 <style>
 	.composition-figure {
 		width: 100%;
-		margin: 0;
+		max-width: 540px;
+		margin: 0 auto;
 		display: flex;
 		flex-direction: column;
 		gap: 20px;
@@ -333,10 +334,13 @@
 		font-size: 13px;
 	}
 	figcaption {
+		align-self: center;
+		max-width: 60ch;
 		margin: 0;
-		font-size: 12px;
+		font-size: var(--text-xs);
 		line-height: 1.6;
 		color: var(--color-ink-3);
+		text-align: center;
 	}
 	.gain-axis {
 		display: flex;
@@ -482,86 +486,42 @@
 		line-height: 1.5;
 		margin: 0;
 	}
-	@media (max-width: 1100px) {
+	/* a phone: the drawings keep readable labels, the side-by-side keys stack */
+	@media (max-width: 560px) {
 		.composition-figure {
-			gap: 10px;
-			max-width: 540px;
-			margin: 0 auto;
-			max-height: 100%;
+			gap: 14px;
 		}
-		header {
-			font-size: 11px;
+		.triangles text {
+			font-size: 17px;
 		}
-		figcaption {
-			font-size: 10px;
-			line-height: 1.4;
-		}
-		.clocks {
-			max-height: 155px;
-		}
-		.card-sums {
-			gap: 5px;
-		}
-		.card-sums :global(.math) {
-			font-size: 11px;
-		}
-		.triangles {
-			max-height: 225px;
+		.triangles .quiet {
+			font-size: 14px;
 		}
 		.solid {
-			height: 185px;
+			height: 260px;
 		}
-		.rotation-key {
-			font-size: 9px;
+		.product-sequence {
+			gap: 22px;
+			font-size: 22px;
 		}
-		.ladder-body {
-			max-width: 325px;
-		}
-		.ladder-figure {
-			gap: 6px;
-		}
-		.ladder-body :global(h4) {
-			margin-bottom: 0;
-			font-size: 11px;
-		}
-		.ladder-body :global(p) {
-			font-size: 9px;
-			margin-top: 0;
-		}
-		.sectors {
+		.sectors > div {
+			grid-template-columns: 52px 1fr;
 			gap: 12px;
 		}
 		.sectors :global(.math) {
-			font-size: 16px;
+			font-size: 17px;
 		}
-		.product-sequence {
-			font-size: 20px;
-		}
-		.programs {
-			gap: 14px;
-		}
-		.program-name {
-			margin-bottom: 8px;
-			font-size: 10px;
-		}
-		.state > span {
-			margin-bottom: 3px;
+		.states {
+			gap: 10px;
 		}
 		.state b {
 			font-size: 17px;
 		}
-		.principles {
-			gap: 16px;
-		}
-		.principles strong {
-			font-size: 14px;
-		}
 		.principles li {
-			grid-template-columns: 110px 1fr;
-			gap: 3px 10px;
+			grid-template-columns: minmax(0, 1fr);
 		}
 		.principles p {
-			font-size: 11px;
+			grid-column: 1;
 		}
 	}
 	@media (prefers-reduced-motion: reduce) {

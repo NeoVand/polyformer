@@ -227,5 +227,11 @@
 		.chars {
 			grid-template-columns: minmax(0, 1fr);
 		}
+		/* stacked, the wheels would scale their labels far past the text size */
+		.wheels svg {
+			display: block;
+			max-width: 240px;
+			margin: 0 auto;
+		}
 	}
 </style>

@@ -45,7 +45,7 @@
 	const x = (v: number, f: number) => 4 + Math.max(0, Math.min(1, (v - f) / (1 - f))) * 52;
 </script>
 
-<div class="wrap">
+<div class="wrap" style:--n={tasks.length}>
 	<table>
 		<caption>{caption}</caption>
 		<thead>
@@ -68,6 +68,7 @@
 									{#if v.length}
 										<svg
 											width="60"
+											viewBox="0 0 60 10"
 											height="10"
 											aria-label="Seeds: {v.map((b) => (b * 100).toFixed(0)).join(', ')}%"
 										>
@@ -97,6 +98,7 @@
 
 <style>
 	.wrap {
+		container-type: inline-size;
 		overflow-x: auto;
 		margin: 12px 0 18px;
 	}
@@ -166,5 +168,46 @@
 	}
 	.na {
 		color: #444;
+	}
+	/* narrow: each model's name gets its own line, its numbers sit under it */
+	@container (max-width: 520px) {
+		table,
+		thead,
+		tbody,
+		caption {
+			display: block;
+		}
+		tr {
+			display: grid;
+			grid-template-columns: repeat(var(--n), minmax(0, 1fr));
+		}
+		thead th:first-child {
+			display: none;
+		}
+		thead th {
+			padding-right: 0;
+		}
+		td {
+			padding-right: 0;
+		}
+		td.name {
+			grid-column: 1 / -1;
+			padding: 10px 0 0;
+			color: var(--color-ink-3);
+			font-size: var(--text-xs);
+		}
+		tbody td:not(.name) {
+			padding-top: 2px;
+			padding-bottom: 8px;
+		}
+		tbody tr:last-child {
+			border-bottom: 1px solid #262626;
+		}
+		tbody tr:last-child td {
+			border-bottom: 0;
+		}
+		svg {
+			width: 44px;
+		}
 	}
 </style>

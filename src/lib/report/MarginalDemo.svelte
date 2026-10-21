@@ -80,8 +80,8 @@
 	<figcaption>
 		Every triple of <MathTex tex={String.raw`G=\mathbb Z_3^2`} />, scored by a random sum of
 		functions of one or two of its elements. The two clouds differ in shape, but their means
-		coincide for every draw (lines), as Theorem 1 says. Only a term that reads all three elements at
-		once moves one mean away from the other.
+		coincide for every draw (lines), as the averaging argument says. Only a term that reads all
+		three elements at once moves one mean away from the other.
 	</figcaption>
 </figure>
 

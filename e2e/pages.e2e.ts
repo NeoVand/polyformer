@@ -1,10 +1,10 @@
 import { expect, test } from '@playwright/test';
 
-test('landing presents the composition story and links the course and paper', async ({ page }) => {
+test('landing presents the composition story and links the paper', async ({ page }) => {
 	await page.goto('/');
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Learning to compose');
-	await page.getByRole('link', { name: 'Read how it works' }).click();
-	await expect(page).toHaveURL(/\/learn$/);
+	await page.getByRole('link', { name: 'Read the paper' }).click();
+	await expect(page).toHaveURL(/\/paper$/);
 	await expect(page.getByRole('heading', { level: 1 })).toHaveText('Learning to compose');
 	await expect(page.locator('#groups')).toContainText('A group is a rule for combining');
 });
@@ -38,15 +38,15 @@ test('holonomy lab opens with a visible model and can inspect the real recording
 	);
 });
 
-test('report includes completed word-problem results with their limits', async ({ page }) => {
-	await page.goto('/report');
+test('paper includes completed word-problem results with their limits', async ({ page }) => {
+	await page.goto('/paper');
 	await expect(page.getByRole('heading', { level: 1 })).toContainText('Learning to compose');
 	const wordProblems = page.locator('#word-problems');
 	await expect(wordProblems).toContainText('294 runs');
 	await expect(
 		wordProblems
 			.getByRole('row')
-			.filter({ has: page.getByRole('rowheader', { name: 'Holonomy', exact: true }) })
+			.filter({ has: page.getByRole('rowheader', { name: 'Holonomy attention', exact: true }) })
 			.getByRole('cell')
 	).toHaveText(['100.0', '100.0', '99.8', '98.4']);
 	await expect(wordProblems).toContainText('20,000-step amendment runs');
@@ -55,9 +55,15 @@ test('report includes completed word-problem results with their limits', async (
 	await expect(wordProblems).toContainText('Some predictions failed');
 	await expect(page.locator('main')).not.toContainText('results pending');
 	await expect(page.locator('main')).toContainText('Seq2Tens');
-	await page.goto('/learn');
-	await expect(page.locator('#word-problems')).toContainText('98.4%');
-	await expect(
-		page.locator('#word-problems').getByRole('link', { name: 'full results' })
-	).toHaveAttribute('href', '/report#word-problems');
+});
+
+test('old Learn and Report links land on the matching paper section', async ({ page }) => {
+	await page.goto('/report#groups');
+	await expect(page).toHaveURL(/\/paper#ceiling$/);
+	await page.goto('/learn#binding');
+	await expect(page).toHaveURL(/\/paper#head$/);
+	await page.goto('/learn#word-problems');
+	await expect(page).toHaveURL(/\/paper#word-problems$/);
+	await page.goto('/report');
+	await expect(page).toHaveURL(/\/paper$/);
 });

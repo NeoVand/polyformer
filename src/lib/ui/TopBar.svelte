@@ -4,26 +4,24 @@
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import Icon from './Icon.svelte';
 	import Logo from './Logo.svelte';
-	import { Book, Compare, Cube, Github, Note } from './icons.ts';
+	import { Book, Compare, Cube, Github } from './icons.ts';
 
 	const sets = getBench('set');
 	const chase = getBench('chase');
 
 	const nav = [
-		{ label: 'Learn', href: resolve('/learn'), match: '/learn', icon: Book },
+		{ label: 'Paper', href: resolve('/paper'), match: '/paper', icon: Book },
 		{ label: 'Explore', href: resolve('/explore'), match: '/explore', icon: Cube },
-		{ label: 'Compare', href: resolve('/compare'), match: '/compare', icon: Compare },
-		{ label: 'Report', href: resolve('/report'), match: '/report', icon: Note }
+		{ label: 'Compare', href: resolve('/compare'), match: '/compare', icon: Compare }
 	];
 
 	const titles: Record<string, string> = {
-		'/learn': 'From pairs to composition',
+		'/paper': 'Learning to compose',
 		'/explore': 'Cubic attention',
 		'/explore/diagrams': 'Feynman attention, a sum over diagrams',
 		'/explore/newton': 'Newton attention',
 		'/explore/groups': 'Learned rotations',
-		'/compare': 'Bench',
-		'/report': 'Working paper'
+		'/compare': 'Bench'
 	};
 
 	const route = $derived(page.route.id ?? '/');

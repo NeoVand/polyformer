@@ -321,7 +321,8 @@
 					</p>
 					<p>
 						<a href={resolve('/explore/groups')}>Inspect the learned rotations</a> or
-						<a href={resolve('/report') + '#groups'}>read the protocol and full tables</a>.
+						<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolved, plus an anchor -->
+						<a href={resolve('/paper') + '#ceiling'}>read the protocol and full tables</a>.
 					</p>
 				</section>
 				<section>

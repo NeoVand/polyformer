@@ -1,54 +1,23 @@
-<script lang="ts">
+<script lang="ts" module>
 	/**
-	 * The live figure beside each Learn chapter. Everything is computed from the same
-	 * code the app runs: the hand-built head, the operators' cost formulas, the Feynman attention
-	 * sector sizes, and runs recorded with the in-browser engine.
+	 * Figures for the paper, one per section id. Everything is computed from the same code
+	 * the app runs: the hand-built head, the operators' cost formulas, the Feynman attention
+	 * sector sizes, and runs recorded with the in-browser engine. The data below is shared by
+	 * every instance on the page, so it is computed once.
 	 */
 	import { asset } from '$app/paths';
-	import { CHASE_QUERY_POS, dealChase, solveChase, type ChaseInstance } from '#lib/chase/chase.ts';
+	import { dealChase, solveChase, type ChaseInstance } from '#lib/chase/chase.ts';
 	import type { DiagramResult } from '#lib/engine/protocol.ts';
 	import { majorityBaseline } from '#lib/engine/data.ts';
 	import { pairMoment, querySlice, topHyperedges } from '#lib/explore/analysis.ts';
 	import { exactProbe } from '#lib/explore/exact.ts';
 	import { DECK, dealLayout, findSets, type Card } from '#lib/set/cards.ts';
 	import { mulberry32 } from '#lib/set/rng.ts';
-	import FeatureStrip from '#lib/ui/FeatureStrip.svelte';
-	import Heatmap from '#lib/ui/Heatmap.svelte';
-	import LineChart, { type Series } from '#lib/ui/LineChart.svelte';
-	import MathTex from '#lib/ui/Math.svelte';
-	import SetCard from '#lib/ui/SetCard.svelte';
-	import { pct } from '#lib/ui/format.ts';
-	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
-	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
-	import FeynmanDiagram from '#lib/viz/FeynmanDiagram.svelte';
-	import FlowLegend from '#lib/viz/FlowLegend.svelte';
-	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
-	import TensorCube from '#lib/viz/TensorCube.svelte';
+	import type { Series } from '#lib/ui/LineChart.svelte';
 	import { idealChase, idealSet } from '#lib/viz/feynman.ts';
-	import {
-		ARITY_RESULTS,
-		barrierSlices,
-		costCurves,
-		scoreDistribution,
-		sectorSizes,
-		softmax
-	} from './figures.ts';
-	import DiagramSum from './DiagramSum.svelte';
-	import ArityFigure from '#lib/report/ArityFigure.svelte';
-	import ArityUseFigure from '#lib/report/ArityUseFigure.svelte';
-	import CharactersFigure from '#lib/report/CharactersFigure.svelte';
-	import NewtonDemo from '#lib/report/NewtonDemo.svelte';
-	import ReplicationTable from '#lib/report/ReplicationTable.svelte';
-	import phaseA from '#lib/report/results/phase_a.json';
-	import newtonB from '#lib/report/results/newton_b.json';
-	import newtonE from '#lib/report/results/newton_e.json';
-	import newtonDiag from '#lib/report/results/newton_diag.json';
-	import QedDiagram from './QedDiagram.svelte';
-	import ChaseLists from '#lib/ui/ChaseLists.svelte';
 	import { zeroSumMembers } from '#lib/tasks/matchk.ts';
+	import { barrierSlices, costCurves, scoreDistribution, sectorSizes, softmax } from './figures.ts';
 	import { REFERENCES } from './references.ts';
-
-	let { section }: { section: string } = $props();
 
 	// ── one table shared by every figure ─────────────────────────────────────
 	const layout: Card[] = (() => {
@@ -63,7 +32,6 @@
 	const inSet = layout.map((_, i) => sets.some((s) => s.includes(i)));
 
 	// ── the puzzles, one example each ─────────────────────────────────────────
-	let puzzle = $state<'set' | 'match4' | 'chase' | 'compose'>('set');
 	const nine: Card[] = (() => {
 		const rng = mulberry32(5);
 		for (;;) {
@@ -152,7 +120,6 @@
 
 	const majority3 = majorityBaseline('set', 600);
 
-	let diagramTask = $state<'set' | 'chase'>('set');
 	const chase = (() => {
 		const rng = mulberry32(8);
 		let inst = dealChase(rng);
@@ -162,44 +129,25 @@
 	const chaseHead = idealChase(chase, 4);
 	const setHead = idealSet(layout, 2);
 
-	// recorded runs, fetched once
+	// recorded runs and trained models, each fetched once for the whole page
 	interface RecordedRun {
 		evalSteps: number[];
 		evalAccuracy: number[];
 	}
-	let recordedSet = $state.raw<Record<string, RecordedRun> | null>(null);
-	let recordedChase = $state.raw<Record<string, RecordedRun> | null>(null);
-	$effect(() => {
-		const load = (url: string) =>
-			fetch(url)
-				.then((r) => (r.ok ? r.json() : null))
-				.then((j) => (j?.runs as Record<string, RecordedRun>) ?? null)
-				.catch(() => null);
-		load(asset('recorded/set.json')).then((r) => (recordedSet = r));
-		load(asset('recorded/chase.json')).then((r) => (recordedChase = r));
-		const raw = (url: string) =>
-			fetch(url)
-				.then((r) => (r.ok ? r.json() : null))
-				.catch(() => null);
-		raw(asset('recorded/chase-diagram.json')).then((j) => j?.diagram && (chaseModel = j));
-		raw(asset('recorded/set-diagram.json')).then((j) => j?.diagram && (setModel = j));
-	});
+	// a plain cache of fetches shared by every figure on the page, never read reactively
+	// eslint-disable-next-line svelte/prefer-svelte-reactivity
+	const cache = new Map<string, Promise<unknown>>();
+	function load<T>(path: Parameters<typeof asset>[0]): Promise<T | null> {
+		if (!cache.has(path))
+			cache.set(
+				path,
+				fetch(asset(path))
+					.then((r) => (r.ok ? r.json() : null))
+					.catch(() => null)
+			);
+		return cache.get(path) as Promise<T | null>;
+	}
 
-	// trained Feynman attention models, recorded in a browser, read token by token
-	let chaseModel = $state.raw<{ instance: ChaseInstance; diagram: DiagramResult } | null>(null);
-	let setModel = $state.raw<{ layout: number[][]; diagram: DiagramResult } | null>(null);
-	let learnedTask = $state<'chase' | 'set'>('chase');
-	let learnedRoot = $state<number | null>(null);
-	const chaseHeld = $derived(
-		chaseModel
-			? heldPayloads(
-					chaseModel.diagram.perHead[0],
-					chaseModel.diagram.n,
-					chaseModel.diagram.rounds,
-					chaseModel.instance
-				)
-			: null
-	);
 	const LABELS: Record<string, [string, number, string]> = {
 		cubic: ['Cubic', 1, ''],
 		dspa: ['Feynman', 0.86, '10 3'],
@@ -228,14 +176,96 @@
 	const TIMELINE = [
 		{ year: 2017, ref: 'vaswani', what: 'Attention: every token scores every token' },
 		{ year: 2020, ref: 'clift', what: '2-simplicial attention: a query scores pairs' },
+		{ year: 2020, ref: 'seq2tens', what: 'Seq2Tens: ordered products over subsequences' },
+		{ year: 2022, ref: 'development', what: 'Path development: group products along a sequence' },
 		{ year: 2023, ref: 'sanford', what: 'Match3 separates pairwise from tensor attention' },
 		{ year: 2023, ref: 'neo', what: 'Polyformer notebook: cubic attention, derived independently' },
 		{ year: 2025, ref: 'kozachinskiy', what: 'Strassen attention: degree 2, faster' },
 		{ year: 2025, ref: 'roy', what: 'Fast 2-simplicial attention at scale' },
+		{ year: 2025, ref: 'path', what: 'PaTH: Householder products inside attention' },
 		{ year: 2026, ref: 'chakrabarti', what: 'Poly-attention: a general scheme' },
-		{ year: 2026, ref: '', what: 'This project: coupling barrier, exact head, Feynman attention' }
+		{
+			year: 2026,
+			ref: '',
+			what: 'This project: Feynman, Newton and holonomy attention; order-blind ceilings'
+		}
 	];
 	const refNo = (id: string) => REFERENCES.findIndex((r) => r.id === id) + 1;
+</script>
+
+<script lang="ts">
+	import { CHASE_QUERY_POS } from '#lib/chase/chase.ts';
+	import FeatureStrip from '#lib/ui/FeatureStrip.svelte';
+	import Heatmap from '#lib/ui/Heatmap.svelte';
+	import LineChart from '#lib/ui/LineChart.svelte';
+	import MathTex from '#lib/ui/Math.svelte';
+	import SetCard from '#lib/ui/SetCard.svelte';
+	import { pct } from '#lib/ui/format.ts';
+	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
+	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
+	import FeynmanDiagram from '#lib/viz/FeynmanDiagram.svelte';
+	import FlowLegend from '#lib/viz/FlowLegend.svelte';
+	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
+	import TensorCube from '#lib/viz/TensorCube.svelte';
+	import { ARITY_RESULTS } from './figures.ts';
+	import DiagramSum from './DiagramSum.svelte';
+	import ArityFigure from '#lib/report/ArityFigure.svelte';
+	import ArityUseFigure from '#lib/report/ArityUseFigure.svelte';
+	import CharactersFigure from '#lib/report/CharactersFigure.svelte';
+	import NewtonDemo from '#lib/report/NewtonDemo.svelte';
+	import ReplicationTable from '#lib/report/ReplicationTable.svelte';
+	import phaseA from '#lib/report/results/phase_a.json';
+	import newtonB from '#lib/report/results/newton_b.json';
+	import newtonE from '#lib/report/results/newton_e.json';
+	import newtonDiag from '#lib/report/results/newton_diag.json';
+	import QedDiagram from './QedDiagram.svelte';
+	import ChaseLists from '#lib/ui/ChaseLists.svelte';
+
+	let { section }: { section: string } = $props();
+
+	let puzzle = $state<'set' | 'match4' | 'chase' | 'compose'>('set');
+	let diagramTask = $state<'set' | 'chase'>('set');
+
+	// only the figures that show recorded runs fetch them
+	let recordedSet = $state.raw<Record<string, RecordedRun> | null>(null);
+	let recordedChase = $state.raw<Record<string, RecordedRun> | null>(null);
+	let chaseModel = $state.raw<{ instance: ChaseInstance; diagram: DiagramResult } | null>(null);
+	let setModel = $state.raw<{ layout: number[][]; diagram: DiagramResult } | null>(null);
+	$effect(() => {
+		if (section === 'training')
+			load<{ runs: Record<string, RecordedRun> }>('recorded/set.json').then(
+				(j) => (recordedSet = j?.runs ?? null)
+			);
+		if (section === 'chase') {
+			load<{ runs: Record<string, RecordedRun> }>('recorded/chase.json').then(
+				(j) => (recordedChase = j?.runs ?? null)
+			);
+			load<{ instance: ChaseInstance; diagram: DiagramResult }>('recorded/chase-diagram.json').then(
+				(j) => j?.diagram && (chaseModel = j)
+			);
+			load<{ layout: number[][]; diagram: DiagramResult }>('recorded/set-diagram.json').then(
+				(j) => j?.diagram && (setModel = j)
+			);
+		}
+	});
+
+	// trained Feynman attention models, recorded in a browser, read token by token
+	// the barrier heatmaps share the figure's width, three per row
+	let barrierWidth = $state(420);
+	const heatSize = $derived(Math.max(72, Math.min(104, Math.floor((barrierWidth - 84) / 3))));
+
+	let learnedTask = $state<'chase' | 'set'>('chase');
+	let learnedRoot = $state<number | null>(null);
+	const chaseHeld = $derived(
+		chaseModel
+			? heldPayloads(
+					chaseModel.diagram.perHead[0],
+					chaseModel.diagram.n,
+					chaseModel.diagram.rounds,
+					chaseModel.instance
+				)
+			: null
+	);
 </script>
 
 {#if section === 'puzzles'}
@@ -477,14 +507,14 @@
 	</figure>
 {:else if section === 'barrier'}
 	<figure class="fig">
-		<div class="grid3">
+		<div class="grid3" bind:clientWidth={barrierWidth}>
 			<span class="g-label">Degree 2</span>
 			{#each barrier.degree2 as m, q (q)}
 				<Heatmap
 					values={m}
 					rows={12}
 					cols={12}
-					size={104}
+					size={heatSize}
 					scale="signed"
 					max={barrier.max2}
 					label="Degree-2 slice"
@@ -496,7 +526,7 @@
 					values={m}
 					rows={12}
 					cols={12}
-					size={104}
+					size={heatSize}
 					scale="signed"
 					max={barrier.maxCubic}
 					label="Cubic slice"
@@ -926,7 +956,7 @@
 		animation: arrive 360ms ease both;
 	}
 	.fig.tall {
-		height: 100%;
+		height: clamp(360px, 72vw, 540px);
 		grid-template-rows: minmax(0, 1fr) auto;
 	}
 	.fig.tall:has(.fig-head) {
@@ -936,13 +966,17 @@
 		justify-items: stretch;
 	}
 	.learned-key {
+		display: flex;
+		justify-content: center;
 		margin: 10px 0 8px;
 	}
 	.learned-note {
-		margin: 0 0 22px;
+		max-width: 52ch;
+		margin: 0 auto 22px;
 		font-size: var(--text-xs);
 		line-height: 1.55;
 		color: var(--color-ink-3);
+		text-align: center;
 	}
 	.three {
 		position: relative;
@@ -1074,6 +1108,7 @@
 	}
 	.grid3 {
 		display: grid;
+		width: min(100%, 420px);
 		grid-template-columns: auto repeat(3, auto);
 		gap: 10px 12px;
 		align-items: center;
@@ -1120,7 +1155,8 @@
 	}
 	.results {
 		display: grid;
-		grid-template-columns: 140px 220px 56px;
+		width: min(100%, 440px);
+		grid-template-columns: minmax(84px, 140px) minmax(60px, 1fr) 52px;
 		gap: 8px 12px;
 		align-items: center;
 	}
@@ -1245,7 +1281,7 @@
 	}
 	.mass {
 		display: grid;
-		grid-template-columns: 90px min(300px, 60vw);
+		grid-template-columns: 76px min(300px, 58vw);
 		gap: 14px 12px;
 		align-items: center;
 	}
@@ -1288,7 +1324,7 @@
 	}
 	.atlas {
 		display: grid;
-		grid-template-columns: 70px auto;
+		grid-template-columns: 70px minmax(0, auto);
 		gap: 18px 16px;
 		align-items: center;
 	}
@@ -1303,7 +1339,8 @@
 	}
 	.row {
 		display: flex;
-		gap: 22px;
+		flex-wrap: wrap;
+		gap: 16px 22px;
 	}
 	.cell {
 		display: grid;
