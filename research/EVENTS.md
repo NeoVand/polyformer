@@ -270,3 +270,17 @@ in the $300.
   H1. At 8,192 and base size, `hyb` is below `soft` on each of seeds 1–3 at 443M softmax tokens, by
   at least 0.5% on the mean. H2. Its margin at 2,048 (seeds 1–2) is smaller than at 8,192 by at least
   0.5 points.
+- **Cheap-day confirmation** (`events_confirm`, context 512, seeds 1–3, equal modeled FLOPs, 443M
+  softmax tokens; `val_big` 1,024 windows; paired t over windows of the seed-averaged difference):
+
+  | Arm | val_big | vs control | per seed | paired t | non-emb. params | wall |
+  |---|---|---|---|---|---|---|
+  | control: rope+forget+gate+vres | 3.5235 | | | | 20.5M | 1,241 s |
+  | candidate: hybrid holo+forget+gate+vres, 1 transport head | 3.5278 | +0.12% | +0.04 / +0.11 / +0.22 | +5.6 | 21.7M | 1,837 s |
+  | equal-parameter control (MLP 2,234) | **3.5172** | **−0.18%** | −0.20 / −0.24 / −0.09 | −8.3 | 21.7M | 1,376 s |
+
+  Against LOOPS's rows under the same protocol, the two parts lower rope+forget by 1.33% (3.5709 →
+  3.5235) and the hybrid by 0.57% (3.5479 → 3.5278). **C4 fails**: with the gate and the value
+  residual in both arms, the candidate is above the control on every seed, and above the
+  equal-parameter control by 0.30%, at 1.48 times the wall clock. At context 512 the hybrid's 0.64%
+  over rope+forget in LOOPS was something the published parts give softmax for free.

@@ -222,6 +222,28 @@ def stage(name):
                 ("soft", "hyb", "ev_l8", "ev_l16", "ev_l8_rope", "ev_l8_wide")]
         jobs += [long_arm_job(n, 2048, 0, 3051, 512, 0) for n in ("soft", "hyb", "ev_l8")]
         return jobs
+    if name.startswith("probe:"):
+        # probe:manifest[,manifest...]  every saved checkpoint of those manifests: loss buckets with the
+        # frame ablations (loops_eval, the val_big windows) and the probes (events_probe), three per job
+        import glob
+        paths = []
+        for p in sorted(glob.glob(str(pathlib.Path(__file__).parent / "results" / "loops_runs" / "*.json"))):
+            r = json.load(open(p))
+            if r.get("manifest") in name.split(":")[1].split(",") and r.get("val_big_raw"):
+                argv = r["argv"]
+                ctx = int(argv[argv.index("--ctx") + 1])
+                data = argv[argv.index("--data") + 1]
+                paths.append((ctx, data, f"/runs/{r['job_id']}/final.pkl"))
+        jobs = []
+        for key in sorted({(c, d) for c, d, _ in paths}):
+            group = [p for c, d, p in paths if (c, d) == key]
+            for i in range(0, len(group), 3):
+                ck = ",".join(group[i:i + 3])
+                jobs.append({"script": "loops_eval.py", "gpu": "H100", "max_seconds": 2400,
+                             "argv": ["--ckpts", ck, "--data", key[1], "--seqs", str(2 ** 21 // key[0]), "--ablate", "1"]})
+                jobs.append({"script": "events_probe.py", "gpu": "H100", "max_seconds": 2400,
+                             "argv": ["--ckpts", ck, "--data", key[1]]})
+        return jobs
     if name.startswith("long:"):
         # long:ctx:arm1,arm2:seeds[:size[:data]]  e.g. long:8192:soft,hyb,ev_l8:1,2,3
         # reference 13,531 updates of the strengthened softmax control (443M tokens); held-out windows:
