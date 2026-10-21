@@ -235,7 +235,7 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   seed-0 references: Gated DeltaNet 3.855246, DeltaProduct 3.840066, convolved Parallax 3.871201.
   Against the predictions: P1 holds (rope −1.17%). **P2 fails**: content-driven abelian clocks alone
   are 0.30% worse than RoPE. P3's language half holds (holo within ±0.3% of rope; vtrans costs 0.4% on
-  text). P4 holds and is the largest single effect: the forget gate is worth 0.60% on top of rope.
+  text). P4 misses on the high side (registered 0.1–0.5%; observed 0.60% on top of rope), and the gate is the largest single effect at this length; at 443M tokens it is 0.25%, inside the range.
   P5 holds at this seed: both hybrids beat every attention arm and both recurrent references, and
   the hybrid with holo+forget beats the hybrid with rope (by 0.18%, which this screen cannot separate
   from the forget gate). P6 holds: the depth loop is 0.54% worse than six distinct blocks at equal
@@ -314,19 +314,19 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   2.6); a few blocks stayed at RoPE. The model uses the non-abelian frames, yet they do not lower
   the loss at this scale. The forget gates repeat the rope+forget pattern (short half-lives early,
   up to tens of thousands of tokens in the last attention layer; resets at boundaries).
-- Seed 1 complete: GDN 3.579272 (12,756 updates); the candidate is 0.84% below it. Caps moved again
+- Seed 1 complete: GDN 3.579267 (12,756 updates); the candidate is 0.84% below it. Caps moved again
   (development $1, screen $14, language $85; total still $100) so the scale check and DeltaProduct fit;
   launched with limited concurrency so reservations never exceed the cap.
 - **Stage 3 complete** (val_big; equal modeled training FLOPs; seeds 1/2/3; mean in the last column):
 
   | Arm | Seed 1 | Seed 2 | Seed 3 | Mean |
   |---|---|---|---|---|
-  | **hybrid GAGAGA holo+forget (candidate)** | 3.549097 | 3.547500 | 3.547070 | 3.547889 |
-  | hybrid GAGAGA rope | 3.550674 | 3.551037 | 3.552140 | 3.551284 |
-  | rope+forget | 3.573876 | 3.568775 | 3.570090 | 3.570914 |
-  | GDN | 3.579272 | 3.574200 | 3.578030 | 3.577167 |
-  | rope | 3.583959 | 3.576787 | 3.578580 | 3.579775 |
-  | abs | 3.612944 | 3.606994 | 3.621190 | 3.613709 |
+  | **hybrid GAGAGA holo+forget (candidate)** | 3.549097 | 3.547497 | 3.547073 | 3.547889 |
+  | hybrid GAGAGA rope | 3.550674 | 3.551037 | 3.552143 | 3.551284 |
+  | rope+forget | 3.573876 | 3.568775 | 3.570093 | 3.570914 |
+  | GDN | 3.579267 | 3.574195 | 3.578025 | 3.577162 |
+  | rope | 3.583959 | 3.576787 | 3.578579 | 3.579775 |
+  | abs | 3.612944 | 3.606994 | 3.621186 | 3.613708 |
 
   Candidate vs rope: −0.973%, −0.819%, −0.880%. **The registered headline fails on all three seeds**
   (1% needed); the candidate beats softmax by 0.82–0.97% at equal compute. Everything else about the
@@ -350,4 +350,10 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   the lowest loss of every arm on every seed, recurrent controls included.
 - Final spend: $75.41 settled across 50 runs (stage 1 $0.53, screens $13.96, language $60.93), none
   failed. Modal apps stopped. Everything is committed on branch `claude/loops`; nothing pushed.
+- Report for review: `research/LOOPS_REPORT.md` (all results, predictions scorecard, caveats,
+  questions). Writing it surfaced two corrections to this log, applied above: P4 missed on the high
+  side at 100M tokens (0.60% against a registered 0.1–0.5%), and several stage-3 losses had been
+  transcribed with errors in the sixth decimal. It also surfaced a reading of BEYOND: under this
+  protocol GDN is only 0.07% better than RoPE softmax and DeltaProduct 0.30%, so most of BEYOND's
+  recurrent advantage over convolved softmax came from the softmax baseline's learned positions.
 
