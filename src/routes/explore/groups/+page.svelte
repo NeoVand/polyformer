@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { asset, resolve } from '$app/paths';
+	import { asset } from '$app/paths';
 	import { onMount } from 'svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
-	import { Feynman, Newton, Simplex } from '#lib/ui/icons.ts';
+	import { exploreRail } from '#lib/explore/rail.ts';
 	import A5Rotation from '#lib/viz/A5Rotation.svelte';
 	import {
 		cycleLabel,
@@ -56,15 +56,7 @@
 	/>
 </svelte:head>
 
-<PageFrame
-	rail={[
-		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
-		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') },
-		{ id: 'groups', label: 'Holonomy', icon: Simplex, href: resolve('/explore/groups') }
-	]}
-	active="groups"
->
+<PageFrame rail={exploreRail()} active="groups">
 	<div class="lab">
 		<header>
 			<p class="eyebrow">Composition lab</p>

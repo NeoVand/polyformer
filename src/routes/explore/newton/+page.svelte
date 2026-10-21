@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { asset, resolve } from '$app/paths';
+	import { asset } from '$app/paths';
 	import { untrack } from 'svelte';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import type { Knockout, NewtonProbe } from '#lib/engine/protocol.ts';
@@ -18,9 +18,10 @@
 	import Icon from '#lib/ui/Icon.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
+	import { exploreRail } from '#lib/explore/rail.ts';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import { Dice, Download, Feynman, Newton, Pause, Play, Simplex } from '#lib/ui/icons.ts';
+	import { Dice, Download, Pause, Play } from '#lib/ui/icons.ts';
 
 	const bench = getBench('match4');
 	const RUN = 'newton';
@@ -341,15 +342,7 @@
 	<title>Explore Newton attention | Polyformer</title>
 </svelte:head>
 
-<PageFrame
-	rail={[
-		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
-		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') },
-		{ id: 'groups', label: 'Holonomy', icon: Simplex, href: resolve('/explore/groups') }
-	]}
-	active="newton"
->
+<PageFrame rail={exploreRail()} active="newton">
 	<div class="lab">
 		<header class="head">
 			<h1>Newton attention</h1>

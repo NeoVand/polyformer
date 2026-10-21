@@ -1,5 +1,4 @@
 <script lang="ts">
-	import { resolve } from '$app/paths';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import type { ProbeResult } from '#lib/engine/protocol.ts';
 	import {
@@ -19,20 +18,10 @@
 	import Icon from '#lib/ui/Icon.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
+	import { exploreRail } from '#lib/explore/rail.ts';
 	import RolePicker from '#lib/ui/RolePicker.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import {
-		Dice,
-		Feynman,
-		Newton,
-		Next,
-		Pause,
-		Play,
-		Previous,
-		Reset,
-		Simplex,
-		Thermometer
-	} from '#lib/ui/icons.ts';
+	import { Dice, Next, Pause, Play, Previous, Reset, Thermometer } from '#lib/ui/icons.ts';
 	import Hypergraph3D from '#lib/viz/Hypergraph3D.svelte';
 	import TensorCube from '#lib/viz/TensorCube.svelte';
 
@@ -235,15 +224,7 @@
 </svelte:head>
 <svelte:window bind:innerWidth />
 
-<PageFrame
-	rail={[
-		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
-		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') },
-		{ id: 'groups', label: 'Holonomy', icon: Simplex, href: resolve('/explore/groups') }
-	]}
-	active="tensor"
->
+<PageFrame rail={exploreRail()} active="tensor">
 	<div class="lab" data-mode={mode}>
 		<header class="head">
 			<div class="title-row">

@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { asset, resolve } from '$app/paths';
+	import { asset } from '$app/paths';
 	import { CHASE_QUERY_POS, dealChase, solveChase, type ChaseInstance } from '#lib/chase/chase.ts';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
 	import type { DiagramHead, DiagramResult, DiagramSector } from '#lib/engine/protocol.ts';
@@ -8,19 +8,10 @@
 	import Icon from '#lib/ui/Icon.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
+	import { exploreRail } from '#lib/explore/rail.ts';
 	import SetCard from '#lib/ui/SetCard.svelte';
 	import { pct } from '#lib/ui/format.ts';
-	import {
-		Dice,
-		Feynman,
-		Newton,
-		Next,
-		Pause,
-		Play,
-		Previous,
-		Scissors,
-		Simplex
-	} from '#lib/ui/icons.ts';
+	import { Dice, Next, Pause, Play, Previous, Scissors } from '#lib/ui/icons.ts';
 	import ChaseLists from '#lib/ui/ChaseLists.svelte';
 	import { flowGroups, heldPayloads } from '#lib/viz/chaseFlow.ts';
 	import DiagramFlow from '#lib/viz/DiagramFlow.svelte';
@@ -299,15 +290,7 @@
 	<title>Diagrams | Polyformer</title>
 </svelte:head>
 
-<PageFrame
-	rail={[
-		{ id: 'tensor', label: 'Cubic', icon: Simplex, href: resolve('/explore') },
-		{ id: 'diagrams', label: 'Feynman', icon: Feynman, href: resolve('/explore/diagrams') },
-		{ id: 'newton', label: 'Newton', icon: Newton, href: resolve('/explore/newton') },
-		{ id: 'groups', label: 'Holonomy', icon: Simplex, href: resolve('/explore/groups') }
-	]}
-	active="diagrams"
->
+<PageFrame rail={exploreRail()} active="diagrams">
 	<div class="screen">
 		<header class="head">
 			<div class="title-row">

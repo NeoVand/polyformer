@@ -46,10 +46,10 @@ export { default as Workflow } from '@hugeicons/core-free-icons/WorkflowSquare01
 export { default as Github } from '@hugeicons/core-free-icons/GithubIcon';
 
 /*
- * Two marks drawn for this project on the same 24px grid and 1.5px stroke, so they
- * sit beside the Hugeicons set: a 2-simplex for cubic attention (one query, a pair
- * of keys) and a textbook Feynman diagram for Feynman attention (two lines meet, exchange a
- * photon, and part).
+ * Marks drawn for this project on the same 24px grid and 1.5px stroke, so they sit beside
+ * the Hugeicons set: a 2-simplex for cubic attention (one query, a pair of keys), a textbook
+ * Feynman diagram for Feynman attention (two lines meet, exchange a photon, and part), a
+ * phase wheel for Newton attention and a carried frame for holonomy attention.
  */
 const stroke = {
 	stroke: 'currentColor',
@@ -73,4 +73,12 @@ export const Newton = [
 	['circle', { cx: '12', cy: '4', r: '1.6', fill: 'currentColor', ...stroke, key: '1' }],
 	['circle', { cx: '5.07', cy: '16', r: '1.6', fill: 'currentColor', ...stroke, key: '2' }],
 	['circle', { cx: '18.93', cy: '16', r: '1.6', fill: 'currentColor', ...stroke, key: '3' }]
+] as unknown as IconData;
+/**
+ * Holonomy attention: carried once around the loop, a frame comes back turned. The arc is the
+ * loop, the arrow its direction, and the tilted square the frame it turns.
+ */
+export const Holonomy = [
+	['path', { d: 'M18.93 8 A8 8 0 1 1 12 4 M9.4 2 L12 4 L9.4 6', ...stroke, key: '0' }],
+	['path', { d: 'M13.16 8.72 L15.28 13.16 L10.84 15.28 L8.72 10.84 Z', ...stroke, key: '1' }]
 ] as unknown as IconData;
