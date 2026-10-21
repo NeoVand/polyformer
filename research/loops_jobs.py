@@ -151,7 +151,7 @@ def stage(name):
         jobs = []
         for i in range(0, len(paths), 4):
             argv = ["--ckpts", ",".join(paths[i:i + 4]), "--data", "/data/fineweb_edu", "--ablate", "1"]
-            jobs.append({"script": "loops_eval.py", "argv": argv, "gpu": "L4", "max_seconds": 2400})
+            jobs.append({"script": "loops_eval.py", "argv": argv, "gpu": "H100", "max_seconds": 1800})
         return jobs
     if name == "cheap":
         names = ("rope_forget_gate", "rope_forget_vres", "rope_forget_gate_vres", "hybrid_hf_gate", "hybrid_hf_vres",

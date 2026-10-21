@@ -128,4 +128,15 @@ The ledger is `research/results/loops_budget.json`; `loops_modal.py` caps are ra
   `hybrid_hf_gate_vres_vt1` is within 0.1% of `hybrid_hf_gate_vres` (C3). Confirmation arms: the
   strengthened control, the strengthened candidate, and the strengthened control with its MLP
   widened to the candidate's non-embedding parameter count; seeds 1–3, equal modeled FLOPs.
+- The first evaluation launch (`events_eval`, six L4 jobs) never got a container: every input stayed
+  PENDING for 40 minutes while H100 jobs scheduled normally. Cancelled and settled at $0 in the
+  ledger (no compute ran); relaunched on H100 as `events_eval_h100`.
+- Event model implemented (`events_model.py`, arch `events` in `lm.py`) with exact block-causal
+  attention (`loops_layers.causal_attention`) and a decay hook in `beyond_layers.apply_layer`.
+  Tests: blockwise equals dense attention even with large forget biases; the event model is causal
+  (future tokens change no earlier prediction, also when the slot buffer overflows); the router
+  receives gradient. Modeled training FLOPs per token (lm convention): context 2,048: softmax+forget
+  306.8M, hybrid 303.0M, events 283.8M; context 8,192: 422.7M, 361.0M, 291.0M, so at equal compute
+  the event model sees 1.08x (2k) and 1.45x (8k) the tokens of softmax+forget. A timing pilot
+  (`events_timing`) prices the study before its registration is finalised.
 

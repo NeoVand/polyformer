@@ -81,6 +81,36 @@
       "stage": "language",
       "status": "complete"
     },
+    "1fcd1c758d0e1c190f7e04c7": {
+      "call_id": "fc-01M5FH2DERF4AT10PPQ3QNYQRX",
+      "gpu": "H100",
+      "id": "1fcd1c758d0e1c190f7e04c7",
+      "launched_at": "2026-10-21T15:25:25.890310+00:00",
+      "manifest": "events_cheap",
+      "manifest_sha256": "29fbcc2d3fbf31aaca79dd29bf2975588de971bb5418f40706f525574daa1095",
+      "reserved_at": "2026-10-21T15:25:25.577301+00:00",
+      "reserved_usd": 1.283903,
+      "result_file": "results/loops_runs/1fcd1c758d0e1c190f7e04c7.json",
+      "settled_at": "2026-10-21T15:30:53.081050+00:00",
+      "settled_usd": 0.57953,
+      "stage": "screen",
+      "status": "complete"
+    },
+    "21023e840dc23a4f4b93593e": {
+      "call_id": "fc-01M5FGYZSS44H2NWWVQZFTV6M9",
+      "gpu": "L4",
+      "id": "21023e840dc23a4f4b93593e",
+      "launched_at": "2026-10-21T15:23:33.608773+00:00",
+      "manifest": "events_eval",
+      "manifest_sha256": "1164b7a5e99240c3cd08ddca37379b9a33042db065181af277a7fd33071062c4",
+      "note": "cancelled: the L4 input stayed PENDING with no container for 40 minutes; no compute ran",
+      "reserved_at": "2026-10-21T15:23:33.259796+00:00",
+      "reserved_usd": 0.881563,
+      "settled_at": "2026-10-21T15:31:46.938927+00:00",
+      "settled_usd": 0.0,
+      "stage": "development",
+      "status": "error"
+    },
     "214822baacd59710c8cd9a5f": {
       "call_id": "fc-01M5EJ61FG28GG3J5S19M2MFHC",
       "gpu": "H100",
@@ -170,6 +200,18 @@
       "settled_usd": 2.99003,
       "stage": "language",
       "status": "complete"
+    },
+    "3e185c298afa7d77601e9f1b": {
+      "call_id": "fc-01M5FH2DFQQ70J59RW24E8F0BQ",
+      "gpu": "H100",
+      "id": "3e185c298afa7d77601e9f1b",
+      "launched_at": "2026-10-21T15:25:25.919642+00:00",
+      "manifest": "events_cheap",
+      "manifest_sha256": "29fbcc2d3fbf31aaca79dd29bf2975588de971bb5418f40706f525574daa1095",
+      "reserved_at": "2026-10-21T15:25:25.585937+00:00",
+      "reserved_usd": 1.894123,
+      "stage": "screen",
+      "status": "running"
     },
     "4209f1ebb7599d10a7c10542": {
       "call_id": "fc-01M5EK21T10N8ENP29DTTF9WRZ",
@@ -306,6 +348,21 @@
       "stage": "language",
       "status": "complete"
     },
+    "6678dd6207270645696bdaeb": {
+      "call_id": "fc-01M5FGYZSQP8X47CT116CFEG0Q",
+      "gpu": "L4",
+      "id": "6678dd6207270645696bdaeb",
+      "launched_at": "2026-10-21T15:23:33.604810+00:00",
+      "manifest": "events_eval",
+      "manifest_sha256": "1164b7a5e99240c3cd08ddca37379b9a33042db065181af277a7fd33071062c4",
+      "note": "cancelled: the L4 input stayed PENDING with no container for 40 minutes; no compute ran",
+      "reserved_at": "2026-10-21T15:23:33.258392+00:00",
+      "reserved_usd": 0.881563,
+      "settled_at": "2026-10-21T15:31:46.938921+00:00",
+      "settled_usd": 0.0,
+      "stage": "development",
+      "status": "error"
+    },
     "6a6f7611b396aab8625764ac": {
       "call_id": "fc-01M5EK21DMDTCVNW0FDD5V2QZH",
       "gpu": "H100",
@@ -380,6 +437,30 @@
       "settled_usd": 0.58628,
       "stage": "screen",
       "status": "complete"
+    },
+    "91009de507619324b1c452b1": {
+      "call_id": "fc-01M5FHD2S1K3887222K2GSH5M4",
+      "gpu": "H100",
+      "id": "91009de507619324b1c452b1",
+      "launched_at": "2026-10-21T15:31:15.396754+00:00",
+      "manifest": "events_cheap",
+      "manifest_sha256": "29fbcc2d3fbf31aaca79dd29bf2975588de971bb5418f40706f525574daa1095",
+      "reserved_at": "2026-10-21T15:31:15.310768+00:00",
+      "reserved_usd": 1.894123,
+      "stage": "screen",
+      "status": "running"
+    },
+    "932c9fd16179d3d8adbe4876": {
+      "call_id": "fc-01M5FHCBZQN0YV3X26B90ZAWH6",
+      "gpu": "H100",
+      "id": "932c9fd16179d3d8adbe4876",
+      "launched_at": "2026-10-21T15:30:52.066788+00:00",
+      "manifest": "events_cheap",
+      "manifest_sha256": "29fbcc2d3fbf31aaca79dd29bf2975588de971bb5418f40706f525574daa1095",
+      "reserved_at": "2026-10-21T15:30:51.959205+00:00",
+      "reserved_usd": 1.894123,
+      "stage": "screen",
+      "status": "running"
     },
     "9a5752bdd3a29afe7e25a494": {
       "call_id": "fc-01M5EHGNZVAGH9ETAJ2EZZQBJJ",
@@ -471,6 +552,33 @@
       "stage": "language",
       "status": "complete"
     },
+    "a9fc61f1ff62027a86f3542e": {
+      "call_id": "fc-01M5FHCD2PV4B0S79NA8J2K6M6",
+      "gpu": "H100",
+      "id": "a9fc61f1ff62027a86f3542e",
+      "launched_at": "2026-10-21T15:30:53.255657+00:00",
+      "manifest": "events_cheap",
+      "manifest_sha256": "29fbcc2d3fbf31aaca79dd29bf2975588de971bb5418f40706f525574daa1095",
+      "reserved_at": "2026-10-21T15:30:53.084079+00:00",
+      "reserved_usd": 1.894123,
+      "stage": "screen",
+      "status": "running"
+    },
+    "af70e61179b0ab6bc1372126": {
+      "call_id": "fc-01M5FGYZST0QQS1CG08V3B8DD1",
+      "gpu": "L4",
+      "id": "af70e61179b0ab6bc1372126",
+      "launched_at": "2026-10-21T15:23:33.606679+00:00",
+      "manifest": "events_eval",
+      "manifest_sha256": "1164b7a5e99240c3cd08ddca37379b9a33042db065181af277a7fd33071062c4",
+      "note": "cancelled: the L4 input stayed PENDING with no container for 40 minutes; no compute ran",
+      "reserved_at": "2026-10-21T15:23:33.261217+00:00",
+      "reserved_usd": 0.881563,
+      "settled_at": "2026-10-21T15:31:46.938926+00:00",
+      "settled_usd": 0.0,
+      "stage": "development",
+      "status": "error"
+    },
     "b344aee3ef4f573be9acbd92": {
       "call_id": "fc-01M5EK21DFX7K59GMKQSS8STWN",
       "gpu": "H100",
@@ -499,6 +607,36 @@
       "settled_at": "2026-10-21T07:34:56.114949+00:00",
       "settled_usd": 2.678796,
       "stage": "language",
+      "status": "complete"
+    },
+    "bae4f0d7a39ba0b7b1956fa8": {
+      "call_id": "fc-01M5FGYZSS52HQZR6P7CRVPY6G",
+      "gpu": "L4",
+      "id": "bae4f0d7a39ba0b7b1956fa8",
+      "launched_at": "2026-10-21T15:23:33.600445+00:00",
+      "manifest": "events_eval",
+      "manifest_sha256": "1164b7a5e99240c3cd08ddca37379b9a33042db065181af277a7fd33071062c4",
+      "note": "cancelled: the L4 input stayed PENDING with no container for 40 minutes; no compute ran",
+      "reserved_at": "2026-10-21T15:23:33.256930+00:00",
+      "reserved_usd": 0.881563,
+      "settled_at": "2026-10-21T15:31:46.938792+00:00",
+      "settled_usd": 0.0,
+      "stage": "development",
+      "status": "error"
+    },
+    "bb74efdaf4ab3f408a01a594": {
+      "call_id": "fc-01M5FH2DFBH03SD1DDEG5FYV2K",
+      "gpu": "H100",
+      "id": "bb74efdaf4ab3f408a01a594",
+      "launched_at": "2026-10-21T15:25:25.905053+00:00",
+      "manifest": "events_cheap",
+      "manifest_sha256": "29fbcc2d3fbf31aaca79dd29bf2975588de971bb5418f40706f525574daa1095",
+      "reserved_at": "2026-10-21T15:25:25.580370+00:00",
+      "reserved_usd": 1.283903,
+      "result_file": "results/loops_runs/bb74efdaf4ab3f408a01a594.json",
+      "settled_at": "2026-10-21T15:30:51.957094+00:00",
+      "settled_usd": 0.576792,
+      "stage": "screen",
       "status": "complete"
     },
     "be8a3113646890c5e7cb3760": {
@@ -666,6 +804,21 @@
       "stage": "language",
       "status": "complete"
     },
+    "e0d926eeb1db74745ff31f65": {
+      "call_id": "fc-01M5FH2DEXW59QA3912VTTN03M",
+      "gpu": "H100",
+      "id": "e0d926eeb1db74745ff31f65",
+      "launched_at": "2026-10-21T15:25:25.896112+00:00",
+      "manifest": "events_cheap",
+      "manifest_sha256": "29fbcc2d3fbf31aaca79dd29bf2975588de971bb5418f40706f525574daa1095",
+      "reserved_at": "2026-10-21T15:25:25.583405+00:00",
+      "reserved_usd": 1.283903,
+      "result_file": "results/loops_runs/e0d926eeb1db74745ff31f65.json",
+      "settled_at": "2026-10-21T15:31:15.309923+00:00",
+      "settled_usd": 0.605499,
+      "stage": "screen",
+      "status": "complete"
+    },
     "e25e427553702177456968e8": {
       "call_id": "fc-01M5ENMVP5G74J65NQSWX64RVG",
       "gpu": "H100",
@@ -726,6 +879,21 @@
       "stage": "screen",
       "status": "complete"
     },
+    "f38761ff956ef238b89c0065": {
+      "call_id": "fc-01M5FGYZSMMVN7M2FE8VW75SKV",
+      "gpu": "L4",
+      "id": "f38761ff956ef238b89c0065",
+      "launched_at": "2026-10-21T15:23:33.591825+00:00",
+      "manifest": "events_eval",
+      "manifest_sha256": "1164b7a5e99240c3cd08ddca37379b9a33042db065181af277a7fd33071062c4",
+      "note": "cancelled: the L4 input stayed PENDING with no container for 40 minutes; no compute ran",
+      "reserved_at": "2026-10-21T15:23:33.262490+00:00",
+      "reserved_usd": 0.881563,
+      "settled_at": "2026-10-21T15:31:46.938924+00:00",
+      "settled_usd": 0.0,
+      "stage": "development",
+      "status": "error"
+    },
     "f4726588a8955ab43254bca7": {
       "call_id": "fc-01M5EM6DX5YZ9YF4MPB7TBKK49",
       "gpu": "H100",
@@ -740,6 +908,21 @@
       "settled_usd": 1.627117,
       "stage": "language",
       "status": "complete"
+    },
+    "f887cb8551b28635da65708c": {
+      "call_id": "fc-01M5FGYZSJX99PYG9FSHZM72H8",
+      "gpu": "L4",
+      "id": "f887cb8551b28635da65708c",
+      "launched_at": "2026-10-21T15:23:33.598157+00:00",
+      "manifest": "events_eval",
+      "manifest_sha256": "1164b7a5e99240c3cd08ddca37379b9a33042db065181af277a7fd33071062c4",
+      "note": "cancelled: the L4 input stayed PENDING with no container for 40 minutes; no compute ran",
+      "reserved_at": "2026-10-21T15:23:33.264027+00:00",
+      "reserved_usd": 0.881563,
+      "settled_at": "2026-10-21T15:31:46.938928+00:00",
+      "settled_usd": 0.0,
+      "stage": "development",
+      "status": "error"
     },
     "fc603e98a417eb748bf4b246": {
       "call_id": "fc-01M5EH9MXS087ZX5A0KJYE3HCG",
