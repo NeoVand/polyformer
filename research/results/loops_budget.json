@@ -60,8 +60,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:00:47.525878+00:00",
       "reserved_usd": 3.148735,
+      "result_file": "results/loops_runs/1d0954406e86f17a7cc99b45.json",
+      "settled_at": "2026-10-21T07:20:31.626229+00:00",
+      "settled_usd": 1.628365,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "1d6df1308cba322f02d0d5b8": {
       "call_id": "fc-01M5EK21DQJTVPPZ7W1NWK75PB",
@@ -162,8 +165,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T06:40:55.963452+00:00",
       "reserved_usd": 4.796329,
+      "result_file": "results/loops_runs/4209f1ebb7599d10a7c10542.json",
+      "settled_at": "2026-10-21T07:15:10.749505+00:00",
+      "settled_usd": 2.681808,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "43a350f2e6716e4c34f593e6": {
       "call_id": "fc-01M5EK21DPCB3F1RDCKKK2QJYH",
@@ -189,8 +195,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:01:04.876643+00:00",
       "reserved_usd": 3.389162,
+      "result_file": "results/loops_runs/44dd4ef319ea9300822f288f.json",
+      "settled_at": "2026-10-21T07:21:10.528082+00:00",
+      "settled_usd": 1.646193,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "4c638f647ebdc6e806c6e566": {
       "call_id": "fc-01M5EJ61FEQMFS54X2YWN7TFDB",
@@ -621,8 +630,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:00:48.632340+00:00",
       "reserved_usd": 3.199994,
+      "result_file": "results/loops_runs/f4726588a8955ab43254bca7.json",
+      "settled_at": "2026-10-21T07:20:32.771533+00:00",
+      "settled_usd": 1.627117,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "fc603e98a417eb748bf4b246": {
       "call_id": "fc-01M5EH9MXS087ZX5A0KJYE3HCG",

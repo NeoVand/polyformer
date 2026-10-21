@@ -278,4 +278,7 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   2.6); a few blocks stayed at RoPE. The model uses the non-abelian frames, yet they do not lower
   the loss at this scale. The forget gates repeat the rope+forget pattern (short half-lives early,
   up to tens of thousands of tokens in the last attention layer; resets at boundaries).
+- Seed 1 complete: GDN 3.579272 (12,756 updates); the candidate is 0.84% below it. Caps moved again
+  (development $1, screen $14, language $85; total still $100) so the scale check and DeltaProduct fit;
+  launched with limited concurrency so reservations never exceed the cap.
 
