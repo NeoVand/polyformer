@@ -267,4 +267,15 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   rope, rope+forget, hybrid GAGAGAGA holo+forget. Prediction S4-1: the hybrid's margin over rope at
   the larger size is within 0.4 points of its base-size margin (no clear growth). **DeltaProduct**,
   seeds 1–3, equal FLOPs (10,095 updates): S3-4 as registered.
+- Hybrid probe (candidate, seed 1; `results/loops_probe_hybrid_holo_forget_s1.json`). **The clocks
+  learned to count linguistic events, not tokens.** In the attention layers, grid modules that stay
+  on tick fastest on sentence ends ('.', '?', newline, 'The'), on clause words ('who', 'which',
+  'that', 'when', 'with') or on verbs ('was', 'is', 'has', 'will'), and nearly stop on sub-word
+  continuations ("'s", byte pieces) and commas; many modules switched their clock off (velocity near
+  0, a position-free band). That is the grid-cell behaviour the synthesis asked for: the frame
+  advances when the state changes. Most holonomy blocks moved far from the RoPE step (Frobenius
+  distance about 2.6 of a possible 4) and consecutive moves fail to commute (commutator norm about
+  2.6); a few blocks stayed at RoPE. The model uses the non-abelian frames, yet they do not lower
+  the loss at this scale. The forget gates repeat the rope+forget pattern (short half-lives early,
+  up to tens of thousands of tokens in the last attention layer; resets at boundaries).
 
