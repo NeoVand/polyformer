@@ -1,6 +1,8 @@
 <script lang="ts">
 	import Cite from '#lib/learn/Cite.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
+	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
+	import { EVENTS, FRAMES } from '#lib/viz/computeGraphs.ts';
 	import ContextFigure, { type Series } from '../ContextFigure.svelte';
 	import HalfLifeFigure from '../HalfLifeFigure.svelte';
 	import { number } from '../toc.ts';
@@ -94,6 +96,17 @@
 			past
 			<Cite id="fox" />. The strongest model alternates Gated DeltaNet layers <Cite id="gdn" />,
 			which hold a matrix-valued memory, with these attention layers.
+		</p>
+		<div class="figure wide graph">
+			<ComputeGraph graph={FRAMES} label="Computation graph of attention in carried frames" />
+		</div>
+		<p class="caption">
+			Every token supplies a move <MathTex tex="M_t" />, a rotation computed from its content, and a
+			forget gate <MathTex tex="f_t" />. The running product of the moves is the token's frame, and
+			a query meets a key through <MathTex tex={String.raw`F_i^{\top}F_j`} />, the rotation
+			accumulated between them: the holonomy of the path. It is never formed per pair, since
+			<MathTex tex={String.raw`q_i^{\top}F_i^{\top}F_jk_j = (F_iq_i)^{\top}(F_jk_j)`} />. The output
+			gate and value residual of section {number('fair')} are left out.
 		</p>
 		<div class="table-scroll">
 			<table class="bt">
@@ -285,6 +298,15 @@
 			frames and forget gate, run over the events instead of the tokens; and two recurrent layers
 			turn the result back into token predictions. At 8,192 tokens it costs a third less per token
 			than softmax, so at equal compute it sees 1.5 times the text.
+		</p>
+		<div class="figure wide graph">
+			<ComputeGraph graph={EVENTS} label="Computation graph of the event model" />
+		</div>
+		<p class="caption">
+			Top row: the tokens, two Gated DeltaNet layers in and two out, the second pair cutting its
+			state at each event boundary. Bottom row: the router compares neighbouring states, the state
+			at each boundary becomes one event, six attention layers run over the events, and each token
+			receives its event's smoothed output.
 		</p>
 		<p>
 			It lost at every context: +3.6% against softmax at 2,048 and +3.1% to +6.6% at 8,192. Two

@@ -345,3 +345,186 @@ export const NEWTON: Graph = {
 		}
 	]
 };
+
+/**
+ * Holonomy attention: per-token rotations, ordered products over every group that contains the
+ * reading token, computed from a left-to-right and a right-to-left running product.
+ */
+export const HOLONOMY: Graph = {
+	w: 690,
+	h: 236,
+	nodes: [
+		{ id: 'X', x: X0, y: 118, tex: 'X', kind: 'input' },
+		{ id: 'M', x: 140, y: 118, tex: 'M', kind: 'mid' },
+		{ id: 'scanL', x: 252, y: 48, tex: String.raw`\text{scan}\rightarrow`, kind: 'op', w: 66 },
+		{ id: 'L', x: 340, y: 48, tex: 'L_a', kind: 'mid' },
+		{ id: 'scanR', x: 252, y: 188, tex: String.raw`\leftarrow\text{scan}`, kind: 'op', w: 66 },
+		{ id: 'R', x: 340, y: 188, tex: 'R_b', kind: 'mid' },
+		{ id: 'prod', x: 458, y: 118, tex: String.raw`L_a\, M_i\, R_b`, kind: 'op', w: 92 },
+		{ id: 'F', x: 585, y: 118, tex: 'F_r', kind: 'mid' },
+		{ id: 'Y', x: 655, y: 118, tex: 'Y', kind: 'output' }
+	],
+	joins: [{ id: 'sum', x: 530, y: 118, op: 'pool' }],
+	edges: [
+		{ from: 'X', to: 'M', tex: String.raw`W_A,\, w_g` },
+		{ from: 'M', to: 'scanL', out: 90, enter: 0 },
+		{ from: 'M', to: 'scanR', out: -90, enter: 0 },
+		{ from: 'scanL', to: 'L' },
+		{ from: 'scanR', to: 'R' },
+		{ from: 'M', to: 'prod', tex: 'M_i', labelAt: 0.42 },
+		{ from: 'L', to: 'prod', enter: -90 },
+		{ from: 'R', to: 'prod', enter: 90 },
+		{ from: 'prod', to: 'sum' },
+		{ from: 'sum', to: 'F' },
+		{ from: 'F', to: 'Y', tex: String.raw`\alpha_r,\, W_o` }
+	],
+	notes: [
+		{ x: 126, y: 154, tex: String.raw`M_t = g_t\, e^{A_t}`, align: 'right' },
+		{
+			x: 300,
+			y: 16,
+			tex: String.raw`L_a(t) = L_a(t{-}1) + L_{a-1}(t{-}1)\, M_t`,
+			align: 'center'
+		},
+		{
+			x: 300,
+			y: 222,
+			tex: String.raw`R_b(t) = R_b(t{+}1) + M_t\, R_{b-1}(t{+}1)`,
+			align: 'center'
+		},
+		{
+			x: 686,
+			y: 82,
+			tex: String.raw`F_r(i) = \textstyle\sum_{a+b=r-1} L_a(i)\, M_i\, R_b(i)`,
+			align: 'right'
+		},
+		{
+			x: 686,
+			y: 154,
+			tex: String.raw`Y_i = \textstyle\sum_{r \le K} \alpha_r \odot W_o \operatorname{vec} F_r(i)`,
+			align: 'right'
+		}
+	]
+};
+
+/**
+ * Attention in carried frames (LOOPS): every token turns a frame by a move computed from its
+ * content, and a query compares a key through the rotation accumulated between them.
+ */
+export const FRAMES: Graph = {
+	w: 690,
+	h: 268,
+	nodes: [
+		{ id: 'X', x: X0, y: 118, tex: 'X', kind: 'input' },
+		{ id: 'V', x: PROJ, y: 36, tex: 'V', kind: 'proj' },
+		{ id: 'Q', x: PROJ, y: 118, tex: 'Q', kind: 'proj' },
+		{ id: 'K', x: PROJ, y: 164, tex: 'K', kind: 'proj' },
+		{ id: 'M', x: PROJ, y: 222, tex: 'M_t', kind: 'proj' },
+		{ id: 'scan', x: 250, y: 222, tex: String.raw`\text{scan}`, kind: 'op', w: 54 },
+		{ id: 'F', x: 330, y: 222, tex: 'F_t', kind: 'mid' },
+		{ id: 'hol', x: 425, y: 222, tex: String.raw`F_i^{\top} F_j`, kind: 'op', w: 74 },
+		{ id: 'A', x: 545, y: 141, tex: 'A', kind: 'mid' },
+		{ id: 'Y', x: 655, y: 118, tex: 'Y', kind: 'output' }
+	],
+	joins: [
+		{ id: 'qk', x: 250, y: 141, op: 'merge' },
+		{ id: 's', x: 490, y: 141, op: 'merge' },
+		{ id: 'y', x: 600, y: 118, op: 'merge' }
+	],
+	edges: [
+		{ from: 'X', to: 'V', tex: 'W_V', labelAt: 0.74 },
+		{ from: 'X', to: 'Q', tex: 'W_Q', labelAt: 0.62 },
+		{ from: 'X', to: 'K', tex: 'W_K', side: 1, labelAt: 0.74 },
+		{ from: 'X', to: 'M', tex: String.raw`W_M,\, w_f`, side: 1, labelAt: 0.74 },
+		{ from: 'Q', to: 'qk', enter: -55, arrow: false },
+		{ from: 'K', to: 'qk', enter: 55, arrow: false },
+		{ from: 'qk', to: 's', arrowAt: 0.5 },
+		{ from: 'M', to: 'scan' },
+		{ from: 'scan', to: 'F' },
+		{ from: 'F', to: 'hol' },
+		{ from: 'hol', to: 's', enter: 90, arrow: false },
+		{ from: 's', to: 'A' },
+		{ from: 'V', to: 'y', enter: -50, arrowAt: 0.45 },
+		{ from: 'A', to: 'y', enter: 50 },
+		{ from: 'y', to: 'Y' }
+	],
+	notes: [
+		{ x: 330, y: 188, tex: String.raw`F_t = M_1 M_2 \cdots M_t`, align: 'center' },
+		{
+			x: 686,
+			y: 252,
+			tex: String.raw`A_{ij} = q_i^{\top} F_i^{\top} F_j\, k_j + \textstyle\sum_{j<s\le i} \log f_s`,
+			align: 'right'
+		},
+		{
+			x: 686,
+			y: 12,
+			tex: String.raw`Y_i = \textstyle\sum_{j \le i} \operatorname{softmax}_j(A_{ij})\, V_j`,
+			align: 'right'
+		}
+	]
+};
+
+/**
+ * The event model (EVENTS): recurrent layers over tokens, attention over the events a router
+ * marks, and the event outputs handed back to the tokens they cover.
+ */
+export const EVENTS: Graph = {
+	w: 770,
+	h: 226,
+	nodes: [
+		{ id: 'X', x: X0, y: 52, tex: 'X', kind: 'input' },
+		{ id: 'enc', x: 120, y: 52, tex: String.raw`\text{GDN}\,{\times}2`, kind: 'op', w: 70 },
+		{ id: 'h', x: 205, y: 52, tex: 'h_t', kind: 'mid' },
+		{ id: 'chunk', x: 280, y: 160, tex: String.raw`\text{chunk}`, kind: 'op', w: 60 },
+		{ id: 'z', x: 352, y: 160, tex: 'z_e', kind: 'mid' },
+		{
+			id: 'main',
+			x: 450,
+			y: 160,
+			tex: String.raw`\text{attention}\,{\times}6`,
+			kind: 'op',
+			w: 100
+		},
+		{ id: 'ye', x: 545, y: 160, tex: 'y_e', kind: 'mid' },
+		{ id: 'dechunk', x: 615, y: 160, tex: String.raw`\text{dechunk}`, kind: 'op', w: 70 },
+		{ id: 'dec', x: 680, y: 52, tex: String.raw`\text{GDN}\,{\times}2`, kind: 'op', w: 66 },
+		{ id: 'Y', x: 742, y: 52, tex: 'Y', kind: 'output' }
+	],
+	joins: [{ id: 'add', x: 615, y: 52, op: 'merge' }],
+	edges: [
+		{ from: 'X', to: 'enc' },
+		{ from: 'enc', to: 'h' },
+		{ from: 'h', to: 'add' },
+		{ from: 'h', to: 'chunk', out: -90, enter: 0 },
+		{ from: 'chunk', to: 'z' },
+		{ from: 'z', to: 'main' },
+		{ from: 'main', to: 'ye' },
+		{ from: 'ye', to: 'dechunk' },
+		{ from: 'dechunk', to: 'add', out: 90, enter: 90, arrow: false },
+		{ from: 'add', to: 'dec' },
+		{ from: 'dec', to: 'Y' }
+	],
+	notes: [
+		{
+			x: 450,
+			y: 130,
+			tex: String.raw`\text{frames and forget gate, over events}`,
+			align: 'center'
+		},
+		{
+			x: 232,
+			y: 194,
+			tex: String.raw`p_t = \tfrac12\big(1 - \cos(W_q h_t,\, W_k h_{t-1})\big)`,
+			align: 'left'
+		},
+		{ x: 232, y: 214, tex: String.raw`b_t = [\,p_t \ge \tfrac12\,]`, align: 'left' },
+		{
+			x: 615,
+			y: 196,
+			tex: String.raw`\bar y_e = p_e\, y_e + (1 - p_e)\, \bar y_{e-1}`,
+			align: 'center'
+		},
+		{ x: 680, y: 18, tex: String.raw`\text{state cut where } b_t = 1`, align: 'center' }
+	]
+};

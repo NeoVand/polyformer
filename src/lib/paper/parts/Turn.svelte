@@ -3,6 +3,8 @@
 	import CompositionFigure from '#lib/learn/CompositionFigure.svelte';
 	import { CHARACTER_ROWS } from '#lib/report/groupResults.ts';
 	import MathTex from '#lib/ui/Math.svelte';
+	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
+	import { HOLONOMY } from '#lib/viz/computeGraphs.ts';
 	import { number } from '../toc.ts';
 
 	const eq = {
@@ -191,6 +193,16 @@
 			embeddings: order enters only through the products. The name comes from geometry, where
 			carrying a frame around a path accumulates a rotation called the holonomy.
 		</p>
+		<p>
+			The layer never lists the groups. One running product from the left collects, for every size,
+			the ordered products of the tokens before each position; one from the right collects those
+			after it. A group that contains token <MathTex tex="i" /> is a group before it, then
+			<MathTex tex="M_i" />, then a group after it, so three matrices multiplied in that order give
+			every term, and the read-out turns each size into features.
+		</p>
+		<div class="figure wide graph">
+			<ComputeGraph graph={HOLONOMY} label="Computation graph of holonomy attention" />
+		</div>
 		<details class="more">
 			<summary>How it avoids listing every group</summary>
 			<p>
