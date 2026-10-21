@@ -222,6 +222,16 @@ def stage(name):
                 ("soft", "hyb", "ev_l8", "ev_l16", "ev_l8_rope", "ev_l8_wide")]
         jobs += [long_arm_job(n, 2048, 0, 3051, 512, 0) for n in ("soft", "hyb", "ev_l8")]
         return jobs
+    if name.startswith("long:"):
+        # long:ctx:arm1,arm2:seeds[:size[:data]]  e.g. long:8192:soft,hyb,ev_l8:1,2,3
+        # reference 13,531 updates of the strengthened softmax control (443M tokens); held-out windows:
+        # 2^20 tokens for the curve, 2^21 for val_big (256 at 8,192, 1,024 at 2,048); checkpoints saved
+        parts = name.split(":")
+        ctx, arms, seeds = int(parts[1]), parts[2].split(","), parts[3].split(",")
+        size = parts[4] if len(parts) > 4 and parts[4] else "base"
+        data = parts[5] if len(parts) > 5 else "/data/fineweb_edu"
+        return [long_arm_job(n, ctx, int(seed), 13531, 2 ** 20 // ctx, 2 ** 21 // ctx, size=size, data=data)
+                for seed in seeds for n in arms]
     if name == "cheap_a5":
         # the cheap screen's A5 check, moved to an H100 after its L4 input never got a container
         return [diag_job("wp_a5_16", 1, ["posenc=holo", "vtrans=1", "vtrans_heads=1"], gpu="H100")]
