@@ -4,6 +4,7 @@
 """
 
 import json
+import pathlib
 import sys
 
 # The BEYOND language protocol (beyond_language_tuning / seed manifests), unchanged.
@@ -99,6 +100,19 @@ def stage(name):
     if name == "screen":
         jobs = [lm_job(n, 0, 3051, 305, 0.008, 8, 0) for n in ARMS]
         jobs += [lm_job(n, 0, 3051, 305, 0.012, 8, 0) for n in ("rope", "holo_forget")]
+        return jobs
+    if name == "eval":
+        # every confirmation checkpoint (lang_core, lang_extra, lang_dp), four per L4 job
+        import glob
+        paths = []
+        for p in sorted(glob.glob(str(pathlib.Path(__file__).parent / "results" / "loops_runs" / "*.json"))):
+            r = json.load(open(p))
+            if r.get("manifest", "").startswith("loops_lang") and r.get("val_big_raw"):
+                paths.append(f"/runs/{r['job_id']}/final.pkl")
+        jobs = []
+        for i in range(0, len(paths), 4):
+            argv = ["--ckpts", ",".join(paths[i:i + 4]), "--data", "/data/fineweb_edu", "--ablate", "1"]
+            jobs.append({"script": "loops_eval.py", "argv": argv, "gpu": "L4", "max_seconds": 2400})
         return jobs
     if name == "screen2":
         names = ("hybrid_rope_forget", "hybrid_grid_forget", "hybrid_holo_forget_vtrans", "hybrid_holo_forget_AG",
