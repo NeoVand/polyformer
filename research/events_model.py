@@ -141,8 +141,19 @@ def _unit(x):
     return x / jnp.sqrt(jnp.maximum(jnp.sum(x * x, -1, keepdims=True), 1e-12))
 
 
-def route(cfg, router, h):
-    """Boundary probability and decision per token; p_0 = 1 and b_0 = 1."""
+def route(cfg, router, h, idx=None):
+    """Boundary probability and decision per token; p_0 = 1 and b_0 = 1.
+
+    ev_router "punct" replaces the learned router with fixed events: a boundary after every token that
+    ends in punctuation or holds a newline, and at least every ev_cap positions (probability 1 at a
+    boundary, 0 elsewhere, so nothing about the boundaries is trained).
+    """
+    if _get(cfg, "ev_router", "learned") == "punct":
+        import events_tokens
+        table = jnp.zeros(cfg.vocab, bool).at[jnp.asarray(events_tokens.PUNCT + events_tokens.NEWLINE)].set(True)
+        after = jnp.concatenate([jnp.ones_like(idx[:, :1], bool), table[idx[:, :-1]]], 1)
+        hard = after | (jnp.arange(idx.shape[1]) % int(_get(cfg, "ev_cap", 16)) == 0)[None, :]
+        return hard.astype(jnp.float32), hard
     hn = _ln(router["ln_r"], h).astype(jnp.float32)
     q, k = hn @ router["rq"]["w"], hn @ router["rk"]["w"]
     cos = jnp.sum(_unit(q[:, 1:]) * _unit(k[:, :-1]), -1)
@@ -161,7 +172,7 @@ def forward(cfg, p, idx, with_aux=False, with_boundaries=False):
     for i in range(enc):
         x = remat(lambda l, x_: _gdn_block(cfg, l, x_))(layers[i], x)
     h = x
-    prob, hard = route(cfg, layers[enc - 1], h)
+    prob, hard = route(cfg, layers[enc - 1], h, idx)
     count = jnp.cumsum(hard.astype(jnp.int32), 1)                 # boundaries up to t (>= 1)
     event = jnp.minimum(count - 1, slots - 1)                      # the event token t belongs to
     keep = hard & (count <= slots)                                 # boundaries that open a slot

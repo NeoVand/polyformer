@@ -197,7 +197,7 @@ def test_blockwise_attention_equals_dense_with_forget_bias():
 def ev_cfg(**kw):
     c = cfg(arch="events", d=64, heads=2, mlp=128, ctx=64, vocab=50, ev_enc=1, ev_main=2, ev_dec=1, ev_len=4.0,
             ev_slots=0, ev_dmain=64, ev_heads=2, ev_posenc="holo", ev_forget=1, ev_vtrans=0, ev_vtrans_heads=0,
-            ev_gate_out=0, ev_vres=0, ratio_w=0.03, delta_chunk=16, attn_block=1024, remat=0)
+            ev_gate_out=0, ev_vres=0, ev_router="learned", ev_cap=16, ratio_w=0.03, delta_chunk=16, attn_block=1024, remat=0)
     for k, v in kw.items():
         setattr(c, k, v)
     return c
@@ -214,12 +214,14 @@ def _random_router(p, seed=11):
     return {**p, "layers": [r if i == enc - 1 else l for i, l in enumerate(p["layers"])]}
 
 
-@pytest.mark.parametrize("slots,parts,dmain", [(0, 0, 64), (6, 0, 64), (0, 1, 64), (0, 1, 96)])
-def test_event_model_is_causal(slots, parts, dmain):
+@pytest.mark.parametrize("slots,parts,dmain,router", [(0, 0, 64, "learned"), (6, 0, 64, "learned"),
+                                                      (0, 1, 64, "learned"), (0, 1, 96, "learned"),
+                                                      (0, 1, 64, "punct")])
+def test_event_model_is_causal(slots, parts, dmain, router):
     import events_model as em
     # parts: the gate, the value residual and one transport head in the main network; dmain: a wider one
     c = ev_cfg(ev_slots=slots, ev_gate_out=parts, ev_vres=parts, ev_vtrans=parts, ev_vtrans_heads=parts,
-               ev_dmain=dmain, ev_heads=dmain // 32)
+               ev_dmain=dmain, ev_heads=dmain // 32, ev_router=router, ev_cap=4, vocab=50304)
     p = _random_router(lm.init(jax.random.PRNGKey(0), c))
     idx = jax.random.randint(jax.random.PRNGKey(2), (2, c.ctx), 0, c.vocab)
     _, aux = em.forward(c, p, idx, with_aux=True)

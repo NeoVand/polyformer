@@ -35,6 +35,8 @@ def arm(argv):
             name += "+gate+vres" if flag(argv, "--ev_vres", "0") == "1" else "+gate"
         if flag(argv, "--ev_vtrans", "0") == "1":
             name += "+vt1"
+        if flag(argv, "--ev_router", "learned") != "learned":
+            name += f" router={flag(argv, '--ev_router')}"
         if flag(argv, "--ev_dmain"):
             name += f" dmain{flag(argv, '--ev_dmain')}"
         ctx = flag(argv, "--ctx", "512")

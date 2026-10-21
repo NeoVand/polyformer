@@ -123,6 +123,10 @@ LONG.update({
     "ev_l16": EV + ["--ev_len", "16"],
     "ev_l8_rope": EV + ["--ev_len", "8", "--ev_posenc", "rope", "--ev_vtrans", "0", "--ev_vtrans_heads", "0"],
     "ev_l8_wide": EV + ["--ev_len", "8", "--ev_dmain", "768", "--ev_heads", "12"],
+    # fixed events (after punctuation or a newline, at least every 16 tokens): the router-collapse check;
+    # 2,560 slots hold a boundary rate up to 0.31 at 8,192
+    "ev_punct": EV + ["--ev_len", "8", "--ev_router", "punct", "--ev_cap", "16", "--ev_slots", "2560",
+                      "--ratio_w", "0"],
 })
 # measured steady seconds per update at 32,768 tokens per update (events_timing3/4), with margin for the
 # parts added since; used only for timeouts and reservations

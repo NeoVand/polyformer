@@ -891,6 +891,8 @@ def build_parser():
     ap.add_argument("--ev_vtrans_heads", type=int, default=0)
     ap.add_argument("--ev_gate_out", type=int, default=0)
     ap.add_argument("--ev_vres", type=int, default=0)
+    ap.add_argument("--ev_router", default="learned", help="events: learned (H-Net) | punct (fixed boundaries)")
+    ap.add_argument("--ev_cap", type=int, default=16, help="events, punct router: a boundary at least this often")
     ap.add_argument("--ratio_w", type=float, default=0.03, help="events: weight of the ratio loss")
     ap.add_argument("--ctx", type=int, default=256)
     ap.add_argument("--batch", type=int, default=64)

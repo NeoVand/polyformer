@@ -287,3 +287,21 @@ in the $300.
 - `events_2k` and `events_code` were planned before a change to `loops_jobs.py` and refused to launch
   (sources changed since planning); nothing ran. The same job lists are re-planned as `events_2k_b`
   and `events_code_b`.
+- **Router collapse.** The learned router held its target in the 100M-token development screens
+  (mean event length 8.9–9.9) but not over 443M tokens: at the end of training the mean boundary
+  probability sits just under the threshold (0.4992–0.4996) and boundaries nearly vanish. Mean event
+  length: 42 tokens (`events_8k` ev_l8 seed 1), 830 (ev_l8_rope seed 1), 14 (2,048 seed 1), 341
+  (code). The ratio loss only constrains the hard boundary rate through the threshold, at weight 0.03,
+  while the language loss pays for every boundary through the decoder's state cut; the event network
+  is then fed a handful of events per window. So the long event runs test a collapsed router, not
+  memory over events. Final `val_big` at 8,192, seed 1: ev_l8 3.5493 and ev_l8_rope 3.5483 against
+  soft 3.4414 (+3.1%).
+- **Two runs cancelled** at 18:42 UTC and settled at elapsed time: the large-size event arm (it would
+  compare one collapsed router with another, so E3's size half cannot be read from it) and
+  `events_8k` ev_l8 seed 3 (at about 25%; seed 2 continues as the second seed).
+- **Registered before launch (R1):** an event model with fixed boundaries, so nothing about them is
+  trained: a boundary after every token that ends in punctuation or holds a newline, and at least
+  every 16 positions (`ev_punct`; 2,560 slots; ratio loss off; otherwise ev_l8). 8,192, seed 1,
+  equal modeled FLOPs (307.0M per token, 19,048 updates). Prediction: it lands between soft and the
+  collapsed ev_l8 (3.4414 < x < 3.5493), and stays above soft: memory over events loses exact
+  copying, which the development screens already showed at a working router (+1.6% at 100M tokens).
