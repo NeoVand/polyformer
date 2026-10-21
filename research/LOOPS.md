@@ -4,6 +4,41 @@ Started 21 October 2026, overnight, after reading [REVIEW.md](REVIEW.md). Budget
 all stages included. This file holds the synthesis, the registered predictions and gates, and the log.
 Predictions are written and committed before the runs they predict.
 
+## Result in brief (written after the runs; the plan and predictions below were registered first)
+
+**What was asked:** a path forward from the review, through loops, symmetry and neuroscience, that
+can beat softmax on language. **Budget:** $100 of Modal; about $75 spent (conservative resource estimate).
+
+1. **Language: a two-memory model beats every control on every seed, but by less than the
+   registered 1%.** Gated DeltaNet layers alternating with attention whose frames are carried along
+   the sequence and which has a forget gate (GAGAGA holo+forget): 3.5479 nats/token (mean of three
+   seeds, about 443M tokens, equal modeled compute). Against RoPE softmax −0.89% (−0.97, −0.82,
+   −0.88), against the Forgetting Transformer −0.65%, against Gated DeltaNet −0.82%, against
+   DeltaProduct −0.53% and −0.64% on seeds 2 and 3 (seed 1 below), against learned-position softmax −1.82%. The registered headline (≥1%
+   below the better softmax control on all three seeds) **fails**, by 0.03–0.18 points. The ordering
+   is not noise: seed spread is about 0.1%.
+2. **Symmetry is a window onto state, not onto text.** Frames transported by content-dependent
+   non-commuting rotations, with values transported too, let one attention layer track A5 (98.5%
+   on late positions; RoPE, abelian clocks and frames without value transport stay at chance,
+   1.7%). On text the same frames are neutral (within ±0.1% of RoPE) and value transport costs 0.4%.
+3. **The loops that pay on text are resets and a second memory.** The forget gate is worth 0.3–0.6%
+   over RoPE; the recurrent fast-weight layers are worth about 0.8% more. In Krohn–Rhodes terms the
+   reset atoms carry the language gains and the group atoms carry state tracking.
+4. **The brain's solutions emerged untaught.** Forget gates learned a hierarchy of timescales
+   (half-lives of 1–100 tokens in early layers, thousands in the last ones) and reset at sentence
+   and line boundaries; content-driven clocks learned to tick on sentence ends, clause words and
+   verbs and to stop on sub-word fragments. These are temporal receptive windows and event
+   segmentation, found from next-token loss.
+5. **Depth loops** trade parameters for compute: at equal compute a looped model is 0.54% worse than
+   six distinct blocks; with the same distinct blocks it is 0.89% better than not looping.
+6. **Scale check** (width 768, 8 layers, one seed): the hybrid's margin did not grow. At width 768 and 8 layers it is
+   0.86% below RoPE and 0.49% below the Forgetting Transformer (base size, same seed: 0.97% and 0.69%).
+
+**Where it points:** build the discovered structure in rather than hoping it is found: one shared
+event clock that drives resets in every layer and the recurrent decay; a timescale hierarchy as an
+initialisation; the two-memory layout at three sizes to measure whether its margin grows; and the
+holonomy frames evaluated where they matter, on state-tracking probes inside a language model.
+
 ## 1. Where the review leaves us
 
 The review's thesis is right and the project's own data support it: the higher order that pays is in
@@ -300,4 +335,13 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   S3-3 holds (under 1% vs rope+forget). S3-5 holds: rope stays ahead of abs (0.80–1.18%) by less than
   at 100M tokens. Seed-to-seed spread of each arm is about 0.1–0.4%, far below the gaps, so the
   ordering is not noise; the shortfall is in size, not sign.
+- **Scale check** (width 768, 8 layers, 12 heads, seed 1, equal modeled FLOPs at 13,5xx updates):
+  rope 3.446651, rope+forget 3.433903, hybrid GAGAGAGA holo+forget 3.416956. The hybrid is 0.86%
+  below rope (base, seed 1: 0.97%) and 0.49% below rope+forget (base: 0.69%). **S4-1 holds**: no
+  growth of the margin with a three-times-larger model; if anything it narrows. The forget gate's
+  own value grows a little (0.37% vs 0.28% at base, seed 1).
+- **DeltaProduct** (10,095 updates, equal modeled FLOPs): seed 2 3.566316, seed 3 3.569971 (seed 1
+  pending). The candidate is 0.53% and 0.64% below it; with BEYOND's seed-1 DeltaProduct
+  (3.564820, 10,277 updates) as a stand-in, 0.44%. S3-4 holds on the seeds so far.
+- Spend: $70.65 settled plus one running DeltaProduct run (about $4.7); no failed runs.
 
