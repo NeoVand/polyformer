@@ -39,6 +39,21 @@ ARMS = {
     "hybrid_holo_forget_GGA": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GGAGGA"], 1400),
     "hybrid_holo_forget_DA": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "DADADA"], 2000),
     "rope4": (["--arch", "loop", "--posenc", "rope", "--layers", "4"], 900),
+    # EVENTS cheap day: published parts in both arms, one-head value transport
+    "rope_forget_gate": (["--arch", "loop", "--posenc", "rope", "--forget", "1", "--gate_out", "1"], 900),
+    "rope_forget_vres": (["--arch", "loop", "--posenc", "rope", "--forget", "1", "--vres", "1"], 900),
+    "rope_forget_gate_vres": (["--arch", "loop", "--posenc", "rope", "--forget", "1", "--gate_out", "1",
+                               "--vres", "1"], 900),
+    "hybrid_hf_gate": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA",
+                        "--gate_out", "1"], 1400),
+    "hybrid_hf_vres": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA",
+                        "--vres", "1"], 1400),
+    "hybrid_hf_gate_vres": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA",
+                             "--gate_out", "1", "--vres", "1"], 1400),
+    "hybrid_hf_vt1": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA",
+                       "--vtrans", "1", "--vtrans_heads", "1"], 1400),
+    "hybrid_hf_gate_vres_vt1": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA",
+                                 "--gate_out", "1", "--vres", "1", "--vtrans", "1", "--vtrans_heads", "1"], 1400),
     "gdn": (["--arch", "gated_delta", "--pos", "1", "--qkv_conv", "0", "--nh", "1", "--beta_max", "1",
              "--group_init", "random", "--gdim", "5"], 1400),
     "deltaproduct": (["--arch", "gated_delta", "--pos", "1", "--qkv_conv", "0", "--nh", "4", "--beta_max", "2",
@@ -114,6 +129,12 @@ def stage(name):
             argv = ["--ckpts", ",".join(paths[i:i + 4]), "--data", "/data/fineweb_edu", "--ablate", "1"]
             jobs.append({"script": "loops_eval.py", "argv": argv, "gpu": "L4", "max_seconds": 2400})
         return jobs
+    if name == "cheap":
+        names = ("rope_forget_gate", "rope_forget_vres", "rope_forget_gate_vres", "hybrid_hf_gate", "hybrid_hf_vres",
+                 "hybrid_hf_gate_vres", "hybrid_hf_vt1", "hybrid_hf_gate_vres_vt1")
+        jobs = [lm_job(n, 0, 3051, 305, 0.008, 8, 0) for n in names]
+        jobs.append(diag_job("wp_a5_16", 1, ["posenc=holo", "vtrans=1", "vtrans_heads=1"]))
+        return jobs
     if name == "screen2":
         names = ("hybrid_rope_forget", "hybrid_grid_forget", "hybrid_holo_forget_vtrans", "hybrid_holo_forget_AG",
                  "hybrid_holo_forget_GGA", "hybrid_holo_forget_DA", "rope4")
@@ -143,7 +164,10 @@ SCREEN_WALL = {"abs": 300, "rope": 306, "grid": 320, "grid_forget": 329, "holo":
                "holo_forget_vtrans": 431, "rope_forget": 328, "hybrid_rope": 451, "hybrid_holo_forget": 532,
                "hybrid_rope_forget": 445, "hybrid_grid_forget": 474, "hybrid_holo_forget_vtrans": 525,
                "hybrid_holo_forget_AG": 507, "hybrid_holo_forget_GGA": 542, "hybrid_holo_forget_DA": 835,
-               "loop": 303, "rope4": 232, "gdn": 520, "deltaproduct": 1200}
+               "loop": 303, "rope4": 232, "gdn": 520, "deltaproduct": 1200,
+               "rope_forget_gate": 345, "rope_forget_vres": 335, "rope_forget_gate_vres": 350,
+               "hybrid_hf_gate": 545, "hybrid_hf_vres": 540, "hybrid_hf_gate_vres": 555, "hybrid_hf_vt1": 535,
+               "hybrid_hf_gate_vres_vt1": 560}
 
 REFERENCE_STEPS = 13531  # BEYOND's convolved-softmax final budget (about 443M tokens)
 
@@ -176,7 +200,8 @@ def arm_flops(name, size="base"):
         for k in ("arch", "posenc", "pattern", "loop_order"):
             if k in d:
                 c[k] = d[k]
-        for k in ("layers", "forget", "vtrans", "holo", "modules", "nh", "qkv_conv"):
+        c.update(gate_out=0, vres=0, vtrans_heads=0)
+        for k in ("layers", "forget", "vtrans", "holo", "modules", "nh", "qkv_conv", "gate_out", "vres", "vtrans_heads"):
             if k in d:
                 c[k] = int(d[k])
         if "beta_max" in d:

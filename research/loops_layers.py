@@ -19,7 +19,11 @@ formed per pair. Position encodings, by the group the moves live in:
 Options: `forget` adds the Forgetting Transformer's gate, logits_ij += sum_{j<s<=i} log f_s with
 f = sigmoid(w.x + forget_bias) per head; `vtrans` also transports the values on the holonomy dims
 (v_j -> F_j v_j before averaging, the output -> F_i^T out), so the output can carry the running
-product. This module does not import lm (that would load a second copy of the harness); matmuls use
+product; `vtrans_heads` limits that to the first few heads (0 = all). EVENTS.md's cheap day adds two
+published parts: `gate_out`, an element-wise sigmoid gate computed from the layer input on the
+attention output before the output projection (Qiu et al. 2025), and `vres`, a value residual: every
+attention layer after the first adds lambda times the first attention layer's values to its own, lambda
+learned per head and 0.5 at init (Zhou et al. 2024). This module does not import lm (that would load a second copy of the harness); matmuls use
 cfg.bf16 the same way lm.mm does.
 """
 
@@ -86,6 +90,11 @@ def init_extra(key, cfg):
                      "b": jnp.zeros(h * blocks * 6)}
     if _get(cfg, "forget", 0):
         p["fgate"] = {"w": jnp.zeros((d, h)), "b": jnp.full(h, float(_get(cfg, "forget_bias", 5.0)))}
+    if _get(cfg, "gate_out", 0):
+        k2 = jax.random.fold_in(key, 17)
+        p["gout"] = {"w": jax.random.normal(k2, (d, d)) / math.sqrt(d), "b": jnp.zeros(d)}
+    if _get(cfg, "vres", 0):
+        p["vres"] = jnp.full((h, 1), 0.5)
     return p
 
 
@@ -175,25 +184,33 @@ def rotate(cfg, fr, v, inverse=False):
 
 
 def rotate_holo(cfg, fr, v, inverse=False):
-    """Transport only the holonomy dims (value transport); the abelian dims pass through."""
+    """Transport only the holonomy dims (value transport) of the first `vtrans_heads` heads (0 = all);
+    the abelian dims and the other heads pass through."""
     dh, pairs, blocks, _ = dims(cfg)
     if not blocks:
         return v
-    hv = v[..., 2 * pairs:].reshape(*v.shape[:-1], blocks, 4)
+    nt = int(_get(cfg, "vtrans_heads", 0)) or v.shape[2]
+    hv = v[:, :, :nt, 2 * pairs:].reshape(*v.shape[:2], nt, blocks, 4)
     spec = "bthnji,bthnj->bthni" if inverse else "bthnij,bthnj->bthni"
-    moved = jnp.einsum(spec, fr["F"], hv).reshape(*v.shape[:-1], 4 * blocks)
-    return jnp.concatenate([v[..., :2 * pairs], moved], -1)
+    moved = jnp.einsum(spec, fr["F"][:, :, :nt], hv).reshape(*v.shape[:2], nt, 4 * blocks)
+    head = jnp.concatenate([v[:, :, :nt, :2 * pairs], moved], -1)
+    return jnp.concatenate([head, v[:, :, nt:]], 2)
 
 
-def attention(cfg, p, x, project_qkv):
+def attention(cfg, p, x, project_qkv, vfirst=None, return_values=False):
     """Causal softmax attention in transported frames. x is the normed input; project_qkv(p, x)
-    returns q, k, v [B, T, D] (with the shared short convolution, if the layer has one)."""
+    returns q, k, v [B, T, D] (with the shared short convolution, if the layer has one). With
+    `vfirst` (the first attention layer's values) and a value-residual parameter, those values are
+    mixed in; with return_values the layer's own values come back for the next layers."""
     b, t, d = x.shape
     h = cfg.heads
     dh = d // h
     q, k, v = project_qkv(p, x)
     split = lambda y: y.reshape(b, t, h, dh)
     q, k, v = split(q), split(k), split(v)
+    own_values = v
+    if vfirst is not None and "vres" in p:
+        v = v + p["vres"] * vfirst
     fr = frames(cfg, p, x)
     q, k = rotate(cfg, fr, q), rotate(cfg, fr, k)
     vtrans = bool(_get(cfg, "vtrans", 0)) and "F" in fr
@@ -210,7 +227,10 @@ def attention(cfg, p, x, project_qkv):
     o = _mm(cfg, a, heads(v), "bhts,bhsc->bhtc").transpose(0, 2, 1, 3)
     if vtrans:
         o = rotate_holo(cfg, fr, o, inverse=True)
-    return _lin(cfg, p["o"], o.reshape(b, t, d))
+    if "gout" in p:
+        o = o * jax.nn.sigmoid(_lin(cfg, p["gout"], x)).reshape(b, t, h, dh)
+    y = _lin(cfg, p["o"], o.reshape(b, t, d))
+    return (y, own_values) if return_values else y
 
 
 def extra_flops(cfg, seq_len):
@@ -239,4 +259,10 @@ def extra_flops(cfg, seq_len):
             f += 2 * h * blocks * 2 * 32                       # transport v and the output
     if _get(cfg, "forget", 0):
         f += 2 * d * h + 6 * h + ta * h                        # gate, log-sigmoid, cumsum, bias add
+    if _get(cfg, "gate_out", 0):
+        f += 2 * d * d + 6 * d                                 # gate projection, sigmoid, product
+    if _get(cfg, "vres", 0):
+        f += 2 * d                                             # scale and add the first values
+    if blocks and _get(cfg, "vtrans", 0) and int(_get(cfg, "vtrans_heads", 0)):
+        f -= 2 * (h - int(_get(cfg, "vtrans_heads", 0))) * blocks * 2 * 32   # fewer transported heads
     return float(f)

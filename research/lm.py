@@ -544,14 +544,7 @@ def block(cfg, lyr, x, stats=None):
             stats.append(record)
         x = x + update
     if cfg.arch == "loop":
-        import beyond_layers
-        import loops_layers
-        normed = ln(lyr["ln1"], x)
-        if "dbeta" in lyr:
-            letter = "G" if lyr["dbeta"]["w"].shape[1] == cfg.heads else "D"
-            x = x + beyond_layers.apply_layer(delta_cfg(cfg, letter), lyr, normed, kind="gated_delta")
-        else:
-            x = x + loops_layers.attention(cfg, lyr, normed, project_qkv)
+        return loop_block(cfg, lyr, x)[0]
     if cfg.arch == "sfa":
         x = x + sfa_attention(cfg, lyr, ln(lyr["ln1"], x))
     if cfg.arch in ("gpt", "hybrid"):
@@ -563,18 +556,38 @@ def block(cfg, lyr, x, stats=None):
     return x + lin(lyr["fc2"], jax.nn.gelu(lin(lyr["fc1"], ln(lyr["ln2"], x))))
 
 
+def loop_block(cfg, lyr, x, vfirst=None):
+    """One LOOPS block: Gated DeltaNet or frame attention, then the MLP. Threads the first attention
+    layer's values through the stack for the value residual (EVENTS.md); returns (x, vfirst)."""
+    import beyond_layers
+    import loops_layers
+    normed = ln(lyr["ln1"], x)
+    if "dbeta" in lyr:
+        letter = "G" if lyr["dbeta"]["w"].shape[1] == cfg.heads else "D"
+        x = x + beyond_layers.apply_layer(delta_cfg(cfg, letter), lyr, normed, kind="gated_delta")
+    else:
+        update, values = loops_layers.attention(cfg, lyr, normed, project_qkv, vfirst, return_values=True)
+        x = x + update
+        if vfirst is None:
+            vfirst = values
+    x = x + lin(lyr["fc2"], jax.nn.gelu(lin(lyr["fc1"], ln(lyr["ln2"], x))))
+    return x, vfirst
+
+
 def forward(cfg, p, idx, stats=None):
     T = idx.shape[1]
     x = p["emb"][idx]
     if getattr(cfg, "pos", 1):
         x = x + p["pos"][None, :T]
     f = jax.checkpoint(lambda lyr, x: block(cfg, lyr, x)) if getattr(cfg, "remat", 0) else (lambda lyr, x: block(cfg, lyr, x))
-    if cfg.arch == "loop" and getattr(cfg, "loop_order", ""):
-        seen, first = set(), None
+    if cfg.arch == "loop":
+        g = (lambda lyr, x, v: loop_block(cfg, lyr, x, v))
+        g = jax.checkpoint(g) if getattr(cfg, "remat", 0) else g
+        seen, first, vfirst = set(), None, None
         for i in loop_order(cfg):
             if i in seen:
                 x = x + p["inject"] * first          # input injection on every return
-            x = f(p["layers"][i], x)
+            x, vfirst = g(p["layers"][i], x, vfirst)
             if first is None:
                 first = x
             seen.add(i)
@@ -846,6 +859,9 @@ def main():
     ap.add_argument("--forget", type=int, default=0, help="loop: Forgetting Transformer gate")
     ap.add_argument("--forget_bias", type=float, default=5.0)
     ap.add_argument("--vtrans", type=int, default=0, help="loop holo: transport values on the holonomy dims")
+    ap.add_argument("--vtrans_heads", type=int, default=0, help="loop holo: transport in the first N heads only (0 = all)")
+    ap.add_argument("--gate_out", type=int, default=0, help="loop: sigmoid gate on the attention output (Qiu et al.)")
+    ap.add_argument("--vres", type=int, default=0, help="loop: value residual from the first attention layer (Zhou et al.)")
     ap.add_argument("--pattern", default="", help="loop: A/G/D per distinct block, e.g. GAGAGA")
     ap.add_argument("--loop_order", default="", help="loop: depth loop order of distinct blocks, e.g. 0,1,2,1,2,3")
     ap.add_argument("--ctx", type=int, default=256)

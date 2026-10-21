@@ -20,6 +20,7 @@ jax.config.update("jax_enable_x64", False)
 def cfg(**kw):
     base = dict(arch="loop", d=64, layers=2, heads=2, mlp=128, ctx=24, vocab=50, pos=0, posenc="rope",
                 holo=16, modules=4, holo_init=0.3, rope_base=10000.0, forget=0, forget_bias=5.0, vtrans=0,
+                vtrans_heads=0, gate_out=0, vres=0,
                 pattern="", loop_order="", qkv_conv=3, nh=1, beta_max=1.0, delta_key_ratio=0.75,
                 delta_v_expand=2.0, delta_chunk=0, delta_unroll=1, conv_width=4, remat=0, bf16=0,
                 hops=1, lookback=0, cap=0.0, gdim=5, nheads=2, rank=8, order=3)
@@ -130,6 +131,8 @@ def test_forget_gate_starts_near_softmax():
     dict(posenc="rope", layers=3, loop_order="0,1,1,2"),
     dict(posenc="abs", pos=1),
     dict(posenc="holo", holo=32, vtrans=1),
+    dict(posenc="holo", forget=1, gate_out=1, vres=1, vtrans=1, vtrans_heads=1, pattern="GA"),
+    dict(posenc="rope", forget=1, gate_out=1, vres=1, layers=3, loop_order="0,1,1,2"),
 ])
 def test_models_train_one_step(kw):
     c = cfg(**kw)
@@ -152,3 +155,23 @@ def test_frame_flops_are_small_at_language_size():
     base = cfg(d=512, heads=8, layers=6, mlp=2048, ctx=512, vocab=50304, posenc="rope")
     ratio = lm.flops_per_token(big, 512) / lm.flops_per_token(base, 512)
     assert 1.0 < ratio < 1.02, ratio
+
+
+def test_value_residual_reaches_later_layers_and_one_head_transport_is_partial():
+    c = cfg(posenc="holo", vres=1, vtrans=1, vtrans_heads=1, layers=2, holo_init=0.8)
+    p = lm.init(jax.random.PRNGKey(0), c)
+    idx = jax.random.randint(jax.random.PRNGKey(2), (2, c.ctx), 0, c.vocab)
+    base = lm.forward(c, p, idx)
+    # zeroing layer 2's residual share changes the output; layer 1 has nothing to mix
+    p2 = {**p, "layers": [p["layers"][0], {**p["layers"][1], "vres": jnp.zeros_like(p["layers"][1]["vres"])}]}
+    assert float(jnp.abs(lm.forward(c, p2, idx) - base).max()) > 1e-5
+    p1 = {**p, "layers": [{**p["layers"][0], "vres": jnp.zeros_like(p["layers"][0]["vres"])}, p["layers"][1]]}
+    np.testing.assert_allclose(np.asarray(lm.forward(c, p1, idx)), np.asarray(base), atol=1e-5)
+    # transport touches head 0 only
+    _, lyr = layer(c)
+    x = x_in(c)
+    fr = ll.frames(c, lyr, x)
+    v = jax.random.normal(jax.random.PRNGKey(4), (2, c.ctx, c.heads, c.d // c.heads))
+    moved = ll.rotate_holo(c, fr, v)
+    np.testing.assert_allclose(np.asarray(moved[:, :, 1:]), np.asarray(v[:, :, 1:]))
+    assert float(jnp.abs(moved[:, :, 0] - v[:, :, 0]).max()) > 1e-4

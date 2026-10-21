@@ -112,3 +112,20 @@ Every prediction is reported as held or failed, with the numbers.
 The ledger is `research/results/loops_budget.json`; `loops_modal.py` caps are raised to a $300 total.
 
 ## 5. Log
+
+- 21 Oct. Paper correction committed on `claude/loops` (Question bullet, Part VIII closing paragraph,
+  "what next" item): against rotary softmax, recurrence wins by 0.1–0.3% and the hybrid by 0.8–0.9%.
+  Not published; main is only updated with Neo's OK.
+- Code: `gate_out`, `vres` and `vtrans_heads` in `loops_layers.py`; the value residual is threaded
+  through `lm.forward` (`loop_block`, rematerialisation kept); 17 CPU tests pass. Evaluator
+  `loops_eval.py` launched on all 24 confirmation checkpoints (manifest `events_eval`).
+- **Cheap-day screen registered** (seed 0, 3,051 updates, lr .008; manifest `events_cheap`):
+  rope+forget with gate / vres / both; the candidate (hybrid GAGAGA holo+forget) with gate / vres /
+  both / one transport head / all four; one-layer A5 with one transport head. Selection rule for the
+  three-seed confirmation: the strengthened control is rope+forget plus whichever of {gate, vres,
+  both} has the lowest screen loss (plain rope+forget if none beats it); the strengthened candidate
+  is chosen the same way among {gate, vres, both}, and the one-head transport is added if
+  `hybrid_hf_gate_vres_vt1` is within 0.1% of `hybrid_hf_gate_vres` (C3). Confirmation arms: the
+  strengthened control, the strengthened candidate, and the strengthened control with its MLP
+  widened to the candidate's non-embedding parameter count; seeds 1–3, equal modeled FLOPs.
+
