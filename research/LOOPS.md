@@ -348,6 +348,6 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
 - DeltaProduct seed 1: 3.570849. All three seeds: 3.570849, 3.566316, 3.569971 (mean 3.569045). The
   candidate is below it by 0.61%, 0.53%, 0.64%: **S3-4 holds on all three seeds**. The candidate has
   the lowest loss of every arm on every seed, recurrent controls included.
-- Final spend: $75.41 settled across 50 runs (stage 1 $0.53, screens $13.96, language $60.92), none
+- Final spend: $75.41 settled across 50 runs (stage 1 $0.53, screens $13.96, language $60.93), none
   failed. Modal apps stopped. Everything is committed on branch `claude/loops`; nothing pushed.
 
