@@ -197,6 +197,36 @@ def rotate_holo(cfg, fr, v, inverse=False):
     return jnp.concatenate([head, v[:, :, nt:]], 2)
 
 
+def causal_attention(cfg, q, k, v, c=None):
+    """softmax(q k^T / sqrt(dh) + c_i - c_j) v under a causal mask; q, k, v [B, H, T, dh], c [B, H, T]
+    the running sum of log forget gates (or None). Short sequences take one dense pass. Long ones
+    (T above `attn_block`, a multiple of it) go block by block: each block of queries meets only the
+    keys up to its end, products in bf16 with fp32 accumulation, the forget bias added in fp32 per
+    tile, so the result is exact (the bias reaches thousands at 8k tokens, beyond bf16's precision)."""
+    b, h, t, dh = q.shape
+    block = int(_get(cfg, "attn_block", 1024))
+    if t <= block:
+        s = _mm(cfg, q, k, "bhtc,bhsc->bhts") / math.sqrt(dh)
+        if c is not None:
+            s = s + c[:, :, :, None] - c[:, :, None, :]
+        mask = jnp.tril(jnp.ones((t, t), bool))
+        a = jax.nn.softmax(jnp.where(mask, s, -1e9), -1)
+        return _mm(cfg, a, v, "bhts,bhsc->bhtc")
+    if t % block:
+        raise ValueError("long sequences must be a multiple of attn_block")
+    tri = jnp.tril(jnp.ones((block, block), bool))
+    outs = []
+    for i in range(t // block):
+        lo, hi = i * block, (i + 1) * block
+        s = _mm(cfg, q[:, :, lo:hi], k[:, :, :hi], "bhtc,bhsc->bhts") / math.sqrt(dh)
+        if c is not None:
+            s = s + c[:, :, lo:hi, None] - c[:, :, None, :hi]
+        mask = jnp.concatenate([jnp.ones((block, lo), bool), tri], 1)
+        a = jax.nn.softmax(jnp.where(mask, s, -1e9), -1)
+        outs.append(_mm(cfg, a, v[:, :, :hi], "bhts,bhsc->bhtc"))
+    return jnp.concatenate(outs, 2)
+
+
 def attention(cfg, p, x, project_qkv, vfirst=None, return_values=False):
     """Causal softmax attention in transported frames. x is the normed input; project_qkv(p, x)
     returns q, k, v [B, T, D] (with the shared short convolution, if the layer has one). With
@@ -217,14 +247,11 @@ def attention(cfg, p, x, project_qkv, vfirst=None, return_values=False):
     if vtrans:
         v = rotate_holo(cfg, fr, v)
     heads = lambda y: y.transpose(0, 2, 1, 3)
-    s = _mm(cfg, heads(q), heads(k), "bhtc,bhsc->bhts") / math.sqrt(dh)
+    c = None
     if "fgate" in p:
         logf = jax.nn.log_sigmoid((x @ p["fgate"]["w"] + p["fgate"]["b"]).astype(jnp.float32))
         c = jnp.cumsum(logf, axis=1).transpose(0, 2, 1)          # [B, H, T]
-        s = s + c[:, :, :, None] - c[:, :, None, :]
-    mask = jnp.tril(jnp.ones((t, t), bool))
-    a = jax.nn.softmax(jnp.where(mask, s, -1e9), -1)
-    o = _mm(cfg, a, heads(v), "bhts,bhsc->bhtc").transpose(0, 2, 1, 3)
+    o = causal_attention(cfg, heads(q), heads(k), heads(v), c).transpose(0, 2, 1, 3)
     if vtrans:
         o = rotate_holo(cfg, fr, o, inverse=True)
     if "gout" in p:

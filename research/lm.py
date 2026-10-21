@@ -124,6 +124,9 @@ def ln(p, x):
 
 
 def init(key, cfg):
+    if cfg.arch == "events":
+        import events_model
+        return events_model.init(key, cfg)
     D, L, T = cfg.d, cfg.layers, cfg.ctx
     conv_width = qkv_conv_width(cfg)
     ks = iter(jax.random.split(key, 16 + 16 * L))
@@ -575,6 +578,9 @@ def loop_block(cfg, lyr, x, vfirst=None):
 
 
 def forward(cfg, p, idx, stats=None):
+    if cfg.arch == "events":
+        import events_model
+        return events_model.forward(cfg, p, idx)
     T = idx.shape[1]
     x = p["emb"][idx]
     if getattr(cfg, "pos", 1):
@@ -655,6 +661,9 @@ def flops_per_token(cfg, T):
     (T + 1) / 2 keys on average), the same way for every architecture. Training costs three times this.
     Every power-sum pass, Newton recursion, read-out, look-back and walk pass is included.
     """
+    if cfg.arch == "events":
+        import events_model
+        return events_model.flops_per_token(cfg, T)
     D, L, V, H = cfg.d, cfg.layers, cfg.vocab, cfg.heads
     conv_width = qkv_conv_width(cfg)
     if cfg.arch in BEYOND_ARCHS:
@@ -717,6 +726,9 @@ def flops_per_token(cfg, T):
 def training_flops_per_token(cfg, T):
     """Declared training arithmetic, including optional chunk-solve backward work."""
     extra = 0.0
+    if cfg.arch == "events":
+        import events_model
+        extra = events_model.training_extra_flops(cfg, T)
     if cfg.arch in BEYOND_ARCHS:
         import beyond_layers
         extra = cfg.layers * beyond_layers.training_extra_flops(cfg, seq_len=T)
@@ -864,6 +876,21 @@ def main():
     ap.add_argument("--vres", type=int, default=0, help="loop: value residual from the first attention layer (Zhou et al.)")
     ap.add_argument("--pattern", default="", help="loop: A/G/D per distinct block, e.g. GAGAGA")
     ap.add_argument("--loop_order", default="", help="loop: depth loop order of distinct blocks, e.g. 0,1,2,1,2,3")
+    ap.add_argument("--attn_block", type=int, default=1024, help="loop/events: exact block-causal attention above this length")
+    # EVENTS (EVENTS.md section 2): encoder / main / decoder blocks, target event length, slots, main network
+    ap.add_argument("--ev_enc", type=int, default=2)
+    ap.add_argument("--ev_main", type=int, default=6)
+    ap.add_argument("--ev_dec", type=int, default=2)
+    ap.add_argument("--ev_len", type=float, default=8.0)
+    ap.add_argument("--ev_slots", type=int, default=0, help="event slots per window (0: 2 ctx / ev_len)")
+    ap.add_argument("--ev_dmain", type=int, default=0)
+    ap.add_argument("--ev_heads", type=int, default=0)
+    ap.add_argument("--ev_posenc", default="holo")
+    ap.add_argument("--ev_forget", type=int, default=1)
+    ap.add_argument("--ev_vtrans", type=int, default=0)
+    ap.add_argument("--ev_vtrans_heads", type=int, default=0)
+    ap.add_argument("--ev_gate_out", type=int, default=0)
+    ap.add_argument("--ratio_w", type=float, default=0.03, help="events: weight of the ratio loss")
     ap.add_argument("--ctx", type=int, default=256)
     ap.add_argument("--batch", type=int, default=64)
     ap.add_argument("--micro", type=int, default=1, help="split each batch into this many accumulated micro-batches")
@@ -908,7 +935,7 @@ def main():
         newton = 2 * D * H * r + 2 * H * r * D
         attn = 4 * D * D
         per_layer = attn + 8 * D * D
-        if cfg.arch in ("gpt", "lla", "plx", "loop") + BEYOND_ARCHS:
+        if cfg.arch in ("gpt", "lla", "plx", "loop", "events") + BEYOND_ARCHS:
             cfg.mlp = 4 * D
         elif cfg.arch in ("hybrid", "sfa"):
             if cfg.arch == "sfa":
@@ -918,6 +945,10 @@ def main():
             cfg.mlp = max(D, int((per_layer - newton) / (2 * D)))
     if cfg.arch == "loop" and cfg.posenc != "abs":
         cfg.pos = 0  # a rotary frame replaces the learned absolute positions
+    if cfg.arch == "events":
+        cfg.pos = 0
+        cfg.ev_dmain = cfg.ev_dmain or cfg.d
+        cfg.ev_heads = cfg.ev_heads or cfg.heads
     train, val = load(cfg.data)
     T = cfg.ctx
     if cfg.tokens:
@@ -942,6 +973,10 @@ def main():
     tfpt = training_flops_per_token(cfg, T)
 
     def loss_fn(p, x, y):
+        if cfg.arch == "events":
+            import events_model
+            lg, aux = events_model.forward(cfg, p, x, with_aux=True)
+            return optax.softmax_cross_entropy_with_integer_labels(lg, y).mean() + cfg.ratio_w * aux["ratio"]
         lg = forward(cfg, p, x)
         return optax.softmax_cross_entropy_with_integer_labels(lg, y).mean()
 
@@ -1073,6 +1108,11 @@ def main():
             }
             for layer in params["layers"]
         ]
+    if cfg.arch == "events":
+        import events_model
+        _, aux = jax.jit(lambda p_, x_: events_model.forward(cfg, p_, x_, with_aux=True))(params, jnp.asarray(vx[:8]))
+        extra["boundaries"] = {k: float(v) for k, v in aux.items()}
+        extra["mean_event_length"] = 1.0 / max(float(aux["rate"]), 1e-9)
     out = {"arch": cfg.arch, "config": vars(cfg), "opt": cfg.opt, "plx_norm": cfg.plx_norm if cfg.arch == "plx" else None, "chart": cfg.chart if cfg.arch == "lla" else None,
            "chart_init": cfg.chart_init if cfg.arch == "lla" else None, "lam0": cfg.lam0 if cfg.arch == "lla" else None, "seed": cfg.seed, "params": nparams, "nonembed": nparams - nembed, "mlp": cfg.mlp,
            "layers": cfg.layers, "d": cfg.d, "rank": cfg.rank, "order": cfg.order, "vac": cfg.vac, "alpha0": cfg.alpha0,

@@ -175,3 +175,83 @@ def test_value_residual_reaches_later_layers_and_one_head_transport_is_partial()
     moved = ll.rotate_holo(c, fr, v)
     np.testing.assert_allclose(np.asarray(moved[:, :, 1:]), np.asarray(v[:, :, 1:]))
     assert float(jnp.abs(moved[:, :, 0] - v[:, :, 0]).max()) > 1e-4
+
+
+def test_blockwise_attention_equals_dense_with_forget_bias():
+    c_dense = cfg(attn_block=64, bf16=0)
+    c_block = cfg(attn_block=16, bf16=0)
+    kq = jax.random.split(jax.random.PRNGKey(7), 4)
+    q, k, v = (jax.random.normal(kk, (2, 3, 64, 8)) for kk in kq[:3])
+    logf = jax.nn.log_sigmoid(jax.random.normal(kq[3], (2, 3, 64)) + 1.0)
+    cbias = jnp.cumsum(logf, axis=-1) * 40.0          # large biases, as at long context
+    a = ll.causal_attention(c_dense, q, k, v, cbias)
+    b = ll.causal_attention(c_block, q, k, v, cbias)
+    np.testing.assert_allclose(np.asarray(a), np.asarray(b), atol=2e-5)
+    np.testing.assert_allclose(np.asarray(ll.causal_attention(c_dense, q, k, v)),
+                               np.asarray(ll.causal_attention(c_block, q, k, v)), atol=2e-5)
+
+
+def ev_cfg(**kw):
+    c = cfg(arch="events", d=64, heads=2, mlp=128, ctx=64, vocab=50, ev_enc=1, ev_main=2, ev_dec=1, ev_len=4.0,
+            ev_slots=0, ev_dmain=64, ev_heads=2, ev_posenc="holo", ev_forget=1, ev_vtrans=0, ev_vtrans_heads=0,
+            ev_gate_out=0, ratio_w=0.03, delta_chunk=16, attn_block=1024, remat=0)
+    for k, v in kw.items():
+        setattr(c, k, v)
+    return c
+
+
+def _random_router(p, seed=11):
+    # identity routers rarely fire on random inputs; random ones make many boundaries to test against
+    import events_model as em
+    enc, _, _, _, _ = em.sizes(ev_cfg())
+    r = p["layers"][enc - 1]
+    kk = jax.random.split(jax.random.PRNGKey(seed), 2)
+    r = {**r, "rq": {"w": jax.random.normal(kk[0], r["rq"]["w"].shape)},
+         "rk": {"w": jax.random.normal(kk[1], r["rk"]["w"].shape)}}
+    return {**p, "layers": [r if i == enc - 1 else l for i, l in enumerate(p["layers"])]}
+
+
+@pytest.mark.parametrize("slots", [0, 6])
+def test_event_model_is_causal(slots):
+    import events_model as em
+    c = ev_cfg(ev_slots=slots)
+    p = _random_router(lm.init(jax.random.PRNGKey(0), c))
+    idx = jax.random.randint(jax.random.PRNGKey(2), (2, c.ctx), 0, c.vocab)
+    _, aux = em.forward(c, p, idx, with_aux=True)
+    assert 0.05 < float(aux["rate"]) < 0.95          # boundaries actually occur
+    for cut in (10, 33, 50):
+        idx2 = idx.at[:, cut:].set((idx[:, cut:] + 13) % c.vocab)
+        a, b = lm.forward(c, p, idx), lm.forward(c, p, idx2)
+        np.testing.assert_allclose(np.asarray(a[:, :cut]), np.asarray(b[:, :cut]), atol=2e-5)
+        assert float(jnp.abs(a[:, cut:] - b[:, cut:]).max()) > 1e-4
+    if slots:
+        assert float(aux["overflow"]) > 0               # the small buffer overflows, and stays causal
+
+
+def test_event_model_trains_one_step_and_counts_flops():
+    import events_model as em
+    c = ev_cfg()
+    p = _random_router(lm.init(jax.random.PRNGKey(0), c))
+    idx = jax.random.randint(jax.random.PRNGKey(2), (2, c.ctx), 0, c.vocab)
+
+    def loss(p):
+        lg, aux = em.forward(c, p, idx, with_aux=True)
+        return jax.nn.log_softmax(lg).mean() + 0.03 * aux["ratio"]
+
+    g = jax.grad(loss)(p)
+    assert all(bool(jnp.isfinite(v).all()) for v in jax.tree_util.tree_leaves(g))
+    # the router receives gradient (through the confidence, the smoothing and the ratio loss)
+    enc = em.sizes(c)[0]
+    assert float(jnp.abs(g["layers"][enc - 1]["rq"]["w"]).max()) > 0
+    assert lm.flops_per_token(c, c.ctx) > 0
+
+
+def test_event_model_flops_are_below_softmax_at_long_context():
+    import events_model as em
+    big = dict(d=512, heads=8, mlp=2048, vocab=50304, qkv_conv=3)
+    soft = cfg(arch="loop", layers=6, posenc="rope", forget=1, ctx=8192, **big)
+    ev = ev_cfg(ctx=8192, ev_enc=2, ev_main=6, ev_dec=2, ev_len=8.0, ev_dmain=512, ev_heads=8, delta_chunk=32, **big)
+    ratio8k = lm.training_flops_per_token(ev, 8192) / lm.training_flops_per_token(soft, 8192)
+    soft.ctx, ev.ctx = 2048, 2048
+    ratio2k = lm.training_flops_per_token(ev, 2048) / lm.training_flops_per_token(soft, 2048)
+    assert ratio8k < ratio2k < 1.2, (ratio8k, ratio2k)

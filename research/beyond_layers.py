@@ -454,7 +454,9 @@ def _delta_chunk_flops(t, nh, dk, dv, chunk_size=32):
     }
 
 
-def apply_layer(cfg, p, x, kind=None):
+def apply_layer(cfg, p, x, kind=None, extra_log_decay=None):
+    """extra_log_decay [B, T, H] (non-positive) is added to Gated DeltaNet's per-token log decay
+    (EVENTS.md: the event model's decoder resets its state at event boundaries)."""
     kind = _kind(cfg, kind)
     if kind not in KINDS:
         raise ValueError(kind)
@@ -473,6 +475,8 @@ def apply_layer(cfg, p, x, kind=None):
         beta_logits = _lin(cfg, p["dbeta"], x).reshape(b, t, h, nh) + float(_get(cfg, "beta0", 0.0))
         beta = float(_get(cfg, "beta_max", 2.0)) * jax.nn.sigmoid(beta_logits)
         log_decay = -jnp.exp(p["A_log"]) * jax.nn.softplus(_lin(cfg, p["ddecay"], x) + p["dt_bias"])
+        if extra_log_decay is not None:
+            log_decay = log_decay + extra_log_decay
         chunk_size = int(_get(cfg, "delta_chunk", 0))
         if chunk_size:
             out, _ = gated_delta_chunk(q, k, v, beta, log_decay.reshape(b, t, h),

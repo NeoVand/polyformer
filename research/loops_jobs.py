@@ -95,6 +95,30 @@ def lm_job(name, seed, steps, warmup, lr, evals, vbig, scale=1.0, size="base"):
     return {"script": "lm.py", "argv": argv, "gpu": "H100", "max_seconds": int(seconds * scale), "name": name}
 
 
+# EVENTS long-context arms (context set per job); shared: short convolution, chunked delta rule, exact
+# block-causal attention above 1,024 positions
+LONG = {
+    "soft_rf": ["--arch", "loop", "--posenc", "rope", "--forget", "1"],
+    "hyb_hf": ["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA"],
+    "ev8": ["--arch", "events", "--ev_len", "8"],
+    "ev16": ["--arch", "events", "--ev_len", "16"],
+    "ev8_rope": ["--arch", "events", "--ev_len", "8", "--ev_posenc", "rope"],
+}
+
+
+def long_job(name, ctx, seed, steps, warmup, evals, vseqs, vbig, max_seconds, lr=0.008, extra=()):
+    batch = 32768 // ctx
+    argv = ["--data", "/data/fineweb_edu", "--vocab", "50304", "--ctx", str(ctx), "--d", "512", "--heads", "8",
+            "--layers", "6", "--mlp", "2048", "--opt", "muon", "--batch", str(batch), "--micro", "2", "--bf16", "1",
+            "--remat", "1", "--tokens", "0", "--progress", "1", "--qkv_conv", "3", "--delta_chunk", "32",
+            "--attn_block", "1024", "--lr", str(lr), "--seed", str(seed), "--steps", str(steps),
+            "--warmup", str(warmup), "--evals", str(evals), "--vseqs", str(vseqs), "--vbig", str(vbig)]
+    argv += LONG[name] + list(extra)
+    if vbig:
+        argv += ["--save-final", "1"]
+    return {"script": "lm.py", "argv": argv, "gpu": "H100", "max_seconds": int(max_seconds)}
+
+
 def diag_job(task, layers, sets, steps=6000, lr=0.004, seed=0):
     argv = ["--task", task, "--arch", "loop", "--layers", str(layers), "--d", "128", "--heads", "4",
             "--steps", str(steps), "--lr", str(lr), "--seed", str(seed), "--pos", "0", "--progress",
@@ -134,6 +158,12 @@ def stage(name):
                  "hybrid_hf_gate_vres", "hybrid_hf_vt1", "hybrid_hf_gate_vres_vt1")
         jobs = [lm_job(n, 0, 3051, 305, 0.008, 8, 0) for n in names]
         jobs.append(diag_job("wp_a5_16", 1, ["posenc=holo", "vtrans=1", "vtrans_heads=1"]))
+        return jobs
+    if name == "timing":
+        jobs = []
+        for ctx in (2048, 8192):
+            for n in ("soft_rf", "hyb_hf", "ev8"):
+                jobs.append(long_job(n, ctx, 0, 150, 30, 1, 16, 0, 1500))
         return jobs
     if name == "screen2":
         names = ("hybrid_rope_forget", "hybrid_grid_forget", "hybrid_holo_forget_vtrans", "hybrid_holo_forget_AG",
