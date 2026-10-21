@@ -281,4 +281,23 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
 - Seed 1 complete: GDN 3.579272 (12,756 updates); the candidate is 0.84% below it. Caps moved again
   (development $1, screen $14, language $85; total still $100) so the scale check and DeltaProduct fit;
   launched with limited concurrency so reservations never exceed the cap.
+- **Stage 3 complete** (val_big; equal modeled training FLOPs; seeds 1/2/3; mean in the last column):
+
+  | Arm | Seed 1 | Seed 2 | Seed 3 | Mean |
+  |---|---|---|---|---|
+  | **hybrid GAGAGA holo+forget (candidate)** | 3.549097 | 3.547500 | 3.547070 | 3.547889 |
+  | hybrid GAGAGA rope | 3.550674 | 3.551037 | 3.552140 | 3.551284 |
+  | rope+forget | 3.573876 | 3.568775 | 3.570090 | 3.570914 |
+  | GDN | 3.579272 | 3.574200 | 3.578030 | 3.577167 |
+  | rope | 3.583959 | 3.576787 | 3.578580 | 3.579775 |
+  | abs | 3.612944 | 3.606994 | 3.621190 | 3.613709 |
+
+  Candidate vs rope: −0.973%, −0.819%, −0.880%. **The registered headline fails on all three seeds**
+  (1% needed); the candidate beats softmax by 0.82–0.97% at equal compute. Everything else about the
+  ordering is stable: the candidate has the lowest loss on every seed, below rope+forget by
+  0.60–0.69%, below GDN by 0.75–0.87% (**"beats both" holds for GDN**, S3-2), and below the plain
+  hybrid by 0.04–0.14% on all three seeds (the frames and gate add about 0.1% inside the hybrid).
+  S3-3 holds (under 1% vs rope+forget). S3-5 holds: rope stays ahead of abs (0.80–1.18%) by less than
+  at 100M tokens. Seed-to-seed spread of each arm is about 0.1–0.4%, far below the gaps, so the
+  ordering is not noise; the shortfall is in size, not sign.
 

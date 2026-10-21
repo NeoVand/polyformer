@@ -156,6 +156,18 @@
       "stage": "language",
       "status": "complete"
     },
+    "38e77c389209854cb125b054": {
+      "call_id": "fc-01M5ENMVNVK5Z0SB9N9QQSNDGV",
+      "gpu": "H100",
+      "id": "38e77c389209854cb125b054",
+      "launched_at": "2026-10-21T07:26:10.158655+00:00",
+      "manifest": "loops_lang_extra",
+      "manifest_sha256": "876f441b613d957825302e29b359f2db9e91d1ff40c1e6ddce684e77b7ed997b",
+      "reserved_at": "2026-10-21T07:26:09.840031+00:00",
+      "reserved_usd": 6.594037,
+      "stage": "language",
+      "status": "running"
+    },
     "4209f1ebb7599d10a7c10542": {
       "call_id": "fc-01M5EK21T10N8ENP29DTTF9WRZ",
       "gpu": "H100",
@@ -170,6 +182,18 @@
       "settled_usd": 2.681808,
       "stage": "language",
       "status": "complete"
+    },
+    "43179b62ca6ad05528d1288b": {
+      "call_id": "fc-01M5ENMVNVP5QGRY63KAFXEKAQ",
+      "gpu": "H100",
+      "id": "43179b62ca6ad05528d1288b",
+      "launched_at": "2026-10-21T07:26:10.155620+00:00",
+      "manifest": "loops_lang_extra",
+      "manifest_sha256": "876f441b613d957825302e29b359f2db9e91d1ff40c1e6ddce684e77b7ed997b",
+      "reserved_at": "2026-10-21T07:26:09.845017+00:00",
+      "reserved_usd": 6.193733,
+      "stage": "language",
+      "status": "running"
     },
     "43a350f2e6716e4c34f593e6": {
       "call_id": "fc-01M5EK21DPCB3F1RDCKKK2QJYH",
@@ -230,6 +254,18 @@
       "settled_usd": 0.554307,
       "stage": "screen",
       "status": "complete"
+    },
+    "5097525d2087453b8eafd198": {
+      "call_id": "fc-01M5EP8N6RH3BVWHBDM2H7WMG0",
+      "gpu": "H100",
+      "id": "5097525d2087453b8eafd198",
+      "launched_at": "2026-10-21T07:36:58.888240+00:00",
+      "manifest": "loops_lang_dp",
+      "manifest_sha256": "ec00b94ab6976d9139b51830841c8b1148fd58415d5d9fd9e3902342f0b412ef",
+      "reserved_at": "2026-10-21T07:36:58.617392+00:00",
+      "reserved_usd": 8.303874,
+      "stage": "language",
+      "status": "running"
     },
     "5a8f3339f2df26fdbfeceef9": {
       "call_id": "fc-01M5EH9MXSKQYXKNTMRFGF9JF0",
@@ -366,6 +402,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "a1ac5da86cffa76257019332": {
+      "call_id": "fc-01M5EP8N6NG10BH5ZAT08RPKPZ",
+      "gpu": "H100",
+      "id": "a1ac5da86cffa76257019332",
+      "launched_at": "2026-10-21T07:36:58.879298+00:00",
+      "manifest": "loops_lang_dp",
+      "manifest_sha256": "ec00b94ab6976d9139b51830841c8b1148fd58415d5d9fd9e3902342f0b412ef",
+      "reserved_at": "2026-10-21T07:36:58.615246+00:00",
+      "reserved_usd": 8.303874,
+      "stage": "language",
+      "status": "running"
+    },
     "a39c3bde6910ddc0c96a26b0": {
       "call_id": "fc-01M5EJ61R7N2JKQXGGWZJ37TKZ",
       "gpu": "H100",
@@ -380,6 +428,18 @@
       "settled_usd": 0.846179,
       "stage": "screen",
       "status": "complete"
+    },
+    "a5332a690f65c6a70446f18f": {
+      "call_id": "fc-01M5EPJYSK7SZQ9P27J1GXSTKX",
+      "gpu": "H100",
+      "id": "a5332a690f65c6a70446f18f",
+      "launched_at": "2026-10-21T07:42:36.388702+00:00",
+      "manifest": "loops_lang_dp",
+      "manifest_sha256": "ec00b94ab6976d9139b51830841c8b1148fd58415d5d9fd9e3902342f0b412ef",
+      "reserved_at": "2026-10-21T07:42:36.096363+00:00",
+      "reserved_usd": 8.303874,
+      "stage": "language",
+      "status": "running"
     },
     "a76c32b69612b860302b82ff": {
       "call_id": "fc-01M5EK21DNXW5AWZVP0KKC2GN5",
@@ -420,8 +480,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:00:46.337626+00:00",
       "reserved_usd": 4.796329,
+      "result_file": "results/loops_runs/b9d45b7c64fb7274fb6fc24b.json",
+      "settled_at": "2026-10-21T07:34:56.114949+00:00",
+      "settled_usd": 2.678796,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "be8a3113646890c5e7cb3760": {
       "call_id": "fc-01M5EHE00895365SE1NPAJZ67C",
@@ -462,8 +525,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:01:16.005172+00:00",
       "reserved_usd": 4.341105,
+      "result_file": "results/loops_runs/c37c07d73ca2710951c32108.json",
+      "settled_at": "2026-10-21T07:28:33.198710+00:00",
+      "settled_usd": 2.174044,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "c566d2d7da4c6bd7410c2e5a": {
       "call_id": "fc-01M5EHGJGTKGRY62BRCSJBRD1F",
@@ -504,8 +570,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:07:57.785459+00:00",
       "reserved_usd": 4.983057,
+      "result_file": "results/loops_runs/c5c8bce2012984e592bd315c.json",
+      "settled_at": "2026-10-21T07:37:54.192358+00:00",
+      "settled_usd": 2.371006,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "c8367ac31740415d0c715713": {
       "call_id": "fc-01M5EHA9CD8NEVXMH9RPZRX7M8",
@@ -561,8 +630,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:00:44.378236+00:00",
       "reserved_usd": 4.983057,
+      "result_file": "results/loops_runs/cbb3b56ecc50330cc8aa41f6.json",
+      "settled_at": "2026-10-21T07:32:06.378255+00:00",
+      "settled_usd": 2.469083,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "daf20b9e8de3e3855d4e9066": {
       "call_id": "fc-01M5EK21DHZC3ZZ633Q48SKCD9",
@@ -579,6 +651,18 @@
       "stage": "language",
       "status": "complete"
     },
+    "e25e427553702177456968e8": {
+      "call_id": "fc-01M5ENMVP5G74J65NQSWX64RVG",
+      "gpu": "H100",
+      "id": "e25e427553702177456968e8",
+      "launched_at": "2026-10-21T07:26:10.171168+00:00",
+      "manifest": "loops_lang_extra",
+      "manifest_sha256": "876f441b613d957825302e29b359f2db9e91d1ff40c1e6ddce684e77b7ed997b",
+      "reserved_at": "2026-10-21T07:26:09.842572+00:00",
+      "reserved_usd": 8.972675,
+      "stage": "language",
+      "status": "running"
+    },
     "e7d844cd130f87d0adde85d5": {
       "call_id": "fc-01M5EMM3TAQVM2EE6SDXSDEJAD",
       "gpu": "H100",
@@ -588,8 +672,11 @@
       "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
       "reserved_at": "2026-10-21T07:08:17.053322+00:00",
       "reserved_usd": 4.796329,
+      "result_file": "results/loops_runs/e7d844cd130f87d0adde85d5.json",
+      "settled_at": "2026-10-21T07:41:54.649625+00:00",
+      "settled_usd": 2.641829,
       "stage": "language",
-      "status": "running"
+      "status": "complete"
     },
     "eb5216c1542b0c5cc53e0315": {
       "call_id": "fc-01M5EHKXXXFMCPYPPEC24DYA4W",
