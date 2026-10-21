@@ -216,4 +216,17 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   model for P6. Selection rule: the lowest seed-0 loss among hybrids whose modeled training FLOPs are
   within 5% of abs goes to stage 3 as the candidate; GAGAGA holo+forget is the default if nothing
   beats it by more than 0.1%.
+- Stage 3 registration (written before screen 2's results). Seeds 1, 2, 3; every arm gets the
+  modeled training FLOPs of abs at 13,531 updates (about 443M tokens): abs 13,531, rope 13,527,
+  rope+forget 13,518, hybrid GAGAGA rope 13,131, GDN 12,756, DeltaProduct 10,095, the candidate per
+  `loops_jobs.equal_flop_steps`. Final metric: `val_big` (1,024 fresh windows, seed 5678), as BEYOND.
+  Arms: abs, rope (the registered softmax controls), rope+forget (the Forgetting Transformer, the
+  strongest attention control, reported against the candidate even though it is not in the
+  registered gate), hybrid GAGAGA rope (the plain hybrid), the screen-2 candidate, GDN; DeltaProduct
+  if the budget allows after the core arms.
+  Predictions: S3-1 the candidate is at least 1% below the better of abs and rope on all three seeds
+  (I put this at even odds; the screen margin over rope was 1.19% at 100M tokens). S3-2 it is below
+  GDN on all three seeds (likely). S3-3 it is less than 1% below rope+forget on every seed (likely:
+  the screen margin was 0.59%). S3-4 it is below DeltaProduct on at least two seeds (60%). S3-5 rope
+  stays ahead of abs at 443M tokens, by less than at 100M.
 
