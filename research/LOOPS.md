@@ -229,4 +229,16 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   GDN on all three seeds (likely). S3-3 it is less than 1% below rope+forget on every seed (likely:
   the screen margin was 0.59%). S3-4 it is below DeltaProduct on at least two seeds (60%). S3-5 rope
   stays ahead of abs at 443M tokens, by less than at 100M.
+- Screen 2 results (seed 0, 100M tokens): DADADA holo+forget 3.798680 (but about 17% more modeled
+  FLOPs than abs, so outside the rule), GAGAGA grid+forget 3.805733, GGAGGA holo+forget 3.808107,
+  GAGAGA rope+forget 3.808816, AGAGAG holo+forget 3.813344, GAGAGA holo+forget+vtrans 3.814397,
+  rope with 4 blocks 3.909783. No eligible hybrid beats GAGAGA holo+forget (3.808238) by 0.1%, so
+  **the registered default is the stage-3 candidate**. The frame type inside the hybrid is worth at
+  most 0.08% here; the forget gate and the recurrent layers carry the gain. P6 completed: the depth
+  loop (3.874952) beats the 4-block model with the same distinct blocks by 0.89%.
+- Budget: $14.48 spent (conservative) after stages 1, 2 and screen 2. Caps moved to development $5,
+  screen $20, language $75 (total unchanged at $100) so stage 3 plus DeltaProduct fit.
+  Stage 3 core: abs, rope, rope+forget, hybrid GAGAGA rope, hybrid GAGAGA holo+forget, GDN; seeds
+  1/2/3, seed-major order. Then DeltaProduct and DADADA holo+forget (both at equal FLOPs) if the core
+  leaves at least $30.
 

@@ -87,10 +87,21 @@ def stage(name):
         for seed in seeds.split(","):
             for n in arms.split(","):
                 steps = equal_flop_steps(n)
-                jobs.append(lm_job(n, int(seed), steps, 400, 0.008, 16, 1024, scale=steps / 3051 * 1.25))
+                job = lm_job(n, int(seed), steps, 400, 0.008, 16, 1024)
+                # timeout from the measured 3,051-update screen wall, with margin for evaluation and saving
+                job["max_seconds"] = min(7200, int(SCREEN_WALL[n] * steps / 3051 * 1.6 + 300))
+                jobs.append(job)
         return jobs
     raise SystemExit(f"unknown stage {name}")
 
+
+# measured seconds for 3,051 updates (loops_screen / loops_screen2; GDN and DeltaProduct from BEYOND's
+# tuning ledger: about $0.80 and $1.65 at its rate)
+SCREEN_WALL = {"abs": 300, "rope": 306, "grid": 320, "grid_forget": 329, "holo": 394, "holo_forget": 425,
+               "holo_forget_vtrans": 431, "rope_forget": 328, "hybrid_rope": 451, "hybrid_holo_forget": 532,
+               "hybrid_rope_forget": 445, "hybrid_grid_forget": 474, "hybrid_holo_forget_vtrans": 525,
+               "hybrid_holo_forget_AG": 507, "hybrid_holo_forget_GGA": 542, "hybrid_holo_forget_DA": 835,
+               "loop": 303, "rope4": 232, "gdn": 520, "deltaproduct": 1200}
 
 REFERENCE_STEPS = 13531  # BEYOND's convolved-softmax final budget (about 443M tokens)
 
