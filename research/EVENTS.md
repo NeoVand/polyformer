@@ -241,3 +241,32 @@ E2 at each seed is the loss on the 256 `val_big` windows; the paired test is acr
 Estimated cost: development $14, headline $64, 2,048 $17, large $38, code $14, evaluations $4: $151,
 which with the cheap-day confirmation ($20) and the $88 already committed leaves about $40 of margin
 in the $300.
+- **A5 with one transport head** (`events_a5`, one layer, 4 heads at width 128, 6,000 updates):
+  accuracy 0.64, on late positions 0.37 (all four heads transported: 0.98). **C3's A5 half fails**: one
+  head of four does not keep the state-tracking result at this size and budget.
+- **Development screens** (`events_dev`, seed 0, equal modeled FLOPs to `soft` at 3,051 updates;
+  validation on 2^20 tokens):
+
+  | Arm | 2,048 | vs soft | 8,192 | vs soft | non-emb. params | wall (s) |
+  |---|---|---|---|---|---|---|
+  | soft (rope+forget+gate+vres) | 3.7246 | | 3.7020 | | 20.5M | 482 / 984 |
+  | hyb (hybrid holo+forget+gate+vres, 1 transport head) | 3.7239 | −0.02% | **3.6584** | **−1.18%** | 21.7M | 684 / 1,336 |
+  | ev_l8 | 3.8540 | +3.47% | 3.7615 | +1.61% | 37.0M | 773 / 1,494 |
+  | ev_l16 | | | 3.7842 | +2.22% | 37.0M | 1,485 |
+  | ev_l8_wide (event network width 768) | | | 3.8197 | +3.18% | | |
+  | ev_l8_rope (rotary frames over events) | | | 3.7476 | +1.23% | 36.4M | 1,418 |
+
+  The routers hit their targets without supervision (mean event length 8.95 and 18.7 at 8,192, 9.9
+  at 2,048). Every event arm is behind the softmax control, and further behind it at 2,048 than at
+  8,192 (−3.47% → −1.61%: the slope has the registered sign, at one seed and 100M tokens). The
+  in-context copying probe is the clearest cost of compression: 0.18 for events against 0.23–0.25
+  for the token-level arms at 8,192. Rotary frames over events beat holonomy frames (−0.37%).
+  The token-level hybrid gains with context: −0.02% at 2,048, −1.18% at 8,192 (and +0.10% at 512 with
+  the same parts, `events_confirm` seed 1, below).
+- **Selection applied:** ev_l8 has the lowest 8,192 loss among ev_l8, ev_l16 and ev_l8_wide; it is
+  1.61% above `soft`, inside the 2% guard, so the headline runs as registered with ev_l8, and the
+  ablation arm is ev_l8_rope at seed 1.
+- **Registered now, after seeing the development screens (a confirmation, not a blind prediction):**
+  H1. At 8,192 and base size, `hyb` is below `soft` on each of seeds 1–3 at 443M softmax tokens, by
+  at least 0.5% on the mean. H2. Its margin at 2,048 (seeds 1–2) is smaller than at 8,192 by at least
+  0.5 points.
