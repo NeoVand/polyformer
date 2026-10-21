@@ -125,7 +125,13 @@ holonomy moves to the RoPE step at inference raises the 8,192 hybrid's loss by 0
 
 ### 4.4 Size (8,192, width 768, 8 layers, seed 1)
 
-⟨LARGE⟩
+| Arm | val_big | vs soft | paired t | non-emb. params | wall |
+|---|---|---|---|---|---|
+| soft | 3.3047 | | | 61.6M | 7,732 s |
+| hyb (GAGAGAGA) | 3.2893 | −0.46% | −12.3 | 65.0M | 9,036 s (1.17×) |
+
+On seed 1 the base-size margin is −0.72%; at three times the non-embedding parameters it is −0.46%.
+The margin does not grow with size here (one seed each; the large event arm was cancelled, see 4.5).
 
 ### 4.5 The event model
 

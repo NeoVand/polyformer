@@ -333,3 +333,9 @@ in the $300.
   cancelled): soft 3.3047, hyb 3.2893, **−0.46%** (paired t −12.3), against −0.72% for the base size on
   seed 1. The margin does not grow with size on this seed (61.6M vs 65.0M non-embedding parameters;
   wall 7,732 s vs 9,036 s, 1.17×).
+- **A1 result** (`events_8k_hybrope`, seed 1): hyb_rope 3.4342, −0.21% against soft (paired t −7.9);
+  the holonomy hybrid on the same seed is −0.72%, so the frames (with one transport head) are worth
+  **−0.51%** inside the hybrid at 8,192 (paired t −16.5). **A1 fails**: most of the 8,192 gain is the
+  frames, not the second memory. Inside the hybrid, holonomy over RoPE is worth −0.10% at 512 (LOOPS,
+  with the forget gate also differing), −0.21% at 2,048 (seed 1) and −0.51% at 8,192 (seed 1): the
+  frames' value grows with context.
