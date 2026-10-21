@@ -26,6 +26,18 @@ ARMS = {
     "hybrid_rope": (["--arch", "loop", "--posenc", "rope", "--pattern", "GAGAGA"], 1300),
     "hybrid_holo_forget": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA"], 1400),
     "loop": (["--arch", "loop", "--posenc", "rope", "--layers", "4", "--loop_order", "0,1,2,1,2,3"], 900),
+    "hybrid_rope_forget": (["--arch", "loop", "--posenc", "rope", "--forget", "1", "--pattern", "GAGAGA"], 1300),
+    "hybrid_grid_forget": (["--arch", "loop", "--posenc", "grid", "--forget", "1", "--pattern", "GAGAGA"], 1300),
+    "hybrid_holo_forget_vtrans": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--vtrans", "1",
+                                   "--pattern", "GAGAGA"], 1400),
+    "hybrid_holo_forget_AG": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "AGAGAG"], 1400),
+    "hybrid_holo_forget_GGA": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GGAGGA"], 1400),
+    "hybrid_holo_forget_DA": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "DADADA"], 2000),
+    "rope4": (["--arch", "loop", "--posenc", "rope", "--layers", "4"], 900),
+    "gdn": (["--arch", "gated_delta", "--pos", "1", "--qkv_conv", "0", "--nh", "1", "--beta_max", "1",
+             "--group_init", "random", "--gdim", "5"], 1400),
+    "deltaproduct": (["--arch", "gated_delta", "--pos", "1", "--qkv_conv", "0", "--nh", "4", "--beta_max", "2",
+                      "--group_init", "random", "--gdim", "5"], 2600),
 }
 
 
@@ -64,7 +76,52 @@ def stage(name):
         jobs = [lm_job(n, 0, 3051, 305, 0.008, 8, 0) for n in ARMS]
         jobs += [lm_job(n, 0, 3051, 305, 0.012, 8, 0) for n in ("rope", "holo_forget")]
         return jobs
+    if name == "screen2":
+        names = ("hybrid_rope_forget", "hybrid_grid_forget", "hybrid_holo_forget_vtrans", "hybrid_holo_forget_AG",
+                 "hybrid_holo_forget_GGA", "hybrid_holo_forget_DA", "rope4")
+        return [lm_job(n, 0, 3051, 305, 0.008, 8, 0) for n in names]
+    if name.startswith("language"):
+        # language:arm1,arm2,...:seeds  e.g. language:abs,rope,hybrid_rope:1,2,3
+        _, arms, seeds = name.split(":")
+        jobs = []
+        for seed in seeds.split(","):
+            for n in arms.split(","):
+                steps = equal_flop_steps(n)
+                jobs.append(lm_job(n, int(seed), steps, 400, 0.008, 16, 1024, scale=steps / 3051 * 1.25))
+        return jobs
     raise SystemExit(f"unknown stage {name}")
+
+
+REFERENCE_STEPS = 13531  # BEYOND's convolved-softmax final budget (about 443M tokens)
+
+
+def equal_flop_steps(name):
+    """Updates giving this arm the convolved-softmax control's modeled training FLOPs (lm's convention)."""
+    import argparse
+    import pathlib
+    sys.path.insert(0, str(pathlib.Path(__file__).parent))
+    import lm
+
+    def cfg(argv):
+        d = {argv[i][2:]: argv[i + 1] for i in range(0, len(argv), 2)}
+        c = dict(arch="gpt", d=512, layers=6, heads=8, mlp=2048, ctx=512, vocab=50304, qkv_conv=3, posenc="abs",
+                 holo=16, modules=4, holo_init=0.05, rope_base=10000.0, forget=0, forget_bias=5.0, vtrans=0,
+                 pattern="", loop_order="", nh=1, beta_max=1.0, delta_key_ratio=0.75, delta_v_expand=2.0,
+                 delta_chunk=32, delta_unroll=4, conv_width=4, hops=1, lookback=0, cap=0.0, bf16=1, pos=1,
+                 nheads=4, rank=32, order=4, gdim=5)
+        for k in ("arch", "posenc", "pattern", "loop_order"):
+            if k in d:
+                c[k] = d[k]
+        for k in ("layers", "forget", "vtrans", "holo", "modules", "nh", "qkv_conv"):
+            if k in d:
+                c[k] = int(d[k])
+        if "beta_max" in d:
+            c["beta_max"] = float(d["beta_max"])
+        return argparse.Namespace(**c)
+
+    ref = lm.training_flops_per_token(cfg(ARMS["abs"][0]), 512)
+    own = lm.training_flops_per_token(cfg(ARMS[name][0]), 512)
+    return int(REFERENCE_STEPS * ref / own)
 
 
 if __name__ == "__main__":

@@ -169,3 +169,51 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   holo frames change when two tokens swap while grid phases do not; causality; one training step
   finite for every option, hybrids G/D and the depth loop; frame+gate+vtrans FLOPs under 2%).
   Existing BEYOND/LOCAL tests still pass. CPU smoke runs of `lm.py` succeed for every variant.
+
+- 21 Oct, stage 1 (L4, `loops_synthetic`, 6 runs, about $1.8). One-layer A5 word tracking, late-position
+  accuracy (chance 1.7%): rope 1.6%, grid 1.9%, holo 1.7%, **holo + vtrans 98.5%** (all positions 99.2%).
+  **P3's synthetic half holds**: a non-abelian frame carried along the sequence tracks A5 in a single
+  attention layer once the values are transported too; abelian frames cannot, and without value
+  transport the running product never reaches the output. Two-layer MQAR: rope and holo+forget both
+  100% (retrieval intact).
+- 21 Oct, stage 2 (H100, `loops_screen`, 13 runs, seed 0, 3,051 updates ≈ 100M tokens). Final
+  validation loss (1,024 windows, sampler seed 1234), change against abs:
+
+  | Arm | lr | Loss | vs abs | vs rope |
+  |---|---|---|---|---|
+  | hybrid GAGAGA holo+forget | .008 | 3.808238 | −2.34% | −1.19% |
+  | hybrid GAGAGA rope | .008 | 3.815074 | −2.17% | −1.01% |
+  | grid+forget | .008 | 3.826246 | −1.88% | −0.72% |
+  | holo+forget | .008 | 3.829548 | −1.80% | −0.63% |
+  | rope+forget | .008 | 3.830838 | −1.76% | −0.60% |
+  | holo+forget | .012 | 3.841079 | −1.50% | −0.34% |
+  | holo+forget+vtrans | .008 | 3.846718 | −1.36% | −0.19% |
+  | rope | .008 | 3.853963 | −1.17% | 0 |
+  | holo | .008 | 3.854309 | −1.16% | +0.01% |
+  | rope | .012 | 3.857376 | −1.08% | +0.09% |
+  | grid | .008 | 3.865385 | −0.88% | +0.30% |
+  | loop 0,1,2,1,2,3 (rope) | .008 | 3.874952 | −0.63% | +0.54% |
+  | abs | .008 | 3.899646 | 0 | +1.18% |
+
+  abs reproduces BEYOND's convolved softmax tuning run (3.897961) to 0.04%. BEYOND's same-protocol
+  seed-0 references: Gated DeltaNet 3.855246, DeltaProduct 3.840066, convolved Parallax 3.871201.
+  Against the predictions: P1 holds (rope −1.17%). **P2 fails**: content-driven abelian clocks alone
+  are 0.30% worse than RoPE. P3's language half holds (holo within ±0.3% of rope; vtrans costs 0.4% on
+  text). P4 holds and is the largest single effect: the forget gate is worth 0.60% on top of rope.
+  P5 holds at this seed: both hybrids beat every attention arm and both recurrent references, and
+  the hybrid with holo+forget beats the hybrid with rope (by 0.18%, which this screen cannot separate
+  from the forget gate). P6 holds: the depth loop is 0.54% worse than six distinct blocks at equal
+  compute, with two thirds of the block parameters (the four-block comparison is in screen 2).
+  .012 is worse than .008 for both arms tested, so .008 stays.
+
+  Reading: the gains come from the **reset atom** (the forget gate, synaptic decay) and from the
+  **complementary memory** (a fast-weight recurrent layer beside attention). Learned frames, abelian
+  or not, are neutral on text at this scale even though they are what makes state tracking possible.
+
+- Screen 2 (registered now, before running; seed 0, 100M tokens, lr .008): which hybrid goes to the
+  3-seed stage. Arms: GAGAGA with rope+forget, with grid+forget, with holo+forget+vtrans; AGAGAG
+  and GGAGGA with holo+forget; DADADA (DeltaProduct layers) with holo+forget; and a 4-block rope
+  model for P6. Selection rule: the lowest seed-0 loss among hybrids whose modeled training FLOPs are
+  within 5% of abs goes to stage 3 as the candidate; GAGAGA holo+forget is the default if nothing
+  beats it by more than 0.1%.
+
