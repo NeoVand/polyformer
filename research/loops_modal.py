@@ -35,7 +35,7 @@ ROOT = pathlib.Path(__file__).resolve().parent
 MANIFESTS = ROOT / "manifests"
 LEDGER = ROOT / "results" / "loops_budget.json"
 LOCK = ROOT / "results" / "loops_budget.lock"
-CAPS = {"development": 25.0, "screen": 60.0, "language": 215.0}
+CAPS = {"development": 25.0, "screen": 60.0, "language": 250.0}  # the $300 total binds
 TOTAL_CAP = 300.0
 # Published serverless rates, checked 2026-10-20: https://modal.com/pricing.
 # CPU and RAM tuples below impose hard limits; use their maxima in reservations.
