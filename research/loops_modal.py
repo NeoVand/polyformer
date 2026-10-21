@@ -117,8 +117,8 @@ def normalize_job(raw, source_hashes):
         raise ValueError("argv must be a list of strings")
     if job["gpu"] not in GPU_RATES:
         raise ValueError("gpu must be CPU, L4 or H100")
-    if not isinstance(job["max_seconds"], int) or not 1 <= job["max_seconds"] <= 14400:
-        raise ValueError("max_seconds must be an integer in [1, 14400]")
+    if not isinstance(job["max_seconds"], int) or not 1 <= job["max_seconds"] <= 21600:
+        raise ValueError("max_seconds must be an integer in [1, 21600]")
     if not isinstance(job["attempt"], int) or job["attempt"] < 0:
         raise ValueError("attempt must be a nonnegative integer")
     # Time limits do not change experiment identity. A timeout is never retried by

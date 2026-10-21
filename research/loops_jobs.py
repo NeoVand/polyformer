@@ -169,7 +169,7 @@ def long_arm_job(name, ctx, seed, ref_steps, vseqs, vbig, size="base", data="/da
     kind = "ev" if name.startswith("ev") else name
     slow = 1.0 if size == "base" else long_flops(name, ctx, size) / long_flops(name, ctx)
     seconds = steps * STEP_SECONDS[ctx][kind] * slow * 1.3 + 600
-    job = long_job(name, ctx, seed, steps, max(100, steps // 10), evals, vseqs, vbig, min(14400, seconds), size=size)
+    job = long_job(name, ctx, seed, steps, max(100, steps // 10), evals, vseqs, vbig, min(21600, seconds), size=size)
     if data != "/data/fineweb_edu":
         job["argv"][job["argv"].index("--data") + 1] = data
     return job
