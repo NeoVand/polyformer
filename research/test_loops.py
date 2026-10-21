@@ -260,3 +260,49 @@ def test_event_model_flops_are_below_softmax_at_long_context():
     soft.ctx, ev.ctx = 2048, 2048
     ratio2k = lm.training_flops_per_token(ev, 2048) / lm.training_flops_per_token(soft, 2048)
     assert ratio8k < ratio2k < 1.2, (ratio8k, ratio2k)
+
+
+def test_probe_items_have_the_answers_they_claim():
+    import events_probe as ep
+    import events_tokens as tok
+    inv = {v: k.strip() for k, v in tok.PIECE.items()}
+    val = np.random.default_rng(0).integers(0, 50000, 20000).astype(np.uint16)
+    sets = ep.probe_items(2048, val)
+    assert set(sets) == {"kv_d0", "kv_d256", "kv_d1024"} | {f"{k}_k{m}" for k in ("boxes", "owners") for m in range(4)}
+    for name, items in sets.items():
+        assert len(items) == 128
+        for prompt, cands, ans in items[:40]:
+            assert len(prompt) < 2048 and len(set(cands)) == len(cands)
+            if name.startswith("kv"):
+                colour = inv[prompt[-3]]
+                facts = [prompt[i:i + 9] for i in range(1, 37, 9)]
+                assert [inv[f[7]] for f in facts if inv[f[4]] == colour] == [inv[cands[ans]]]
+                continue
+            words = [inv.get(t, "?") for t in prompt[1:]]
+            sentences = " ".join(words).split(" . ")
+            where = {}
+            for s in sentences[:-1]:
+                w = s.replace(" .", "").split()
+                if w[0] == "The":            # The t is in box P
+                    where[w[1]] = w[5]
+                elif w[0] == "Move":         # Move the t to box P
+                    where[w[2]] = w[5]
+                elif w[1] == "has":          # N has the t
+                    where[w[3]] = w[0]
+                else:                        # N gives the t to M
+                    where[w[3]] = w[5]
+            q = sentences[-1].split()
+            thing = q[1] if q[0] == "The" else q[2]
+            assert where[thing] == inv[cands[ans]], (name, sentences)
+
+
+def test_probe_scores_a_tiny_model(tmp_path):
+    import events_probe as ep
+    c = ev_cfg(ctx=160, vocab=50304)
+    p = lm.init(jax.random.PRNGKey(0), c)
+    items = ep.tracking_items(np.random.default_rng(1), 6, 2, "owners")
+    out = ep.score_items(c, p, items, 4)
+    assert out["n"] == 6 and 0 <= out["acc"] <= 1 and out["loss"] > 0 and out["chance"] == 1 / 3
+    x = np.asarray(jax.random.randint(jax.random.PRNGKey(3), (4, 160), 0, c.vocab), np.int32)
+    b = ep.boundary_stats(c, _random_router(p), x)
+    assert b["boundaries"] > 0 and 0 <= b["share_any"] <= 1 and len(b["samples"]) == 3

@@ -151,7 +151,7 @@ def route(cfg, router, h):
     return prob, hard
 
 
-def forward(cfg, p, idx, with_aux=False):
+def forward(cfg, p, idx, with_aux=False, with_boundaries=False):
     enc, main, dec, n_target, slots = sizes(cfg)
     mc = main_cfg(cfg)
     layers = p["layers"]
@@ -197,8 +197,11 @@ def forward(cfg, p, idx, with_aux=False):
     rate = hard.astype(jnp.float32).mean()
     mean_prob = prob.mean()
     ratio = n_target / (n_target - 1) * ((n_target - 1) * rate * mean_prob + (1 - rate) * (1 - mean_prob))
-    return logits, {"ratio": ratio, "rate": rate, "prob": mean_prob,
-                    "overflow": (count[:, -1] > slots).astype(jnp.float32).mean()}
+    aux = {"ratio": ratio, "rate": rate, "prob": mean_prob,
+           "overflow": (count[:, -1] > slots).astype(jnp.float32).mean()}
+    if with_boundaries:
+        aux.update(hard=hard, probs=prob)
+    return logits, aux
 
 
 def flops_per_token(cfg, t):

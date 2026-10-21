@@ -33,6 +33,12 @@ import lm  # noqa: E402
 
 DIST_EDGES = [(0, 0, "none"), (1, 32, "1-32"), (33, 128, "33-128"), (129, 256, "129-256"),
               (257, 384, "257-384"), (385, 10 ** 9, "385+")]
+# at long contexts the farthest bucket is split (EVENTS.md stage 6)
+LONG_EDGES = DIST_EDGES[:-1] + [(385, 1024, "385-1024"), (1025, 4096, "1025-4096"), (4097, 10 ** 9, "4097+")]
+
+
+def dist_edges(t):
+    return DIST_EDGES if t <= 512 else LONG_EDGES
 
 
 def repeat_distance(x, y):
@@ -50,7 +56,7 @@ def repeat_distance(x, y):
 
 def buckets(per_token, dist, positions_edges):
     out = {"distance": {}, "position": {}}
-    for lo, hi, name in DIST_EDGES:
+    for lo, hi, name in dist_edges(per_token.shape[1]):
         m = (dist == 0) if name == "none" else ((dist >= lo) & (dist <= hi))
         out["distance"][name] = {"loss": float(per_token[m].mean()) if m.any() else None, "count": int(m.sum())}
     t = per_token.shape[1]
@@ -66,7 +72,7 @@ def main():
     ap.add_argument("--ckpts", required=True, help="comma-separated final.pkl paths")
     ap.add_argument("--data", default="/data/fineweb_edu")
     ap.add_argument("--seqs", type=int, default=1024)
-    ap.add_argument("--batch", type=int, default=16)
+    ap.add_argument("--batch", type=int, default=0, help="windows per forward pass (0: 16 at 512, 16,384 tokens above)")
     ap.add_argument("--ablate", type=int, default=0)
     args = ap.parse_args()
     started = time.time()
@@ -78,6 +84,7 @@ def main():
         if cfg.bf16:
             lm.MM = jnp.bfloat16
         T = cfg.ctx
+        bs = args.batch or (16 if T <= 512 else max(1, 16384 // T))
         g = np.random.default_rng(5678)
         idx = g.integers(0, len(val) - T - 1, args.seqs)
         xy = np.stack([val[j:j + T + 1] for j in idx]).astype(np.int32)
@@ -90,8 +97,7 @@ def main():
             return optax.softmax_cross_entropy_with_integer_labels(lm.forward(cfg, p, xb), yb)
 
         def per_token(p):
-            out = [np.asarray(score(p, x[i:i + args.batch], y[i:i + args.batch]))
-                   for i in range(0, len(x), args.batch)]
+            out = [np.asarray(score(p, x[i:i + bs], y[i:i + bs])) for i in range(0, len(x), bs)]
             return np.concatenate(out, 0)
 
         edges = [(0, 64), (64, T // 4), (T // 4, T // 2), (T // 2, T)]
@@ -102,7 +108,8 @@ def main():
             variants["grid_off"] = {**params, "layers": [zero(l, "vel") for l in params["layers"]]}
             variants["frames_off"] = {**params, "layers": [zero(zero(l, "quat"), "vel") for l in params["layers"]]}
         row = {"ckpt": path, "cfg": {k: payload["cfg"].get(k) for k in
-                                     ("arch", "posenc", "pattern", "forget", "vtrans", "d", "layers", "seed", "ctx")}}
+                                     ("arch", "posenc", "pattern", "forget", "vtrans", "d", "layers", "seed", "ctx",
+                                      "ev_len", "ev_posenc", "ev_dmain", "gate_out", "vres", "data")}}
         for name, p in variants.items():
             pt = per_token(p)
             row[name] = {"loss": float(pt.mean()), "sequence_losses": pt.mean(1).tolist(),
@@ -112,7 +119,7 @@ def main():
                 row[name]["delta"] = float(diff.mean())
                 # where the increase concentrates: the share of the total increase from each distance bucket
                 share = {}
-                for lo, hi, bname in DIST_EDGES:
+                for lo, hi, bname in dist_edges(T):
                     m = (dist == 0) if bname == "none" else ((dist >= lo) & (dist <= hi))
                     share[bname] = float(diff[m].sum() / max(diff.sum(), 1e-12))
                 row[name]["delta_share_by_distance"] = share

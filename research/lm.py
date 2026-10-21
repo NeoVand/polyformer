@@ -1016,7 +1016,8 @@ def main():
         lg = forward(cfg, p, x)
         return optax.softmax_cross_entropy_with_integer_labels(lg, y).sum(0)
 
-    vb = max(1, min(64, cfg.vseqs) // cfg.micro)
+    # evaluation batch: 32 windows at 512 tokens, the same number of tokens at longer contexts
+    vb = max(1, min(64, cfg.vseqs) * 512 // max(T, 512) // cfg.micro)
     # induction probe: random tokens repeated once; an induction head predicts the second copy
     prng = np.random.default_rng(4321)
     half = T // 2
