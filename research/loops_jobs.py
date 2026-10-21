@@ -159,6 +159,9 @@ def stage(name):
         jobs = [lm_job(n, 0, 3051, 305, 0.008, 8, 0) for n in names]
         jobs.append(diag_job("wp_a5_16", 1, ["posenc=holo", "vtrans=1", "vtrans_heads=1"]))
         return jobs
+    if name == "timing4":
+        return [long_job("ev8", 8192, 0, 160, 30, 2, 16, 0, 1500, extra=["--delta_precision", p])
+                for p in ("high", "default")]
     if name == "timing3":
         hp = ["--delta_precision", "high"]
         return [long_job("soft_rf", 8192, 0, 160, 30, 2, 16, 0, 1500),

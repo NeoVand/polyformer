@@ -189,6 +189,9 @@ def test_blockwise_attention_equals_dense_with_forget_bias():
     np.testing.assert_allclose(np.asarray(a), np.asarray(b), atol=2e-5)
     np.testing.assert_allclose(np.asarray(ll.causal_attention(c_dense, q, k, v)),
                                np.asarray(ll.causal_attention(c_block, q, k, v)), atol=2e-5)
+    # a length that is not a multiple of the block is padded and still exact
+    c_odd = cfg(attn_block=24, bf16=0)
+    np.testing.assert_allclose(np.asarray(ll.causal_attention(c_odd, q, k, v, cbias)), np.asarray(a), atol=2e-5)
 
 
 def ev_cfg(**kw):

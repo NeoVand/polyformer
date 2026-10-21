@@ -212,8 +212,13 @@ def causal_attention(cfg, q, k, v, c=None):
         mask = jnp.tril(jnp.ones((t, t), bool))
         a = jax.nn.softmax(jnp.where(mask, s, -1e9), -1)
         return _mm(cfg, a, v, "bhts,bhsc->bhtc")
-    if t % block:
-        raise ValueError("long sequences must be a multiple of attn_block")
+    pad = (-t) % block
+    if pad:
+        # padding at the end is invisible to every real query under the causal mask
+        padded = lambda z: jnp.pad(z, ((0, 0), (0, 0), (0, pad), (0, 0)))
+        out = causal_attention(cfg, padded(q), padded(k), padded(v),
+                               None if c is None else jnp.pad(c, ((0, 0), (0, 0), (0, pad)), mode="edge"))
+        return out[:, :, :t]
     tri = jnp.tril(jnp.ones((block, block), bool))
     outs = []
     for i in range(t // block):

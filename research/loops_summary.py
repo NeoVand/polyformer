@@ -16,6 +16,8 @@ def flag(argv, name, default=None):
 
 
 def arm(argv):
+    if flag(argv, "--ckpts"):
+        return None
     if flag(argv, "--task"):
         sets = [argv[i + 1] for i, a in enumerate(argv) if a == "--set" and argv[i + 1] != "qkv_conv=3"]
         return f"{flag(argv, '--task')} L{flag(argv, '--layers')} " + " ".join(sets)
@@ -81,6 +83,8 @@ def main():
         gain = f"{100 * (r['val_raw'] / base - 1):+.2f}%" if base and r["val_raw"] else ""
         val = f"{r['val_raw']:.6f}" if r["val_raw"] else ""
         big = f"{r['val_big']:.6f}" if r["val_big"] else ""
+        if r["arm"] is None or r["lr"] is None:
+            continue  # evaluation jobs: see loops_eval results
         print(f"{(r['manifest'] or '')[:18]:18s} {r['arm']:42s} s{r['seed']} lr{r['lr']:6s} val {val:9s} "
               f"big {big:9s} {gain:8s} wall {r['wall']} {r['error']}")
         if r["test"] and not r["val_raw"]:

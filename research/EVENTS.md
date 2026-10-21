@@ -139,4 +139,23 @@ The ledger is `research/results/loops_budget.json`; `loops_modal.py` caps are ra
   306.8M, hybrid 303.0M, events 283.8M; context 8,192: 422.7M, 361.0M, 291.0M, so at equal compute
   the event model sees 1.08x (2k) and 1.45x (8k) the tokens of softmax+forget. A timing pilot
   (`events_timing`) prices the study before its registration is finalised.
+- **Probes 1–2 on the 24 LOOPS checkpoints** (`events_eval_h100`; per-token loss on the 1,024
+  `val_big` windows, seed means; buckets by how far back the target token last occurred):
+
+  | Arm | all | never | 1–32 | 33–128 | 129–256 | 257–384 | 385+ |
+  |---|---|---|---|---|---|---|---|
+  | hybrid GAGAGA holo+forget | 3.5479 | 4.9424 | 1.6806 | 2.2165 | 2.9121 | 3.3218 | 3.6289 |
+  | hybrid GAGAGA rope | 3.5513 | 4.9432 | 1.6850 | 2.2235 | 2.9199 | 3.3336 | 3.6777 |
+  | deltaproduct | 3.5690 | 4.9492 | 1.7027 | 2.2541 | 2.9908 | 3.4409 | 3.7363 |
+  | rope+forget | 3.5709 | 4.9687 | 1.7002 | 2.2346 | 2.9304 | 3.3535 | 3.6851 |
+  | gdn | 3.5772 | 4.9568 | 1.7099 | 2.2648 | 3.0035 | 3.4381 | 3.7390 |
+  | rope | 3.5798 | 4.9776 | 1.7059 | 2.2450 | 2.9465 | 3.3694 | 3.7023 |
+  | abs | 3.6137 | 5.0251 | 1.7273 | 2.2644 | 2.9599 | 3.3847 | 3.6738 |
+
+  Recurrence alone is better than attention on tokens never seen in the window and worse on every
+  repeat bucket past 32; the hybrid is best everywhere, with its largest edge over rope+forget on the
+  farthest bucket (−1.5%; −2.4% at width 768). Frame ablation on the trained candidate: holonomy
+  moves set to the RoPE step raise the loss by 0.10% (0.09% at width 768), 82% of it on repeats
+  within 128 tokens; **C5 holds**. Clock velocities set to 1 raise it by 14%: the model built its
+  position code on the clocks, so this ablation measures dependence, not benefit.
 
