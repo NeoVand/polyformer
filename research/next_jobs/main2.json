@@ -1,0 +1,494 @@
+[
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "1",
+      "--steps",
+      "2500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "1",
+      "--steps",
+      "2500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "2",
+      "--steps",
+      "2500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "2",
+      "--steps",
+      "2500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "3",
+      "--steps",
+      "2500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "3",
+      "--steps",
+      "2500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64"
+    ],
+    "max_seconds": 900
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "1",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "identity"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "1",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "rotation"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "1",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "colour"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "1",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "identity"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "1",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "rotation"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "1",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "colour"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "2",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "identity"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "2",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "rotation"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "2",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "colour"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "2",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "identity"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "2",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "rotation"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "2",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "colour"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "3",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "identity"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "3",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "rotation"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "softmax",
+      "--seed",
+      "3",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "colour"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "3",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "identity"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "3",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "rotation"
+    ],
+    "max_seconds": 600
+  },
+  {
+    "script": "algebraic_arc.py",
+    "argv": [
+      "--arm",
+      "hybrid",
+      "--seed",
+      "3",
+      "--steps",
+      "500",
+      "--batch",
+      "32",
+      "--eval-tasks",
+      "64",
+      "--train-tasks",
+      "2048",
+      "--ttt-steps",
+      "0",
+      "--control",
+      "colour"
+    ],
+    "max_seconds": 600
+  }
+]

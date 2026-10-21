@@ -1,0 +1,895 @@
+{
+  "seed": 1234,
+  "pairs_per_split": 1024,
+  "algorithm": "For each story execute aliases as snapshots; count transfer as nonidentity exactly when both resolved endpoints are bound and distinct. Count overwrite when alias previously bound. Each pair changes only initial-owner operation; initial-owner baseline predicts that owner. All pairs retained without rejection.",
+  "splits": {
+    "id": {
+      "labels": {
+        "A": 512,
+        "D": 509,
+        "C": 516,
+        "B": 511
+      },
+      "operations": {
+        "transfer": 8665,
+        "revoke": 1372,
+        "alias": 3274,
+        "overwrite": 740
+      },
+      "mean_nominal_operations": 13.9990234375,
+      "mean_nonidentity_transfers": 3.7236328125,
+      "nonidentity_transfer_histogram": {
+        "3": 182,
+        "4": 202,
+        "5": 156,
+        "1": 105,
+        "7": 45,
+        "2": 170,
+        "0": 26,
+        "6": 102,
+        "8": 22,
+        "9": 10,
+        "10": 3,
+        "11": 1
+      },
+      "initial_owner_paired_accuracy": 0.1298828125,
+      "examples": [
+        {
+          "template": 1,
+          "operations": [
+            [
+              [
+                "owner",
+                "D",
+                ""
+              ],
+              [
+                "transfer",
+                "A",
+                "B"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "z",
+                "B"
+              ],
+              [
+                "alias",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "D",
+                "A"
+              ],
+              [
+                "transfer",
+                "B",
+                "B"
+              ],
+              [
+                "transfer",
+                "D",
+                "x"
+              ],
+              [
+                "alias",
+                "z",
+                "A"
+              ]
+            ],
+            [
+              [
+                "owner",
+                "A",
+                ""
+              ],
+              [
+                "transfer",
+                "A",
+                "B"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "z",
+                "B"
+              ],
+              [
+                "alias",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "D",
+                "A"
+              ],
+              [
+                "transfer",
+                "B",
+                "B"
+              ],
+              [
+                "transfer",
+                "D",
+                "x"
+              ],
+              [
+                "alias",
+                "z",
+                "A"
+              ]
+            ]
+          ],
+          "answers": [
+            "A",
+            "D"
+          ],
+          "text": [
+            "<bos> D owns the parcel now . between A and B transfer ownership . now revoke alias y . between z and B transfer ownership . now x means alias B . between D and A transfer ownership . between B and B transfer ownership . between D and x transfer ownership . now z means alias A . who owns the parcel now ? A",
+            "<bos> A owns the parcel now . between A and B transfer ownership . now revoke alias y . between z and B transfer ownership . now x means alias B . between D and A transfer ownership . between B and B transfer ownership . between D and x transfer ownership . now z means alias A . who owns the parcel now ? D"
+          ]
+        },
+        {
+          "template": 1,
+          "operations": [
+            [
+              [
+                "owner",
+                "A",
+                ""
+              ],
+              [
+                "alias",
+                "x",
+                "C"
+              ],
+              [
+                "alias",
+                "w",
+                "A"
+              ],
+              [
+                "alias",
+                "y",
+                "D"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ],
+              [
+                "transfer",
+                "w",
+                "B"
+              ],
+              [
+                "transfer",
+                "B",
+                "C"
+              ]
+            ],
+            [
+              [
+                "owner",
+                "B",
+                ""
+              ],
+              [
+                "alias",
+                "x",
+                "C"
+              ],
+              [
+                "alias",
+                "w",
+                "A"
+              ],
+              [
+                "alias",
+                "y",
+                "D"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ],
+              [
+                "transfer",
+                "w",
+                "B"
+              ],
+              [
+                "transfer",
+                "B",
+                "C"
+              ]
+            ]
+          ],
+          "answers": [
+            "A",
+            "C"
+          ],
+          "text": [
+            "<bos> A owns the parcel now . now x means alias C . now w means alias A . now y means alias D . now revoke alias y . between B and A transfer ownership . between C and C transfer ownership . between w and B transfer ownership . between B and C transfer ownership . who owns the parcel now ? A",
+            "<bos> B owns the parcel now . now x means alias C . now w means alias A . now y means alias D . now revoke alias y . between B and A transfer ownership . between C and C transfer ownership . between w and B transfer ownership . between B and C transfer ownership . who owns the parcel now ? C"
+          ]
+        }
+      ]
+    },
+    "both": {
+      "labels": {
+        "A": 532,
+        "C": 488,
+        "D": 506,
+        "B": 522
+      },
+      "operations": {
+        "transfer": 17980,
+        "alias": 6824,
+        "overwrite": 2448,
+        "revoke": 2713
+      },
+      "mean_nominal_operations": 27.8720703125,
+      "mean_nonidentity_transfers": 8.5166015625,
+      "nonidentity_transfer_histogram": {
+        "8": 170,
+        "6": 118,
+        "5": 67,
+        "7": 131,
+        "9": 142,
+        "10": 113,
+        "11": 95,
+        "15": 13,
+        "3": 12,
+        "12": 55,
+        "13": 36,
+        "4": 35,
+        "14": 23,
+        "16": 6,
+        "2": 7,
+        "17": 1
+      },
+      "initial_owner_paired_accuracy": 0.0869140625,
+      "examples": [
+        {
+          "template": 2,
+          "operations": [
+            [
+              [
+                "owner",
+                "D",
+                ""
+              ],
+              [
+                "transfer",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "D",
+                "C"
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "B",
+                "B"
+              ],
+              [
+                "alias",
+                "z",
+                "y"
+              ],
+              [
+                "revoke",
+                "w",
+                ""
+              ],
+              [
+                "transfer",
+                "y",
+                "y"
+              ],
+              [
+                "alias",
+                "y",
+                "C"
+              ],
+              [
+                "alias",
+                "w",
+                "A"
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "A",
+                "C"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "w",
+                "A"
+              ],
+              [
+                "transfer",
+                "A",
+                "D"
+              ],
+              [
+                "transfer",
+                "A",
+                "C"
+              ],
+              [
+                "alias",
+                "w",
+                "D"
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "D",
+                "y"
+              ],
+              [
+                "transfer",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "z",
+                "C"
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "A",
+                "w"
+              ],
+              [
+                "transfer",
+                "B",
+                "C"
+              ],
+              [
+                "transfer",
+                "z",
+                "A"
+              ],
+              [
+                "alias",
+                "w",
+                "D"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "w",
+                "w"
+              ],
+              [
+                "transfer",
+                "z",
+                "D"
+              ]
+            ],
+            [
+              [
+                "owner",
+                "B",
+                ""
+              ],
+              [
+                "transfer",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "D",
+                "C"
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "B",
+                "B"
+              ],
+              [
+                "alias",
+                "z",
+                "y"
+              ],
+              [
+                "revoke",
+                "w",
+                ""
+              ],
+              [
+                "transfer",
+                "y",
+                "y"
+              ],
+              [
+                "alias",
+                "y",
+                "C"
+              ],
+              [
+                "alias",
+                "w",
+                "A"
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "A",
+                "C"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "w",
+                "A"
+              ],
+              [
+                "transfer",
+                "A",
+                "D"
+              ],
+              [
+                "transfer",
+                "A",
+                "C"
+              ],
+              [
+                "alias",
+                "w",
+                "D"
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "D",
+                "y"
+              ],
+              [
+                "transfer",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "z",
+                "C"
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "A",
+                "w"
+              ],
+              [
+                "transfer",
+                "B",
+                "C"
+              ],
+              [
+                "transfer",
+                "z",
+                "A"
+              ],
+              [
+                "alias",
+                "w",
+                "D"
+              ],
+              [
+                "revoke",
+                "y",
+                ""
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "w",
+                "w"
+              ],
+              [
+                "transfer",
+                "z",
+                "D"
+              ]
+            ]
+          ],
+          "answers": [
+            "A",
+            "C"
+          ],
+          "text": [
+            "<bos> now the parcel belongs to D . ownership transfer between x and B . ownership transfer between D and C . ownership transfer between D and z . ownership transfer between D and z . ownership transfer between B and B . now alias z means y . alias w revoke now . ownership transfer between y and y . now alias y means C . now alias w means A . ownership transfer between D and z . ownership transfer between A and C . alias y revoke now . ownership transfer between w and A . ownership transfer between A and D . ownership transfer between A and C . now alias w means D . ownership transfer between B and A . ownership transfer between D and y . ownership transfer between x and B . ownership transfer between z and C . ownership transfer between B and A . ownership transfer between A and w . ownership transfer between B and C . ownership transfer between z and A . now alias w means D . alias y revoke now . ownership transfer between D and z . ownership transfer between w and w . ownership transfer between z and D . who owns the parcel now ? A",
+            "<bos> now the parcel belongs to B . ownership transfer between x and B . ownership transfer between D and C . ownership transfer between D and z . ownership transfer between D and z . ownership transfer between B and B . now alias z means y . alias w revoke now . ownership transfer between y and y . now alias y means C . now alias w means A . ownership transfer between D and z . ownership transfer between A and C . alias y revoke now . ownership transfer between w and A . ownership transfer between A and D . ownership transfer between A and C . now alias w means D . ownership transfer between B and A . ownership transfer between D and y . ownership transfer between x and B . ownership transfer between z and C . ownership transfer between B and A . ownership transfer between A and w . ownership transfer between B and C . ownership transfer between z and A . now alias w means D . alias y revoke now . ownership transfer between D and z . ownership transfer between w and w . ownership transfer between z and D . who owns the parcel now ? C"
+          ]
+        },
+        {
+          "template": 2,
+          "operations": [
+            [
+              [
+                "owner",
+                "A",
+                ""
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ],
+              [
+                "transfer",
+                "D",
+                "y"
+              ],
+              [
+                "transfer",
+                "w",
+                "B"
+              ],
+              [
+                "alias",
+                "y",
+                "A"
+              ],
+              [
+                "alias",
+                "w",
+                "C"
+              ],
+              [
+                "alias",
+                "y",
+                "A"
+              ],
+              [
+                "revoke",
+                "w",
+                ""
+              ],
+              [
+                "revoke",
+                "z",
+                ""
+              ],
+              [
+                "transfer",
+                "D",
+                "A"
+              ],
+              [
+                "transfer",
+                "C",
+                "D"
+              ],
+              [
+                "transfer",
+                "A",
+                "D"
+              ],
+              [
+                "transfer",
+                "C",
+                "D"
+              ],
+              [
+                "transfer",
+                "w",
+                "B"
+              ],
+              [
+                "transfer",
+                "w",
+                "w"
+              ],
+              [
+                "alias",
+                "w",
+                "B"
+              ],
+              [
+                "transfer",
+                "x",
+                "A"
+              ],
+              [
+                "alias",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ],
+              [
+                "transfer",
+                "B",
+                "B"
+              ],
+              [
+                "alias",
+                "y",
+                "C"
+              ],
+              [
+                "transfer",
+                "A",
+                "x"
+              ],
+              [
+                "alias",
+                "z",
+                "y"
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ]
+            ],
+            [
+              [
+                "owner",
+                "B",
+                ""
+              ],
+              [
+                "transfer",
+                "D",
+                "z"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ],
+              [
+                "transfer",
+                "D",
+                "y"
+              ],
+              [
+                "transfer",
+                "w",
+                "B"
+              ],
+              [
+                "alias",
+                "y",
+                "A"
+              ],
+              [
+                "alias",
+                "w",
+                "C"
+              ],
+              [
+                "alias",
+                "y",
+                "A"
+              ],
+              [
+                "revoke",
+                "w",
+                ""
+              ],
+              [
+                "revoke",
+                "z",
+                ""
+              ],
+              [
+                "transfer",
+                "D",
+                "A"
+              ],
+              [
+                "transfer",
+                "C",
+                "D"
+              ],
+              [
+                "transfer",
+                "A",
+                "D"
+              ],
+              [
+                "transfer",
+                "C",
+                "D"
+              ],
+              [
+                "transfer",
+                "w",
+                "B"
+              ],
+              [
+                "transfer",
+                "w",
+                "w"
+              ],
+              [
+                "alias",
+                "w",
+                "B"
+              ],
+              [
+                "transfer",
+                "x",
+                "A"
+              ],
+              [
+                "alias",
+                "x",
+                "B"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ],
+              [
+                "transfer",
+                "B",
+                "B"
+              ],
+              [
+                "alias",
+                "y",
+                "C"
+              ],
+              [
+                "transfer",
+                "A",
+                "x"
+              ],
+              [
+                "alias",
+                "z",
+                "y"
+              ],
+              [
+                "transfer",
+                "B",
+                "A"
+              ],
+              [
+                "transfer",
+                "C",
+                "C"
+              ]
+            ]
+          ],
+          "answers": [
+            "D",
+            "B"
+          ],
+          "text": [
+            "<bos> now the parcel belongs to A . ownership transfer between D and z . ownership transfer between C and C . ownership transfer between D and y . ownership transfer between w and B . now alias y means A . now alias w means C . now alias y means A . alias w revoke now . alias z revoke now . ownership transfer between D and A . ownership transfer between C and D . ownership transfer between A and D . ownership transfer between C and D . ownership transfer between w and B . ownership transfer between w and w . now alias w means B . ownership transfer between x and A . now alias x means B . ownership transfer between C and C . ownership transfer between B and B . now alias y means C . ownership transfer between A and x . now alias z means y . ownership transfer between B and A . ownership transfer between C and C . who owns the parcel now ? D",
+            "<bos> now the parcel belongs to B . ownership transfer between D and z . ownership transfer between C and C . ownership transfer between D and y . ownership transfer between w and B . now alias y means A . now alias w means C . now alias y means A . alias w revoke now . alias z revoke now . ownership transfer between D and A . ownership transfer between C and D . ownership transfer between A and D . ownership transfer between C and D . ownership transfer between w and B . ownership transfer between w and w . now alias w means B . ownership transfer between x and A . now alias x means B . ownership transfer between C and C . ownership transfer between B and B . now alias y means C . ownership transfer between A and x . now alias z means y . ownership transfer between B and A . ownership transfer between C and C . who owns the parcel now ? B"
+          ]
+        }
+      ]
+    }
+  }
+}
