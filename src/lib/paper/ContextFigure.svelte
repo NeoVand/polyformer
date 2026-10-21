@@ -1,14 +1,17 @@
+<script lang="ts" module>
+	export interface Series {
+		name: string;
+		points: { ctx: number; pct: number; seeds: number }[];
+		dashed?: boolean;
+	}
+</script>
+
 <script lang="ts">
 	/**
 	 * Change in held-out loss against the strengthened softmax control (rotary positions, forget
 	 * gate, gated output, value residual) at equal modeled training FLOPs, by context length
 	 * (research/EVENTS.md). Below zero is better than softmax.
 	 */
-	export interface Series {
-		name: string;
-		points: { ctx: number; pct: number; seeds: number }[];
-		dashed?: boolean;
-	}
 	let { series }: { series: Series[] } = $props();
 	const W = 560;
 	const H = 250;
@@ -19,14 +22,22 @@
 	const CTX = [512, 2048, 8192];
 	const xs = (c: number) => L + (Math.log2(c / 512) / 4) * (W - L - R);
 	const lo = $derived(Math.min(-1, ...series.flatMap((s) => s.points.map((p) => p.pct))));
-	const hi = $derived(Math.max(1, ...series.flatMap((s) => s.points.map((p) => p.pct))));
+	const hi = $derived(Math.max(0.5, ...series.flatMap((s) => s.points.map((p) => p.pct))));
 	const ys = (v: number) => T + ((hi - v) / (hi - lo)) * (H - T - B);
 	const ticks = $derived(
-		Array.from({ length: Math.floor(hi) - Math.ceil(lo) + 1 }, (_, i) => Math.ceil(lo) + i)
+		Array.from(
+			{ length: Math.floor(hi * 2) - Math.ceil(lo * 2) + 1 },
+			(_, i) => (Math.ceil(lo * 2) + i) / 2
+		)
 	);
 </script>
 
-<svg viewBox="0 0 {W} {H}" class="cf" role="img" aria-label="Change against softmax by context length">
+<svg
+	viewBox="0 0 {W} {H}"
+	class="cf"
+	role="img"
+	aria-label="Change against softmax by context length"
+>
 	{#each ticks as t (t)}
 		<line class={t === 0 ? 'zero' : 'grid'} x1={L} x2={W - R} y1={ys(t)} y2={ys(t)} />
 		<text class="tick" x={L - 8} y={ys(t) + 3.5} text-anchor="end">{t > 0 ? '+' : ''}{t}%</text>

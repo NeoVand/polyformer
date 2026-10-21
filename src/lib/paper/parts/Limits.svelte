@@ -115,7 +115,8 @@
 			did pay was a hybrid: recurrent layers alternating with attention beat rotary softmax by 0.8%
 			to 0.9% on every seed, and every recurrent or attention model alone. The study is
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link -->
-			<a href={`${repo}research/LOOPS_REPORT.md`}>LOOPS</a>.
+			<a href={`${repo}research/LOOPS_REPORT.md`}>LOOPS</a>. Part IX follows that hybrid further: a
+			stronger softmax baseline erases its lead at 512 tokens, and the lead returns at long context.
 		</p>
 	</section>
 

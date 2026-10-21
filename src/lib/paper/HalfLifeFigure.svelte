@@ -8,11 +8,23 @@
 		{
 			name: 'Softmax with a forget gate',
 			rows: [
-				{ layer: 1, h: [109.2, 11.6, 8.9, 14.3, 53.3, 90.0, 8.7, 9.1], most: ['The', '⏎', '.', ':'] },
+				{
+					layer: 1,
+					h: [109.2, 11.6, 8.9, 14.3, 53.3, 90.0, 8.7, 9.1],
+					most: ['The', '⏎', '.', ':']
+				},
 				{ layer: 2, h: [1.3, 41.3, 1.1, 2.7, 2.5, 56.5, 11.2, 8.2], most: ['.', '?', '⏎', ';'] },
-				{ layer: 3, h: [6.6, 73.8, 11.9, 11.0, 67.8, 17.7, 1.9, 9.8], most: ['⏎', 'was', '.', 'is'] },
+				{
+					layer: 3,
+					h: [6.6, 73.8, 11.9, 11.0, 67.8, 17.7, 1.9, 9.8],
+					most: ['⏎', 'was', '.', 'is']
+				},
 				{ layer: 4, h: [3.9, 36.3, 7.7, 2.1, 35.5, 46.0, 4.4, 66.2], most: ['?', '⏎', '.', 'but'] },
-				{ layer: 5, h: [325.2, 5.0, 799.5, 3.6, 1009.8, 366.1, 333.4, 57.9], most: ['⏎', '?', '.', ')'] },
+				{
+					layer: 5,
+					h: [325.2, 5.0, 799.5, 3.6, 1009.8, 366.1, 333.4, 57.9],
+					most: ['⏎', '?', '.', ')']
+				},
 				{
 					layer: 6,
 					h: [102.7, 13252.8, 245.5, 1901.9, 302.8, 694.1, 69.9, 277.9],
@@ -23,7 +35,11 @@
 		{
 			name: 'Hybrid, its attention layers',
 			rows: [
-				{ layer: 2, h: [232.2, 38.5, 7.9, 27.3, 64.2, 37.0, 87.3, 4621.7], most: ['⏎', '.', '?', 'The'] },
+				{
+					layer: 2,
+					h: [232.2, 38.5, 7.9, 27.3, 64.2, 37.0, 87.3, 4621.7],
+					most: ['⏎', '.', '?', 'The']
+				},
 				{
 					layer: 4,
 					h: [1922.0, 279.8, 2755.6, 83.0, 8.7, 2921.6, 15.9, 1381.3],
@@ -52,15 +68,15 @@
 		y = top + m.rows.length * ROW + 10;
 		return { ...m, top };
 	});
-	const H = y + 30;
+	const H = y + 40;
 </script>
 
 <svg viewBox="0 0 {W} {H}" class="hl" role="img" aria-label="Forget-gate half-lives by layer">
 	{#each ticks as t (t)}
-		<line class="grid" x1={x(t)} x2={x(t)} y1="14" y2={H - 26} />
-		<text class="tick" x={x(t)} y={H - 10} text-anchor="middle">{label(t)}</text>
+		<line class="grid" x1={x(t)} x2={x(t)} y1="14" y2={H - 36} />
+		<text class="tick" x={x(t)} y={H - 22} text-anchor="middle">{label(t)}</text>
 	{/each}
-	<line class="ctx" x1={x(512)} x2={x(512)} y1="14" y2={H - 26} />
+	<line class="ctx" x1={x(512)} x2={x(512)} y1="14" y2={H - 36} />
 	<text class="tick" x={x(512) + 4} y="10">context 512</text>
 	<text class="head" x={W - R + 12} y="10">forgets most at</text>
 	{#each layout as m (m.name)}
@@ -75,7 +91,9 @@
 			<text class="most" x={W - R + 12} y={cy + 4}>{r.most.join('  ')}</text>
 		{/each}
 	{/each}
-	<text class="tick" x={L + (W - L - R) / 2} y={H} text-anchor="middle">half-life in tokens</text>
+	<text class="tick" x={L + (W - L - R) / 2} y={H - 4} text-anchor="middle"
+		>half-life in tokens</text
+	>
 </svg>
 
 <style>

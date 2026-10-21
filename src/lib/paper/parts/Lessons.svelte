@@ -20,7 +20,7 @@
 
 <section class="part" id="part-lessons">
 	<header class="part-head">
-		<span class="roman">Part IX</span>
+		<span class="roman">Part X</span>
 		<h2>What we learned</h2>
 	</header>
 
@@ -92,11 +92,12 @@
 		<p class="src"><span class="mark new"></span>Open directions</p>
 		<ol class="list">
 			<li>
-				<strong>Go past the hybrid.</strong> The recurrent comparison is finished (section {number(
-					'combined'
-				)}): against rotary softmax, recurrence alone wins by 0.1–0.3% and a hybrid of recurrence
-				and attention by 0.8–0.9%. Its trained gates segment text into sentences and clauses on
-				their own, which suggests making events, not tokens, the unit of memory.
+				<strong>Scale the long-context result.</strong> A second, recurrent memory beats a
+				strengthened softmax model only once the context is long, and by more as it grows (section
+				{number('context')}). The claim worth testing is that slope: more sizes, contexts of 16,000
+				tokens and beyond, real kernels, and evaluations that need long-range recall. Events as the
+				unit of memory need a router that does not drift and a way to keep exact tokens (section
+				{number('event-model')}).
 			</li>
 			<li>
 				<strong>Infer operators from examples.</strong> Parallax-style layers fit a small linear model

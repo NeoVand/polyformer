@@ -90,6 +90,18 @@ export const PARTS: Part[] = [
 		]
 	},
 	{
+		id: 'part-memory',
+		title: 'Memory on text',
+		sections: [
+			{ id: 'two-memories', title: 'Two memories on text' },
+			{ id: 'segments', title: 'The models find events on their own' },
+			{ id: 'fair', title: 'A stronger baseline erases it at short range' },
+			{ id: 'context', title: 'Where the second memory pays' },
+			{ id: 'event-model', title: 'Events as the unit of memory' },
+			{ id: 'why-text', title: 'Why text rewards resets, not groups' }
+		]
+	},
+	{
 		id: 'part-lessons',
 		title: 'What we learned',
 		sections: [

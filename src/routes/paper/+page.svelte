@@ -10,6 +10,7 @@
 	import Turn from '#lib/paper/parts/Turn.svelte';
 	import Results from '#lib/paper/parts/Results.svelte';
 	import Limits from '#lib/paper/parts/Limits.svelte';
+	import Memory from '#lib/paper/parts/Memory.svelte';
 	import Lessons from '#lib/paper/parts/Lessons.svelte';
 
 	const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
@@ -83,6 +84,7 @@
 	<Turn />
 	<Results />
 	<Limits />
+	<Memory />
 	<Lessons />
 
 	<section class="refs part" id="references">

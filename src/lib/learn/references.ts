@@ -290,6 +290,55 @@ export const REFERENCES: Reference[] = [
 		venue: 'arXiv',
 		year: 2019,
 		url: 'https://arxiv.org/abs/1911.01547'
+	},
+	{
+		id: 'rope',
+		authors: 'J. Su, Y. Lu, S. Pan, A. Murtadha, B. Wen, Y. Liu',
+		title: 'RoFormer: enhanced transformer with rotary position embedding',
+		venue: 'arXiv',
+		year: 2021,
+		url: 'https://arxiv.org/abs/2104.09864'
+	},
+	{
+		id: 'fox',
+		authors: 'Z. Lin, E. Nikishin, X. O. He, A. Courville',
+		title: 'Forgetting Transformer: softmax attention with a forget gate',
+		venue: 'ICLR',
+		year: 2025,
+		url: 'https://arxiv.org/abs/2503.02130'
+	},
+	{
+		id: 'gatedattn',
+		authors: 'Z. Qiu et al.',
+		title:
+			'Gated attention for large language models: non-linearity, sparsity, and attention-sink-free',
+		venue: 'NeurIPS',
+		year: 2025,
+		url: 'https://arxiv.org/abs/2505.06708'
+	},
+	{
+		id: 'valueres',
+		authors: 'Z. Zhou, T. Wu, Z. Jiang, Z. Lan',
+		title: 'Value residual learning for alleviating attention concentration in transformers',
+		venue: 'arXiv',
+		year: 2024,
+		url: 'https://arxiv.org/abs/2410.17897'
+	},
+	{
+		id: 'hnet',
+		authors: 'S. Hwang, B. Wang, A. Gu',
+		title: 'Dynamic chunking for end-to-end hierarchical sequence modeling',
+		venue: 'ICLR',
+		year: 2026,
+		url: 'https://arxiv.org/abs/2507.07955'
+	},
+	{
+		id: 'starfree',
+		authors: 'A. Yang, D. Chiang, D. Angluin',
+		title: 'Masked hard-attention transformers recognize exactly the star-free languages',
+		venue: 'NeurIPS',
+		year: 2024,
+		url: 'https://arxiv.org/abs/2310.13897'
 	}
 ];
 

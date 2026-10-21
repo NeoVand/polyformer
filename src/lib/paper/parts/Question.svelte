@@ -70,8 +70,9 @@
 				<span
 					>On language, nothing higher-order cleared our bar of 1% lower loss at equal compute. Once
 					the softmax baseline uses rotary positions, recurrent networks that multiply matrices
-					along the sequence beat it by only 0.1–0.3%; a hybrid of recurrence and attention beats it
-					by 0.8–0.9% on three seeds.</span
+					along the sequence beat it by only 0.1–0.3%. A hybrid of recurrence and attention beats it
+					by 0.8–0.9%, but a softmax model given two published parts closes that gap at 512 tokens;
+					the hybrid leads again, by 0.66% on three seeds, at 8,192.</span
 				>
 			</li>
 			<li>
