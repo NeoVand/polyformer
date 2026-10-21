@@ -51,6 +51,33 @@
       "stage": "screen",
       "status": "complete"
     },
+    "1d0954406e86f17a7cc99b45": {
+      "call_id": "fc-01M5EM6CTMGKX5727HTBTTEEPS",
+      "gpu": "H100",
+      "id": "1d0954406e86f17a7cc99b45",
+      "launched_at": "2026-10-21T07:00:47.616616+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:00:47.525878+00:00",
+      "reserved_usd": 3.148735,
+      "stage": "language",
+      "status": "running"
+    },
+    "1d6df1308cba322f02d0d5b8": {
+      "call_id": "fc-01M5EK21DQJTVPPZ7W1NWK75PB",
+      "gpu": "H100",
+      "id": "1d6df1308cba322f02d0d5b8",
+      "launched_at": "2026-10-21T06:40:56.300947+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.962043+00:00",
+      "reserved_usd": 3.148735,
+      "result_file": "results/loops_runs/1d6df1308cba322f02d0d5b8.json",
+      "settled_at": "2026-10-21T07:00:48.630216+00:00",
+      "settled_usd": 1.629872,
+      "stage": "language",
+      "status": "complete"
+    },
     "214822baacd59710c8cd9a5f": {
       "call_id": "fc-01M5EJ61FG28GG3J5S19M2MFHC",
       "gpu": "H100",
@@ -111,6 +138,60 @@
       "stage": "screen",
       "status": "complete"
     },
+    "37c7dee7bab8153b389a0031": {
+      "call_id": "fc-01M5EK21DH04CAEN4RD0VTM5T2",
+      "gpu": "H100",
+      "id": "37c7dee7bab8153b389a0031",
+      "launched_at": "2026-10-21T06:40:56.290260+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.956181+00:00",
+      "reserved_usd": 3.389162,
+      "result_file": "results/loops_runs/37c7dee7bab8153b389a0031.json",
+      "settled_at": "2026-10-21T07:01:16.002522+00:00",
+      "settled_usd": 1.661339,
+      "stage": "language",
+      "status": "complete"
+    },
+    "4209f1ebb7599d10a7c10542": {
+      "call_id": "fc-01M5EK21T10N8ENP29DTTF9WRZ",
+      "gpu": "H100",
+      "id": "4209f1ebb7599d10a7c10542",
+      "launched_at": "2026-10-21T06:40:56.700516+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.963452+00:00",
+      "reserved_usd": 4.796329,
+      "stage": "language",
+      "status": "running"
+    },
+    "43a350f2e6716e4c34f593e6": {
+      "call_id": "fc-01M5EK21DPCB3F1RDCKKK2QJYH",
+      "gpu": "H100",
+      "id": "43a350f2e6716e4c34f593e6",
+      "launched_at": "2026-10-21T06:40:56.299487+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.964618+00:00",
+      "reserved_usd": 4.341105,
+      "result_file": "results/loops_runs/43a350f2e6716e4c34f593e6.json",
+      "settled_at": "2026-10-21T07:08:17.051102+00:00",
+      "settled_usd": 2.16936,
+      "stage": "language",
+      "status": "complete"
+    },
+    "44dd4ef319ea9300822f288f": {
+      "call_id": "fc-01M5EM6XRXCQS0WE2167PHGSXA",
+      "gpu": "H100",
+      "id": "44dd4ef319ea9300822f288f",
+      "launched_at": "2026-10-21T07:01:04.972774+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:01:04.876643+00:00",
+      "reserved_usd": 3.389162,
+      "stage": "language",
+      "status": "running"
+    },
     "4c638f647ebdc6e806c6e566": {
       "call_id": "fc-01M5EJ61FEQMFS54X2YWN7TFDB",
       "gpu": "H100",
@@ -154,6 +235,36 @@
       "settled_at": "2026-10-21T06:15:45.771419+00:00",
       "settled_usd": 0.585849,
       "stage": "screen",
+      "status": "complete"
+    },
+    "65209f033824dae1cc1e98b3": {
+      "call_id": "fc-01M5EK21DC2MG2CFV3S9FPNFGZ",
+      "gpu": "H100",
+      "id": "65209f033824dae1cc1e98b3",
+      "launched_at": "2026-10-21T06:40:56.278683+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.965816+00:00",
+      "reserved_usd": 3.389162,
+      "result_file": "results/loops_runs/65209f033824dae1cc1e98b3.json",
+      "settled_at": "2026-10-21T07:01:04.874500+00:00",
+      "settled_usd": 1.649762,
+      "stage": "language",
+      "status": "complete"
+    },
+    "6a6f7611b396aab8625764ac": {
+      "call_id": "fc-01M5EK21DMDTCVNW0FDD5V2QZH",
+      "gpu": "H100",
+      "id": "6a6f7611b396aab8625764ac",
+      "launched_at": "2026-10-21T06:40:56.296762+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.958039+00:00",
+      "reserved_usd": 4.341105,
+      "result_file": "results/loops_runs/6a6f7611b396aab8625764ac.json",
+      "settled_at": "2026-10-21T07:07:57.783021+00:00",
+      "settled_usd": 2.154854,
+      "stage": "language",
       "status": "complete"
     },
     "706312cc77e1cf64bad3c596": {
@@ -261,6 +372,48 @@
       "stage": "screen",
       "status": "complete"
     },
+    "a76c32b69612b860302b82ff": {
+      "call_id": "fc-01M5EK21DNXW5AWZVP0KKC2GN5",
+      "gpu": "H100",
+      "id": "a76c32b69612b860302b82ff",
+      "launched_at": "2026-10-21T06:40:56.282428+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.959408+00:00",
+      "reserved_usd": 4.983057,
+      "result_file": "results/loops_runs/a76c32b69612b860302b82ff.json",
+      "settled_at": "2026-10-21T07:11:01.891359+00:00",
+      "settled_usd": 2.368696,
+      "stage": "language",
+      "status": "complete"
+    },
+    "b344aee3ef4f573be9acbd92": {
+      "call_id": "fc-01M5EK21DFX7K59GMKQSS8STWN",
+      "gpu": "H100",
+      "id": "b344aee3ef4f573be9acbd92",
+      "launched_at": "2026-10-21T06:40:56.293901+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.952468+00:00",
+      "reserved_usd": 3.148735,
+      "result_file": "results/loops_runs/b344aee3ef4f573be9acbd92.json",
+      "settled_at": "2026-10-21T07:00:47.523590+00:00",
+      "settled_usd": 1.632496,
+      "stage": "language",
+      "status": "complete"
+    },
+    "b9d45b7c64fb7274fb6fc24b": {
+      "call_id": "fc-01M5EM6BNEAAVZ2NYG6HA2P4J6",
+      "gpu": "H100",
+      "id": "b9d45b7c64fb7274fb6fc24b",
+      "launched_at": "2026-10-21T07:00:46.466878+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:00:46.337626+00:00",
+      "reserved_usd": 4.796329,
+      "stage": "language",
+      "status": "running"
+    },
     "be8a3113646890c5e7cb3760": {
       "call_id": "fc-01M5EHE00895365SE1NPAJZ67C",
       "gpu": "L4",
@@ -290,6 +443,18 @@
       "settled_usd": 0.803331,
       "stage": "screen",
       "status": "complete"
+    },
+    "c37c07d73ca2710951c32108": {
+      "call_id": "fc-01M5EM78MS8Q9P61RH5T3MTJ88",
+      "gpu": "H100",
+      "id": "c37c07d73ca2710951c32108",
+      "launched_at": "2026-10-21T07:01:16.107324+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:01:16.005172+00:00",
+      "reserved_usd": 4.341105,
+      "stage": "language",
+      "status": "running"
     },
     "c566d2d7da4c6bd7410c2e5a": {
       "call_id": "fc-01M5EHGJGTKGRY62BRCSJBRD1F",
@@ -321,6 +486,18 @@
       "stage": "screen",
       "status": "complete"
     },
+    "c5c8bce2012984e592bd315c": {
+      "call_id": "fc-01M5EMKH04JVX7YB3QSD0059QQ",
+      "gpu": "H100",
+      "id": "c5c8bce2012984e592bd315c",
+      "launched_at": "2026-10-21T07:07:57.956620+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:07:57.785459+00:00",
+      "reserved_usd": 4.983057,
+      "stage": "language",
+      "status": "running"
+    },
     "c8367ac31740415d0c715713": {
       "call_id": "fc-01M5EHA9CD8NEVXMH9RPZRX7M8",
       "gpu": "L4",
@@ -351,6 +528,60 @@
       "stage": "screen",
       "status": "complete"
     },
+    "c8f1aa4ecf0baa0e3de041e9": {
+      "call_id": "fc-01M5EK21DHKGX3PGTPVD9RM4RK",
+      "gpu": "H100",
+      "id": "c8f1aa4ecf0baa0e3de041e9",
+      "launched_at": "2026-10-21T06:40:56.285447+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.960638+00:00",
+      "reserved_usd": 3.199994,
+      "result_file": "results/loops_runs/c8f1aa4ecf0baa0e3de041e9.json",
+      "settled_at": "2026-10-21T07:00:44.376079+00:00",
+      "settled_usd": 1.625207,
+      "stage": "language",
+      "status": "complete"
+    },
+    "cbb3b56ecc50330cc8aa41f6": {
+      "call_id": "fc-01M5EM69RBYM1258FRT2EH3T6X",
+      "gpu": "H100",
+      "id": "cbb3b56ecc50330cc8aa41f6",
+      "launched_at": "2026-10-21T07:00:44.478771+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:00:44.378236+00:00",
+      "reserved_usd": 4.983057,
+      "stage": "language",
+      "status": "running"
+    },
+    "daf20b9e8de3e3855d4e9066": {
+      "call_id": "fc-01M5EK21DHZC3ZZ633Q48SKCD9",
+      "gpu": "H100",
+      "id": "daf20b9e8de3e3855d4e9066",
+      "launched_at": "2026-10-21T06:40:56.287590+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T06:40:55.954399+00:00",
+      "reserved_usd": 3.199994,
+      "result_file": "results/loops_runs/daf20b9e8de3e3855d4e9066.json",
+      "settled_at": "2026-10-21T07:00:46.335180+00:00",
+      "settled_usd": 1.626037,
+      "stage": "language",
+      "status": "complete"
+    },
+    "e7d844cd130f87d0adde85d5": {
+      "call_id": "fc-01M5EMM3TAQVM2EE6SDXSDEJAD",
+      "gpu": "H100",
+      "id": "e7d844cd130f87d0adde85d5",
+      "launched_at": "2026-10-21T07:08:17.143209+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:08:17.053322+00:00",
+      "reserved_usd": 4.796329,
+      "stage": "language",
+      "status": "running"
+    },
     "eb5216c1542b0c5cc53e0315": {
       "call_id": "fc-01M5EHKXXXFMCPYPPEC24DYA4W",
       "gpu": "H100",
@@ -380,6 +611,18 @@
       "settled_usd": 0.72752,
       "stage": "screen",
       "status": "complete"
+    },
+    "f4726588a8955ab43254bca7": {
+      "call_id": "fc-01M5EM6DX5YZ9YF4MPB7TBKK49",
+      "gpu": "H100",
+      "id": "f4726588a8955ab43254bca7",
+      "launched_at": "2026-10-21T07:00:48.724185+00:00",
+      "manifest": "loops_lang_core",
+      "manifest_sha256": "c6bb7a4405bf5874d275e37d6ce105d4dd50d0c584295ea63b5befb0c3eee58d",
+      "reserved_at": "2026-10-21T07:00:48.632340+00:00",
+      "reserved_usd": 3.199994,
+      "stage": "language",
+      "status": "running"
     },
     "fc603e98a417eb748bf4b246": {
       "call_id": "fc-01M5EH9MXS087ZX5A0KJYE3HCG",

@@ -241,4 +241,30 @@ Learning rate: .008 for every arm (BEYOND's selected rate for all six of its arm
   Stage 3 core: abs, rope, rope+forget, hybrid GAGAGA rope, hybrid GAGAGA holo+forget, GDN; seeds
   1/2/3, seed-major order. Then DeltaProduct and DADADA holo+forget (both at equal FLOPs) if the core
   leaves at least $30.
+- Stage 3, first results (val_big, 1,024 windows, seed 5678; about 443M tokens at equal modeled FLOPs):
+
+  | Arm | Seed 1 | Seed 2 |
+  |---|---|---|
+  | hybrid GAGAGA holo+forget (candidate) | 3.549097 | pending |
+  | hybrid GAGAGA rope | 3.550674 | 3.551037 |
+  | rope+forget | 3.573876 | 3.568775 |
+  | rope | 3.583959 | 3.576787 |
+  | abs | 3.612944 | 3.606994 |
+
+  abs reproduces BEYOND's convolved softmax (3.612649, 3.609362) to 0.07%. **Seed 1 misses the
+  registered gate by a hair**: the candidate is 0.973% below rope; 1% needed 3.548119. It is 0.69%
+  below rope+forget and 0.44% below BEYOND's seed-1 DeltaProduct (3.564820). The margin over rope
+  shrank from 1.19% at 100M tokens. Inside the hybrid the forget gate is worth 0.04% at this length.
+  Per what I told Neo, the extra $100 is conditional on a ≥1% win on every seed, so spending stays
+  under $100.
+- Forget-gate probe (rope+forget, seed 1, 48 held-out windows): the gates learned a hierarchy of
+  timescales, half-lives of 1–110 tokens in layers 1–4 and 58–13,000 in layers 5–6, and every layer
+  forgets most at event boundaries ('.', '?', newline, sentence-initial 'The'). This is the cortical
+  hierarchy of temporal receptive windows (Hasson et al. 2008; Lerner et al. 2011) and boundary-
+  triggered event segmentation (Baldassano et al. 2017), found from next-token loss alone.
+- Registered before running (within the $100): **scale check**, width 768, 8 layers, 12 heads, MLP
+  3072 (about 2.1x the FLOPs per token), seed 1, equal modeled FLOPs to abs at 13,531 updates:
+  rope, rope+forget, hybrid GAGAGAGA holo+forget. Prediction S4-1: the hybrid's margin over rope at
+  the larger size is within 0.4 points of its base-size margin (no clear growth). **DeltaProduct**,
+  seeds 1–3, equal FLOPs (10,095 updates): S3-4 as registered.
 
