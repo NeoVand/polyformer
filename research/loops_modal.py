@@ -8,7 +8,7 @@ and ``max_seconds``. ``script`` is a research/*.py basename. Then:
     uvx modal run research/loops_modal.py::run --manifest research/manifests/timing.json
     python research/loops_modal.py status
 
-Predictions in LOOPS.md must be committed before planning. A manifest records that
+Predictions in LOOPS.md (and EVENTS.md) must be committed before planning. A manifest records that
 commit, all Python source digests, the exact arguments and conservative reservations.
 Results and call IDs are durable; re-running a manifest retrieves existing calls.
 No retries are automatic. A new, explicitly numbered attempt is a new experiment.
@@ -35,8 +35,8 @@ ROOT = pathlib.Path(__file__).resolve().parent
 MANIFESTS = ROOT / "manifests"
 LEDGER = ROOT / "results" / "loops_budget.json"
 LOCK = ROOT / "results" / "loops_budget.lock"
-CAPS = {"development": 1.0, "screen": 14.0, "language": 85.0}
-TOTAL_CAP = 100.0
+CAPS = {"development": 25.0, "screen": 60.0, "language": 215.0}
+TOTAL_CAP = 300.0
 # Published serverless rates, checked 2026-10-20: https://modal.com/pricing.
 # CPU and RAM tuples below impose hard limits; use their maxima in reservations.
 GPU_RATES = {"CPU": 0.0, "L4": 0.000222, "H100": 0.001097}
