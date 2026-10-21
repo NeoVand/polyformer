@@ -57,7 +57,7 @@ def _lin(cfg, p, x):
 def sizes(cfg):
     enc, main, dec = int(_get(cfg, "ev_enc", 2)), int(_get(cfg, "ev_main", 6)), int(_get(cfg, "ev_dec", 2))
     n = float(_get(cfg, "ev_len", 8))
-    slots = int(_get(cfg, "ev_slots", 0)) or int(math.ceil(2 * cfg.ctx / n))
+    slots = int(_get(cfg, "ev_slots", 0)) or int(math.ceil(1.5 * cfg.ctx / n))
     return enc, main, dec, n, slots
 
 

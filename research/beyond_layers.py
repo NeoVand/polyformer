@@ -305,7 +305,7 @@ def gated_delta_scan(q, k, v, beta, decay, initial=None, unroll=1):
 
 
 def gated_delta_chunk(q, k, v, beta, log_decay, initial=None, *, chunk_size=32,
-             dtype=jnp.float32, chunk_unroll=1):
+             dtype=jnp.float32, chunk_unroll=1, precision=jax.lax.Precision.HIGHEST):
     """Exact gated recurrence using independent triangular solves per chunk.
 
     q[B,T,H,K], k[B,T,H,nh,K], v[B,T,H,nh,V],
@@ -348,7 +348,7 @@ def gated_delta_chunk(q, k, v, beta, log_decay, initial=None, *, chunk_size=32,
     # Crucially mask *before* exp. For non-positive decay, retained differences
     # are non-positive; unused upper-triangle positive differences cannot overflow.
     pair_decay = jnp.exp(jnp.where(strict_lower, g[..., :, None] - g[..., None, :], 0))
-    gram = jnp.matmul(k, jnp.swapaxes(k, -1, -2), precision=jax.lax.Precision.HIGHEST)
+    gram = jnp.matmul(k, jnp.swapaxes(k, -1, -2), precision=precision)
     lower = jnp.where(strict_lower, beta[..., :, None] * gram * pair_decay, 0)
     a = jnp.where(diagonal, jnp.asarray(1, dtype), lower)
     rhs = jnp.concatenate(
@@ -364,7 +364,7 @@ def gated_delta_chunk(q, k, v, beta, log_decay, initial=None, *, chunk_size=32,
     gq = jnp.take(g, query_idx, axis=-1)
     query_mask = query_idx[:, None] >= idx[None, :]
     query_decay = jnp.exp(jnp.where(query_mask, gq[..., :, None] - g[..., None, :], 0))
-    qk = jnp.matmul(q, jnp.swapaxes(k, -1, -2), precision=jax.lax.Precision.HIGHEST)
+    qk = jnp.matmul(q, jnp.swapaxes(k, -1, -2), precision=precision)
     coeff = jnp.where(query_mask, qk * query_decay, 0)
     scaled_q = q * jnp.take(eg, query_idx, axis=-1)[..., None]
     end_k = k * jnp.exp(g[..., -1, None] - g)[..., None]
@@ -377,14 +377,14 @@ def gated_delta_chunk(q, k, v, beta, log_decay, initial=None, *, chunk_size=32,
     def step(state, inputs):
         ut, wt, qt, ct, kt, at = inputs
         st = jnp.swapaxes(state, -1, -2)
-        residual = ut - jnp.matmul(wt, st, precision=jax.lax.Precision.HIGHEST)
+        residual = ut - jnp.matmul(wt, st, precision=precision)
         output = (
-            jnp.matmul(qt, st, precision=jax.lax.Precision.HIGHEST)
-            + jnp.matmul(ct, residual, precision=jax.lax.Precision.HIGHEST)
+            jnp.matmul(qt, st, precision=precision)
+            + jnp.matmul(ct, residual, precision=precision)
         )
         state = state * at[..., None, None] + jnp.matmul(
             jnp.swapaxes(residual, -1, -2), kt,
-            precision=jax.lax.Precision.HIGHEST,
+            precision=precision,
         )
         return state, output
 
@@ -479,8 +479,12 @@ def apply_layer(cfg, p, x, kind=None, extra_log_decay=None):
             log_decay = log_decay + extra_log_decay
         chunk_size = int(_get(cfg, "delta_chunk", 0))
         if chunk_size:
+            # EVENTS runs may lower the chunk products' precision for speed ("high": bf16 x3);
+            # the default keeps BEYOND's full-precision products bit for bit
+            prec = {"highest": jax.lax.Precision.HIGHEST, "high": jax.lax.Precision.HIGH,
+                    "default": jax.lax.Precision.DEFAULT}[str(_get(cfg, "delta_precision", "highest"))]
             out, _ = gated_delta_chunk(q, k, v, beta, log_decay.reshape(b, t, h),
-                                       chunk_size=chunk_size)
+                                       chunk_size=chunk_size, precision=prec)
         else:
             decay = jnp.exp(log_decay).reshape(b, t, h)
             out = gated_delta_scan(q, k, v, beta, decay, unroll=int(_get(cfg, "delta_unroll", 1)))

@@ -877,6 +877,7 @@ def main():
     ap.add_argument("--pattern", default="", help="loop: A/G/D per distinct block, e.g. GAGAGA")
     ap.add_argument("--loop_order", default="", help="loop: depth loop order of distinct blocks, e.g. 0,1,2,1,2,3")
     ap.add_argument("--attn_block", type=int, default=1024, help="loop/events: exact block-causal attention above this length")
+    ap.add_argument("--delta_precision", default="highest", help="chunked delta-rule products: highest | high | default")
     # EVENTS (EVENTS.md section 2): encoder / main / decoder blocks, target event length, slots, main network
     ap.add_argument("--ev_enc", type=int, default=2)
     ap.add_argument("--ev_main", type=int, default=6)
