@@ -16,13 +16,14 @@ can beat softmax on language. **Budget:** $100 of Modal; about $75 spent (conser
    −0.88), against the Forgetting Transformer −0.65%, against Gated DeltaNet −0.82%, against
    DeltaProduct −0.53% and −0.64% on seeds 2 and 3 (seed 1 below), against learned-position softmax −1.82%. The registered headline (≥1%
    below the better softmax control on all three seeds) **fails**, by 0.03–0.18 points. The ordering
-   is not noise: seed spread is about 0.1%.
+   is not noise: the candidate's three seeds span 0.06%, the controls' 0.1–0.4%.
 2. **Symmetry is a window onto state, not onto text.** Frames transported by content-dependent
    non-commuting rotations, with values transported too, let one attention layer track A5 (98.5%
    on late positions; RoPE, abelian clocks and frames without value transport stay at chance,
    1.7%). On text the same frames are neutral (within ±0.1% of RoPE) and value transport costs 0.4%.
-3. **The loops that pay on text are resets and a second memory.** The forget gate is worth 0.3–0.6%
-   over RoPE; the recurrent fast-weight layers are worth about 0.8% more. In Krohn–Rhodes terms the
+3. **The loops that pay on text are resets and a second memory.** At 443M tokens the forget gate is
+   worth 0.25% over RoPE (0.6% at 100M tokens); alternating Gated DeltaNet layers with attention is
+   worth 0.8%; inside the hybrid the frames and the gate add another 0.1%. In Krohn–Rhodes terms the
    reset atoms carry the language gains and the group atoms carry state tracking.
 4. **The brain's solutions emerged untaught.** Forget gates learned a hierarchy of timescales
    (half-lives of 1–100 tokens in early layers, thousands in the last ones) and reset at sentence
