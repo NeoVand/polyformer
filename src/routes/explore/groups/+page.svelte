@@ -1,9 +1,12 @@
 <script lang="ts">
-	import { asset } from '$app/paths';
+	import { asset, resolve } from '$app/paths';
 	import { onMount } from 'svelte';
 	import PageFrame from '#lib/ui/PageFrame.svelte';
 	import { exploreRail } from '#lib/explore/rail.ts';
 	import A5Rotation from '#lib/viz/A5Rotation.svelte';
+	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
+	import { HOLONOMY } from '#lib/viz/computeGraphs.ts';
+	import HolonomyPath from '#lib/viz/HolonomyPath.svelte';
 	import {
 		cycleLabel,
 		elements,
@@ -29,6 +32,10 @@
 		orderStep === 0 ? identity : orderStep === 1 ? rotationB : multiply(rotationA, rotationB)
 	);
 	const selected = $derived(cycleLabel(elements[element]));
+	/** The rotations the figures use: the group's own, or the learned head's after one change of axes. */
+	const rotations = $derived(
+		model === 'recorded' && recording ? recording.elements.map((e) => e.aligned) : idealRotations
+	);
 
 	onMount(() => {
 		const controller = new AbortController();
@@ -52,7 +59,7 @@
 	<title>Holonomy · Polyformer</title>
 	<meta
 		name="description"
-		content="Inspect the sixty rotations learned by a holonomy attention head, and see why the order of composition matters."
+		content="See how holonomy attention multiplies per-token rotations in order, and inspect the sixty rotations one head learned from labels alone."
 	/>
 </svelte:head>
 
@@ -62,31 +69,56 @@
 			<p class="eyebrow">Composition lab</p>
 			<h1>Learning to turn</h1>
 			<p class="intro">
-				An icosahedron has 60 rotational symmetries. Can a neural layer discover them from labels
-				alone?
+				Holonomy attention gives every token a rotation and reads the products of those rotations in
+				the order the tokens appear. Carry a frame along a sequence to see what it computes, then
+				compare the sixty rotations one head learned with the true symmetries of an icosahedron.
 			</p>
 		</header>
+		<div class="lab-bar">
+			<div class="model-switch" role="group" aria-label="Model">
+				<span>Model</span>
+				<button
+					aria-pressed={model === 'ideal'}
+					onclick={() => {
+						model = 'ideal';
+					}}>Ideal</button
+				>
+				<button
+					disabled={!recording}
+					aria-pressed={model === 'recorded'}
+					onclick={() => {
+						model = 'recorded';
+					}}>Recorded</button
+				>
+			</div>
+		</div>
+		<section class="carry" aria-label="Carry a frame along a sequence">
+			<h2>Carry a frame</h2>
+			<p class="lede">
+				Each token is one of the sixty rotations. To relate a group of tokens, the layer multiplies
+				their rotations in sequence order. That is the same as walking along the sequence with a
+				frame and turning it only at the chosen tokens: the frame at the end is the product.
+			</p>
+			<HolonomyPath {rotations} learned={model === 'recorded' && !!recording} />
+		</section>
+		<section class="computation" aria-label="The computation">
+			<h2>The computation</h2>
+			<p class="lede">
+				The layer never lists the groups. A running product from the left collects, for every size,
+				the ordered products before each token; one from the right collects those after it; and a
+				group containing token <em>i</em> is one of each with <em>M<sub>i</sub></em> between them.
+				Every size up to <em>K</em> is read out into the token's features.
+				<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- resolved, plus an anchor -->
+				<a href={resolve('/paper') + '#holonomy'}>Paper, section on holonomy attention</a>
+			</p>
+			<ComputeGraph graph={HOLONOMY} label="Computation graph of holonomy attention" />
+		</section>
 		<section class="experiment" aria-label="Compare ideal and learned rotations">
+			<h2>The sixty rotations, ideal and learned</h2>
 			<div class="toolbar">
 				<span class="selection"
 					>Element <strong>{String(element).padStart(2, '0')}</strong><span>{selected}</span></span
 				>
-				<div class="model-switch" role="group" aria-label="Model">
-					<span>Model</span>
-					<button
-						aria-pressed={model === 'ideal'}
-						onclick={() => {
-							model = 'ideal';
-						}}>Ideal</button
-					>
-					<button
-						disabled={!recording}
-						aria-pressed={model === 'recorded'}
-						onclick={() => {
-							model = 'recorded';
-						}}>Recorded</button
-					>
-				</div>
 			</div>
 			<div class="comparison">
 				<figure>
@@ -237,8 +269,50 @@
 		grid-template-columns: minmax(0, 1fr) 284px;
 		gap: 20px 36px;
 	}
-	header {
+	header,
+	.lab-bar,
+	.carry,
+	.computation {
 		grid-column: 1;
+		min-width: 0;
+	}
+	.lab-bar {
+		display: flex;
+		justify-content: flex-end;
+		font-size: 12px;
+		margin-bottom: -8px;
+	}
+	.carry,
+	.computation {
+		display: grid;
+		gap: 10px;
+	}
+	.carry h2,
+	.computation h2,
+	.experiment h2 {
+		margin: 0;
+	}
+	.experiment h2 {
+		margin-bottom: 10px;
+	}
+	.computation {
+		margin-top: 18px;
+	}
+	.experiment {
+		margin-top: 18px;
+	}
+	.lede {
+		font-size: 12px;
+		line-height: 1.65;
+		color: var(--color-ink-2);
+		max-width: 76ch;
+	}
+	.lede a {
+		color: var(--color-ink-2);
+		margin-left: 4px;
+	}
+	.lede a:hover {
+		color: var(--color-ink);
 	}
 	.eyebrow {
 		font-size: 10px;
@@ -376,7 +450,7 @@
 	}
 	aside {
 		grid-column: 2;
-		grid-row: 1 / 3;
+		grid-row: 1 / 7;
 		padding-top: 2px;
 	}
 	h2 {
