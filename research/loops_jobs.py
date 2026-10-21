@@ -54,6 +54,10 @@ ARMS = {
                        "--vtrans", "1", "--vtrans_heads", "1"], 1400),
     "hybrid_hf_gate_vres_vt1": (["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA",
                                  "--gate_out", "1", "--vres", "1", "--vtrans", "1", "--vtrans_heads", "1"], 1400),
+    # the strengthened control with its MLP widened to the strengthened candidate's non-embedding
+    # parameters (21,686,272 vs 20,543,584: 186 more hidden units in each of six MLPs)
+    "rope_forget_gate_vres_eqp": (["--arch", "loop", "--posenc", "rope", "--forget", "1", "--gate_out", "1",
+                                   "--vres", "1", "--mlp", "2234"], 950),
     "gdn": (["--arch", "gated_delta", "--pos", "1", "--qkv_conv", "0", "--nh", "1", "--beta_max", "1",
              "--group_init", "random", "--gdim", "5"], 1400),
     "deltaproduct": (["--arch", "gated_delta", "--pos", "1", "--qkv_conv", "0", "--nh", "4", "--beta_max", "2",
@@ -104,28 +108,80 @@ LONG = {
     "ev16": ["--arch", "events", "--ev_len", "16"],
     "ev8_rope": ["--arch", "events", "--ev_len", "8", "--ev_posenc", "rope"],
 }
+# the event study's arms, strengthened as on the cheap day: the gate and the value residual in every
+# attention, one transport head wherever there are holonomy frames, the delta rule's products at bf16x3
+STRONG = ["--gate_out", "1", "--vres", "1"]
+EV = ["--arch", "events", "--ev_gate_out", "1", "--ev_vres", "1", "--ev_vtrans", "1", "--ev_vtrans_heads", "1",
+      "--delta_precision", "high"]
+LONG.update({
+    "soft": ["--arch", "loop", "--posenc", "rope", "--forget", "1"] + STRONG,
+    "hyb": ["--arch", "loop", "--posenc", "holo", "--forget", "1", "--pattern", "GAGAGA", "--vtrans", "1",
+            "--vtrans_heads", "1", "--delta_precision", "high"] + STRONG,
+    "hyb_rope": ["--arch", "loop", "--posenc", "rope", "--forget", "1", "--pattern", "GAGAGA",
+                 "--delta_precision", "high"] + STRONG,
+    "ev_l8": EV + ["--ev_len", "8"],
+    "ev_l16": EV + ["--ev_len", "16"],
+    "ev_l8_rope": EV + ["--ev_len", "8", "--ev_posenc", "rope", "--ev_vtrans", "0", "--ev_vtrans_heads", "0"],
+    "ev_l8_wide": EV + ["--ev_len", "8", "--ev_dmain", "768", "--ev_heads", "12"],
+})
+# measured steady seconds per update at 32,768 tokens per update (events_timing3/4), with margin for the
+# parts added since; used only for timeouts and reservations
+STEP_SECONDS = {8192: {"soft": 0.30, "hyb": 0.34, "hyb_rope": 0.33, "ev": 0.30},
+                2048: {"soft": 0.14, "hyb": 0.22, "hyb_rope": 0.21, "ev": 0.17}}
 
 
-def long_job(name, ctx, seed, steps, warmup, evals, vseqs, vbig, max_seconds, lr=0.008, extra=()):
+def long_job(name, ctx, seed, steps, warmup, evals, vseqs, vbig, max_seconds, lr=0.008, extra=(), size="base"):
     batch = 32768 // ctx
-    argv = ["--data", "/data/fineweb_edu", "--vocab", "50304", "--ctx", str(ctx), "--d", "512", "--heads", "8",
-            "--layers", "6", "--mlp", "2048", "--opt", "muon", "--batch", str(batch), "--micro", "2", "--bf16", "1",
+    dims = SIZES[size]
+    argv = ["--data", "/data/fineweb_edu", "--vocab", "50304", "--ctx", str(ctx), "--d", dims["d"],
+            "--heads", dims["heads"], "--layers", dims["layers"], "--mlp", dims["mlp"], "--opt", "muon", "--batch", str(batch), "--micro", "2", "--bf16", "1",
             "--remat", "1", "--tokens", "0", "--progress", "1", "--qkv_conv", "3", "--delta_chunk", "32",
             "--attn_block", "1024", "--lr", str(lr), "--seed", str(seed), "--steps", str(steps),
             "--warmup", str(warmup), "--evals", str(evals), "--vseqs", str(vseqs), "--vbig", str(vbig)]
-    argv += LONG[name] + list(extra)
+    arch = list(LONG[name])
+    if "--arch" in arch and arch[arch.index("--arch") + 1] == "events":
+        arch += ["--ev_main", dims["layers"]]  # the event network is as deep as the token models
+    if "--pattern" in arch:
+        i = arch.index("--pattern")
+        arch[i + 1] = (arch[i + 1] * int(dims["layers"]))[:int(dims["layers"])]
+    argv += arch + list(extra)
     if vbig:
         argv += ["--save-final", "1"]
     return {"script": "lm.py", "argv": argv, "gpu": "H100", "max_seconds": int(max_seconds)}
 
 
-def diag_job(task, layers, sets, steps=6000, lr=0.004, seed=0):
+def long_flops(name, ctx, size="base"):
+    """Modeled training FLOPs per token of a long-context arm (lm's own parser and convention)."""
+    sys.path.insert(0, str(pathlib.Path(__file__).parent))
+    import lm
+    argv = long_job(name, ctx, 0, 1, 1, 1, 1, 0, 1, size=size)["argv"]
+    cfg = lm.finish_cfg(lm.build_parser().parse_args(argv))
+    return lm.training_flops_per_token(cfg, ctx)
+
+
+def equal_flop_long(name, ctx, ref_steps, size="base"):
+    """Updates giving an arm the modeled training FLOPs of the strengthened softmax control at ref_steps."""
+    return int(ref_steps * long_flops("soft", ctx, size) / long_flops(name, ctx, size))
+
+
+def long_arm_job(name, ctx, seed, ref_steps, vseqs, vbig, size="base", data="/data/fineweb_edu", evals=8):
+    steps = equal_flop_long(name, ctx, ref_steps, size)
+    kind = "ev" if name.startswith("ev") else name
+    slow = 1.0 if size == "base" else long_flops(name, ctx, size) / long_flops(name, ctx)
+    seconds = steps * STEP_SECONDS[ctx][kind] * slow * 1.3 + 600
+    job = long_job(name, ctx, seed, steps, max(100, steps // 10), evals, vseqs, vbig, seconds, size=size)
+    if data != "/data/fineweb_edu":
+        job["argv"][job["argv"].index("--data") + 1] = data
+    return job
+
+
+def diag_job(task, layers, sets, steps=6000, lr=0.004, seed=0, gpu="L4"):
     argv = ["--task", task, "--arch", "loop", "--layers", str(layers), "--d", "128", "--heads", "4",
             "--steps", str(steps), "--lr", str(lr), "--seed", str(seed), "--pos", "0", "--progress",
             "--set", "qkv_conv=3"]
     for s in sets:
         argv += ["--set", s]
-    return {"script": "beyond_diag.py", "argv": argv, "gpu": "L4", "max_seconds": 2400}
+    return {"script": "beyond_diag.py", "argv": argv, "gpu": gpu, "max_seconds": 2400}
 
 
 def stage(name):
@@ -159,6 +215,16 @@ def stage(name):
         jobs = [lm_job(n, 0, 3051, 305, 0.008, 8, 0) for n in names]
         jobs.append(diag_job("wp_a5_16", 1, ["posenc=holo", "vtrans=1", "vtrans_heads=1"]))
         return jobs
+    if name == "evdev":
+        # event-study development screens, seed 0, equal modeled FLOPs to the strengthened softmax control
+        # at 3,051 updates (100M tokens at 32,768 tokens per update)
+        jobs = [long_arm_job(n, 8192, 0, 3051, 128, 0) for n in
+                ("soft", "hyb", "ev_l8", "ev_l16", "ev_l8_rope", "ev_l8_wide")]
+        jobs += [long_arm_job(n, 2048, 0, 3051, 512, 0) for n in ("soft", "hyb", "ev_l8")]
+        return jobs
+    if name == "cheap_a5":
+        # the cheap screen's A5 check, moved to an H100 after its L4 input never got a container
+        return [diag_job("wp_a5_16", 1, ["posenc=holo", "vtrans=1", "vtrans_heads=1"], gpu="H100")]
     if name == "timing4":
         return [long_job("ev8", 8192, 0, 160, 30, 2, 16, 0, 1500, extra=["--delta_precision", p])
                 for p in ("high", "default")]
@@ -207,7 +273,7 @@ SCREEN_WALL = {"abs": 300, "rope": 306, "grid": 320, "grid_forget": 329, "holo":
                "loop": 303, "rope4": 232, "gdn": 520, "deltaproduct": 1200,
                "rope_forget_gate": 345, "rope_forget_vres": 335, "rope_forget_gate_vres": 350,
                "hybrid_hf_gate": 545, "hybrid_hf_vres": 540, "hybrid_hf_gate_vres": 555, "hybrid_hf_vt1": 535,
-               "hybrid_hf_gate_vres_vt1": 560}
+               "hybrid_hf_gate_vres_vt1": 560, "rope_forget_gate_vres_eqp": 365}
 
 REFERENCE_STEPS = 13531  # BEYOND's convolved-softmax final budget (about 443M tokens)
 
@@ -241,7 +307,8 @@ def arm_flops(name, size="base"):
             if k in d:
                 c[k] = d[k]
         c.update(gate_out=0, vres=0, vtrans_heads=0)
-        for k in ("layers", "forget", "vtrans", "holo", "modules", "nh", "qkv_conv", "gate_out", "vres", "vtrans_heads"):
+        for k in ("layers", "forget", "vtrans", "holo", "modules", "nh", "qkv_conv", "gate_out", "vres", "vtrans_heads",
+                  "mlp"):
             if k in d:
                 c[k] = int(d[k])
         if "beta_max" in d:

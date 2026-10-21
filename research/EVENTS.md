@@ -44,7 +44,7 @@ Three memories and one boundary signal (review 3.3), in the style of H-Net (Hwan
   boundary where p_t ≥ 1/2: a decision that depends on tokens up to t only. A ratio loss (H-Net's
   form, weight 0.03) pulls the boundary rate toward a target of one event per ℓ tokens.
 - **Downsampler:** the encoder state at each boundary token becomes that event's vector, placed in a
-  fixed buffer of K = T/ℓ_min slots (static shapes). Boundaries beyond the buffer merge into the last
+  fixed buffer of K = 1.5 T/ℓ slots (static shapes). Boundaries beyond the buffer merge into the last
   slot; whether that happens depends only on the past, so causality holds.
 - **Main network (events):** attention over event vectors with the LOOPS frames carried over the
   event sequence (rotary over event index, content clocks, holonomy blocks) and the forget gate over
@@ -61,7 +61,7 @@ before t, and the main network is causal over events. This is tested by perturbi
 **Long-context attention for the token-level controls.** The Forgetting Transformer's bias is
 c_i − c_j with c a running sum of log forget gates, which reaches thousands at 8k tokens; bf16 cannot
 hold it near the softmax maximum, so a stock flash kernel with a key bias is not exact. The controls
-use an exact block-causal attention: queries in blocks of 512 against the keys up to their block, bf16
+use an exact block-causal attention: queries in blocks of 1,024 against the keys up to their block, bf16
 products with fp32 accumulation, and the bias added in fp32 per tile. FLOPs are counted causally as
 before.
 
@@ -101,13 +101,15 @@ Every prediction is reported as held or failed, with the numbers.
 | Phase | Est. cost |
 |---|---|
 | Cheap day: 8 screens, A5 check, 9 confirmation runs, evaluations | $35 |
-| Event model development screens (2,048 and 8,192, seed 0) | $25 |
-| 2,048 cells (three arms, one seed) | $10 |
-| 8,192 headline cell (three arms, three seeds) | $55 |
-| 8,192 large size (three arms, one seed) | $35 |
-| Code corpus preparation and three arms at 2,048 | $15 |
-| Entity-tracking evaluation | $5 |
-| Margin for failures | $45 |
+| Event model development screens (2,048 and 8,192, seed 0) | $14 |
+| 8,192 headline cell (three arms, three seeds, one ablation) | $64 |
+| 2,048 cells (three arms, two seeds, one ablation) | $17 |
+| 8,192 large size (three arms, one seed) | $38 |
+| Code corpus preparation and four arms at 2,048 | $14 |
+| Evaluations (buckets, boundaries, entity tracking) | $4 |
+| Margin for failures | about $40 |
+
+(Revised at the event-study registration in section 5, from measured step times.)
 
 The ledger is `research/results/loops_budget.json`; `loops_modal.py` caps are raised to a $300 total.
 
@@ -159,3 +161,83 @@ The ledger is `research/results/loops_budget.json`; `loops_modal.py` caps are ra
   within 128 tokens; **C5 holds**. Clock velocities set to 1 raise it by 14%: the model built its
   position code on the clocks, so this ablation measures dependence, not benefit.
 
+- **Cheap-day screen** (`events_cheap`, seed 0, 3,051 updates, 100M tokens, equal updates; plain
+  rows from `loops_screen`):
+
+  | Arm | rope+forget | hybrid GAGAGA holo+forget |
+  |---|---|---|
+  | plain | 3.8308 | 3.8082 |
+  | + gate | 3.8034 (−0.72%) | 3.8036 (−0.12%) |
+  | + value residual | 3.8073 (−0.61%) | 3.7973 (−0.29%) |
+  | + both | **3.7844 (−1.21%)** | 3.7926 (−0.41%) |
+  | + one transport head | | 3.8085 (+0.01%) |
+  | + both + one transport head | | 3.7881 (−0.53%) |
+
+  **C1 holds** (the gate: −0.72% on the control, −0.12% on the candidate). **C2 fails narrowly** at
+  the control (−0.61%, above the registered 0.1–0.6%) and holds at the candidate (−0.29%). **C3's
+  text half holds** (one transport head: +0.01% alone, −0.12% with both parts); its A5 half is pending.
+  The ordering reversed: with both parts, the softmax control (3.7844) is below the candidate (3.7881)
+  at equal updates, although the candidate has 2% more modeled FLOPs per token. The published parts
+  supply most of what resets and frames supplied. Wall clock per 3,051 updates: control 344 s,
+  candidate 540 s.
+- **Selection rule applied:** strengthened control = rope+forget+gate+vres (`rope_forget_gate_vres`);
+  strengthened candidate = hybrid+gate+vres with one transport head (`hybrid_hf_gate_vres_vt1`,
+  3.7881, within 0.1% of and below `hybrid_hf_gate_vres`); equal-parameter control =
+  `rope_forget_gate_vres_eqp`, the control with MLP width 2,234 (21,687,484 non-embedding parameters
+  against the candidate's 21,686,272). Seeds 1–3, equal modeled FLOPs (13,071 / 12,806 / 12,766
+  updates against the reference 13,531 for abs), `val_big` and final checkpoints saved; the paired
+  test is on per-sequence losses over the 1,024 `val_big` windows (`loops_eval.py`). Manifest
+  `events_confirm`.
+- The A5 check's L4 input again never got a container (12 minutes PENDING); cancelled, settled at $0,
+  relaunched on H100 (`events_a5`).
+
+### Event-study registration (before any event-model training)
+
+Protocol: FineWeb-Edu, GPT-2 tokens, 32,768 tokens per update (16 windows at 2,048, 4 at 8,192),
+Muon at lr .008, warmup a tenth of the updates, cosine to a tenth, bf16 with fp32 accumulation.
+Every attention in every arm carries the gate and the value residual (the cheap day's result), and
+every arm with holonomy frames has one transport head. Equal modeled training FLOPs per run (lm's
+convention, `loops_jobs.long_flops`): the reference is the strengthened softmax control at a given
+number of updates, and every other arm gets the updates that match its FLOPs.
+
+Arms (`loops_jobs.LONG`):
+
+- `soft`: rope+forget+gate+vres, 6 layers × 512 (the control in E1–E4).
+- `hyb`: hybrid GAGAGA holo+forget+gate+vres, one transport head (the token-level candidate).
+- `ev_l8`, `ev_l16`: the event model, target event length 8 or 16; 2 Gated DeltaNet layers in, 6
+  attention layers over events (holo+forget+gate+vres, one transport head), 2 Gated DeltaNet layers
+  out, width 512.
+- `ev_l8_wide`: as `ev_l8` with the event network at width 768 (12 heads): FLOPs spent per event
+  instead of on more tokens.
+- `ev_l8_rope`: as `ev_l8` with rotary frames over event index instead of holonomy (no transport):
+  the frames-over-events ablation.
+- `hyb_rope`: as `hyb` with rotary frames (for E6).
+
+Modeled training FLOPs per token, base size: 2,048: soft 316.3M, hyb 307.8M, ev_l8 276.9M,
+ev_l16 263.6M, ev_l8_wide 307.7M; 8,192: soft 432.2M, hyb 365.7M, ev_l8 281.0M, ev_l16 264.6M,
+ev_l8_wide 313.8M. So at 8,192 the event model sees 1.54× the softmax control's tokens.
+
+Stages, in order:
+
+1. **Development screens** (`events_dev`, seed 0, reference 3,051 updates = 100M softmax tokens):
+   at 8,192: soft, hyb, ev_l8, ev_l16, ev_l8_rope, ev_l8_wide; at 2,048: soft, hyb, ev_l8.
+   **Selection rule:** the headline event arm is whichever of ev_l8, ev_l16, ev_l8_wide has the lowest
+   8,192 screen loss. **Guard:** if that arm is more than 2% above `soft` at 8,192, the headline is not
+   run as registered; the event model is debugged first and the change logged.
+2. **Headline cell** (8,192, base, seeds 1–3, reference 13,531 updates = 443M softmax tokens):
+   soft, hyb, the selected event arm; plus ev_l8_rope (or the selected arm with rotary frames) at
+   seed 1. Final checkpoints and `val_big` (256 windows) saved. E2 and the 8,192 half of E3.
+3. **Context 2,048** (seeds 1–2, reference 13,531): soft, hyb, the selected event arm, and hyb_rope
+   at seed 1. E1, the 2,048 half of E3, and the prose half of E6.
+4. **Large size** (8,192, width 768, 8 layers, 12 heads, MLP 3,072; the event network 8 layers;
+   seed 1, reference 13,531): soft, hyb, the selected event arm. The size half of E3 (sign only).
+5. **Code** (`/data/code_python`: CodeParrot-clean Python, 921M training tokens, 2,048, seed 1,
+   reference 13,531): soft, hyb, hyb_rope, the selected event arm. E6.
+6. **Evaluations** on the saved checkpoints: repeat-distance buckets extended to 1,025–4,096 and
+   4,097+ at 8,192 (E4); boundary statistics on held-out text (E5); entity tracking scored on answer
+   tokens (E4).
+
+E2 at each seed is the loss on the 256 `val_big` windows; the paired test is across those windows.
+Estimated cost: development $14, headline $64, 2,048 $17, large $38, code $14, evaluations $4: $151,
+which with the cheap-day confirmation ($20) and the $88 already committed leaves about $40 of margin
+in the $300.

@@ -12,7 +12,10 @@ ROOT = pathlib.Path(__file__).resolve().parent
 
 
 def flag(argv, name, default=None):
-    return argv[argv.index(name) + 1] if name in argv else default
+    """The last value given for a flag, as argparse reads it."""
+    if name not in argv:
+        return default
+    return argv[len(argv) - 1 - argv[::-1].index(name) + 1]
 
 
 def arm(argv):
@@ -28,6 +31,12 @@ def arm(argv):
         return "gdn" if flag(argv, "--nh") == "1" else "deltaproduct"
     if a == "events":
         name = f"events l={flag(argv, '--ev_len', '8')} {flag(argv, '--ev_posenc', 'holo')}"
+        if flag(argv, "--ev_gate_out", "0") == "1":
+            name += "+gate+vres" if flag(argv, "--ev_vres", "0") == "1" else "+gate"
+        if flag(argv, "--ev_vtrans", "0") == "1":
+            name += "+vt1"
+        if flag(argv, "--ev_dmain"):
+            name += f" dmain{flag(argv, '--ev_dmain')}"
         ctx = flag(argv, "--ctx", "512")
         return name + (f" ctx{ctx}" if ctx != "512" else "")
     name = flag(argv, "--posenc", "abs")

@@ -72,7 +72,7 @@ def main_cfg(cfg):
         **vars(cfg), "arch": "loop", "d": int(_get(cfg, "ev_dmain", cfg.d)), "heads": int(_get(cfg, "ev_heads", cfg.heads)),
         "posenc": _get(cfg, "ev_posenc", "holo"), "forget": int(_get(cfg, "ev_forget", 1)), "ctx": slots,
         "vtrans": int(_get(cfg, "ev_vtrans", 0)), "vtrans_heads": int(_get(cfg, "ev_vtrans_heads", 0)),
-        "gate_out": int(_get(cfg, "ev_gate_out", 0)), "vres": 0,
+        "gate_out": int(_get(cfg, "ev_gate_out", 0)), "vres": int(_get(cfg, "ev_vres", 0)),
     })
 
 
@@ -125,14 +125,16 @@ def _gdn_block(cfg, lyr, x, boundary=None):
     return x + _lin(cfg, lyr["fc2"], jax.nn.gelu(_lin(cfg, lyr["fc1"], _ln(lyr["ln2"], x))))
 
 
-def _main_block(cfg, mc, lyr, x):
+def _main_block(cfg, mc, lyr, x, vfirst=None):
     def qkv(p_, x_):
         packed = _lin(mc, p_["qkv"], x_)
         if "qkv_conv" in p_:
             packed = beyond_layers.causal_depthwise_conv(packed, p_["qkv_conv"])
         return jnp.split(packed, 3, -1)
-    x = x + loops_layers.attention(mc, lyr, _ln(lyr["ln1"], x), qkv)
-    return x + _lin(mc, lyr["fc2"], jax.nn.gelu(_lin(mc, lyr["fc1"], _ln(lyr["ln2"], x))))
+    update, values = loops_layers.attention(mc, lyr, _ln(lyr["ln1"], x), qkv, vfirst, return_values=True)
+    x = x + update
+    x = x + _lin(mc, lyr["fc2"], jax.nn.gelu(_lin(mc, lyr["fc1"], _ln(lyr["ln2"], x))))
+    return x, (values if vfirst is None else vfirst)
 
 
 def _unit(x):
@@ -168,8 +170,9 @@ def forward(cfg, p, idx, with_aux=False):
     z = jnp.zeros((b_, slots + 1, d), h.dtype).at[rows, slot].set(h)[:, :slots]
     pz = jnp.zeros((b_, slots + 1), prob.dtype).at[rows, slot].set(prob)[:, :slots]
     m = _lin(mc, layers[enc]["ev_in"], z)
+    vfirst = None
     for j in range(main):
-        m = remat(lambda l, m_: _main_block(cfg, mc, l, m_))(layers[enc + j], m)
+        m, vfirst = remat(lambda l, m_, v_: _main_block(cfg, mc, l, m_, v_))(layers[enc + j], m, vfirst)
     last = layers[enc + main - 1]
     y = _lin(mc, last["ev_out"], _ln(last["ev_lnout"], m))        # [B, K, d]
     # smoothing over events: ybar_e = P_e y_e + (1 - P_e) ybar_{e-1}, a linear recurrence

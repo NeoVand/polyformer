@@ -826,8 +826,7 @@ def final_ablation_losses(cfg, params, bx, by, batch_size, *, return_details=Fal
     return results
 
 
-def main():
-    global MM
+def build_parser():
     ap = argparse.ArgumentParser()
     ap.add_argument("--arch", default="gpt")
     ap.add_argument("--d", type=int, default=256)
@@ -891,6 +890,7 @@ def main():
     ap.add_argument("--ev_vtrans", type=int, default=0)
     ap.add_argument("--ev_vtrans_heads", type=int, default=0)
     ap.add_argument("--ev_gate_out", type=int, default=0)
+    ap.add_argument("--ev_vres", type=int, default=0)
     ap.add_argument("--ratio_w", type=float, default=0.03, help="events: weight of the ratio loss")
     ap.add_argument("--ctx", type=int, default=256)
     ap.add_argument("--batch", type=int, default=64)
@@ -919,17 +919,11 @@ def main():
                     help="atomically save cfg and final parameters to BEYOND_ARTIFACT_DIR/final.pkl")
     ap.add_argument("--ablations", type=int, default=0,
                     help="final-only component losses for candidates on the same 1024 val_big sequences")
-    cfg = ap.parse_args()
-    artifact_dir = os.environ.get("BEYOND_ARTIFACT_DIR")
-    if cfg.save_final and not artifact_dir:
-        ap.error("--save-final 1 requires BEYOND_ARTIFACT_DIR")
-    if cfg.ablations and cfg.arch.startswith("beyond_"):
-        if cfg.vbig != 1024:
-            ap.error("--ablations 1 requires --vbig 1024 for the registered held-out sample")
-        if cfg.ablate != "none":
-            ap.error("--ablations 1 requires an unablated training configuration (--ablate none)")
-    if cfg.bf16:
-        MM = jnp.bfloat16
+    return ap
+
+
+def finish_cfg(cfg):
+    """Defaults that depend on other settings (also used to price jobs before launch)."""
     if not cfg.mlp:
         # matched parameters: the Newton branch's weights come out of the MLP
         D, H, r = cfg.d, cfg.nheads, cfg.rank
@@ -950,6 +944,24 @@ def main():
         cfg.pos = 0
         cfg.ev_dmain = cfg.ev_dmain or cfg.d
         cfg.ev_heads = cfg.ev_heads or cfg.heads
+    return cfg
+
+
+def main():
+    global MM
+    ap = build_parser()
+    cfg = ap.parse_args()
+    artifact_dir = os.environ.get("BEYOND_ARTIFACT_DIR")
+    if cfg.save_final and not artifact_dir:
+        ap.error("--save-final 1 requires BEYOND_ARTIFACT_DIR")
+    if cfg.ablations and cfg.arch.startswith("beyond_"):
+        if cfg.vbig != 1024:
+            ap.error("--ablations 1 requires --vbig 1024 for the registered held-out sample")
+        if cfg.ablate != "none":
+            ap.error("--ablations 1 requires an unablated training configuration (--ablate none)")
+    if cfg.bf16:
+        MM = jnp.bfloat16
+    finish_cfg(cfg)
     train, val = load(cfg.data)
     T = cfg.ctx
     if cfg.tokens:
