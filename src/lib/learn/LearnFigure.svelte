@@ -703,7 +703,7 @@
 		</figcaption>
 	</figure>
 {:else if section === 'diagrams'}
-	<figure class="fig tall">
+	<figure class="fig tall tree" class:compact={diagramTask === 'set'}>
 		<div class="fig-head">
 			<div class="seg" role="group" aria-label="Example">
 				<button aria-pressed={diagramTask === 'set'} onclick={() => (diagramTask = 'set')}
@@ -868,12 +868,13 @@
 				{ id: 'dspa5-d192', label: 'Feynman, Newton parts, width 192' },
 				{ id: 'newton-K6-r256-h4-shared-fnorm', label: 'Newton attention' }
 			]}
-			caption="Balanced accuracy, chance 50%. Mean of three seeds; each dot is one seed."
+			caption="Balanced accuracy %, chance 50%: the mean of three seeds, with the seeds below it."
 		/>
 		<figcaption>
-			Only an operator with a native k-way term leaves chance on Match-k. Feynman attention with
-			every part of the Newton construction, wider than the group, does not. Newton attention offers
-			every arity natively.
+			Balanced accuracy %, chance 50%: the mean of three seeds, with the seeds below it. Only an
+			operator with a native k-way term leaves chance on Match-k. Feynman attention with every part
+			of the Newton construction, wider than the group, does not. Newton attention offers every
+			arity natively.
 		</figcaption>
 	</figure>
 {:else if section === 'characters'}
@@ -921,11 +922,12 @@
 				{ id: 'alone-final', label: 'Newton attention, each task alone' },
 				{ id: 'mix345-r256-shared-fnorm-s6000', label: 'Newton attention, trained together' }
 			]}
-			caption="Balanced accuracy, chance 50%. Mean of three seeds; each dot is one seed. Rank 256, 6,000 steps."
+			caption="Balanced accuracy %, chance 50%: the mean of three seeds, with the seeds below it. Rank 256, 6,000 steps."
 		/>
 		<figcaption>
-			One layer trained on three arities at once, scored on each. Each arity gets a third of the
-			data and still does better than a layer trained on it alone.
+			Balanced accuracy %, chance 50%: the mean of three seeds, with the seeds below it; rank 256,
+			6,000 steps. One layer trained on three arities at once, scored on each. Each arity gets a
+			third of the data and still does better than a layer trained on it alone.
 		</figcaption>
 	</figure>
 {:else}
@@ -969,6 +971,20 @@
 		display: flex;
 		justify-content: center;
 		margin: 10px 0 8px;
+	}
+	.learned-key :global(.legend) {
+		justify-content: center;
+	}
+	/* the ideal trees: as wide as they need, and short when the tree is (SET has three rows) */
+	.fig.tree .three {
+		width: min(100%, 600px);
+		justify-self: center;
+	}
+	.fig.tall.tree.compact {
+		height: clamp(260px, 44vw, 330px);
+	}
+	.fig.tree.compact .three {
+		min-height: 200px;
 	}
 	.learned-note {
 		max-width: 52ch;
@@ -1228,8 +1244,10 @@
 	}
 	.hops,
 	.tokens {
+		display: block;
 		width: 100%;
 		max-width: 520px;
+		margin: 0 auto;
 		overflow: visible;
 	}
 	.hops .map {

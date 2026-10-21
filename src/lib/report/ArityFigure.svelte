@@ -280,6 +280,10 @@
 	.fig1.single {
 		grid-template-columns: minmax(0, 1fr);
 		gap: 26px;
+		/* near the drawing's own size, so its type matches the page */
+		width: 100%;
+		max-width: 540px;
+		margin: 0 auto;
 	}
 	svg {
 		width: 100%;

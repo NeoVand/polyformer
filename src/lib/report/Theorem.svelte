@@ -60,8 +60,8 @@
 <style>
 	/* no boxes or rules: the statement is set in full ink, the prose around it is not */
 	.thm {
-		position: relative;
-		margin: 18px 0 20px;
+		margin-top: 22px;
+		margin-bottom: 24px;
 	}
 	.head {
 		display: flex;
@@ -83,15 +83,6 @@
 		gap: 6px;
 		font-size: var(--text-2xs);
 		color: var(--color-ink-3);
-	}
-	/* in the margin when there is one */
-	@media (min-width: 1180px) {
-		.ev {
-			position: absolute;
-			top: 4px;
-			left: calc(100% + 40px);
-			width: 200px;
-		}
 	}
 	.ev::before {
 		content: '';
@@ -132,7 +123,7 @@
 	.proof {
 		margin-top: 6px;
 		padding-left: 18px;
-		font-size: 14px;
+		font-size: 0.94em;
 		color: var(--color-ink-2);
 	}
 	.proof :global(p) {

@@ -38,6 +38,7 @@
 	.sum {
 		display: flex;
 		flex-wrap: wrap;
+		justify-content: center;
 		align-items: center;
 		gap: 10px 7px;
 		margin: 8px 0 16px;

@@ -1,12 +1,16 @@
 /*
- * The paper: one reading column, figures that may run wider, nothing in the margins.
- * Every rule is scoped under .paper so the rest of the app is untouched.
+ * The paper: one reading column, figures held to the same width, nothing in the margins.
+ * Every rule is scoped under .paper so the rest of the app is untouched. The type tokens
+ * grow a little on large screens, so captions and figure labels grow with the text.
  */
 .paper {
-	--read: clamp(14.5px, calc(12.6px + 0.2vw), 15.5px);
-	--measure: 680px;
-	--wide: 960px;
-	--gutter: clamp(16px, 4vw, 40px);
+	--read: clamp(15px, calc(13.4px + 0.25vw), 17.5px);
+	--measure: 760px;
+	--wide: 760px;
+	--gutter: clamp(16px, 4vw, 48px);
+	--text-2xs: clamp(11px, calc(9.6px + 0.15vw), 12px);
+	--text-xs: clamp(12px, calc(10.6px + 0.17vw), 13.5px);
+	--text-sm: clamp(13px, calc(11.4px + 0.22vw), 15px);
 	padding: 0 var(--gutter) 120px;
 	color: var(--color-ink-2);
 	font-size: var(--read);
@@ -37,7 +41,7 @@
 	margin-top: 0;
 	margin-bottom: 0;
 	font-family: 'KaTeX_Main', 'Times New Roman', serif;
-	font-size: clamp(34px, 6vw, 52px);
+	font-size: clamp(36px, 6vw, 60px);
 	font-weight: 400;
 	line-height: 1.06;
 	letter-spacing: -0.01em;
@@ -131,7 +135,7 @@
 	margin-top: 2px;
 	margin-bottom: 0;
 	font-family: 'KaTeX_Main', 'Times New Roman', serif;
-	font-size: clamp(26px, 4vw, 34px);
+	font-size: clamp(27px, 4vw, 38px);
 	font-weight: 400;
 	line-height: 1.15;
 	color: var(--color-ink);
@@ -145,7 +149,7 @@
 	scroll-margin-top: calc(var(--bar-h) + 16px);
 }
 .paper section.chapter {
-	padding-top: 40px;
+	padding-top: clamp(40px, 5vw, 56px);
 }
 .paper h3 {
 	display: flex;

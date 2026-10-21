@@ -98,7 +98,9 @@
 
 <style>
 	.demo {
-		margin: 18px 0 24px;
+		width: 100%;
+		max-width: 620px;
+		margin: 18px auto 24px;
 	}
 	table {
 		width: 100%;
@@ -138,6 +140,7 @@
 	.controls {
 		display: flex;
 		flex-wrap: wrap;
+		justify-content: center;
 		align-items: center;
 		gap: 8px 16px;
 		margin-top: 10px;
@@ -171,9 +174,11 @@
 		margin-left: auto;
 	}
 	figcaption {
-		margin-top: 10px;
+		max-width: 60ch;
+		margin: 14px auto 0;
 		font-size: var(--text-xs);
-		line-height: 1.55;
+		line-height: 1.6;
 		color: var(--color-ink-3);
+		text-align: center;
 	}
 </style>

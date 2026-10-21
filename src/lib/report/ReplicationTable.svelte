@@ -1,9 +1,9 @@
 <script lang="ts">
 	/**
-	 * Replicated results: mean balanced accuracy per task and model, with every seed
-	 * drawn as a dot on a 50–100% strip so the spread is visible, not just the mean.
-	 * With metric 'tok' the cells show plain accuracy instead. A row with no seeds is a
-	 * published number: its mean is shown with the published standard deviation, if any.
+	 * Replicated results: mean balanced accuracy per task and model, with the seeds written
+	 * small underneath, and the best mean in each column in bold. With metric 'tok' the cells
+	 * show plain accuracy instead. A row with no seeds is a published number: its mean is
+	 * shown with the published standard deviation, if any.
 	 */
 	interface Row {
 		task: string;
@@ -20,15 +20,12 @@
 		rows,
 		tasks,
 		models,
-		floor = 0.5,
 		metric = 'bal',
 		caption
 	}: {
 		rows: Row[];
-		tasks: { id: string; label: string; floor?: number }[];
+		tasks: { id: string; label: string }[];
 		models: { id: string; label: string }[];
-		/** Chance level for the strip's left edge, unless a task sets its own. */
-		floor?: number;
 		/** Balanced accuracy, or plain accuracy over scored tokens. */
 		metric?: 'bal' | 'tok';
 		caption: string;
@@ -42,10 +39,10 @@
 	const cell = (task: string, model: string) =>
 		rows.find((r) => r.task === task && r.model === model);
 	const best = (task: string) => Math.max(...rows.filter((r) => r.task === task).map(mean));
-	const x = (v: number, f: number) => 4 + Math.max(0, Math.min(1, (v - f) / (1 - f))) * 52;
+	const pct = (v: number) => (v * 100).toFixed(1);
 </script>
 
-<div class="wrap" style:--n={tasks.length}>
+<div class="wrap">
 	<table>
 		<caption>{caption}</caption>
 		<thead>
@@ -57,34 +54,18 @@
 		<tbody>
 			{#each models as m (m.id)}
 				<tr>
-					<td class="name">{m.label}</td>
+					<th class="name">{m.label}</th>
 					{#each tasks as t (t.id)}
 						{@const c = cell(t.id, m.id)}
 						<td class="r">
 							{#if c}
 								{@const v = values(c)}
-								<span class="v" class:top={mean(c) >= best(t.id) - 0.005}>
-									<span class="num">{(mean(c) * 100).toFixed(1)}</span>
-									{#if v.length}
-										<svg
-											width="60"
-											viewBox="0 0 60 10"
-											height="10"
-											aria-label="Seeds: {v.map((b) => (b * 100).toFixed(0)).join(', ')}%"
-										>
-											<line x1="4" x2="56" y1="5" y2="5" class="axis" />
-											{#each v as b, i (i)}<circle
-													cx={x(b, t.floor ?? floor)}
-													cy="5"
-													r="2.4"
-												/>{/each}
-										</svg>
-									{:else}
-										<span class="pub"
-											>{c.sd === undefined ? '' : `± ${(c.sd * 100).toFixed(1)}`}</span
-										>
-									{/if}
-								</span>
+								<span class="v" class:top={mean(c) >= best(t.id) - 0.005}>{pct(mean(c))}</span>
+								{#if v.length > 1}
+									<small>{v.map(pct).join(', ')}</small>
+								{:else if c.sd !== undefined}
+									<small>± {pct(c.sd)}</small>
+								{/if}
 							{:else}
 								<span class="na">·</span>
 							{/if}
@@ -98,7 +79,6 @@
 
 <style>
 	.wrap {
-		container-type: inline-size;
 		overflow-x: auto;
 		margin: 12px 0 18px;
 	}
@@ -106,108 +86,76 @@
 		width: 100%;
 		border-collapse: collapse;
 		font-size: var(--text-sm);
+		line-height: 1.45;
+		font-variant-numeric: tabular-nums;
 	}
+	/* read by screen readers; on screen the figure's own caption says the same */
 	caption {
-		caption-side: top;
-		margin-bottom: 8px;
-		text-align: left;
-		font-size: var(--text-xs);
-		color: var(--color-ink-3);
+		position: absolute;
+		width: 1px;
+		height: 1px;
+		overflow: hidden;
+		clip-path: inset(50%);
+		white-space: nowrap;
+	}
+	thead {
+		border-top: 1px solid var(--color-ink-3);
+		border-bottom: 1px solid var(--color-rule);
 	}
 	thead th {
-		border-bottom: 1px solid #262626;
-		padding: 0 8px 8px 0;
+		padding: 7px 14px 7px 0;
+		font-size: var(--text-xs);
 		font-weight: 400;
 		text-align: left;
 		color: var(--color-ink-3);
-		white-space: nowrap;
 	}
-	tbody tr:last-child td {
-		border-bottom: 1px solid #262626;
+	tbody {
+		border-bottom: 1px solid var(--color-ink-3);
 	}
+	th.name,
 	td {
-		padding: 6px 8px 6px 0;
+		padding: 7px 14px 7px 0;
+		vertical-align: top;
+	}
+	th.name {
+		font-weight: 400;
+		text-align: left;
+		color: var(--color-ink);
+	}
+	th:last-child,
+	td:last-child {
+		padding-right: 0;
 	}
 	.r {
 		text-align: right;
-	}
-	.name {
 		white-space: nowrap;
 	}
 	.v {
-		display: inline-flex;
-		align-items: center;
-		gap: 6px;
 		color: var(--color-ink-2);
 	}
 	.v.top {
 		color: var(--color-ink);
-		font-weight: 500;
+		font-weight: 600;
 	}
-	.num {
-		min-width: 34px;
-		font-variant-numeric: tabular-nums;
-	}
-	svg {
+	small {
 		display: block;
-	}
-	.pub {
-		width: 60px;
-		font-size: var(--text-xs);
+		font-size: var(--text-2xs);
 		color: var(--color-ink-3);
-		text-align: left;
-	}
-	.axis {
-		stroke: #262626;
-	}
-	circle {
-		fill: #8a8a8a;
-	}
-	.v.top circle {
-		fill: #f2f2f2;
 	}
 	.na {
-		color: #444;
+		color: var(--color-ink-3);
 	}
-	/* narrow: each model's name gets its own line, its numbers sit under it */
-	@container (max-width: 520px) {
-		table,
-		thead,
-		tbody,
-		caption {
-			display: block;
-		}
-		tr {
-			display: grid;
-			grid-template-columns: repeat(var(--n), minmax(0, 1fr));
-		}
-		thead th:first-child {
-			display: none;
-		}
-		thead th {
-			padding-right: 0;
-		}
-		td {
-			padding-right: 0;
-		}
-		td.name {
-			grid-column: 1 / -1;
-			padding: 10px 0 0;
-			color: var(--color-ink-3);
+	@media (max-width: 640px) {
+		table {
 			font-size: var(--text-xs);
 		}
-		tbody td:not(.name) {
-			padding-top: 2px;
-			padding-bottom: 8px;
+		th.name,
+		td,
+		thead th {
+			padding-right: 10px;
 		}
-		tbody tr:last-child {
-			border-bottom: 1px solid #262626;
-		}
-		tbody tr:last-child td {
-			border-bottom: 0;
-		}
-		svg {
-			width: 44px;
+		small {
+			white-space: normal;
 		}
 	}
 </style>
