@@ -5,6 +5,7 @@
 	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
 	import { NERODE, ORACLE } from '#lib/viz/computeGraphs.ts';
 	import ExactFigure from '../ExactFigure.svelte';
+	import ExecFigure from '../ExecFigure.svelte';
 	import SeedGrid, { type SeedRow } from '../SeedGrid.svelte';
 	import { number, roman } from '../toc.ts';
 
@@ -109,19 +110,53 @@
 			clause: 'P1',
 			registered:
 				'Tracking exists: at depth 1 the combination beats the state-blind arm on the hard class by at least 10 points, on both seeds; otherwise the direction stops',
-			status: 'pending'
+			status: 'fails'
 		},
 		{
 			clause: 'P2',
 			registered:
 				'Exactness carries: from depth 1 to depths 4–6 the combination loses at most half the points the plain recurrence loses, and is at least 5 points above the transformer at depths 4–6 and 7–12',
-			status: 'pending'
+			status: 'fails'
 		},
 		{
 			clause: 'P3',
 			registered:
 				'The prover guard: at depths 4–6, keeping 90% of accepted probes, it rejects at least half of the rejected ones',
-			status: 'pending'
+			status: 'fails'
+		}
+	];
+	// research/EXEC_LM.md section 4 (seeds 0 / 1 / 2): the registered clauses and what the batch returned
+	const execClauses = [
+		{
+			clause: 'P1',
+			registered: 'The slot with the objective exact (≥ 0.99) at 256 statements on 3 of 3 seeds',
+			measured: '1.000 / 1.000 / 1.000',
+			verdict: 'pass'
+		},
+		{
+			clause: 'P2',
+			registered: 'The final-state arm below 0.5 at 64 on 3 of 3',
+			measured: '0.340 / 0.342 / 0.340',
+			verdict: 'pass'
+		},
+		{
+			clause: 'P3',
+			registered:
+				'Chain of thought lower at 256 than at 16 on 3 of 3, lower at 1,024 than at 256 on the mean, at 8 tokens per statement',
+			measured: '1.000 to 0.055 / 0.316 / 0.367; mean 0.246 to 0.198',
+			verdict: 'pass'
+		},
+		{
+			clause: 'P4',
+			registered: 'The slot alone below 0.95 at 256 on at least one seed',
+			measured: '0.072 / 0.053 / 0.137',
+			verdict: 'pass'
+		},
+		{
+			clause: 'Kill',
+			registered: 'The objective exact at 256 on no more seeds than the slot alone',
+			measured: '3 against 0',
+			verdict: 'does not fire'
 		}
 	];
 	// research/LEAN_S1.md, section 6.2: the registered clauses and what the batch returned
@@ -185,7 +220,9 @@
 			forces that, states the term that removes it, and tests the term where a proof assistant certifies
 			every pair of equivalent histories. With the term, a recurrence trained on 8 rewrite steps tracks
 			1,024 exactly, on every seed. A second night tested that result harder, found what the exact state
-			is, and took the method to natural proofs, where it failed in a way that changed the target.
+			is, and took the method to natural proofs, where it failed in a way that changed the target. A third
+			put a pretrained code model in the loop: read through it, a slot carries the exact state of a program
+			sixteen times past its training length without generating a token.
 		</p>
 	</header>
 
@@ -817,7 +854,11 @@
 		<p>
 			Stated plainly: the readouts learn what kind of step a tactic is and never produce the new
 			terms a step introduces. The obstacle on natural proofs was generating content, not tracking
-			state. Along the way the three readouts confirmed a rule about where the term may be measured:
+			state. Reading verdicts instead of strings met the same boundary from the other side (section {number(
+				'kernel-oracle'
+			)}): rerun with an audited protocol, a critic given the true state judges whether a tactic
+			applies no better than a one-word table on the tactic's head word. Along the way the three
+			readouts confirmed a rule about where the term may be measured:
 		</p>
 		<div class="table-scroll">
 			<table class="bt">
@@ -856,7 +897,7 @@
 		<p class="src">
 			<span class="mark new"></span>The diagnosis and the corrected course (COURSE, 23 October);
 			<span class="mark measured inline"></span>probe data replayed in Lean, the chain gate on two
-			seeds (LEAN_N §12); the natural pilot registered and not yet reported
+			seeds, the natural pilot and its audited rerun (LEAN_N §§12–13, D1_AUDIT)
 		</p>
 		<p>
 			The failure had a reason in our own theory. Section {number('nerode-term')} says the state is the
@@ -925,6 +966,111 @@
 			or keeps the kernel in the loop at every step (searched 23 October). If P1 and P2 hold, the
 			next number is kernel calls spared at equal theorems proved when the oracle filters a prover's
 			search, with the recall of accepted tactics beside it.
+		</p>
+		<p>
+			They did not hold. On natural proofs all three predictions failed: balanced accuracy on the
+			hard class sat at 0.57–0.78 for every arm in every depth band, with overlapping intervals, and
+			the critic given the kernel's true state read 0.64–0.69, inside the others. An independent
+			audit reproduced every number and found the comparison unable to decide: that critic met the
+			probe only at the end, saw renamed hypotheses on 44–48% of probes, and was judged at its last
+			step after memorising its training probes, while a logistic regression on the tactic's head
+			word out-ranked every arm. Rerun with consistent names, the probe attending to the state and
+			checkpoints chosen on validation, the critic given the true state reads 0.69–0.75 against the
+			one-word table's 0.705 and 0.755. Whether a mathlib tactic applies to a goal is not learnable
+			from 2,565 theorems by a small encoder trained from scratch, beyond that prior. The
+			exact-state line on natural proofs waits on a pretrained encoder of goals and tactics.
+		</p>
+	</section>
+
+	<section class="chapter" id="latent-exec">
+		<h3><span class="n">{number('latent-exec')}</span>Latent execution without chain of thought</h3>
+		<p class="src">
+			<span class="mark prior"></span>Qwen2.5-Coder <Cite id="qwencoder" />, scratchpads for
+			intermediate computation <Cite id="scratchpad" />;
+			<span class="mark new inline"></span>the slot on a frozen code model with the objective;
+			<span class="mark measured inline"></span>12 runs, three seeds per arm, registered before the
+			batch (EXEC_LM)
+		</p>
+		<p>
+			The last test puts a pretrained language model in the loop, where a pretrained encoder was
+			missing above. The programs are the register machine of section {number('hardening')} written as
+			Python: four of eight bit variables <code>v0</code>–<code>v7</code>, all 0 at the start, and
+			statements such as <code>v3 = (v1 + v2) % 2</code>. The state is the eight bits, and
+			<em>exact</em> means all eight right after the last statement. Training programs have 4 to 16
+			statements; test programs have 16 to 1,024. Four arms use Qwen2.5-Coder-0.5B, a
+			0.5-billion-parameter code model <Cite id="qwencoder" />, and every number is read against a
+			shallow floor:
+		</p>
+		<ul class="list">
+			<li>
+				<strong>Slot + objective.</strong> The language model is frozen and reads each statement line
+				on its own. The recurrent slot of the earlier sections, width 128, attends to that statement's
+				hidden states from the model's middle layer, and a linear head reads the eight bits from LN(slot).
+				It is trained with next-latent prediction and the invariance term, on pairs of programs certified
+				equivalent by running both. It generates no tokens.
+			</li>
+			<li><strong>Slot alone.</strong> The same, without the two terms.</li>
+			<li>
+				<strong>Chain of thought.</strong> The model fully fine-tuned to write the state after every
+				statement, a scratchpad <Cite id="scratchpad" />, and judged running free on what it wrote
+				itself: 8 generated tokens per statement.
+			</li>
+			<li>
+				<strong>Final state only.</strong> The model fine-tuned to write the state once, after the whole
+				program.
+			</li>
+			<li>
+				<strong>Shallow floor.</strong> A table from each variable's last assignment to its most frequent
+				final value. It reads one statement per variable and follows no dependency.
+			</li>
+		</ul>
+		<div class="figure wide">
+			<figure class="pf">
+				<ExecFigure />
+				<figcaption>
+					Exact final state: the share of test programs whose state is exact after the last
+					statement, by program length, trained on 4 to 16 statements; light marks are the three
+					seeds, the line their mean, and the dashed line the shallow floor. Tokens: what each arm
+					generates per statement; the final-state arm writes 8 per program. The language-model arms
+					are judged on the first 512, 512, 256 and 64 programs of the same test sets.
+				</figcaption>
+			</figure>
+		</div>
+		<div class="table-scroll">
+			<table class="bt">
+				<thead><tr><th>Registered before the batch</th><th>Measured</th><th>Verdict</th></tr></thead
+				>
+				<tbody>
+					{#each execClauses as r (r.clause)}
+						<tr>
+							<th>{r.registered}</th><td>{r.measured}</td><td class="verdict">{r.verdict}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		<p class="caption">
+			The registered clauses of the execution test and what the batch returned; seeds 0, 1 and 2.
+		</p>
+		<p>
+			All four predictions pass and the kill does not fire. The slot with the objective is exact at
+			256 statements, sixteen times its training length, on every seed, and never wrong at any
+			statement along the way on 100%, 100% and 99.8% of programs; at 1,024 it ends exact on
+			0.73–0.97 of programs and the median program is never wrong. The same slot without the
+			objective drifts below the floor by 256 (0.05–0.14). Writing the state keeps it only at the
+			training length: chain of thought is exact at 16 and at 0.06–0.37 by 256, with its first error
+			at statements 53 to 90, and it pays 8 tokens per statement for that, 8,192 at 1,024
+			statements. Asked for the final state alone, the model learns less than the one-statement
+			table at every length. As on the rewrite chains, the growth of the distance to a certified
+			short partner predicts the drift (Spearman +0.88), and unrelated states stay 0.09–0.22 apart,
+			so nothing collapsed.
+		</p>
+		<p>
+			Two caveats bound the claim. The state lives in the slot, not in the language model, which is
+			frozen and reads one statement at a time; the domain is four bit variables with assignments
+			and one-bit arithmetic, trained on 4 to 16 statements. The fine-tuned arms had 2,000 steps of
+			full fine-tuning, enough to fit the training length exactly, and smaller test sets at 256 and
+			1,024.
 		</p>
 	</section>
 </section>

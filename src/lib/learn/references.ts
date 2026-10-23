@@ -422,6 +422,23 @@ export const REFERENCES: Reference[] = [
 		venue: 'ICLR',
 		year: 2021,
 		url: 'https://arxiv.org/abs/2006.10742'
+	},
+	{
+		id: 'qwencoder',
+		authors: 'B. Hui, J. Yang, Z. Cui et al.',
+		title: 'Qwen2.5-Coder technical report',
+		venue: 'arXiv',
+		year: 2024,
+		url: 'https://arxiv.org/abs/2409.12186'
+	},
+	{
+		id: 'scratchpad',
+		authors:
+			'M. Nye, A. J. Andreassen, G. Gur-Ari, H. Michalewski, J. Austin, D. Bieber, D. Dohan, A. Lewkowycz, M. Bosma, D. Luan, C. Sutton, A. Odena',
+		title: 'Show your work: scratchpads for intermediate computation with language models',
+		venue: 'arXiv',
+		year: 2021,
+		url: 'https://arxiv.org/abs/2112.00114'
 	}
 ];
 

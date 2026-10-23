@@ -113,7 +113,8 @@ export const PARTS: Part[] = [
 			{ id: 'nerode-metric', title: 'The three clauses in one loss' },
 			{ id: 'state-geometry', title: 'What the exact state is, and what it saves' },
 			{ id: 'natural-proofs', title: 'Natural proofs: the kind of step, not the terms' },
-			{ id: 'kernel-oracle', title: 'Reading out verdicts, not strings' }
+			{ id: 'kernel-oracle', title: 'Reading out verdicts, not strings' },
+			{ id: 'latent-exec', title: 'Latent execution without chain of thought' }
 		]
 	},
 	{
