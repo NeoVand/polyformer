@@ -629,3 +629,65 @@ export const NERODE: Graph = {
 		{ x: 800, y: 216, tex: String.raw`\text{over sampled pairs } u \sim v`, align: 'right' }
 	]
 };
+
+/**
+ * The kernel oracle (COURSE, pilot D1): the slot reads the initial proof state once and then one
+ * gold tactic per step, never an intermediate state; at each step a probe tactic is scored by a
+ * head that is linear in the readout's view of the slot for each probe, and the target is what
+ * the kernel would say to that probe there.
+ */
+export const ORACLE: Graph = {
+	w: 760,
+	h: 262,
+	nodes: [
+		{ id: 'w0', x: X0, y: 70, tex: 'w_{t-1}', kind: 'mid', r: 18 },
+		{ id: 'tau', x: X0, y: 140, tex: String.raw`\tau_t`, kind: 'input' },
+		{ id: 'step', x: 200, y: 70, tex: String.raw`\text{transition}`, kind: 'op', w: 80 },
+		{ id: 'w1', x: MID, y: 70, tex: 'w_t', kind: 'mid' },
+		{ id: 'ln', x: 410, y: 70, tex: String.raw`\text{LN}`, kind: 'op', w: 40 },
+		{ id: 'z', x: 490, y: 70, tex: 'z_t', kind: 'mid' },
+		{ id: 'pi', x: X0, y: 208, tex: String.raw`\pi`, kind: 'input' },
+		{ id: 'enc', x: 200, y: 208, tex: String.raw`\text{encode}`, kind: 'op', w: 64 },
+		{ id: 'e', x: MID, y: 208, tex: String.raw`e_\pi`, kind: 'proj' },
+		{ id: 'bil', x: 570, y: 139, tex: String.raw`z_t^{\top} B\, e_\pi`, kind: 'op', w: 84 },
+		{ id: 'v', x: 690, y: 139, tex: 'v', kind: 'output' }
+	],
+	joins: [],
+	edges: [
+		{ from: 'w0', to: 'step' },
+		{ from: 'tau', to: 'step', enter: 90 },
+		{ from: 'step', to: 'w1' },
+		{ from: 'w1', to: 'ln' },
+		{ from: 'ln', to: 'z' },
+		{ from: 'w1', to: 'w0', out: 120, enter: 240, reach: [60, 60], soft: true, arrowAt: 0.5 },
+		{ from: 'pi', to: 'enc' },
+		{ from: 'enc', to: 'e' },
+		{ from: 'z', to: 'bil', enter: -90 },
+		{ from: 'e', to: 'bil', enter: 90 },
+		{ from: 'bil', to: 'v' }
+	],
+	notes: [
+		{ x: 185, y: 34, tex: String.raw`t \to t+1`, align: 'center' },
+		{ x: 18, y: 106, tex: String.raw`w_0 \text{ reads } s_0 \text{ once}`, align: 'left' },
+		{
+			x: 226,
+			y: 108,
+			tex: String.raw`\text{attend to } \tau_t\text{, then MLP; four ticks}`,
+			align: 'left'
+		},
+		{
+			x: 18,
+			y: 244,
+			tex: String.raw`\pi\!: \text{gold, misplaced gold, premise swap, permuted, random}`,
+			align: 'left'
+		},
+		{
+			x: 750,
+			y: 34,
+			tex: String.raw`\operatorname{CE}(v, \text{kernel}) + \text{NextLat} + \text{invariance}`,
+			align: 'right'
+		},
+		{ x: 750, y: 178, tex: String.raw`\text{accepted, goals left,}`, align: 'right' },
+		{ x: 750, y: 198, tex: String.raw`\text{complete, error class}`, align: 'right' }
+	]
+};

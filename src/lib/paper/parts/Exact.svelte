@@ -3,12 +3,127 @@
 	import Theorem from '#lib/report/Theorem.svelte';
 	import MathTex from '#lib/ui/Math.svelte';
 	import ComputeGraph from '#lib/viz/ComputeGraph.svelte';
-	import { NERODE } from '#lib/viz/computeGraphs.ts';
+	import { NERODE, ORACLE } from '#lib/viz/computeGraphs.ts';
 	import ExactFigure from '../ExactFigure.svelte';
+	import SeedGrid, { type SeedRow } from '../SeedGrid.svelte';
 	import { number, roman } from '../toc.ts';
 
 	const repo = 'https://github.com/neovand/polyformer/blob/main/';
 	const objective = String.raw`\begin{aligned} \mathcal L \;=\;& \operatorname{CE}\big(x_{t+1} \,\big|\, h(x_{\le t})\big) \\ &+\; \mu \operatorname*{E}_{u \sim v} d(z_u,\, z_v) \\ &+\; \lambda \operatorname*{E}_{u \not\sim v'} \max\big(0,\, m - d(z_u,\, z_{v'})\big) \end{aligned}`;
+	const bisim = String.raw`d(u, v) = (1-\gamma)\,\|o(u) - o(v)\|_{\mathrm{TV}} + \gamma \operatorname*{E}_{x} d(ux, vx)`;
+	const metricLoss = String.raw`\begin{aligned} \mathcal L_M = \operatorname*{E}_{u,v,x} \Big[ & d_N\big(h(u), h(v)\big) - (1-\gamma)\|o(u) - o(v)\|_{\mathrm{TV}} \\ & - \gamma \operatorname{sg} d_N\big(h(ux), h(vx)\big) \Big]^2 \end{aligned}`;
+	// research/LEAN_H.md 3.1 and 3.2 (seeds 0 / 1 / 2): exact match at 8, 64, 256, 1,024 and 4,096 steps;
+	// the recurrence is LEAN_H's control under the same compiler flag, the term its rerun of LEAN_S1's arm
+	const lengthRows: SeedRow[] = [
+		{
+			name: 'recurrence',
+			cells: [
+				[1, 1, 1],
+				[0.924, 0.674, 0.984],
+				[0.527, 0, 0.949],
+				[0.43, 0, 0.891],
+				[0.406, 0, 0.746]
+			]
+		},
+		{
+			name: '+ term',
+			cells: [
+				[1, 1, 1],
+				[1, 1, 1],
+				[1, 1, 1],
+				[1, 0.754, 1],
+				[1, 0.555, 1]
+			]
+		},
+		{
+			name: '+ next-latent',
+			cells: [
+				[1, 1, 1],
+				[1, 1, 1],
+				[1, 1, 1],
+				[1, 0.996, 1],
+				[0.988, 0.992, 1]
+			]
+		},
+		{
+			name: '+ both',
+			cells: [
+				[1, 1, 1],
+				[1, 1, 1],
+				[1, 1, 1],
+				[1, 1, 1],
+				[1, 1, 1]
+			]
+		},
+		{
+			name: 'transformer',
+			cells: [
+				[0.98, 0.984, 0.984],
+				[0.066, 0.047, 0.053],
+				[0.035, 0.012, 0.018],
+				[0.012, 0, 0.004],
+				null
+			]
+		}
+	];
+	// LEAN_S1 6.2 and its decoder pilot, LEAN_N 5, 7, 10, 11.2 and 12.5: unrelated-state distance under the term
+	const heads = [
+		{
+			label: 'Linear, per position (stage one)',
+			lin: 'yes',
+			unrelated: '0.42–0.52',
+			exact: '3 of 3'
+		},
+		{
+			label: 'Linear, per position, chains in proof format',
+			lin: 'yes',
+			unrelated: '0.19–0.27',
+			exact: '3 of 3'
+		},
+		{ label: 'Linear, the change', lin: 'yes', unrelated: '0.23–0.26', exact: '2 of 2' },
+		{
+			label: 'Verdict head, conditioned on the probe',
+			lin: 'for each probe',
+			unrelated: '0.18–0.20',
+			exact: '2 of 2'
+		},
+		{
+			label: 'Autoregressive decoder, two blocks',
+			lin: 'no',
+			unrelated: '0.010',
+			exact: '0 of 2 (pilot)'
+		},
+		{ label: 'MLP, per position', lin: 'no', unrelated: '0.005–0.009', exact: '0 of 3 (≤ 0.02)' },
+		{ label: 'Copy head into the premises', lin: 'no', unrelated: '0.014–0.016', exact: '0 of 2' }
+	];
+	// COURSE.md 4.2 with the amendments of 4.4 and 4.5; LEAN_N 12.3 and 12.5
+	const oracle = [
+		{
+			clause: 'gate',
+			registered:
+				'Chains first: the combination exact in its verdicts at 256 steps on both seeds, under one configuration',
+			status:
+				'passed: 1.00000 on both seeds at 24,000 steps (linear head 0.576 / 0.580; probe-conditioned at 12,000 steps 0.99999 / 0.99146)'
+		},
+		{
+			clause: 'P1',
+			registered:
+				'Tracking exists: at depth 1 the combination beats the state-blind arm on the hard class by at least 10 points, on both seeds; otherwise the direction stops',
+			status: 'pending'
+		},
+		{
+			clause: 'P2',
+			registered:
+				'Exactness carries: from depth 1 to depths 4–6 the combination loses at most half the points the plain recurrence loses, and is at least 5 points above the transformer at depths 4–6 and 7–12',
+			status: 'pending'
+		},
+		{
+			clause: 'P3',
+			registered:
+				'The prover guard: at depths 4–6, keeping 90% of accepted probes, it rejects at least half of the rejected ones',
+			status: 'pending'
+		}
+	];
 	// research/LEAN_S1.md, section 6.2: the registered clauses and what the batch returned
 	const predictions = [
 		{
@@ -69,7 +184,8 @@
 			and a slowly drifting one on others, at the same training loss. This part says why the objective
 			forces that, states the term that removes it, and tests the term where a proof assistant certifies
 			every pair of equivalent histories. With the term, a recurrence trained on 8 rewrite steps tracks
-			1,024 exactly, on every seed.
+			1,024 exactly, on every seed. A second night tested that result harder, found what the exact state
+			is, and took the method to natural proofs, where it failed in a way that changed the target.
 		</p>
 	</header>
 
@@ -436,6 +552,379 @@
 			<a href={`${repo}research/INVARIANCE.md`}>INVARIANCE</a> and
 			<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link -->
 			<a href={`${repo}research/LEAN_S1.md`}>LEAN_S1</a>.
+		</p>
+	</section>
+
+	<section class="chapter" id="hardening">
+		<h3><span class="n">{number('hardening')}</span>Harder tests of the same result</h3>
+		<p class="src">
+			<span class="mark prior"></span>Next-latent prediction <Cite id="nextlat" />;
+			<span class="mark measured inline"></span>five studies, each registered before its spend
+			(LEAN_H, LEAN_S, METRIC, EXEC_D; 23 October); seeds stated with every number
+		</p>
+		<p>
+			The limits above are where the first test left things. The night after, registered studies
+			pressed on each of them, and on the comparison the first test lacked: the nearest prior
+			method. <em>Next-latent prediction</em> (NextLat) trains a model to predict its own next state
+			from the current state and the next input, against a target held fixed by a stop-gradient <Cite
+				id="nextlat"
+			/>. It uses no equivalent pairs at all. On the same recurrence and the same chains it is exact
+			at 256 steps on 3 of 3 seeds and at 4,096 on 2 of 3 (0.988 / 0.992 / 1.000); our registered
+			prediction that it would fall short failed. The invariance term alone, rerun on the same
+			seeds, is exact at 4,096 on 2 of 3. The two together are exact at every length to 4,096 on 3
+			of 3, 512 times the training length, with the lowest pair distance of any arm (0.00012).
+		</p>
+		<div class="figure wide">
+			<figure class="pf">
+				<SeedGrid
+					lengths={[8, 64, 256, 1024, 4096]}
+					rows={lengthRows}
+					axis="rewrite steps; trained at 8"
+					label="Exactness of each seed by chain length, for five models"
+				/>
+				<figcaption>
+					Each dot is one seed at one chain length: filled when the decoded tree is exact (exact
+					match ≥ 0.99), a ring filled in proportion to its exact match when it is not. Recurrence:
+					the plain tracker under the same compiler setting as the others. Transformer: depth 8 at
+					twice the recurrence's compute per event and twice its steps, evaluated to 1,024. Three
+					seeds each (LEAN_H).
+				</figcaption>
+			</figure>
+		</div>
+		<p>
+			Both objectives reach exactness the same way, through a pair distance that does not grow along
+			the chain; the term's floor is ten times lower (0.0002 against 0.002). What the paper can
+			claim is complementarity and one shared mechanism, not that the term does what NextLat cannot.
+			Six seeds tell the same story (three more seeds, LEAN_S): the term, NextLat and both are exact
+			at 256 on 6 of 6 each, the plain recurrence on 0 of 6; at 1,024 both and NextLat are exact on
+			6 of 6 and the term alone on 5 of 6. The lede's "every seed at 1,024" was the first test's
+			three seeds: rerun on other machines, the term's seed 1 is 0.754 at 1,024, and same-seed
+			reruns on two H100s are not bit-identical.
+		</p>
+		<ul class="list">
+			<li>
+				<strong>A fairer transformer.</strong> Over depth 4 to 8, width 128 and 256, and 12,000 or 24,000
+				steps, no transformer is exact at the training length. The best (depth 8, 2.03 times the compute
+				per event, twice the steps) reaches 0.980–0.984 at 8 steps and 0.012–0.035 at 256, and its length
+				failure does not shrink as its in-distribution accuracy rises from 0.70 to 0.98.
+			</li>
+			<li>
+				<strong>Tier 2.</strong> Distributivity and factoring change the size of the tree (818,563 certificates,
+				none failed). At 12,000 steps the base is not exact even at the training length (0.97–0.98), and
+				the term lifts it to exact in distribution and from 0.47 to 0.90 at 256, exact on no seed. At
+				24,000 steps the combination is exact at 64 and 256 on 2 of 2 seeds with a flat pair distance
+				of 0.0002 (METRIC): the shortfall was under-training.
+			</li>
+			<li>
+				<strong>The floor lever.</strong> The term never reaches zero: the distance between
+				equivalent states settles at a <em>floor</em> (0.0002 on tier 1), which PROOFS A3 shows is
+				optimisation noise, proportional to the final learning rate over <MathTex
+					tex={String.raw`\mu`}
+				/>. Lowering the final learning rate tenfold lowers the floor 2.5 times on every seed.
+				Raising <MathTex tex={String.raw`\mu`} /> to 3 lowers its level 2.7 to 5.7 times but adds growth,
+				and loses 4,096 on one seed: the lever is the learning rate. Across 18 runs the sign of the distance's
+				growth from 8 to 256 predicts exactness at 4,096 in 17; over the width and data runs, every run
+				whose distance did not grow was exact at 1,024 (10 of 10), and a growing one rarely was (5 of
+				53).
+			</li>
+			<li>
+				<strong>Width and data.</strong> With the learning rate scaled as 128/<MathTex tex="d" />,
+				the term is exact at 256 on 5 of 5 runs at widths 256 and 512, and both objectives on 1 of 3
+				at width 64. At fixed compute, more chains (5,000 to 80,000) never make the plain recurrence
+				exact (0 of 8), NextLat stays exact (8 of 8), and the term drops to 1 of 3 at 80,000: each
+				pair was seen 9.6 times instead of 38, the distance grew 25–28 times along the chain, and
+				four times the partners per step, or <MathTex tex={String.raw`\mu = 3`} />, restore 2 of 2.
+				The term's strength must scale with the data per step.
+			</li>
+			<li>
+				<strong>A second certified domain.</strong> Code execution on a register machine of eight
+				named Boolean variables, with statements <code>x = y | c</code> and <code>x = y op z</code>;
+				equivalent partners come from reordering and dead code, each pair certified by running both
+				programs. Trained on 4 to 16 statements, at 256 the plain recurrence is 0.055 / 0.246 /
+				0.068, the term 0.981 / 1.000 / 1.000 (exact on 2 of 3; the miss is 10 of 512 programs), the
+				control 0.021 / 0.193 / 0.158, and a five-layer transformer 0.26 (EXEC_D). No arm is exact
+				at 1,024: the state's norm grows with length and acts as a clock that returns past about 256
+				statements. The reach is domain-dependent: at least 128 times the training length on rewrite
+				chains, 16 times on code.
+			</li>
+		</ul>
+	</section>
+
+	<section class="chapter" id="nerode-metric">
+		<h3><span class="n">{number('nerode-metric')}</span>The three clauses in one loss</h3>
+		<p class="src">
+			<span class="mark prior"></span>Bisimulation metrics <Cite id={['ferns', 'dbc']} />;
+			<span class="mark new inline"></span>the three-clause reading and the metric loss, with proofs
+			of its zero set and of no collapse (EXACTNESS §8);
+			<span class="mark measured inline"></span>18 runs, registered first (METRIC)
+		</p>
+		<p>
+			The Myhill–Nerode theorem says what the smallest automaton is: the coarsest <em
+				>right congruence</em
+			> consistent with the output, where a right congruence is a grouping of histories that survives
+			appending any input. That is three clauses, and the arms above supply them one at a time.
+		</p>
+		<div class="table-scroll">
+			<table class="bt">
+				<thead><tr><th>Clause</th><th>What it asks of the state</th><th>Supplied by</th></tr></thead
+				>
+				<tbody>
+					<tr
+						><th>Consistent with the output</th><td>histories with different outputs differ</td><td
+							>the cross-entropy</td
+						></tr
+					>
+					<tr
+						><th>A right congruence</th><td
+							>the state after <MathTex tex="ux" /> is fixed by the state after <MathTex tex="u" /> and
+							the input <MathTex tex="x" /></td
+						><td>next-latent prediction</td></tr
+					>
+					<tr
+						><th>The coarsest one</th><td>equivalent histories share a state</td><td
+							>the invariance term</td
+						></tr
+					>
+				</tbody>
+			</table>
+		</div>
+		<p class="caption">
+			The combination of the three terms is the theorem written as a loss; each one alone leaves
+			open a direction the others close.
+		</p>
+		<p>
+			One equation holds all three. The <em>bisimulation metric</em> on histories <Cite
+				id="ferns"
+			/> is the fixed point of
+		</p>
+		<MathTex tex={bisim} display />
+		<p>
+			with <MathTex tex="o(u)" /> the output after <MathTex tex="u" />, <MathTex
+				tex={String.raw`\|\cdot\|_{\mathrm{TV}}`}
+			/> the total-variation distance, the same input <MathTex tex="x" /> fed to both histories, and
+			<MathTex tex={String.raw`0 < \gamma < 1`} />. Its zero set is exactly the Nerode equivalence
+			when every input has positive probability (proved here). The <em>Nerode metric loss</em> fits
+			the readout's distance to it, with a stop-gradient <MathTex
+				tex={String.raw`\operatorname{sg}`}
+			/> on the successor term as in deep bisimulation for control <Cite id="dbc" />:
+		</p>
+		<MathTex tex={metricLoss} display />
+		<p>
+			where <MathTex tex={String.raw`d_N = (1 - \cos)/2`} /> in the readout's view. Certified equivalent
+			pairs enter with target 0; inequivalent pairs need no certificate, since their target comes from
+			their outputs. Two properties are proved: no constant state map minimises it once any sampled pair
+			has different outputs, so the paraphrase collapse of section {number('nerode-term')} cannot happen;
+			and at its zero it contains all three clauses.
+		</p>
+		<p>
+			Measured: alone, it is exact at 256 and 1,024 on 3 of 3 seeds and at 4,096 on 2 of 3 (0.969 /
+			0.996 / 0.996), with a pair-distance floor 40 to 80 times the term's but flat, and the readout
+			laid out as the metric (unrelated end states 0.74 apart against a mean output distance of
+			0.75, Spearman 0.90–0.92). On tier 2 at 12,000 steps no arm is exact and the order at 256 is
+			the combination 0.922, the term 0.893, NextLat 0.842, the metric 0.807; at 24,000 steps the
+			metric gains 0.10 but its floor still grows. The explicit combination is the strongest form of
+			the three clauses, and the single equation the weakest. On the language-shaped task of section {number(
+				'dilution'
+			)}, with matched pairs and <MathTex tex={String.raw`\gamma = 0.9`} />, the state moves (the
+			running-state probe from 0.27 to 0.45–0.48, paired decision accuracy from 0.000 to 0.07), but
+			what it carries is the first owner: the model names the first owner on 69–86% of decisions on
+			two seeds. Distinction now exists without labels, and it picks the cheapest feature that
+			separates the pairs. Open.
+		</p>
+	</section>
+
+	<section class="chapter" id="state-geometry">
+		<h3>
+			<span class="n">{number('state-geometry')}</span>What the exact state is, and what it saves
+		</h3>
+		<p class="src">
+			<span class="mark measured"></span>24 retrained checkpoints, four arms × six seeds
+			(MECHANISM); a search over certified rewrites, three seeds, every solution checked by Lean
+			(PROVER_PROXY)
+		</p>
+		<p>
+			Under the term, alone or with NextLat, the exact state is the minimal automaton laid out in a
+			small linear code. The held-out states fall into exactly 960 clusters for the 960 trees, each
+			pure (purity 1.000 on 12 of 12 checkpoints). The code spans about 20 dimensions (19–22), and
+			is 95–97% an affine image of the tree's one-hot <em>Polish string</em>, the tree written out
+			token by token with each operator before its arguments. A rewrite acts on it as the linear map
+			of the permutation it induces on that string: residual 1–4%, composing to 2–5%. It is not one
+			map per lemma and position (residual 11–22%), and not a rotation (singular values 0.2–1.6).
+			The plain recurrence uses 76–98 dimensions, is nonlinear from the first steps, and never forms
+			pure clusters (none at 99% purity below 30,000 clusters).
+		</p>
+		<p>
+			The objectives buy length within the training distribution of events and nothing outside it.
+			No arm reads an unseen atom name or a fifth atom (0.000 at step 0), and a held-out (lemma,
+			position) event is applied correctly on its first occurrence 18–51% of the time. Indexing
+			atoms by role makes fresh names identical inputs, at a price in exactness at 256 (the term
+			0.89, the combination 0.97).
+		</p>
+		<p>
+			What exactness saves is kernel calls. Each problem asks for a rewrite path from a start tree
+			to a target, a thousand problems at each distance. A searcher that asks Lean for the state
+			after every step pays 64 kernel calls per solved problem with uniform proposals and 442 with
+			an edit-distance look-ahead, at success 0.999 and 0.942. A searcher that moves on the
+			tracker's predicted states and asks Lean only to confirm a claimed solution, with the
+			combination as its imagination, takes the kernel's search step for step (1.2 million held
+			states and 2.8 million candidate successors per seed, all equal to the kernel's) at <strong
+				>one call per solved problem</strong
+			>, with the same success, on 3 of 3 seeds. With every walk started from a given expression the
+			drifting recurrence loses nothing, since its first error comes after 70 to 80 rewrites and
+			solutions take 33. After a certified prefix of 4,096 rewrites, though, its reading of the goal
+			is silently wrong on 27–47% of problems and its search loses 10 to 19 points; the combination
+			reads every prefix exactly (exploratory, registered before it ran). Lean certifies all 11,310
+			distinct solutions.
+		</p>
+	</section>
+
+	<section class="chapter" id="natural-proofs">
+		<h3>
+			<span class="n">{number('natural-proofs')}</span>Natural proofs: the kind of step, not the
+			terms
+		</h3>
+		<p class="src">
+			<span class="mark measured"></span>mathlib proofs from LeanDojo Benchmark 4, every step
+			replayed in Lean; three readouts, two to three seeds each, registered first (LEAN_N_DATA,
+			LEAN_N)
+		</p>
+		<p>
+			The natural test takes real proofs: 4,579 from five mathlib directories (natural numbers,
+			integers, reals, lists, special functions), split by length, with proofs of at most 4 steps
+			for training and of 8 to 15 for test. The headline test set is 82 proofs that are both
+			Lean-confirmed at every step and name a premise no training proof names. Three readouts of the
+			same tracker failed at the same place.
+		</p>
+		<ul class="list">
+			<li>
+				<strong>The whole state</strong>, decoded through a position-wise MLP head: every arm
+				memorises its training proofs (1.000) and is exact on 0 of 736 unseen test steps whose state
+				is not
+				<code>no goals</code>.
+			</li>
+			<li>
+				<strong>The change</strong>, through a linear head: which goals closed, one changed goal,
+				and a flag for anything else. The kind of step is right 0.90–0.94 of the time in
+				distribution, and closures stay exact at 0.93–1.00 on the longer test proofs; the rewritten
+				target and the types of added hypotheses are exact on 0–2% and 6% of unseen steps. Run free,
+				every arm is at 0.000.
+			</li>
+			<li>
+				<strong>A copy head</strong> that points into the premise statements: on chains it gives up stage
+				one's reach (0.914 and 0.941 at 256), so the natural runs were not launched.
+			</li>
+		</ul>
+		<p>
+			Stated plainly: the readouts learn what kind of step a tactic is and never produce the new
+			terms a step introduces. The obstacle on natural proofs was generating content, not tracking
+			state. Along the way the three readouts confirmed a rule about where the term may be measured:
+		</p>
+		<div class="table-scroll">
+			<table class="bt">
+				<thead
+					><tr
+						><th>Readout, on chains</th><th>Linear in the state</th><th class="num"
+							>Unrelated distance</th
+						><th>Exact at 256</th></tr
+					></thead
+				>
+				<tbody>
+					{#each heads as h (h.label)}
+						<tr class:quiet={h.lin === 'no'}>
+							<th>{h.label}</th><td>{h.lin}</td><td class="num">{h.unrelated}</td><td>{h.exact}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		<p class="caption">
+			Unrelated distance: the centred-cosine distance between the states of unrelated histories at
+			the end of training under the term; the plain recurrence keeps them 0.81–0.84 apart. Exact at
+			256: seeds exact on certified chains at 256 steps; the verdict head at 24,000 steps (LEAN_S1,
+			LEAN_N).
+		</p>
+		<p>
+			A head that can amplify an arbitrarily small difference in the state lets the term be paid by
+			pulling every state together, which is the collapse; a head linear in the state cannot,
+			because its margins shrink with the spread and the collapse costs cross-entropy. Measure
+			invariance through a head linear in the state, or add the distinction half.
+		</p>
+	</section>
+
+	<section class="chapter" id="kernel-oracle">
+		<h3><span class="n">{number('kernel-oracle')}</span>Reading out verdicts, not strings</h3>
+		<p class="src">
+			<span class="mark new"></span>The diagnosis and the corrected course (COURSE, 23 October);
+			<span class="mark measured inline"></span>probe data replayed in Lean, the chain gate on two
+			seeds (LEAN_N §12); the natural pilot registered and not yet reported
+		</p>
+		<p>
+			The failure had a reason in our own theory. Section {number('nerode-term')} says the state is the
+			class of histories with the same future, and the kernel decides futures; yet on natural proofs we
+			scored the reproduction of Lean's printed state, which is generation of new text. The parts of the
+			readout that were <em>decisions</em> (the kind of step, which goals closed) worked at once and
+			held on longer proofs. And the two halves of section {number('nerode-term')} ask for a primary loss
+			dense in the state: a rewrite chain shows the whole state after every step, a natural proof shows
+			one result per step. A prover does not need the strings either. It gets the state text from the
+			kernel for one call; what it cannot get cheaply is what the kernel will say about tactics it has
+			not yet run.
+		</p>
+		<p>
+			So the second stage becomes a <em>kernel oracle</em>. The tracker sees the initial proof state
+			once, then one tactic per step, and never an intermediate state. At each step it predicts what
+			the kernel would say to a <em>probe</em> tactic tried there: accepted or rejected, goals left,
+			proof complete, and the class of error. Several probes per state make the loss dense: the gold
+			tactic, the tactic of another step (accepted 21.9% of the time, the hard class), a swapped
+			premise (10.3%), permuted arguments (44.8%), and a tactic from another proof (5.7%), each
+			verdict from Lean. Nothing is decoded. The arms are the plain recurrence, the combination, a
+			transformer at equal compute, a <em>state-blind</em> arm that sees only the probe, and an upper
+			bound handed the true state.
+		</p>
+		<div class="figure wide graph">
+			<ComputeGraph graph={ORACLE} label="Computation graph of the kernel oracle" />
+		</div>
+		<p class="caption">
+			The slot <MathTex tex="w" /> reads the initial state <MathTex tex="s_0" /> once, then one gold tactic
+			<MathTex tex={String.raw`\tau_t`} /> per step. A probe <MathTex tex={String.raw`\pi`} /> is scored
+			by a head linear in the readout's view <MathTex tex="z_t" /> for each probe, and the target is the
+			kernel's verdict <MathTex tex="v" />. Next-latent prediction and the invariance term act on
+			the slot as before. Dashed: the slot carried to the next step.
+		</p>
+		<p>
+			The chain gate comes first: the oracle must be exact on certified chains before a natural
+			number is read. With a linear head on the slot after the probe it was not (0.576 and 0.580 at
+			256): two verdict bits per state do not pin down the ten bits of a tree, the sparse primary
+			loss the two halves warn about. With the head conditioned on the probe, seed 0 is exact to 256
+			steps (one wrong verdict in 131,072) and seed 1 reaches 0.991 with errors flat in depth,
+			under-fit rather than drifting. The gate counts only as two seeds under one configuration, so
+			both were rerun at 24,000 steps: every verdict on every chain is right at 8, 16, 64 and 256
+			steps on both seeds (1.00000), with unrelated states 0.18–0.20 apart, so no collapse. The
+			chain gate has passed. The natural pilot, five arms on two seeds, is next; its predictions
+			were committed before any natural number was seen:
+		</p>
+		<div class="table-scroll">
+			<table class="bt">
+				<thead><tr><th>Registered before the pilot</th><th>Status</th></tr></thead>
+				<tbody>
+					{#each oracle as r (r.clause)}
+						<tr>
+							<th>{r.registered}</th><td>{r.status}</td>
+						</tr>
+					{/each}
+				</tbody>
+			</table>
+		</div>
+		<p class="caption">
+			Accuracy on the hard class is balanced accuracy over every misplaced-gold probe at a depth,
+			with a bootstrap interval over proofs; depth <MathTex tex="k" /> means the slot has carried
+			<MathTex tex="k - 1" /> steps without the kernel. Two seeds per arm.
+		</p>
+		<p>
+			We found no published model that predicts Lean's verdicts several steps ahead without the
+			kernel; the nearest work predicts the steps remaining, embeds a tactic by the edit it makes,
+			or keeps the kernel in the loop at every step (searched 23 October). If P1 and P2 hold, the
+			next number is kernel calls spared at equal theorems proved when the oracle filters a prover's
+			search, with the recall of accepted tactics beside it.
 		</p>
 	</section>
 </section>

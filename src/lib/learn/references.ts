@@ -397,6 +397,31 @@ export const REFERENCES: Reference[] = [
 		title: 'The Lean 4 theorem prover and programming language',
 		venue: 'CADE 28, LNCS 12699, 625–635',
 		year: 2021
+	},
+	{
+		id: 'nextlat',
+		authors:
+			'J. Teoh, M. Tomar, K. Ahn, E. S. Hu, T. Pearce, P. Sharma, A. Krishnamurthy, R. Islam, A. Lamb, J. Langford',
+		title: 'Next-latent prediction transformers learn compact world models',
+		venue: 'arXiv',
+		year: 2025,
+		url: 'https://arxiv.org/abs/2511.05963'
+	},
+	{
+		id: 'ferns',
+		authors: 'N. Ferns, P. Panangaden, D. Precup',
+		title: 'Metrics for finite Markov decision processes',
+		venue: 'UAI',
+		year: 2004,
+		url: 'https://arxiv.org/abs/1207.4114'
+	},
+	{
+		id: 'dbc',
+		authors: 'A. Zhang, R. McAllister, R. Calandra, Y. Gal, S. Levine',
+		title: 'Learning invariant representations for reinforcement learning without reconstruction',
+		venue: 'ICLR',
+		year: 2021,
+		url: 'https://arxiv.org/abs/2006.10742'
 	}
 ];
 

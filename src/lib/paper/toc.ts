@@ -108,7 +108,12 @@ export const PARTS: Part[] = [
 			{ id: 'flat-set', title: 'Why training lands near exact' },
 			{ id: 'nerode-term', title: 'One state for equivalent histories' },
 			{ id: 'certified', title: 'Lean as the referee' },
-			{ id: 'exact-limits', title: 'What is shown, and what is not' }
+			{ id: 'exact-limits', title: 'What is shown, and what is not' },
+			{ id: 'hardening', title: 'Harder tests of the same result' },
+			{ id: 'nerode-metric', title: 'The three clauses in one loss' },
+			{ id: 'state-geometry', title: 'What the exact state is, and what it saves' },
+			{ id: 'natural-proofs', title: 'Natural proofs: the kind of step, not the terms' },
+			{ id: 'kernel-oracle', title: 'Reading out verdicts, not strings' }
 		]
 	},
 	{
