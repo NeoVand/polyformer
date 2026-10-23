@@ -3,7 +3,7 @@
 	import Cite from '#lib/learn/Cite.svelte';
 	import CompositionFigure from '#lib/learn/CompositionFigure.svelte';
 	import LearnFigure from '#lib/learn/LearnFigure.svelte';
-	import { number } from '../toc.ts';
+	import { number, roman } from '../toc.ts';
 
 	const repo = 'https://github.com/neovand/polyformer/blob/main/';
 	const notes = [
@@ -20,7 +20,7 @@
 
 <section class="part" id="part-lessons">
 	<header class="part-head">
-		<span class="roman">Part X</span>
+		<span class="roman">Part {roman('part-lessons')}</span>
 		<h2>What we learned</h2>
 	</header>
 

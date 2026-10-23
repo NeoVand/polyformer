@@ -102,6 +102,16 @@ export const PARTS: Part[] = [
 		]
 	},
 	{
+		id: 'part-exact',
+		title: 'States that stay exact',
+		sections: [
+			{ id: 'flat-set', title: 'Why training lands near exact' },
+			{ id: 'nerode-term', title: 'One state for equivalent histories' },
+			{ id: 'certified', title: 'Lean as the referee' },
+			{ id: 'exact-limits', title: 'What is shown, and what is not' }
+		]
+	},
+	{
 		id: 'part-lessons',
 		title: 'What we learned',
 		sections: [
@@ -114,6 +124,29 @@ export const PARTS: Part[] = [
 ];
 
 const ORDER = PARTS.flatMap((p) => p.sections.map((s) => s.id));
+const ROMAN = [
+	'I',
+	'II',
+	'III',
+	'IV',
+	'V',
+	'VI',
+	'VII',
+	'VIII',
+	'IX',
+	'X',
+	'XI',
+	'XII',
+	'XIII',
+	'XIV'
+];
+
+/** The part's roman numeral in reading order. Throws on an unknown id so typos surface. */
+export function roman(id: string): string {
+	const i = PARTS.findIndex((p) => p.id === id);
+	if (i < 0 || i >= ROMAN.length) throw new Error(`unknown paper part: ${id}`);
+	return ROMAN[i];
+}
 
 /** The section's number in reading order, 1-based. Throws on an unknown id so typos surface. */
 export function number(id: string): number {

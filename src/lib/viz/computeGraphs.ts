@@ -528,3 +528,104 @@ export const EVENTS: Graph = {
 		{ x: 680, y: 18, tex: String.raw`\text{state cut where } b_t = 1`, align: 'center' }
 	]
 };
+
+/**
+ * The per-event recurrence with the Nerode term (EXACTNESS, LEAN_S1): two equivalent histories
+ * run through one recurrence with shared weights; the slot attends to each event's tokens and an
+ * MLP updates it; the readout reads the slot through LayerNorm, and the term compares the two
+ * readout views.
+ */
+export const NERODE: Graph = {
+	w: 810,
+	h: 330,
+	nodes: [
+		{ id: 'wu0', x: X0, y: 70, tex: 'w_{t-1}', kind: 'mid', r: 18 },
+		{ id: 'u', x: X0, y: 126, tex: 'u_t', kind: 'input' },
+		{ id: 'Ku', x: 150, y: 108, tex: 'K', kind: 'proj' },
+		{ id: 'Vu', x: 150, y: 144, tex: 'V', kind: 'proj' },
+		{ id: 'attu', x: 240, y: 70, tex: String.raw`\text{attend}`, kind: 'op', w: 60 },
+		{ id: 'au', x: 318, y: 70, tex: 'a_t', kind: 'mid' },
+		{ id: 'mlpu', x: 386, y: 70, tex: String.raw`\text{MLP}`, kind: 'op', w: 50 },
+		{ id: 'wu1', x: 456, y: 70, tex: 'w_t', kind: 'mid' },
+		{ id: 'lnu', x: 520, y: 70, tex: String.raw`\text{LN}`, kind: 'op', w: 40 },
+		{ id: 'zu', x: 584, y: 70, tex: 'z_u', kind: 'mid' },
+		{ id: 'Y', x: 770, y: 70, tex: 'Y', kind: 'output' },
+		{ id: 'wv0', x: X0, y: 262, tex: 'w_{s-1}', kind: 'mid', r: 18 },
+		{ id: 'v', x: X0, y: 206, tex: 'v_s', kind: 'input' },
+		{ id: 'Kv', x: 150, y: 224, tex: 'K', kind: 'proj' },
+		{ id: 'Vv', x: 150, y: 188, tex: 'V', kind: 'proj' },
+		{ id: 'attv', x: 240, y: 262, tex: String.raw`\text{attend}`, kind: 'op', w: 60 },
+		{ id: 'av', x: 318, y: 262, tex: 'a_s', kind: 'mid' },
+		{ id: 'mlpv', x: 386, y: 262, tex: String.raw`\text{MLP}`, kind: 'op', w: 50 },
+		{ id: 'wv1', x: 456, y: 262, tex: 'w_s', kind: 'mid' },
+		{ id: 'lnv', x: 520, y: 262, tex: String.raw`\text{LN}`, kind: 'op', w: 40 },
+		{ id: 'zv', x: 584, y: 262, tex: 'z_v', kind: 'mid' },
+		{ id: 'dist', x: 700, y: 166, tex: String.raw`1 - \cos`, kind: 'op', w: 60 },
+		{ id: 'L', x: 770, y: 166, tex: String.raw`\mathcal L_N`, kind: 'output', r: 17 }
+	],
+	joins: [{ id: 'dm', x: 640, y: 166, op: 'merge' }],
+	edges: [
+		{ from: 'wu0', to: 'attu' },
+		{ from: 'u', to: 'Ku', tex: 'W_K', labelAt: 0.74 },
+		{ from: 'u', to: 'Vu', tex: 'W_V', side: 1, labelAt: 0.74 },
+		{ from: 'Ku', to: 'attu', enter: 70, arrow: false },
+		{ from: 'Vu', to: 'attu', enter: 110, arrow: false },
+		{ from: 'attu', to: 'au' },
+		{ from: 'au', to: 'mlpu' },
+		{ from: 'mlpu', to: 'wu1' },
+		{ from: 'wu1', to: 'lnu' },
+		{ from: 'lnu', to: 'zu' },
+		{ from: 'zu', to: 'Y', tex: 'W_o', labelAt: 0.5 },
+		{ from: 'wu1', to: 'wu0', out: 120, enter: 240, reach: [60, 60], soft: true, arrowAt: 0.5 },
+		{ from: 'wv0', to: 'attv' },
+		{ from: 'v', to: 'Kv', tex: 'W_K', side: 1, labelAt: 0.74 },
+		{ from: 'v', to: 'Vv', tex: 'W_V', labelAt: 0.74 },
+		{ from: 'Kv', to: 'attv', enter: -70, arrow: false },
+		{ from: 'Vv', to: 'attv', enter: -110, arrow: false },
+		{ from: 'attv', to: 'av' },
+		{ from: 'av', to: 'mlpv' },
+		{ from: 'mlpv', to: 'wv1' },
+		{ from: 'wv1', to: 'lnv' },
+		{ from: 'lnv', to: 'zv' },
+		{
+			from: 'wv1',
+			to: 'wv0',
+			out: -120,
+			enter: -240,
+			reach: [60, 60],
+			soft: true,
+			arrowAt: 0.5
+		},
+		{ from: 'zu', to: 'dm', out: -50, enter: -55, arrow: false },
+		{ from: 'zv', to: 'dm', out: 50, enter: 55, arrow: false },
+		{ from: 'dm', to: 'dist' },
+		{ from: 'dist', to: 'L' }
+	],
+	notes: [
+		{ x: 250, y: 34, tex: String.raw`t \to t+1`, align: 'center' },
+		{ x: 250, y: 298, tex: String.raw`s \to s+1`, align: 'center' },
+		{ x: X0, y: 166, tex: String.raw`u \sim v`, align: 'center' },
+		{
+			x: 300,
+			y: 157,
+			tex: String.raw`a_t = \operatorname{softmax}(q K^{\top})\, V,\quad q = \mathrm{LN}(w_{t-1})`,
+			align: 'left'
+		},
+		{
+			x: 300,
+			y: 177,
+			tex: String.raw`w_t = w_{t-1} + a_t + \operatorname{MLP}\big(\mathrm{LN}(w_{t-1} + a_t)\big)\text{, four ticks}`,
+			align: 'left'
+		},
+		{ x: 584, y: 40, tex: String.raw`z_u = \mathrm{LN}(w_t)`, align: 'center' },
+		{ x: 584, y: 292, tex: String.raw`z_v = \mathrm{LN}(w_s)`, align: 'center' },
+		{
+			x: 800,
+			y: 100,
+			tex: String.raw`\text{cross-entropy of } Y \text{ against the state}`,
+			align: 'right'
+		},
+		{ x: 800, y: 196, tex: String.raw`\mathcal L_N = \mu\,(1 - \cos(z_u, z_v))`, align: 'right' },
+		{ x: 800, y: 216, tex: String.raw`\text{over sampled pairs } u \sim v`, align: 'right' }
+	]
+};

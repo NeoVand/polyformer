@@ -339,6 +339,64 @@ export const REFERENCES: Reference[] = [
 		venue: 'NeurIPS',
 		year: 2024,
 		url: 'https://arxiv.org/abs/2310.13897'
+	},
+	{
+		id: 'nerode',
+		authors: 'A. Nerode',
+		title: 'Linear automaton transformations',
+		venue: 'Proceedings of the American Mathematical Society 9, 541–544',
+		year: 1958
+	},
+	{
+		id: 'park',
+		authors: 'D. Park',
+		title: 'Concurrency and automata on infinite sequences',
+		venue: 'Theoretical Computer Science (5th GI-Conference), LNCS 104, 167–183',
+		year: 1981
+	},
+	{
+		id: 'milner',
+		authors: 'R. Milner',
+		title: 'Communication and concurrency',
+		venue: 'Prentice Hall',
+		year: 1989
+	},
+	{
+		id: 'rutten',
+		authors: 'J. J. M. M. Rutten',
+		title: 'Universal coalgebra: a theory of systems',
+		venue: 'Theoretical Computer Science 249, 3–80',
+		year: 2000
+	},
+	{
+		id: 'givan',
+		authors: 'R. Givan, T. Dean, M. Greig',
+		title: 'Equivalence notions and model minimization in Markov decision processes',
+		venue: 'Artificial Intelligence 147, 163–223',
+		year: 2003
+	},
+	{
+		id: 'vanderpol',
+		authors: 'E. van der Pol, T. Kipf, F. A. Oliehoek, M. Welling',
+		title: 'Plannable approximations to MDP homomorphisms: equivariance under actions',
+		venue: 'AAMAS',
+		year: 2020,
+		url: 'https://arxiv.org/abs/2002.11963'
+	},
+	{
+		id: 'vafa',
+		authors: 'K. Vafa, J. Y. Chen, A. Rambachan, J. Kleinberg, S. Mullainathan',
+		title: 'Evaluating the world model implicit in a generative model',
+		venue: 'NeurIPS',
+		year: 2024,
+		url: 'https://arxiv.org/abs/2406.03689'
+	},
+	{
+		id: 'lean4',
+		authors: 'L. de Moura, S. Ullrich',
+		title: 'The Lean 4 theorem prover and programming language',
+		venue: 'CADE 28, LNCS 12699, 625–635',
+		year: 2021
 	}
 ];
 

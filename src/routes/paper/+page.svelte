@@ -1,7 +1,7 @@
 <script lang="ts">
 	import '#lib/paper/paper.css';
 	import { REFERENCES } from '#lib/learn/references.ts';
-	import { PARTS } from '#lib/paper/toc.ts';
+	import { PARTS, roman } from '#lib/paper/toc.ts';
 	import Question from '#lib/paper/parts/Question.svelte';
 	import Pairs from '#lib/paper/parts/Pairs.svelte';
 	import Feynman from '#lib/paper/parts/Feynman.svelte';
@@ -11,9 +11,8 @@
 	import Results from '#lib/paper/parts/Results.svelte';
 	import Limits from '#lib/paper/parts/Limits.svelte';
 	import Memory from '#lib/paper/parts/Memory.svelte';
+	import Exact from '#lib/paper/parts/Exact.svelte';
 	import Lessons from '#lib/paper/parts/Lessons.svelte';
-
-	const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X'];
 
 	/** A thin bar under the top bar shows how far down the article the reader is. */
 	let progress = $state(0);
@@ -59,9 +58,9 @@
 	<nav class="toc" aria-label="Contents">
 		<h2>Contents</h2>
 		<ol>
-			{#each PARTS as part, i (part.id)}
+			{#each PARTS as part (part.id)}
 				<li>
-					<span class="roman">{ROMAN[i]}</span>
+					<span class="roman">{roman(part.id)}</span>
 					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- in-page anchor -->
 					<a class="part-link" href="#{part.id}">{part.title}</a>
 					<span class="chapters"
@@ -85,6 +84,7 @@
 	<Results />
 	<Limits />
 	<Memory />
+	<Exact />
 	<Lessons />
 
 	<section class="refs part" id="references">
