@@ -9,6 +9,7 @@
 	import ArithFigure from '../ArithFigure.svelte';
 	import SeedGrid, { type SeedRow } from '../SeedGrid.svelte';
 	import { number, roman } from '../toc.ts';
+	import landscapeDraft from '../landscape-draft.png';
 
 	const repo = 'https://github.com/neovand/polyformer/blob/main/';
 	const objective = String.raw`\begin{aligned} \mathcal L \;=\;& \operatorname{CE}\big(x_{t+1} \,\big|\, h(x_{\le t})\big) \\ &+\; \mu \operatorname*{E}_{u \sim v} d(z_u,\, z_v) \\ &+\; \lambda \operatorname*{E}_{u \not\sim v'} \max\big(0,\, m - d(z_u,\, z_{v'})\big) \end{aligned}`;
@@ -1129,10 +1130,204 @@
 		</p>
 		<p>A paper draft built on these exact-state results now exists.</p>
 	</section>
+
+	<section class="chapter" id="review-round">
+		<h3>
+			<span class="n">{number('review-round')}</span>24 October 2026: what the review round
+			established
+		</h3>
+		<p class="src">
+			<span class="mark prior"></span>DeltaProduct <Cite id="deltaproduct" />, transformers without
+			positional encoding <Cite id="nope" />, loss-landscape planes <Cite id="losslandscape" />;
+			<span class="mark measured inline"></span>the attribution factorial (EXEC_LM §11.1) and the
+			two controls (LEAN_H §8.4), each registered before its runs; the soft-checker test, its
+			predictions registered before any run finished (PROOFS4 §§6–7);
+			<span class="mark new inline"></span>the three ingredients, an idea, and a first cut through
+			weight space
+		</p>
+		<h4>The attribution factorial (24 October 2026)</h4>
+		<p>
+			The headline of section {number('latent-exec')} combined three things: the certified-equivalence
+			signal, next-state prediction and a fixed norm. A full factorial, registered before the run, separates
+			them on the same task: the slot on the frozen code model, the bit programs of that section, three
+			seeds per cell, exact final state at 1,024 statements.
+		</p>
+		<div class="table-scroll">
+			<table class="bt">
+				<thead><tr><th>Objective</th><th>Norm free</th><th>Fixed norm</th></tr></thead>
+				<tbody>
+					<tr
+						><th>ordinary training</th><td>0.029 / 0.027 / 0.021</td><td>0.764 / 0.557 / 0.484</td
+						></tr
+					>
+					<tr
+						><th>next-state prediction</th><td>0.148 / 0.008 / 0.088</td><td
+							>0.965 / 0.979 / 0.871</td
+						></tr
+					>
+					<tr>
+						<th>certified-equivalence signal</th><td>0.916 / 0.180 / 0.004</td><td
+							><strong>1.000 / 1.000 / 1.000</strong></td
+						>
+					</tr>
+					<tr
+						><th>signal + next-state</th><td>0.965 / 0.844 / 0.729</td><td>1.000 / 1.000 / 1.000</td
+						></tr
+					>
+				</tbody>
+			</table>
+		</div>
+		<p class="caption">
+			Exact final state at 1,024 statements, 64 times the training length, seeds 0 / 1 / 2. In bold,
+			the smallest recipe that is exact on every seed.
+		</p>
+		<p>
+			The fixed norm alone is not enough. Ordinary training with it is exact on no seed: the
+			distance to a certified short partner still grows by 0.44–0.49 from 16 to 1,024 statements,
+			about two thirds of the growth with the norm free. Next-state prediction with the norm comes
+			close and is exact on no seed. The signal with the norm is exact on 3 of 3, its partner
+			distance grows by at most 1 × 10⁻⁴, and adding next-state prediction changes nothing. Without
+			the norm no objective is exact; the signal alone loses the state on the seed whose norm runs
+			to 908. <strong
+				>The fixed norm supplies closure, and the certified-equivalence signal makes the state
+				exact.</strong
+			> Next-state prediction is not needed for the headline.
+		</p>
+		<h4>Two controls (24 October 2026)</h4>
+		<p>
+			On the rewrite chains, DeltaProduct, a linear recurrence built for state tracking
+			<Cite id="deltaproduct" /> (2 blocks, 2 Householder reflections with negative eigenvalues, 397,757
+			parameters, 12,000 steps), fits its training chains but is not exact even at the training length
+			on fresh chains (0.93–0.98). At 4,096 rewrites it is exact on 0 of 3 seeds with ordinary training
+			(at most 0.004) and on 0 of 3 with the certified-equivalence signal (at most 0.020). With the signal
+			its pair distance falls 200-fold, but unrelated states fall with it, to 0.03 against 0.92: the collapse
+			minimum, which this architecture would need the distinction half of the objective to escape. That
+			was not tested, and the configuration was not tuned. A transformer without positional encoding <Cite
+				id="nope"
+			/> fails like the one with RoPE: three seeds at each of depths 4 and 8, at most 0.016 exact at 64
+			rewrites and 0.004 at 256 (RoPE, depth 8: 0.066 and 0.035).
+		</p>
+		<h4>Soft checkers (24 October 2026)</h4>
+		<p>
+			A checker for language will sometimes be wrong. To test this, a share <MathTex tex="f" /> of the
+			certified partners in training was replaced by wrong ones, either a near miss (a neighbouring class)
+			or a random, far class; rewrite chains, two seeds per cell.
+		</p>
+		<ul class="list">
+			<li>
+				<strong>Near misses are absorbed.</strong> With 20% of the pairs replaced by near misses the tracker
+				stays exact to 4,096 rewrites on both seeds (0.996 and 1.000), and so it does at 5%.
+			</li>
+			<li>
+				<strong>Far errors hurt from 1%.</strong> At <MathTex tex="f = 0.01" /> one seed of two loses
+				the state from 256 rewrites (0.947, 0.918 and 0.914 at 256, 1,024 and 4,096); at
+				<MathTex tex="f = 0.20" /> the two seeds end at 0.945 and 0.555 at 4,096.
+			</li>
+			<li>
+				<strong>The theory gave the order before the results.</strong> A wrong pair's pull scales with
+				the distance the code puts between the two classes it falsely pairs. Random pairs are about twice
+				as far apart as neighbours, so they shrink the code more (10–30 times, against 3–6 for near misses),
+				and the fixed floor of the true-pair distance becomes a relative spread large enough to fail.
+			</li>
+		</ul>
+		<p>
+			For language this means the error rate that matters in a soft checker is its rate of far
+			errors, pairs that the next-token loss itself keeps apart. Without a robust term these must
+			stay well below 1%. Its near errors are absorbed under dense supervision, and the theory says
+			they become dangerous only when supervision is sparse.
+		</p>
+		<h4>Three ingredients of exactness at length (24 October 2026)</h4>
+		<p>Every exact result in this part had three things, and every failure lacked one of them:</p>
+		<ul class="list">
+			<li>
+				<strong>A reachable code:</strong> an interface plus a path that teaches the step on correct states.
+				Arithmetic in the flat slot lacked it.
+			</li>
+			<li>
+				<strong>Closure:</strong> the fixed norm or a bounded input space. The free norm lacked it.
+			</li>
+			<li><strong>The certified signal.</strong> Ordinary training lacked it.</li>
+		</ul>
+		<p>
+			The in-model pilot is an honest negative. It wrote the state inside the language model itself,
+			as hidden vectors fed back as inputs and trained through the unrolled model. Within about 40
+			steps every state collapsed to one point and the readout predicted the all-zero state.
+			Ordinary training never left that point in 1,750 steps. With the full recipe the run began to
+			leave it once the term ramped in (mean exact 0.27 at step 1,250), and the pilot was stopped.
+			The diagnosis is that the gradient which had to invent the code ran back through up to 16
+			unrolled passes of a 24-layer model and exploded: the first-step gradient norm was 2.1 × 10⁵.
+			The state was read from final-layer hidden states, which are dominated by a few massive
+			coordinates and, at the placeholder positions, carry only 5.7–7.6% input-dependent energy at
+			initialisation. And there was no curriculum from written to latent steps. The pilot lacked the
+			first ingredient.
+		</p>
+		<h4>An idea, not a result: Nerode self-distillation (24 October 2026)</h4>
+		<p>
+			Nerode's definition can be applied to a model's behaviour, with the model as its own teacher.
+			For a long history <MathTex tex="u" />, a certified short equivalent <MathTex tex="v" /> supplied
+			by the checker, and any continuation <MathTex tex="w" />, require
+		</p>
+		<MathTex
+			tex={String.raw`p_\theta(\cdot \mid u\,w) \;=\; \operatorname{sg}\, p_\theta(\cdot \mid v\,w).`}
+			display
+		/>
+		<p>
+			The model's predictions after the long history must equal its own predictions after the short
+			one, where it is already competent, and <MathTex tex={String.raw`\operatorname{sg}`} /> stops the
+			gradient through that teacher. The loss needs no slot, readout or fixed norm, and it is induction
+			on length run as training. A model exact up to length <MathTex tex="n" /> is taught length
+			<MathTex tex="2n" /> by certified pairs of lengths <MathTex tex="2n" /> and at most
+			<MathTex tex="n" />. Its limit is that a fixed-depth transformer cannot compute a long
+			sequential state in one forward pass, so the idea applies where the model writes or predicts
+			step by step. Token-free exactness still needs a carried state, and the model's own hidden
+			states after reading the canonical short program are a ready-made code for it.
+			Self-improvement on longer problems
+			<Cite id="selfimprove" /> trains on the model's own answers and needs filtering to stop errors from
+			accumulating; here the teacher signal comes from the model's in-distribution regime. This has not
+			been run. The first test is planned on the whole-history chain-of-thought model, which is 0 exact
+			at 256 statements.
+		</p>
+		<h4>A cut through weight space (24 October 2026, draft)</h4>
+		<p>
+			A first plane through weight space shows why the training loss alone cannot pick the exact
+			tracker. It passes through three saved rewrite-chain checkpoints of one seed. Ordinary
+			training (R) drifts: it is exact after 1,024 rewrites on 0.31 of 128 held-out chains.
+			Next-state prediction (R+NL) and the signal with next-state prediction (R+NL+I) are both exact
+			(1.00). In next-token loss the drifting and the exact trackers sit in valleys of equal depth:
+			2.1 × 10⁻⁵ at R and 5.7 × 10⁻⁵ at R+NL+I. Adding the certified-equivalence and next-state
+			terms lifts the drifting valley to a plateau, 1.15 against 4.6 × 10⁻⁴. The equivalence term
+			alone lifts it too, 0.108 against 1.3 × 10⁻⁴.
+		</p>
+		<div class="figure wide">
+			<figure class="pf">
+				<img
+					class="landscape"
+					src={landscapeDraft}
+					alt="Two 3D surfaces over a plane in weight space through three trained trackers"
+					width="2161"
+					height="944"
+				/>
+				<figcaption>
+					Draft. A plane through three seed-0 checkpoints in parameter space <Cite
+						id="losslandscape"
+					/>: orthonormal coordinates with the origin at R, no filter normalisation, 25 × 25 points.
+					Height is log₁₀ of the next-token loss on 256 training chains (a), and of that loss plus
+					the certified-equivalence and next-state terms (b). Colour is the exact final expression
+					after 1,024 rewrites on 128 held-out chains. R has no next-state predictor, so on its side
+					of the plane the next-state terms are read with R+NL's.
+				</figcaption>
+			</figure>
+		</div>
+	</section>
 </section>
 
 <style>
 	.verdict {
 		white-space: nowrap;
+	}
+	.landscape {
+		display: block;
+		width: 100%;
+		height: auto;
 	}
 </style>

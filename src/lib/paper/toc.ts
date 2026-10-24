@@ -114,7 +114,8 @@ export const PARTS: Part[] = [
 			{ id: 'state-geometry', title: 'What the exact state is, and what it saves' },
 			{ id: 'natural-proofs', title: 'Natural proofs: the kind of step, not the terms' },
 			{ id: 'kernel-oracle', title: 'Reading out verdicts, not strings' },
-			{ id: 'latent-exec', title: 'Latent execution without chain of thought' }
+			{ id: 'latent-exec', title: 'Latent execution without chain of thought' },
+			{ id: 'review-round', title: '24 October 2026: what the review round established' }
 		]
 	},
 	{

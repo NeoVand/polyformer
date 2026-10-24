@@ -424,6 +424,30 @@ export const REFERENCES: Reference[] = [
 		url: 'https://arxiv.org/abs/2006.10742'
 	},
 	{
+		id: 'nope',
+		authors: 'A. Kazemnejad, I. Padhi, K. Natesan Ramamurthy, P. Das, S. Reddy',
+		title: 'The impact of positional encoding on length generalization in transformers',
+		venue: 'NeurIPS',
+		year: 2023,
+		url: 'https://arxiv.org/abs/2305.19466'
+	},
+	{
+		id: 'losslandscape',
+		authors: 'H. Li, Z. Xu, G. Taylor, C. Studer, T. Goldstein',
+		title: 'Visualizing the loss landscape of neural nets',
+		venue: 'NeurIPS',
+		year: 2018,
+		url: 'https://arxiv.org/abs/1712.09913'
+	},
+	{
+		id: 'selfimprove',
+		authors: 'N. Lee, Z. Cai, A. Schwarzschild, K. Lee, D. Papailiopoulos',
+		title: 'Self-improving transformers overcome easy-to-hard and length generalization challenges',
+		venue: 'ICML',
+		year: 2025,
+		url: 'https://arxiv.org/abs/2502.01612'
+	},
+	{
 		id: 'qwencoder',
 		authors: 'B. Hui, J. Yang, Z. Cui et al.',
 		title: 'Qwen2.5-Coder technical report',
