@@ -6,6 +6,7 @@
 	import { NERODE, ORACLE } from '#lib/viz/computeGraphs.ts';
 	import ExactFigure from '../ExactFigure.svelte';
 	import ExecFigure from '../ExecFigure.svelte';
+	import ArithFigure from '../ArithFigure.svelte';
 	import SeedGrid, { type SeedRow } from '../SeedGrid.svelte';
 	import { number, roman } from '../toc.ts';
 
@@ -157,6 +158,12 @@
 			registered: 'The objective exact at 256 on no more seeds than the slot alone',
 			measured: '3 against 0',
 			verdict: 'does not fire'
+		},
+		{
+			clause: 'Norm',
+			registered: 'With the slot at a fixed norm, exact at 1,024 on 3 of 3 seeds, on Modal',
+			measured: '1.000 / 1.000 / 1.000',
+			verdict: 'pass'
 		}
 	];
 	// research/LEAN_S1.md, section 6.2: the registered clauses and what the batch returned
@@ -222,7 +229,7 @@
 			1,024 exactly, on every seed. A second night tested that result harder, found what the exact state
 			is, and took the method to natural proofs, where it failed in a way that changed the target. A third
 			put a pretrained code model in the loop: read through it, a slot carries the exact state of a program
-			sixteen times past its training length without generating a token.
+			64 times past its training length without generating a token.
 		</p>
 	</header>
 
@@ -989,7 +996,8 @@
 			intermediate computation <Cite id="scratchpad" />;
 			<span class="mark new inline"></span>the slot on a frozen code model with the objective;
 			<span class="mark measured inline"></span>12 runs, three seeds per arm, registered before the
-			batch (EXEC_LM)
+			batch; the fixed-norm replication and the arithmetic rung, each registered before its run
+			(EXEC_LM §§4, 7, 10)
 		</p>
 		<p>
 			The last test puts a pretrained language model in the loop, where a pretrained encoder was
@@ -1007,7 +1015,8 @@
 				on its own. The recurrent slot of the earlier sections, width 128, attends to that statement's
 				hidden states from the model's middle layer, and a linear head reads the eight bits from LN(slot).
 				It is trained with next-latent prediction and the invariance term, on pairs of programs certified
-				equivalent by running both. It generates no tokens.
+				equivalent by running both. It generates no tokens. In the headline runs the slot is also rescaled
+				to a fixed norm after every statement.
 			</li>
 			<li><strong>Slot alone.</strong> The same, without the two terms.</li>
 			<li>
@@ -1030,9 +1039,11 @@
 				<figcaption>
 					Exact final state: the share of test programs whose state is exact after the last
 					statement, by program length, trained on 4 to 16 statements; light marks are the three
-					seeds, the line their mean, and the dashed line the shallow floor. Tokens: what each arm
-					generates per statement; the final-state arm writes 8 per program. The language-model arms
-					are judged on the first 512, 512, 256 and 64 programs of the same test sets.
+					seeds, the line their mean, and the dashed line the shallow floor. The slot with the
+					objective is drawn at a fixed norm (solid) and, lighter and dashed, as in the registered
+					batch with its norm free. Tokens: what each arm generates per statement; the final-state
+					arm writes 8 per program. The language-model arms are judged on the first 512, 512, 256
+					and 64 programs of the same test sets.
 				</figcaption>
 			</figure>
 		</div>
@@ -1050,20 +1061,29 @@
 			</table>
 		</div>
 		<p class="caption">
-			The registered clauses of the execution test and what the batch returned; seeds 0, 1 and 2.
+			The registered clauses of the execution test and what the runs returned; seeds 0, 1 and 2. The
+			last row was registered later, before its own run.
 		</p>
 		<p>
-			All four predictions pass and the kill does not fire. The slot with the objective is exact at
-			256 statements, sixteen times its training length, on every seed, and never wrong at any
-			statement along the way on 100%, 100% and 99.8% of programs; at 1,024 it ends exact on
-			0.73–0.97 of programs and the median program is never wrong. The same slot without the
-			objective drifts below the floor by 256 (0.05–0.14). Writing the state keeps it only at the
-			training length: chain of thought is exact at 16 and at 0.06–0.37 by 256, with its first error
-			at statements 53 to 90, and it pays 8 tokens per statement for that, 8,192 at 1,024
-			statements. Asked for the final state alone, the model learns less than the one-statement
-			table at every length. As on the rewrite chains, the growth of the distance to a certified
-			short partner predicts the drift (Spearman +0.88), and unrelated states stay 0.09–0.22 apart,
-			so nothing collapsed.
+			<strong>The headline.</strong> With the slot rescaled to a fixed norm after every statement,
+			the slot with the objective is exact at 1,024 statements, 64 times its training length, on 3
+			of 3 seeds, and the distance to a certified short partner stays at 1–3 × 10⁻⁴ from 16 to
+			1,024. The prediction was registered before the run and holds in two replications, on a laptop
+			and on Modal. In the registered batch the norm was free: it grew 1.2–1.35 times by 1,024, the
+			clock of section {number('hardening')}, and fixing it removes the tail.
+		</p>
+		<p>
+			In the registered batch all four predictions pass and the kill does not fire. The slot with
+			the objective is exact at 256 statements, sixteen times its training length, on every seed,
+			and never wrong at any statement along the way on 100%, 100% and 99.8% of programs; at 1,024
+			it ends exact on 0.73–0.97 of programs and the median program is never wrong. The same slot
+			without the objective drifts below the floor by 256 (0.05–0.14). Writing the state keeps it
+			only at the training length: chain of thought is exact at 16 and at 0.06–0.37 by 256, with its
+			first error at statements 53 to 90, and it pays 8 tokens per statement for that, 8,192 at
+			1,024 statements. Asked for the final state alone, the model learns less than the
+			one-statement table at every length. As on the rewrite chains, the growth of the distance to a
+			certified short partner predicts the drift (Spearman +0.88), and unrelated states stay
+			0.09–0.22 apart, so nothing collapsed.
 		</p>
 		<p>
 			Two caveats bound the claim. The state lives in the slot, not in the language model, which is
@@ -1072,6 +1092,42 @@
 			full fine-tuning, enough to fit the training length exactly, and smaller test sets at 256 and
 			1,024.
 		</p>
+		<h4>Where the step is arithmetic</h4>
+		<p>
+			A second rung makes each step a real operation: eight variables over 0 to 15, with addition,
+			subtraction and multiplication modulo 16 and conditionals. Here the flat slot cannot fit even
+			the training length (0.375 exact at 16, one pilot seed): routing a value by its name is what
+			fails. A register-shaped state fits it on 3 of 3 seeds (1.000, 1.000, 0.998): eight registers,
+			each normalised after every write, read and written by attention from the operand names to
+			learned name keys, with one shared operation network and the same objective. Past the training
+			length it settles on a plateau of 0.72–0.77 exact from 256 to 1,024, where a register that
+			went wrong is later overwritten correctly.
+		</p>
+		<div class="figure wide">
+			<figure class="pf">
+				<ArithFigure />
+				<figcaption>
+					The share of test programs whose whole state is exact after each statement, on the
+					arithmetic rung, trained on at most 16 statements; each statement is read from the
+					shortest test set that reaches it. Light lines are seeds, heavy lines their mean. The
+					Markov step and the register slot have three seeds each; the whole-history chain of
+					thought is one pilot seed, tested to 256.
+				</figcaption>
+			</figure>
+		</div>
+		<p>
+			The same language model does better as a <em>Markov step</em>. Fine-tuned on single steps, a
+			state line and a statement in and the next state line out, with states drawn uniformly over
+			all values, and run with only its own last state line and the statement in context (74
+			tokens), it is exact at 1,024 statements on 3 of 3 seeds. Its error is 0.5–2 × 10⁻⁵ per step,
+			every error falls on a conditional, and every one is repaired before the last statement. With
+			its whole history in context the same model is exact at 16 and at 0 by 256 (one pilot seed),
+			and trained only on the states that zero-start programs reach, the bounded-context step
+			plateaus at 0.27. Two changes made the language model exact at 64 times the training length:
+			cut the context to the carried state, and train the step on the states it will meet. It still
+			writes 8 tokens per statement, but its context never grows.
+		</p>
+		<p>A paper draft built on these exact-state results now exists.</p>
 	</section>
 </section>
 

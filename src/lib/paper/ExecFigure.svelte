@@ -1,11 +1,12 @@
 <script lang="ts">
 	/**
-	 * Latent execution (EXEC_LM, registered batch, seeds 0 / 1 / 2): exact final state of Python
-	 * programs of 4 bit variables against program length, trained on 4 to 16 statements, for a slot
-	 * reading each statement through frozen Qwen2.5-Coder-0.5B (with and without the objective) and
-	 * the same model fine-tuned to write its state after every statement or only at the end; the
-	 * shallow last-write table as a dashed floor. Beside it, the tokens each arm generates per
-	 * statement.
+	 * Latent execution (EXEC_LM, seeds 0 / 1 / 2): exact final state of Python programs of 4 bit
+	 * variables against program length, trained on 4 to 16 statements, for a slot reading each
+	 * statement through frozen Qwen2.5-Coder-0.5B (with the objective and its norm fixed, EXEC_LM
+	 * 10.1 on Modal; with the objective and a free norm, the registered batch of section 4; without
+	 * the objective) and the same model fine-tuned to write its state after every statement or only
+	 * at the end; the shallow last-write table as a dashed floor. Beside it, the tokens each arm
+	 * generates per statement.
 	 */
 	interface Arm {
 		id: string;
@@ -17,6 +18,15 @@
 		{
 			id: 'obj',
 			name: 'slot + objective',
+			seeds: [
+				[1, 1, 1, 1],
+				[1, 1, 1, 1],
+				[1, 1, 1, 1]
+			]
+		},
+		{
+			id: 'free',
+			name: 'same, norm free',
 			seeds: [
 				[1, 1, 1, 0.965],
 				[1, 1, 1, 0.844],
@@ -186,6 +196,19 @@
 	}
 	.line.plain {
 		stroke-dasharray: 5 3;
+	}
+	.line.free {
+		stroke: var(--color-ink-2);
+		stroke-width: 1.1;
+		stroke-dasharray: 3 3;
+		opacity: 0.7;
+	}
+	.dot.free {
+		fill: var(--color-ink-2);
+		opacity: 0.7;
+	}
+	.seed.free {
+		fill: var(--color-ink-2);
 	}
 	.line.cot,
 	.line.direct {
