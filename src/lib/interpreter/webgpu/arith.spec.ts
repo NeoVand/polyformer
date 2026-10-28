@@ -62,7 +62,8 @@ function checks(label: string, getTok: () => Tok, full: boolean) {
 				const P = r.pi.length;
 				expect([r.start, ...got.pairs![0]]).toEqual(e.first_tick.forward1.ids);
 				expect([P, P + 1, P + 2]).toEqual(e.first_tick.forward1.positions);
-				expect([P + 3]).toEqual(e.first_tick.forward2.positions);
+				// forward 2 re-feeds the whole block on Π's cache (§4 as amended 28 Oct)
+				expect([P, P + 1, P + 2, P + 3]).toEqual(e.first_tick.forward2.positions);
 
 				// the table's own run: states and outputs, then the <final> line
 				const delta = new Map(r.rows.map((x) => [`${x[0]},${x[1]},${x[2]}`, [x[3], x[4]]]));
@@ -77,7 +78,7 @@ function checks(label: string, getTok: () => Tok, full: boolean) {
 				}
 				expect(states).toEqual(e.run.states);
 				expect(outputs).toEqual(e.run.outputs);
-				expect(e.first_tick.forward2.ids).toEqual([states[0]]);
+				expect(e.first_tick.forward2.ids).toEqual([r.start, ...got.pairs![0], states[0]]);
 				const fin = finalIdsMealy(tok, r, s, outputs);
 				expect(fin).toEqual(e.final_ids);
 				expect(tok.decode(fin)).toBe(e.final_text);

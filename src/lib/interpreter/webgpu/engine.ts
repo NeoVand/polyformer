@@ -802,18 +802,15 @@ export class Engine {
 	// -------------------------------------------------------------- number mode (ARITH_FORMAT)
 
 	/**
-	 * One Mealy tick (§4): the block [s][a][b] at |Π| … |Π|+2 over Π's cache gives t; then [t] at |Π|+3 gives o. The
-	 * fed t is always forward 1's argmax. The extended cache is discarded, so Π's is never written.
+	 * One Mealy tick (§4, as amended 28 Oct): the block [s][a][b] at |Π| … |Π|+2 over Π's cache gives t; then the whole
+	 * block [s][a][b][t] at |Π| … |Π|+3, again over Π's cache, gives o at |Π|+3. The fed t is always forward 1's
+	 * argmax. Neither forward keeps its extended cache, so Π's is never written, and both are multi-token forwards
+	 * (the 1-token [t] of the first version was not bitwise reproducible on an H100).
 	 */
 	private async mealyTick(entry: MealyEntry, s: number, a: number, b: number) {
-		const f1 = await this.lm.forward([s, a, b], entry.past, true);
+		const f1 = await this.lm.forward([s, a, b], entry.past, false);
 		const one = top2(f1.logits);
-		let f2: Forward;
-		try {
-			f2 = await this.lm.forward([one.arg], f1.past!, false);
-		} finally {
-			f1.past?.dispose();
-		}
+		const f2 = await this.lm.forward([s, a, b, one.arg], entry.past, false);
 		const two = top2(f2.logits);
 		return {
 			t: one.arg,
@@ -1124,8 +1121,8 @@ export class Engine {
 					'execution of this table on every pair of numbers of any length (Theorem P for the Mealy block), on ' +
 					'this GPU and code path; not whether the table is the adder, nor whether the spans are the numbers',
 				path:
-					"two forwards per row and per tick: [c][a][b] at |Π|…|Π|+2 over Π's cached keys and values, then " +
-					'[c′] at |Π|+3; batch 1, in this browser',
+					"two forwards per row and per tick, each over Π's cached keys and values: [c][a][b] at |Π|…|Π|+2, " +
+					'then [c][a][b][c′] at |Π|…|Π|+3; batch 1, in this browser',
 				ticks_real: real,
 				ticks_equal: equal
 			},

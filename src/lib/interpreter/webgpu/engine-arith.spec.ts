@@ -94,6 +94,25 @@ describe('number mode on a scripted model', { timeout: 60_000 }, () => {
 			expect(r.exact).toBe(true);
 			// one prefill of Π, two forwards per row, two per column
 			expect(lm.ticks).toBe(1 + 2 * 200 + 2 * e.reading.pairs.length);
+			// every block right after Π, and the first tick's two as the fixture lays them out (§4)
+			const span = (b: { ids: number[]; at: number }) => b.ids.map((_, i) => b.at + i);
+			expect(lm.blocks.every((b) => b.at === e.parsed.register.pi_len)).toBe(true);
+			const [f1, f2] = lm.blocks.slice(400, 402);
+			expect([f1.ids, span(f1)]).toEqual([
+				e.first_tick.forward1.ids,
+				e.first_tick.forward1.positions
+			]);
+			expect([f2.ids, span(f2)]).toEqual([
+				e.first_tick.forward2.ids,
+				e.first_tick.forward2.positions
+			]);
+			// certification takes the same path: [s][a][b], then [s][a][b][t] with t forward 1's argmax
+			expect(lm.blocks.slice(0, 400)).toEqual(
+				out.ctx!.mealy!.rows.flatMap(([s, a, b, t]) => [
+					{ ids: [s, a, b], at: 1200 },
+					{ ids: [s, a, b, t], at: 1200 }
+				])
+			);
 
 			// the events rebuild the run
 			let run = startRun('x', e.question, { model, host });
@@ -230,6 +249,20 @@ describe('number mode on a scripted model', { timeout: 60_000 }, () => {
 		expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual(got);
 	});
 
+	it('feeds forward 2 the argmax of forward 1, not the row’s written carry', async () => {
+		const d = arith.ids.digits;
+		const key = `${d[0]},${d[6]},${d[7]}`;
+		const lm = new FakeLM(script(e, { mealy: { nl, wrongT: new Map([[key, d[0]]]) } }));
+		const engine = engineFor(lm);
+		await engine.ask(e.question, { id: 'x' }, () => {});
+		// the certificate's row, then the run's first column (6 + 7), both fed the model's 0
+		expect(lm.blocks.filter((b) => b.ids.length === 4 && `${b.ids.slice(0, 3)}` === key)).toEqual([
+			{ ids: [d[0], d[6], d[7], d[0]], at: 1200 },
+			{ ids: [d[0], d[6], d[7], d[0]], at: 1200 }
+		]);
+		engine.dispose();
+	});
+
 	it.skipIf(!tokPath)('gives the words room for a 1,000-digit sum (ARITH_FORMAT §7)', async () => {
 		const a = '7'.repeat(1000);
 		const b = '3'.repeat(999);
@@ -251,4 +284,72 @@ describe('number mode on a scripted model', { timeout: 60_000 }, () => {
 		expect(out.score?.answer_correct).toBe(true);
 		engine.dispose();
 	});
+});
+
+/**
+ * The trained model's own runs from ARITH's counted gate (reference.json `model_runs`): its program ids, played back
+ * by the scripted LM with each row's two certified margins as the model measured them. The engine must read the
+ * same pairs, certify every row with those margins, and give the model's states, outputs, `<final>` line and words.
+ */
+describe('the trained model’s counted runs, replayed', { timeout: 60_000 }, () => {
+	for (const run of arith.model_runs.runs)
+		it(`${run.cell}: ${run.question.slice(0, 48)}…`, async () => {
+			const d = arith.ids.digits;
+			const margins = new Map(
+				run.certificate.margins.map(([cell, m1, m2]): [string, [number, number]] => [
+					[...cell].map((c) => d[Number(c)]).join(','),
+					[m1, m2]
+				])
+			);
+			const lm = new FakeLM({
+				prompt: tok.encode(chatPrompt(run.question)),
+				program: run.program_ids,
+				end: im_end,
+				finalOpen: tok.encode('\n<final>'),
+				finalClose: tok.encode(' </final>\n'),
+				words: () => tok.encode(run.answer_text),
+				mealy: { nl, margins }
+			});
+			const engine = engineFor(lm);
+			// the two numbers as the reference's pairs spell them, to score the run against
+			const num = (k: 0 | 1) =>
+				run.pairs
+					.slice(0, -1)
+					.map((p) => String(d.indexOf(p[k])))
+					.reverse()
+					.join('');
+			const out = await engine.ask(
+				run.question,
+				{ id: 'x', addition: { a: num(0), b: num(1) } },
+				() => {}
+			);
+			expect(out.note).toBeNull();
+			expect(out.arith?.quotes).toEqual(run.anchors);
+			expect(out.ctx?.pairs).toEqual(run.pairs);
+			expect(out.ctx?.mealy?.run).toEqual(run.states);
+			expect(out.ctx?.mealy?.outputs).toEqual(run.outputs);
+			expect(out.final_text).toBe(run.final_text.trim());
+			expect(out.answer).toBe(run.answer_text);
+			const sum = run.final_text.match(/ s=(\d+) /)![1];
+			expect([out.arith?.sum, out.arith?.check]).toEqual([sum, sum]);
+			expect(out.score).toEqual({
+				parsed: true,
+				table_exact: true,
+				tape_exact: true,
+				certified: true,
+				run_final_right: true,
+				sum_right: true,
+				answer_correct: true
+			});
+			const r = out.registers[0];
+			expect(r.certificate.all_ok).toBe(run.certificate.pass);
+			expect(r.certificate.min_margin).toBe(run.certificate.min_margin);
+			expect(r.program.rows.map((x) => [`${x.s}${x.a}${x.b}`, x.m, x.m2])).toEqual(
+				run.certificate.margins
+			);
+			expect(r.ticks.bitwise_equal_to_certified_row).toBe(run.pairs.length);
+			expect(lm.ticks).toBe(1 + 400 + 2 * run.pairs.length);
+			engine.dispose();
+			expect(lm.live.size).toBe(0);
+		});
 });

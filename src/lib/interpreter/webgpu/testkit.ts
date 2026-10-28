@@ -135,10 +135,16 @@ export interface FakeScript {
 	jitter?: (call: number) => boolean;
 	/**
 	 * ARITH_FORMAT's Mealy block instead of PROMPTBOX's: Π is rows of six tokens (s a b t o newline); forward 1 on
-	 * [s][a][b] puts the top logit on the row's t, forward 2 on [t] puts it on the row's o. `wrongT` and `wrongO`
-	 * give other argmaxes for some cells, keyed "s,a,b".
+	 * [s][a][b] puts the top logit on the row's t, forward 2 on [s][a][b][t] puts it on the row's o, both right after
+	 * Π and never kept (anything else throws). `wrongT` and `wrongO` give other argmaxes for some cells, keyed "s,a,b";
+	 * `margins` gives a cell's two margins (else 8 to 9, varying by row).
 	 */
-	mealy?: { nl: number; wrongT?: Map<string, number>; wrongO?: Map<string, number> };
+	mealy?: {
+		nl: number;
+		wrongT?: Map<string, number>;
+		wrongO?: Map<string, number>;
+		margins?: Map<string, [number, number]>;
+	};
 	vocab?: number;
 }
 
@@ -152,6 +158,8 @@ export class FakeLM implements LM {
 	readonly live = new Set<FakeKV>();
 	calls = 0;
 	ticks = 0;
+	/** Mealy mode: every block fed after Π, with the position of its first token */
+	readonly blocks: { ids: number[]; at: number }[] = [];
 	private V: number;
 	constructor(
 		private s: FakeScript,
@@ -194,21 +202,26 @@ export class FakeLM implements LM {
 				return null;
 			};
 			if (!past) logits[0] = 1;
-			else if (ids.length === 3) {
+			else {
+				// §4: both forwards right after Π (rows of six ending in a newline), neither cache kept
+				if (keep || before.length % 6 !== 0 || before.at(-1) !== M.nl)
+					throw new Error('a Mealy forward must run on Π’s own cache and keep nothing');
+				if (ids.length !== 3 && ids.length !== 4)
+					throw new Error(`a Mealy forward feeds [s][a][b] or [s][a][b][t], not ${ids.length} ids`);
+				this.blocks.push({ ids: [...ids], at: before.length });
 				const [s, a, b] = ids;
+				const key = `${s},${a},${b}`;
 				const r = find(before, s, a, b);
-				const top = M.wrongT?.get(`${s},${a},${b}`) ?? r?.t ?? before[0];
+				const k = r?.k ?? 0;
+				const [m1, m2] = M.margins?.get(key) ?? [8 + (k % 5) * 0.25, 8 + (k % 3) * 0.5];
+				const top =
+					ids.length === 3
+						? (M.wrongT?.get(key) ?? r?.t ?? before[0])
+						: (M.wrongO?.get(key) ?? r?.o ?? before[0]);
 				const runner = top === M.nl ? before[0] : M.nl;
-				logits[runner] = 2;
-				logits[top] = 10 + ((r?.k ?? 0) % 5) * 0.25;
-			} else {
-				const pi = before.slice(0, -3);
-				const [s, a, b] = before.slice(-3);
-				const r = find(pi, s, a, b);
-				const top = M.wrongO?.get(`${s},${a},${b}`) ?? r?.o ?? before[0];
-				const runner = top === M.nl ? before[0] : M.nl;
-				logits[runner] = 3;
-				logits[top] = 11 + ((r?.k ?? 0) % 3) * 0.5;
+				// every other logit is 0, so the margin is exactly m while m < 40
+				logits[top] = 40;
+				logits[runner] = 40 - (ids.length === 3 ? m1 : m2);
 			}
 			if (this.s.jitter?.(this.ticks)) logits[this.V - 1] = 1e-30;
 		} else {

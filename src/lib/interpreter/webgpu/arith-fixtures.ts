@@ -37,6 +37,28 @@ export interface Example {
 	sum: string;
 }
 
+/** A run of the trained model from ARITH's counted gate (reference.json `model_runs`). */
+export interface ModelRun {
+	cell: string;
+	question: string;
+	program_ids: number[];
+	anchors: { first: [string, string]; second: [string, string] };
+	pi_len: number;
+	pairs: [number, number][];
+	states: number[];
+	outputs: number[];
+	final_ids: number[];
+	final_text: string;
+	answer_text: string;
+	/** per row "sab" (digits): the carry cell's margin and the digit cell's */
+	certificate: {
+		pass: boolean;
+		min_margin: number;
+		rows: number;
+		margins: [string, number, number][];
+	};
+}
+
 export const arith = JSON.parse(
 	readFileSync(new URL('./fixtures/arith.json', import.meta.url), 'utf8')
 ) as {
@@ -44,6 +66,7 @@ export const arith = JSON.parse(
 	ids: { nl: number; digits: number[]; im_end: number };
 	adder_rows: string[][];
 	examples: Example[];
+	model_runs: { source: string; runs: ModelRun[] };
 	failures: {
 		case: string;
 		question: string;

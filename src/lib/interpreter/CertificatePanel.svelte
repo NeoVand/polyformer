@@ -181,9 +181,9 @@
 		<p class={['verdict', verdict || pending ? 'ok' : 'bad']}>
 			{#if pending}
 				Checking row {int(Math.min(rows.length, (cur.row ?? 0) + 1))} of {int(rows.length)}: the
-				block {mealy && cur.pair
-					? `[${cur.s}][${cur.pair[0]}][${cur.pair[1]}], then [${cur.t}],`
-					: `[${cur.s}][${cur.event}]`} after the cached table.
+				{mealy && cur.pair
+					? `blocks [${cur.s}][${cur.pair[0]}][${cur.pair[1]}] and [${cur.s}][${cur.pair[0]}][${cur.pair[1]}][${cur.t}], each`
+					: `block [${cur.s}][${cur.event}]`} after the cached table.
 			{:else if verdict && mealy}
 				Certified: {N} carries and {A} digit pairs, both cells of every row right.
 			{:else if verdict && isLlm}
@@ -198,7 +198,7 @@
 				Not certified.
 			{/if}
 		</p>
-		{#if isLlm && c.ticks_real !== undefined}
+		{#if isLlm && c.ticks_real !== undefined && !(mealy && pending)}
 			<p class="note num">
 				In the run, {int(c.ticks_equal ?? 0)} of {int(c.ticks_real)}
 				{mealy ? 'columns had both forwards' : 'ticks had logits'} bitwise equal to their certified row's.{#if looked}
