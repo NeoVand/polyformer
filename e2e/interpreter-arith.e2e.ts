@@ -2,7 +2,8 @@
  * Certified arithmetic in the browser (ARITH_FORMAT number mode), end to end, with the model replaced by the page's
  * stand-in (webgpu/stub.ts). The stand-in replays the engine's own run of "What is 4096 plus 77?" on a scripted model
  * (e2e/fixtures/arith-run.json, checked by webgpu/engine-arith.spec.ts) and reruns its certified table on the numbers
- * of the question sent, as a certified executor would. The real arithmetic model is not exported yet.
+ * of the question sent, as a certified executor would. The published page pins Savant-4B preview r3, which was
+ * trained to write the adder, so Addition is offered without the stand-in.
  */
 import { readFileSync } from 'node:fs';
 import { expect, test, type Page } from '@playwright/test';
@@ -37,16 +38,14 @@ async function numbers(page: Page) {
 	return [m![1], m![2]] as const;
 }
 
-test('the published page has no Addition suggestion until the arithmetic model is pinned', async ({
-	page
-}) => {
+test('the published page offers Addition, now that r3 is pinned', async ({ page }) => {
 	await page.route('**/api/**', (r) => r.fulfill({ status: 404, body: '' }));
 	await page.goto('/interpreter');
 	await expect(
 		page.getByRole('group', { name: 'Suggested questions' }).getByTitle('Shell game')
 	).toBeVisible();
-	await expect(additionChip(page)).toHaveCount(0);
-	await expect(page.getByText(/Arithmetic and other new kinds of question/)).toBeVisible();
+	await expect(additionChip(page)).toBeVisible();
+	await expect(page.getByText(/additions of any length among them/)).toBeVisible();
 });
 
 test('the Addition suggestion writes two random numbers of the chosen length', async ({ page }) => {
