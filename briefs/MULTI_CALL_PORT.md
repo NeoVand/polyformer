@@ -7,6 +7,7 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
 ## What changed
 
 **Runtime** (`src/lib/interpreter/webgpu/`)
+
 - `reason.ts` (new) ports reason_core's clock side line for line:
   - `notesOf`/`sourcesOf`: S0 is the question; S1 is the notes, meaning the response with every `<program>…<exec/>` deleted.
   - `match`: exact first; then whitespace-relaxed over ASCII `[ \t\n\r\f\v]` only.
@@ -37,6 +38,7 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
   on. With it off the ask options, engine path and traces are today's.
 
 **UI** (`src/lib/interpreter/`)
+
 - `ReasonReply.svelte` (new): a header line (e.g. "3 calls · all certified", or "3 calls · 2 ran, both certified ·
   call 2 got an error line"), the words through `Reply.svelte`, and each call in place. While the run goes it also
   shows the call the clock has and the words being written. The chat's status line says "Call 3 · Certifying
@@ -55,6 +57,7 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
   unchanged, and so are the single-call panels (all their e2e tests pass).
 
 **Fixtures**
+
 - `scripts/reason_fixtures.py` copies `reason_fixtures.json` to `webgpu/fixtures/reason.json`. It asserts that every
   prompt re-encodes to the fixture's ids, and adds:
   - token strings;
@@ -62,6 +65,7 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
   - ids with offsets for every question and every call's notes.
 
   The tests run with or without Qwen3's tokenizer.
+
 - `e2e/fixtures/reason-runs.json` holds the engine's own runs of three transcripts. It is written by
   `engine-reason.spec.ts` with `WRITE_FIXTURES=1`, and that spec checks it otherwise.
 
@@ -139,12 +143,14 @@ still calls any non-adder table "a table with an output".
 Screenshots were taken with Playwright against `vite preview` (`REASON_SHOTS=<dir> npx playwright test
 e2e/interpreter-reason.e2e.ts`). The stand-in needs an init script, so the Browser pane was not used. The shots are
 in `briefs/shots/`:
+
 - `multi-call-desktop.png`: 1440×900, finished, call 3 open;
 - `multi-call-running.png`: call 3 certifying;
 - `multi-call-error.png`: the error call open;
 - `multi-call-phone.png`: 390 px.
 
 Clutter fixed after looking at them:
+
 - The live call repeated the status line below it.
 - The opened call repeated the certificate's tick count, and its link had no space before it.
 - The subtracter's certificate said "not whether the table is the adder", and its program note said "carry".
