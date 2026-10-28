@@ -3,7 +3,7 @@
  * The worker that holds Savant-4B: it loads the weights with transformers.js on WebGPU, runs the pinned loop
  * (engine.ts) one question at a time, and posts every event to the page, which stays free to draw.
  */
-import { SAVANT, gpuLabel } from './config.ts';
+import { gpuLabel } from './config.ts';
 import { Cancelled, Engine, PROMPTBOX_COMMIT, type HostInfo, type ModelInfo } from './engine.ts';
 import type { FromWorker, ToWorker } from './protocol.ts';
 import { loadTransformers } from './transformers-lm.ts';
@@ -54,13 +54,13 @@ async function load(m: Extract<ToWorker, { type: 'load' }>) {
 		await warm(loaded).catch(() => {});
 		const gpu = m.device === 'webgpu' ? await gpuName().catch(() => null) : null;
 		const model: ModelInfo = {
-			name: SAVANT.name,
-			compile_adapter: SAVANT.adapter,
-			executor_adapter: SAVANT.adapter,
+			name: m.model.name,
+			compile_adapter: m.model.adapter,
+			executor_adapter: m.model.adapter,
 			adapter_sha256: { compile: '', executor: '' },
 			tokenizer_sha256: '',
 			promptbox_commit: PROMPTBOX_COMMIT,
-			about: SAVANT.about
+			about: m.model.about
 		};
 		const host: HostInfo = {
 			gpu: gpu ?? (m.device === 'webgpu' ? 'this browser’s GPU' : 'CPU'),

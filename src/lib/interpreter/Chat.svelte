@@ -26,21 +26,22 @@
 		type TraceEntry,
 		type Turn
 	} from './trace.ts';
-	import { ARITHMETIC, SAVANT } from './webgpu/config.ts';
 	import type { LiveRun } from './webgpu/live-view.ts';
 	import {
 		ADDITION_DIGITS,
 		additionTicks,
+		exactReason,
 		FAMILIES,
 		LOOKUP_AFTER,
 		makeAddition,
+		REASON_PROMPTS,
 		ticksOf,
 		type Addition,
 		type PromptSet,
+		type ReasonPrompt,
 		type SuggestedPrompt
 	} from './webgpu/prompts.ts';
 	import { savant } from './webgpu/savant.svelte.ts';
-	import { stubOf } from './webgpu/stub.ts';
 
 	let {
 		entries,
@@ -106,9 +107,14 @@
 			(!!pickedPrompt && draft.trim() !== pickedPrompt.question.trim()) ||
 			(!!pickedAddition && draft.trim() !== pickedAddition.question.trim())
 	);
-	/** the Addition suggestion: on once the pinned model can add, and always in development and under test */
-	const arithmetic = ARITHMETIC || import.meta.env.DEV || stubOf() !== null;
+	const model = $derived(savant.model);
+	/** the Addition suggestion: on for a model trained to write the adder */
+	const arithmetic = $derived(model.arithmetic);
+	/** composites instead of the six families: this model calls programs in the middle of the words */
+	const reasoning = $derived(model.multiCall);
 	const ADDITION = 'addition';
+	/** second sentence of the reasoning scope hint; kept as one string so the text node has no line break */
+	const reasonAddition = 'Additions of any length are among them too.';
 
 	let family = $state<string | null>(null);
 	const ofFamily = $derived(
@@ -152,7 +158,7 @@
 		const regName = reg && r.registers.length > 1 ? ` ${reg.name}` : '';
 		switch (r.stage) {
 			case 'queued':
-				return { text: `Waiting for ${SAVANT.short} to finish loading`, frac: null };
+				return { text: `Waiting for ${model.short} to finish loading`, frac: null };
 			case 'prefill':
 				return {
 					text: `Reading your question · ${int(r.prefill.done)} of ${int(r.prefill.total)} tokens`,
@@ -208,6 +214,14 @@
 		box?.focus();
 		box?.setSelectionRange(0, 0);
 		if (box) box.scrollTop = 0;
+	}
+	function pickReason(p: ReasonPrompt) {
+		pickedPrompt = null;
+		pickedAddition = null;
+		picked = null;
+		family = null;
+		draft = p.question;
+		focusBox();
 	}
 	function pick(e: TraceEntry) {
 		picked = e;
@@ -268,9 +282,15 @@
 				<p class="eyebrow">Interpreter</p>
 				<h1>A model that writes a program and runs it inside</h1>
 				<p class="intro">
-					Ask a question about a long list of events. The model writes a small table for it, proves
-					every row of the table correct, then runs it one tick per event, and the five panels show
-					the inside of that run as it happens.
+					{#if reasoning}
+						Ask a question that takes more than one step. The model reasons in words and calls a
+						program in the middle, the clock runs it, and the model reads the result and goes on.
+						The panels follow the call it is in.
+					{:else}
+						Ask a question about a long list of events. The model writes a small table for it,
+						proves every row of the table correct, then runs it one tick per event, and the five
+						panels show the inside of that run as it happens.
+					{/if}
 				</p>
 				{#if server}
 					<p class="replay-note">
@@ -321,7 +341,7 @@
 							<ReasonReply segments={run.reason.segments} calls={run.reason.calls} live={run} />
 						{/if}
 						<p class="quiet num" role="status">
-							<span class="live-word">{SAVANT.short}</span>
+							<span class="live-word">{model.short}</span>
 							{line.text}
 						</p>
 						{#if line.frac !== null}
@@ -339,18 +359,18 @@
 				{:else if turn.needsModel}
 					{#if savant.status === 'unsupported'}
 						<p class="msg">
-							There is no recorded run of this question, and this browser cannot run {SAVANT.short}:
+							There is no recorded run of this question, and this browser cannot run {model.short}:
 							{savant.gpu?.reason}
 						</p>
 						<p class="quiet">The suggested questions marked “recorded” replay here.</p>
 					{:else if ready}
-						<p class="msg">{SAVANT.short} is loaded now.</p>
+						<p class="msg">{model.short} is loaded now.</p>
 						<div class="actions">
 							<button class="link" onclick={() => onretry(turn.key)}>Run this question</button>
 						</div>
 					{:else}
 						<p class="msg">
-							There is no recorded run of this question. Load {SAVANT.short} and it runs here, in your
+							There is no recorded run of this question. Load {model.short} and it runs here, in your
 							browser.
 						</p>
 						<div class="actions">
@@ -358,7 +378,7 @@
 								class="btn primary small"
 								disabled={savant.status === 'loading' || savant.status === 'checking'}
 								onclick={() => savant.load()}
-								>{savant.status === 'loading' ? 'Loading…' : `Load ${SAVANT.short}`}</button
+								>{savant.status === 'loading' ? 'Loading…' : `Load ${model.short}`}</button
 							>
 							<span class="quiet">It runs as soon as the model is ready.</span>
 						</div>
@@ -476,6 +496,8 @@
 											: 'do not state it'}{/if}.
 								{:else if f.truth !== null}
 									{f.score?.answer_correct ? 'Right' : 'Wrong'} (truth: {f.truth}).
+								{:else if exactReason(f.prompt)}
+									A composite from this model’s training templates. This page does not score it.
 								{:else}
 									No reference answer: the question is not one of the suggested ones.
 								{/if}
@@ -563,14 +585,25 @@
 	<div class="compose">
 		<div class="suggest" role="group" aria-label="Suggested questions">
 			<div class="items families">
-				{#each FAMILIES as f (f.id)}
-					<button
-						class="sugg"
-						aria-pressed={family === f.id}
-						title={f.label}
-						onclick={() => pickFamily(f.id)}>{f.label}</button
-					>
-				{/each}
+				{#if reasoning}
+					{#each REASON_PROMPTS as p (p.id)}
+						<button
+							class="sugg"
+							aria-pressed={draft.trim() === p.question.trim()}
+							title={p.question}
+							onclick={() => pickReason(p)}>{p.title}</button
+						>
+					{/each}
+				{:else}
+					{#each FAMILIES as f (f.id)}
+						<button
+							class="sugg"
+							aria-pressed={family === f.id}
+							title={f.label}
+							onclick={() => pickFamily(f.id)}>{f.label}</button
+						>
+					{/each}
+				{/if}
 				{#if arithmetic}
 					<button
 						class="sugg"
@@ -592,7 +625,7 @@
 						>
 					{/each}
 				</div>
-			{:else if family}
+			{:else if family && !reasoning}
 				<div class="items lengths" role="group" aria-label="Length">
 					<span class="k">{FAMILIES.find((f) => f.id === family)?.unit}</span>
 					{#each ofFamily as p (p.id)}
@@ -618,7 +651,10 @@
 				</div>
 			{/if}
 			<p class="hint scope">
-				{#if arithmetic}
+				{#if reasoning}
+					This preview reasons in words and calls programs along the way. The questions above are
+					composites from its training templates.{#if arithmetic}&nbsp;{reasonAddition}{/if}
+				{:else if arithmetic}
 					This preview runs questions like these seven, additions of any length among them. Other
 					new kinds of question are not in it yet.
 				{:else}
@@ -675,7 +711,7 @@
 		{/if}
 		<p class="hint num">
 			{#if ready && !(picked && !pickedPrompt && !edited)}
-				<span class="live-word">{SAVANT.short}</span>
+				<span class="live-word">{model.short}</span>
 				{edited ? 'Edited: ' : ''}Enter runs it in this browser{(pickedPrompt ?? pickedAddition) &&
 				!edited
 					? ` · ${estimate((pickedPrompt ?? pickedAddition)!)}`
@@ -686,14 +722,14 @@
 				· spent so far about ${server.spent_estimate_usd.toFixed(2)} of ${server.cap_usd.toFixed(0)}
 			{:else if picked && !edited}
 				Enter replays the recorded run{savant.status !== 'unsupported'
-					? ` · load ${SAVANT.short} to run it yourself`
+					? ` · load ${model.short} to run it yourself`
 					: ''}
 			{:else if draft.trim()}
 				{savant.status === 'unsupported'
 					? 'This browser cannot run the model: only recorded questions replay.'
 					: savant.status === 'loading'
-						? `Enter queues it: it runs when ${SAVANT.short} has loaded`
-						: `Load ${SAVANT.short} to run this question in your browser`}
+						? `Enter queues it: it runs when ${model.short} has loaded`
+						: `Load ${model.short} to run this question in your browser`}
 			{:else}
 				Enter sends · Shift+Enter for a new line
 			{/if}

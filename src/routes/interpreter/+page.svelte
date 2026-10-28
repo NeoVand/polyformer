@@ -29,20 +29,21 @@
 		type TraceStep,
 		type Turn
 	} from '#lib/interpreter/trace.ts';
-	import { MULTI_CALL, SAVANT } from '#lib/interpreter/webgpu/config.ts';
+	import {
+		exactPrompt,
+		exactReason,
+		LOOKUP_AFTER,
+		type Addition,
+		type PromptSet,
+		type SuggestedPrompt
+	} from '#lib/interpreter/webgpu/prompts.ts';
 	import {
 		applyEvent,
 		liveTrace,
 		startRun,
 		type LiveRun
 	} from '#lib/interpreter/webgpu/live-view.ts';
-	import {
-		exactPrompt,
-		LOOKUP_AFTER,
-		type Addition,
-		type PromptSet,
-		type SuggestedPrompt
-	} from '#lib/interpreter/webgpu/prompts.ts';
+	import { UNPUBLISHED } from '#lib/interpreter/webgpu/config.ts';
 	import { savant, Stopped } from '#lib/interpreter/webgpu/savant.svelte.ts';
 
 	let entries = $state.raw<TraceEntry[]>([]);
@@ -419,20 +420,22 @@
 		if (!turn) return;
 		const suggested = prompts?.prompts.find((p) => p.id === turn.prompt) ?? null;
 		const addition = additions.get(key) ?? null;
+		const reason = exactReason(turn.text);
+		const chosen = savant.model;
 		const id = `savant-${key}-${++attempt}`;
 		turn.browser = id;
 		turn.needsModel = false;
 		const opts = {
-			title: suggested?.title ?? addition?.title,
+			title: suggested?.title ?? addition?.title ?? reason?.title,
 			family: suggested?.family ?? (addition ? 'addition' : null),
 			model: savant.loaded?.model ?? {
-				name: SAVANT.name,
-				compile_adapter: SAVANT.adapter,
-				executor_adapter: SAVANT.adapter,
+				name: chosen.name,
+				compile_adapter: chosen.adapter,
+				executor_adapter: chosen.adapter,
 				adapter_sha256: { compile: '', executor: '' },
 				tokenizer_sha256: '',
 				promptbox_commit: '',
-				about: SAVANT.about
+				about: chosen.about
 			},
 			host: savant.loaded?.host ?? { gpu: null, cpu: null, avx512f: null }
 		};
@@ -453,12 +456,12 @@
 				turn.text,
 				{
 					id,
-					title: suggested?.title ?? addition?.title,
+					title: suggested?.title ?? addition?.title ?? reason?.title,
 					family: suggested?.family ?? (addition ? 'addition' : null),
 					truth: suggested?.truth ?? null,
 					lookupAfter: fast ? LOOKUP_AFTER : null,
 					...(addition ? { addition: { a: addition.a, b: addition.b } } : {}),
-					...(MULTI_CALL ? { multiCall: true } : {})
+					...(chosen.multiCall ? { multiCall: true } : {})
 				},
 				(ev) => {
 					run = applyEvent(run, ev);
@@ -842,9 +845,11 @@
 			{/key}
 			{#if llm && llm.where === 'browser'}
 				<footer class="prov num">
-					{llm.model.name}: {SAVANT.base} with {adapterName(SAVANT.adapter)} merged · {llm.host
-						.dtype ?? SAVANT.dtype} · run in this browser on {llm.host.gpu ?? 'this GPU'} · {llm
-						.host.runtime ?? 'transformers.js'} · PROMPTBOX {llm.model.promptbox_commit.slice(
+					{llm.model.name}: {savant.model.base}{llm.model.compile_adapter === UNPUBLISHED
+						? ', adapter not uploaded yet'
+						: ` with ${adapterName(llm.model.compile_adapter)} merged`} ·
+					{llm.host.dtype ?? savant.model.dtype} · run in this browser on {llm.host.gpu ??
+						'this GPU'} · {llm.host.runtime ?? 'transformers.js'} · PROMPTBOX {llm.model.promptbox_commit.slice(
 						0,
 						8
 					)}{#if llm.timing?.total}

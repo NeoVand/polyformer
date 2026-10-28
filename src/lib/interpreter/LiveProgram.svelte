@@ -6,7 +6,7 @@
 	import type { Attachment } from 'svelte/attachments';
 	import StageLine from './StageLine.svelte';
 	import { int } from './trace.ts';
-	import { SAVANT } from './webgpu/config.ts';
+	import { savant } from './webgpu/savant.svelte.ts';
 	import type { LiveRun } from './webgpu/live-view.ts';
 
 	let { run }: { run: LiveRun } = $props();
@@ -34,7 +34,7 @@
 					class="caret"
 					aria-hidden="true"></span>{/if}{#if !text && !writing}<span class="placeholder"
 					>{run.stage === 'queued'
-						? `Waiting for ${SAVANT.short} to finish loading.`
+						? `Waiting for ${savant.model.short} to finish loading.`
 						: 'The program appears here as the model writes it.'}</span
 				>{/if}</pre>
 		<div class="side">
@@ -43,8 +43,8 @@
 					<b>{int(run.prefill.done)}</b> of {int(run.prefill.total)} tokens read
 				</p>
 				<p class="quiet">
-					{SAVANT.short} reads your question once; the keys and values it computes stay on the GPU and
-					the program and the answer are written after them.
+					{savant.model.short} reads your question once; the keys and values it computes stay on the GPU
+					and the program and the answer are written after them.
 				</p>
 			{:else}
 				<p class="big num">

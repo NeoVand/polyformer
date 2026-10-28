@@ -1,9 +1,21 @@
 /**
- * Savant-4B in this browser, from the page's side: whether the browser can run it (WebGPU, 16-bit shaders, buffer
- * sizes), whether its weights are already in the browser's cache, the download, and one question or poke at a time
- * in the worker. Reactive, so the chat and the panels follow it.
+ * Savant in this browser, from the page's side: which model the visitor picked, whether the browser can run it
+ * (WebGPU, 16-bit shaders, buffer sizes), whether that model's weights are already cached, the download, and one
+ * question or poke at a time in the worker. Reactive, so the chat and the panels follow it.
  */
-import { gb, gpuLabel, SAVANT, savantUrl } from './config.ts';
+import {
+	browserStorage,
+	gb,
+	gpuLabel,
+	modelById,
+	modelUrl,
+	modelsOffered,
+	readModelChoice,
+	resolveModelId,
+	splitCache,
+	writeModelChoice,
+	type SavantModel
+} from './config.ts';
 import type { EngineEvent, Truth } from './engine.ts';
 import type { FromWorker, Loaded, PokeResult, ToWorker } from './protocol.ts';
 import { StubBackend, stubOf } from './stub.ts';
@@ -33,6 +45,15 @@ interface Pending {
 	onEvent?: (e: EngineEvent) => void;
 }
 
+/** What the GPU probe found, before the sentences that name the selected model. */
+interface GpuFacts {
+	kind: 'ok' | 'no-webgpu' | 'no-adapter' | 'no-f16';
+	adapter: string | null;
+	mobile: boolean;
+	buffer: number | null;
+	stub: boolean;
+}
+
 export class Stopped extends Error {
 	constructor() {
 		super('stopped');
@@ -43,16 +64,12 @@ const CACHE = 'transformers-cache';
 /** the largest single weight (the tied embedding, fp16): a GPU must hold it in one buffer */
 const BIGGEST_TENSOR = 151936 * 2560 * 2;
 
-async function checkGpu(): Promise<GpuCheck> {
-	const mobile =
-		typeof navigator !== 'undefined' && /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
-	const stub = stubOf();
-	if (stub)
-		return stub.gpu
-			? { ok: true, reason: null, warn: null, adapter: stub.gpu, mobile }
-			: { ok: false, reason: 'This browser has no WebGPU.', warn: null, adapter: null, mobile };
-	const gpu = typeof navigator !== 'undefined' ? navigator.gpu : undefined;
-	if (!gpu)
+function describeGpu(f: GpuFacts, model: SavantModel): GpuCheck {
+	const mobile = f.mobile;
+	if (f.stub && f.kind === 'no-webgpu')
+		return { ok: false, reason: 'This browser has no WebGPU.', warn: null, adapter: null, mobile };
+	if (f.stub) return { ok: true, reason: null, warn: null, adapter: f.adapter, mobile };
+	if (f.kind === 'no-webgpu')
 		return {
 			ok: false,
 			reason:
@@ -61,8 +78,7 @@ async function checkGpu(): Promise<GpuCheck> {
 			adapter: null,
 			mobile
 		};
-	const a = await gpu.requestAdapter({ powerPreference: 'high-performance' }).catch(() => null);
-	if (!a)
+	if (f.kind === 'no-adapter')
 		return {
 			ok: false,
 			reason:
@@ -71,24 +87,42 @@ async function checkGpu(): Promise<GpuCheck> {
 			adapter: null,
 			mobile
 		};
-	const i: Partial<GPUAdapterInfo> = a.info ?? {};
-	const adapter = gpuLabel(i) ?? 'an unnamed GPU';
-	if (!a.features.has('shader-f16'))
+	if (f.kind === 'no-f16')
 		return {
 			ok: false,
-			reason: `This GPU (${adapter}) offers no 16-bit floats in shaders (shader-f16), which ${SAVANT.short}’s weights need.`,
+			reason: `This GPU (${f.adapter}) offers no 16-bit floats in shaders (shader-f16), which ${model.short}’s weights need.`,
 			warn: null,
-			adapter,
+			adapter: f.adapter,
 			mobile
 		};
-	const big = Math.min(a.limits.maxBufferSize, a.limits.maxStorageBufferBindingSize);
+	const big = f.buffer ?? 0;
 	const warn =
 		big && big < BIGGEST_TENSOR
 			? `This GPU’s largest buffer is ${Math.round(big / 1e6)} MB; the model’s largest weight is ${Math.round(BIGGEST_TENSOR / 1e6)} MB, so loading may fail.`
 			: mobile
-				? `${SAVANT.short} is a ${gb(SAVANT.bytes)} download and needs a few GB of GPU memory: it is made for desktop GPUs.`
+				? `${model.short} is a ${gb(model.bytes)} download and needs a few GB of GPU memory: it is made for desktop GPUs.`
 				: null;
-	return { ok: true, reason: null, warn, adapter, mobile };
+	return { ok: true, reason: null, warn, adapter: f.adapter, mobile };
+}
+
+async function probeGpu(): Promise<GpuFacts> {
+	const mobile =
+		typeof navigator !== 'undefined' && /Android|iPhone|iPad|Mobile/i.test(navigator.userAgent);
+	const stub = stubOf();
+	if (stub)
+		return stub.gpu
+			? { kind: 'ok', adapter: stub.gpu, mobile, buffer: null, stub: true }
+			: { kind: 'no-webgpu', adapter: null, mobile, buffer: null, stub: true };
+	const gpu = typeof navigator !== 'undefined' ? navigator.gpu : undefined;
+	if (!gpu) return { kind: 'no-webgpu', adapter: null, mobile, buffer: null, stub: false };
+	const a = await gpu.requestAdapter({ powerPreference: 'high-performance' }).catch(() => null);
+	if (!a) return { kind: 'no-adapter', adapter: null, mobile, buffer: null, stub: false };
+	const i: Partial<GPUAdapterInfo> = a.info ?? {};
+	const adapter = gpuLabel(i) ?? 'an unnamed GPU';
+	if (!a.features.has('shader-f16'))
+		return { kind: 'no-f16', adapter, mobile, buffer: null, stub: false };
+	const big = Math.min(a.limits.maxBufferSize, a.limits.maxStorageBufferBindingSize);
+	return { kind: 'ok', adapter, mobile, buffer: big || null, stub: false };
 }
 
 const absolute = (base: string) =>
@@ -111,17 +145,21 @@ class Savant {
 	progress = $state.raw<LoadProgress | null>(null);
 	loaded = $state.raw<Loaded | null>(null);
 	error = $state<string | null>(null);
-	/** the weights are in this browser's cache already */
+	/** the selected model's weights are in this browser's cache already */
 	cached = $state<boolean | null>(null);
 	/** a question or a poke is running */
 	busy = $state(false);
 	/** download speed, bytes per second over the last few seconds */
 	rate = $state(0);
-	readonly base = savantUrl();
+	/** which model the visitor picked; r3 until the saved choice is read on the client */
+	modelId = $state(modelById('r3').id);
 
 	private backend: Backend | null = null;
 	private samples: { t: number; b: number }[] = [];
 	private readyListeners = new Set<() => void>();
+	private facts: GpuFacts | null = null;
+	/** cache presence per model id, filled by check */
+	private knownCache: Record<string, boolean> = {};
 
 	/** Calls `fn` each time the model becomes ready; returns the unsubscribe. */
 	onReady(fn: () => void) {
@@ -131,19 +169,74 @@ class Savant {
 	private pending = new Map<number, Pending>();
 	private rid = 0;
 
-	/** WebGPU and the cache, once; safe to call again. */
+	get model(): SavantModel {
+		return modelById(this.modelId);
+	}
+
+	private publishGpu() {
+		this.gpu = this.facts ? describeGpu(this.facts, this.model) : null;
+	}
+
+	/** The models the picker can show right now. The stand-in also shows one whose weights are not uploaded. */
+	offered(): SavantModel[] {
+		return modelsOffered(stubOf() !== null);
+	}
+
+	/** Applies the choice saved in this browser. The page calls it once the document exists, so SSR stays on r3. */
+	restoreChoice() {
+		const id = resolveModelId(readModelChoice(browserStorage()), this.offered());
+		if (id === this.modelId || this.status === 'loading') return;
+		this.modelId = id;
+		if (id in this.knownCache) this.cached = this.knownCache[id];
+		this.publishGpu();
+	}
+
+	/** Picks a model. A model that is loading, or busy with a question, stays put. The choice is remembered. */
+	select(id: string) {
+		if (!this.offered().some((m) => m.id === id)) return;
+		if (this.status === 'loading' || this.busy) return;
+		writeModelChoice(browserStorage(), id);
+		if (id === this.modelId) return;
+		const live = this.backend !== null;
+		if (live) this.release();
+		this.modelId = id;
+		this.cached = id in this.knownCache ? this.knownCache[id] : null;
+		this.error = null;
+		this.publishGpu();
+		if (live || this.status === 'error' || this.status === 'ready')
+			this.status = this.gpu?.ok ? 'can-load' : 'unsupported';
+	}
+
+	private release() {
+		for (const p of this.pending.values()) p.reject(new Stopped());
+		this.pending.clear();
+		this.busy = false;
+		this.backend?.terminate();
+		this.backend = null;
+		this.loaded = null;
+		this.progress = null;
+		this.samples = [];
+		this.rate = 0;
+	}
+
+	/** WebGPU and each offered model's cache, once; safe to call again. */
 	async check() {
 		if (this.status !== 'idle') return;
 		this.status = 'checking';
-		this.gpu = await checkGpu();
-		this.cached = stubOf()
-			? false
-			: (await cachedKeys(this.base)).some((r) => r.url.includes('onnx/'));
-		this.status = this.gpu.ok ? 'can-load' : 'unsupported';
+		this.facts = await probeGpu();
+		this.publishGpu();
+		const stub = stubOf() !== null;
+		for (const m of this.offered())
+			this.knownCache[m.id] = stub
+				? false
+				: (await cachedKeys(modelUrl(m))).some((r) => r.url.includes('onnx/'));
+		this.cached = this.knownCache[this.modelId] ?? false;
+		this.status = this.gpu?.ok ? 'can-load' : 'unsupported';
 	}
 
 	load() {
 		if (this.status === 'loading' || this.status === 'ready') return;
+		const model = this.model;
 		this.status = 'loading';
 		this.error = null;
 		this.progress = null;
@@ -162,7 +255,13 @@ class Savant {
 			backend = w;
 		}
 		this.backend = backend;
-		backend.postMessage({ type: 'load', base: this.base, dtype: SAVANT.dtype, device: 'webgpu' });
+		backend.postMessage({
+			type: 'load',
+			base: modelUrl(model),
+			dtype: model.dtype,
+			device: 'webgpu',
+			model: { name: model.name, adapter: model.adapter, about: model.about }
+		});
 	}
 
 	private fail(error: string) {
@@ -187,6 +286,7 @@ class Savant {
 			this.loaded = m.loaded;
 			this.status = 'ready';
 			this.cached = true;
+			this.knownCache[this.modelId] = true;
 			this.samples = [];
 			for (const fn of this.readyListeners) fn();
 		} else if (m.type === 'load-error') this.fail(m.error);
@@ -260,11 +360,22 @@ class Savant {
 		this.backend?.postMessage({ type: 'cancel', rid });
 	}
 
-	/** Deletes the weights from this browser's cache (the next load downloads them again). */
+	/** Deletes the selected model's weights from this browser's cache. The other model's files stay. */
 	async forget() {
-		if (typeof caches === 'undefined') return;
-		const c = await caches.open(CACHE);
-		for (const r of await cachedKeys(this.base)) await c.delete(r);
+		const prefix = absolute(modelUrl(this.model));
+		if (typeof caches === 'undefined') {
+			this.knownCache[this.modelId] = false;
+			this.cached = false;
+			return;
+		}
+		try {
+			const c = await caches.open(CACHE);
+			const keys = (await c.keys()).map((r) => r.url);
+			for (const url of splitCache(keys, prefix).drop) await c.delete(url);
+		} catch {
+			/* a cache the browser will not open; the button has still done what it can */
+		}
+		this.knownCache[this.modelId] = false;
 		this.cached = false;
 	}
 }

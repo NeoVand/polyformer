@@ -15,8 +15,15 @@ export interface Loaded {
 
 export type PokeResult = Poke & { min_margin: number | null; seconds: Record<string, number> };
 
+/** Which model a load is, so the worker records that model's name rather than a single global. */
+export interface LoadModel {
+	name: string;
+	adapter: string;
+	about: string;
+}
+
 export type ToWorker =
-	| { type: 'load'; base: string; dtype: string; device: 'webgpu' | 'cpu' }
+	| { type: 'load'; base: string; dtype: string; device: 'webgpu' | 'cpu'; model: LoadModel }
 	| {
 			type: 'ask';
 			rid: number;
@@ -29,7 +36,7 @@ export type ToWorker =
 				lookupAfter?: number | null;
 				/** a suggested addition: the two numbers written into the question, to score the run */
 				addition?: { a: string; b: string } | null;
-				/** REASON_FORMAT: calls in the middle of the words (config MULTI_CALL) */
+				/** REASON_FORMAT: calls in the middle of the words (the selected model's multiCall flag) */
 				multiCall?: boolean;
 			};
 	  }

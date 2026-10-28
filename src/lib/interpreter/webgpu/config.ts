@@ -1,57 +1,210 @@
 /**
- * Savant-4B preview r3: the model the page runs in the browser. Qwen3-4B with ARITH's adapter
- * (`arith-s1r2/adapter_step500`: PROMPTBOX's final adapter `rlg-ours/adapter_iter60`, continued 500 steps on certified
- * addition in ARITH_FORMAT's number mode) merged, exported to ONNX for transformers.js (q4f16: 4-bit weights with the
- * v and down projections at 8 bits, fp16 activations).
+ * The models the interpreter can run, one entry each. The browser cache keys files by revision, so two models never
+ * share a file. Savant-4B preview r3 is live. The reasoning model's repo and revision stay placeholders until the
+ * orchestrator fills them after upload; until then the picker hides that choice. The page's test stand-in still
+ * offers it, so the choice can be exercised before the upload.
  */
+
+/** Working name. The final name is pending, so every label reads this constant. */
+export const REASON_MODEL_NAME = 'Savant-4B Reason (preview)';
 
 /**
- * Production weights: the public Hugging Face repo, transformers.js layout (config, tokenizer, onnx/…), pinned to the
- * r3 commit so a browser never mixes files from two versions in its cache.
+ * Placeholder for a repo or revision the orchestrator replaces after upload. A model whose repo or revision is still
+ * this value has no weights, and the picker hides it.
  */
-export const SAVANT_REVISION = 'e2a8de056586e6095b5be74c23f16d5750950776';
-export const SAVANT_URL = `https://huggingface.co/mohsenvand/savant-4b-preview/resolve/${SAVANT_REVISION}/`;
+export const UNPUBLISHED = 'FILL_AFTER_UPLOAD';
 
-/** The model card (licence, provenance); ModelPanel links it as a literal URL. */
-export const SAVANT_CARD = 'https://huggingface.co/mohsenvand/savant-4b-preview';
+export interface SavantModel {
+	id: string;
+	name: string;
+	short: string;
+	/** one line on what this model is good at */
+	description: string;
+	/** Hugging Face repo (`owner/name`), or {@link UNPUBLISHED} */
+	repo: string;
+	/** pinned commit, or {@link UNPUBLISHED} */
+	revision: string;
+	/** `pnpm dev` serves the local export here (vite.config.ts) */
+	devUrl: string;
+	/** what the browser downloads */
+	bytes: number;
+	adapter: string;
+	dtype: string;
+	base: string;
+	/** model card; none until the repo exists */
+	card: string | null;
+	/** calls in the middle of the words (REASON_FORMAT) */
+	multiCall: boolean;
+	/** the Addition suggestion (ARITH_FORMAT number mode) */
+	arithmetic: boolean;
+	about: string;
+}
 
-/** `pnpm dev` serves the local export here (vite.config.ts, from ../models/savant-4b-preview). */
-export const SAVANT_DEV_URL = '/models/savant-4b-preview-r3/';
+export const MODELS: readonly SavantModel[] = [
+	{
+		id: 'r3',
+		name: 'Savant-4B preview r3',
+		short: 'Savant-4B',
+		description: 'Certified addition and the six task families, one program per question.',
+		repo: 'mohsenvand/savant-4b-preview',
+		revision: 'e2a8de056586e6095b5be74c23f16d5750950776',
+		devUrl: '/models/savant-4b-preview-r3/',
+		/** the q4f16 graph, its two weight files, the tokenizer and configs: 3,330 MB */
+		bytes: 3.33e9,
+		adapter: 'arith-s1r2/adapter_step500',
+		dtype: 'q4f16',
+		base: 'Qwen/Qwen3-4B',
+		card: 'https://huggingface.co/mohsenvand/savant-4b-preview',
+		multiCall: false,
+		arithmetic: true,
+		about:
+			"Savant-4B preview r3: Qwen3-4B with ARITH's adapter (PROMPTBOX's final adapter continued on certified " +
+			'addition, arith-s1r2 step 500) merged, exported ' +
+			'to ONNX (4-bit weights, v and down projections 8-bit, fp16 activations) and run by transformers.js on WebGPU ' +
+			'in this browser'
+	},
+	{
+		id: 'reason',
+		name: REASON_MODEL_NAME,
+		short: 'Savant-4B Reason',
+		description: 'Reasons in words and calls programs mid-thought.',
+		repo: UNPUBLISHED,
+		revision: UNPUBLISHED,
+		devUrl: '/models/savant-4b-reason/',
+		/** PLACEHOLDER until the upload records a size: the same q4f16 layout as r3. */
+		bytes: 3.33e9,
+		adapter: UNPUBLISHED,
+		dtype: 'q4f16',
+		base: 'Qwen/Qwen3-4B',
+		card: null,
+		multiCall: true,
+		arithmetic: true,
+		about:
+			`${REASON_MODEL_NAME}: Qwen3-4B continued from ARITH, trained to reason in words and call programs ` +
+			'mid-thought. The weights are not uploaded yet.'
+	}
+];
+
+export const DEFAULT_MODEL_ID = 'r3';
+
+/** localStorage key for the visitor's choice. Reads and writes are wrapped in try/catch. */
+export const MODEL_CHOICE_KEY = 'polyformer.interpreter.model';
+
+export function modelById(id: string): SavantModel {
+	return MODELS.find((m) => m.id === id) ?? MODELS[0];
+}
+
+/** Weights exist to download: both the repo and the revision have been filled in. */
+export function weightsReady(model: Pick<SavantModel, 'repo' | 'revision'>): boolean {
+	return (
+		model.repo !== UNPUBLISHED &&
+		model.revision !== UNPUBLISHED &&
+		model.repo.length > 0 &&
+		model.revision.length > 0
+	);
+}
 
 /**
- * The Addition suggestion (ARITH_FORMAT number mode). On since r3, the first version trained to write the adder.
- * Development builds and the page's test stand-in show it regardless.
+ * Models the picker shows. An unpublished model stays hidden until its repo and revision are filled. The page's test
+ * stand-in passes `allowUnpublished` so the choice can be selected before the upload.
  */
-export const ARITHMETIC: boolean = true;
+export function modelsOffered(
+	allowUnpublished: boolean,
+	models: readonly SavantModel[] = MODELS
+): SavantModel[] {
+	return models.filter((m) => weightsReady(m) || allowUnpublished);
+}
+
+export interface UrlEnv {
+	dev: boolean;
+	/** `$VITE_SAVANT_URL`. Applied to r3 only, so a local override never shares a cache prefix with the other model. */
+	forced?: string;
+}
+
+const withSlash = (url: string) => (url.endsWith('/') ? url : `${url}/`);
+
+export function hfUrl(repo: string, revision: string): string {
+	return `https://huggingface.co/${repo}/resolve/${revision}/`;
+}
+
+function runtimeEnv(): UrlEnv {
+	return {
+		dev: import.meta.env.DEV,
+		forced: import.meta.env.VITE_SAVANT_URL || undefined
+	};
+}
 
 /**
- * Calls in the middle of the words (REASON_FORMAT): the model reasons in words and, mid-reasoning, writes a program,
- * the clock runs it and appends its `<final>` line, and the model reads the result and goes on, possibly over several
- * calls. Off until SAVANT_URL points at a model trained in that format: with it off the page runs today's single call
- * exactly as before. The engine, the chat and the page's test stand-in support it either way.
+ * Where this build loads one model's weights. In dev, each model has its own path. In production, a published model
+ * is its Hugging Face revision. An unpublished model keeps its dev path and is not offered, so nothing fetches it.
  */
-export const MULTI_CALL: boolean = false;
+export function modelUrl(model: SavantModel, env: UrlEnv = runtimeEnv()): string {
+	if (env.forced && model.id === DEFAULT_MODEL_ID) return withSlash(env.forced);
+	if (env.dev) return model.devUrl;
+	if (weightsReady(model)) return hfUrl(model.repo, model.revision);
+	return model.devUrl;
+}
 
-export const SAVANT = {
-	name: 'Savant-4B preview r3',
-	short: 'Savant-4B',
-	dtype: 'q4f16',
-	/** what the browser downloads (the q4f16 graph, its two weight files, the tokenizer and configs: 3,330 MB) */
-	bytes: 3.33e9,
-	adapter: 'arith-s1r2/adapter_step500',
-	base: 'Qwen/Qwen3-4B',
-	about:
-		"Savant-4B preview r3: Qwen3-4B with ARITH's adapter (PROMPTBOX's final adapter continued on certified " +
-		'addition, arith-s1r2 step 500) merged, exported ' +
-		'to ONNX (4-bit weights, v and down projections 8-bit, fp16 activations) and run by transformers.js on WebGPU ' +
-		'in this browser'
-} as const;
+export interface ChoiceStore {
+	getItem(key: string): string | null;
+	setItem(key: string, value: string): void;
+}
 
-/** Where this build loads the weights from: $VITE_SAVANT_URL, else the local export in dev, else Hugging Face. */
-export function savantUrl(): string {
-	const forced = import.meta.env.VITE_SAVANT_URL as string | undefined;
-	if (forced) return forced;
-	return import.meta.env.DEV ? SAVANT_DEV_URL : SAVANT_URL;
+export function browserStorage(): ChoiceStore | null {
+	try {
+		if (typeof localStorage === 'undefined') return null;
+		return localStorage;
+	} catch {
+		return null;
+	}
+}
+
+export function readModelChoice(storage: ChoiceStore | null): string | null {
+	if (!storage) return null;
+	try {
+		return storage.getItem(MODEL_CHOICE_KEY);
+	} catch {
+		return null;
+	}
+}
+
+export function writeModelChoice(storage: ChoiceStore | null, id: string): void {
+	if (!storage) return;
+	try {
+		storage.setItem(MODEL_CHOICE_KEY, id);
+	} catch {
+		/* private mode, a full disk, or a store that throws */
+	}
+}
+
+/** The stored id when that model is offered, otherwise the default, otherwise the first offered model. */
+export function resolveModelId(
+	stored: string | null,
+	offered: readonly { id: string }[],
+	fallback = DEFAULT_MODEL_ID
+): string {
+	if (stored && offered.some((m) => m.id === stored)) return stored;
+	if (offered.some((m) => m.id === fallback)) return fallback;
+	return offered[0]?.id ?? fallback;
+}
+
+/** Cache URLs that belong to `prefix`, and the ones that belong to other models. */
+export function splitCache(
+	keys: readonly string[],
+	prefix: string
+): { drop: string[]; keep: string[] } {
+	const root = withSlash(prefix);
+	const drop: string[] = [];
+	const keep: string[] = [];
+	for (const key of keys) (key.startsWith(root) ? drop : keep).push(key);
+	return { drop, keep };
+}
+
+/** True when deleting one prefix could delete the other's files. */
+export function cachePrefixesOverlap(a: string, b: string): boolean {
+	const pa = withSlash(a);
+	const pb = withSlash(b);
+	return pa.startsWith(pb) || pb.startsWith(pa);
 }
 
 export const gb = (bytes: number) => `${(bytes / 1e9).toFixed(1)} GB`;

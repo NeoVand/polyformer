@@ -90,3 +90,57 @@ export function makeAddition(digits: number, random: () => number = Math.random)
 /** Ticks an addition runs: one per row of the adder's 200 (each two forwards), then one per column. */
 export const additionTicks = (add: Addition, lookupAfter: number | null = null) =>
 	200 + Math.min(add.digits + 1, lookupAfter ?? Infinity);
+
+/**
+ * Composite questions for the reasoning model, from REASON's training templates (`reason_data.py`).
+ * Each training template has six phrasings; the last two are held out, so these use phrasing 0.
+ * Held-out templates (parking_fee, four_total, coin_add_or_sub, drone_compass, rumor_chain, marble_trades) are not used.
+ */
+export interface ReasonPrompt {
+	id: string;
+	/** `reason_data.TRAIN_TEMPLATES` name */
+	template: string;
+	/** phrasing index; 0–3 are trained, 4–5 are held out */
+	phrasing: number;
+	title: string;
+	question: string;
+}
+
+export const REASON_PROMPTS: readonly ReasonPrompt[] = [
+	{
+		id: 'sales-compare',
+		template: 'sales_compare',
+		phrasing: 0,
+		title: 'Two stores',
+		question:
+			'Store X produced 4821 items last year and 903 items this year. Store Y produced 1750 items last year and 2604 items this year. Over the two years, by how many items did the larger total exceed the smaller one?'
+	},
+	{
+		id: 'deposit-chain',
+		template: 'deposit_chain',
+		phrasing: 0,
+		title: 'A deposit',
+		question:
+			'An account starts with 1200 cents. Then 340 cents are added, and later another 55 cents. How many cents are there in the end?'
+	},
+	{
+		id: 'parity-pick-sum',
+		template: 'parity_pick_sum',
+		phrasing: 0,
+		title: 'Parity, then a sum',
+		question:
+			'A sensor wrote this bit string: 1 0 1 1. If the number of 1s is odd, the shipment total is 48 plus 17; if it is even, the total is 48 plus 9. What is the shipment total?'
+	},
+	{
+		id: 'shelf-bill',
+		template: 'shelf_bill',
+		phrasing: 0,
+		title: 'A shelf bill',
+		question:
+			"A shelf holds at most 4 crates and starts with 1. Here is the log: in out in in. 'in' brings one crate and 'out' removes one; an 'in' when the shelf is full is turned away, and an 'out' when it is empty does nothing. Storage costs 3 dollars per crate per day. What is the daily storage bill, in dollars, for the crates left at the end?"
+	}
+];
+
+/** The composite whose text is exactly this, if any. */
+export const exactReason = (text: string) =>
+	REASON_PROMPTS.find((p) => p.question.trim() === text.trim()) ?? null;

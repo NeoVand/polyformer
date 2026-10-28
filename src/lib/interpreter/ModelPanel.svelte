@@ -1,38 +1,72 @@
 <script lang="ts">
 	/**
-	 * Savant-4B in this browser: the one step before anything runs. Checks for WebGPU, offers the download (never
-	 * starts it unasked), shows its progress and speed, then where the model runs. Compact once the chat has turns.
+	 * The model in this browser: which one to run, then the one step before anything runs. Checks for WebGPU, offers
+	 * the download (never starts it unasked), shows its progress and speed, then where the model runs. Compact once
+	 * the chat has turns.
 	 */
 	import { onMount } from 'svelte';
-	import { SAVANT, gb } from './webgpu/config.ts';
+	import { gb, modelUrl, modelsOffered } from './webgpu/config.ts';
 	import { savant } from './webgpu/savant.svelte.ts';
+	import { stubOf } from './webgpu/stub.ts';
 
 	let { compact = false }: { compact?: boolean } = $props();
 
+	/**
+	 * Stays false through hydration. The stand-in may offer a model whose weights are not uploaded yet; that choice
+	 * appears after mount so the server HTML and the first client render match.
+	 */
+	let client = $state(false);
+
 	onMount(() => {
-		savant.check();
+		client = true;
+		savant.restoreChoice();
+		void savant.check();
 	});
 
+	const choices = $derived(modelsOffered(client && stubOf() !== null));
+	const model = $derived(savant.model);
 	const rate = $derived(savant.rate);
 
 	/** the files report their sizes as they start; until the weights have, the known size stands in */
-	const total = $derived(Math.max(savant.progress?.total ?? 0, SAVANT.bytes));
+	const total = $derived(Math.max(savant.progress?.total ?? 0, model.bytes));
 	const loaded = $derived(savant.progress?.loaded ?? 0);
 	const frac = $derived(total ? Math.min(1, loaded / total) : 0);
 	/** every byte is in and the runtime is building the model on the GPU */
 	const preparing = $derived(savant.status === 'loading' && !!savant.progress && frac >= 0.999);
 	const eta = $derived(rate > 0 && !preparing ? (total - loaded) / rate : null);
 	const fileName = $derived(savant.progress?.file?.split('/').pop() ?? '');
+	const locked = $derived(savant.status === 'loading' || savant.busy);
 
 	const mmss = (s: number) =>
 		s >= 90 ? `about ${Math.round(s / 60)} min left` : `about ${Math.max(1, Math.round(s))} s left`;
-	const size = $derived(savant.cached ? 'from this browser' : `~${gb(SAVANT.bytes)}`);
+	const size = $derived(savant.cached ? 'from this browser' : `~${gb(model.bytes)}`);
 </script>
+
+{#snippet picker(quiet: boolean)}
+	<div class={['choices', quiet && 'quiet']} role="radiogroup" aria-label="Which model">
+		{#each choices as m (m.id)}
+			<button
+				class="choice"
+				type="button"
+				role="radio"
+				aria-checked={model.id === m.id}
+				data-base={modelUrl(m)}
+				disabled={locked}
+				onclick={() => savant.select(m.id)}
+			>
+				<span class="nm">{m.name}</span>
+				<span class="sz num">~{gb(m.bytes)}</span>
+				{#if !quiet}<span class="desc">{m.description}</span>{/if}
+			</button>
+		{/each}
+	</div>
+{/snippet}
 
 <section class={['model', compact && 'compact']} aria-label="The model">
 	{#if compact}
+		{#if choices.length > 1}{@render picker(true)}{/if}
 		<div class="line">
-			<span class="name">{SAVANT.name}</span>
+			{#if choices.length <= 1}<span class="name">{model.name}</span>{/if}
 			{#if savant.status === 'ready'}
 				<span class="quiet num">running in this tab on {savant.loaded?.host.gpu}</span>
 			{:else if savant.status === 'loading'}
@@ -48,13 +82,13 @@
 				<button
 					class="btn load-small"
 					disabled={savant.status === 'checking'}
-					onclick={() => savant.load()}>Load {SAVANT.short} · {size}</button
+					onclick={() => savant.load()}>Load {model.short} · {size}</button
 				>
 			{/if}
 		</div>
 	{:else}
 		<div class="head">
-			<span class="name">{SAVANT.name}</span>
+			<span class="name">{choices.length > 1 ? 'Model' : model.name}</span>
 			<span class="word"
 				>{savant.status === 'ready'
 					? 'running here'
@@ -69,6 +103,11 @@
 								: 'not loaded'}</span
 			>
 		</div>
+		{#if choices.length > 1}
+			{@render picker(false)}
+		{:else}
+			<p class="one">{model.description} <span class="num">~{gb(model.bytes)}</span></p>
+		{/if}
 
 		{#if savant.status === 'unsupported'}
 			<p class="why">{savant.gpu?.reason}</p>
@@ -112,7 +151,7 @@
 				disabled={savant.status === 'idle' || savant.status === 'checking'}
 				onclick={() => savant.load()}
 			>
-				<span class="main">Load {SAVANT.short}<span class="size num">{size}</span></span>
+				<span class="main">Load {model.short}<span class="size num">{size}</span></span>
 				<span class="dim">Runs on your GPU; nothing leaves your browser</span>
 			</button>
 			<p class="quiet">
@@ -125,11 +164,10 @@
 			{#if savant.error}<p class="err">Loading stopped: {savant.error}</p>{/if}
 		{/if}
 		<p class="license">
-			{SAVANT.short} is a research preview. Weights © the Polyformer authors, all rights reserved; licensed
-			for use in this page only.
-			<a href="https://huggingface.co/mohsenvand/savant-4b-preview" target="_blank" rel="noopener"
-				>Model card</a
-			>{#if savant.status === 'ready' || savant.cached}
+			{model.short} is a research preview. Weights © the Polyformer authors, all rights reserved; licensed
+			for use in this page only.{#if model.card}&nbsp;<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link -->
+				<a href={model.card} target="_blank" rel="noopener">Model card</a
+				>{/if}{#if savant.status === 'ready' || savant.cached}
 				· <button
 					class="link"
 					onclick={() => savant.forget()}
@@ -153,13 +191,71 @@
 		border-top: 0;
 		border-bottom: 1px solid #222;
 	}
+	.choices {
+		display: grid;
+		gap: 8px;
+	}
+	.choices.quiet {
+		display: flex;
+		flex-wrap: wrap;
+		gap: 2px 14px;
+	}
+	.choice {
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) auto;
+		column-gap: 12px;
+		row-gap: 1px;
+		width: 100%;
+		border: 0;
+		padding: 0;
+		background: transparent;
+		font: inherit;
+		text-align: left;
+		cursor: pointer;
+		color: inherit;
+	}
+	.choices.quiet .choice {
+		width: auto;
+		max-width: 100%;
+		grid-template-columns: auto auto;
+	}
+	.choice .nm {
+		font-size: var(--text-xs);
+		line-height: 1.4;
+		color: var(--color-ink-2);
+		min-width: 0;
+	}
+	.choice .sz {
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+	}
+	.choice .desc {
+		grid-column: 1 / -1;
+		font-size: var(--text-2xs);
+		line-height: 1.45;
+		color: var(--color-ink-3);
+	}
+	.choice[aria-checked='true'] .nm {
+		color: var(--color-ink);
+		text-decoration: underline;
+		text-underline-offset: 4px;
+		text-decoration-thickness: 1px;
+	}
+	.choice:disabled {
+		cursor: default;
+	}
+	.one {
+		font-size: var(--text-2xs);
+		line-height: 1.5;
+		color: var(--color-ink-3);
+	}
 	.line {
 		display: flex;
 		align-items: center;
 		gap: 10px;
 		min-width: 0;
 		font-size: var(--text-2xs);
-		white-space: nowrap;
+		flex-wrap: wrap;
 	}
 	.line .quiet {
 		overflow: hidden;

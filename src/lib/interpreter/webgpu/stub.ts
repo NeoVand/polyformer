@@ -6,7 +6,7 @@
 import { digitPairs, exactSum, readNumbers } from './arith.ts';
 import type { EngineEvent } from './engine.ts';
 import type { FromWorker, ToWorker } from './protocol.ts';
-import { SAVANT } from './config.ts';
+import { modelById } from './config.ts';
 import type { LlmRegister, LlmTrace, ProgramRow } from '../trace.ts';
 
 export interface SavantStub {
@@ -24,7 +24,7 @@ export interface SavantStub {
 	asked?: string[];
 	lookups?: (number | null)[];
 	additions?: ({ a: string; b: string } | null)[];
-	/** each question's `multiCall` option (config MULTI_CALL), null when the page sent none */
+	/** each question's `multiCall` option (the selected model's flag), null when the page sent none */
 	multiCalls?: (boolean | null)[];
 	poked?: { register: string; step: number; forced: number }[];
 }
@@ -290,28 +290,41 @@ function rerunAddition(
 	};
 }
 
-const stubModel = () => ({
-	name: SAVANT.name,
-	compile_adapter: SAVANT.adapter,
-	executor_adapter: SAVANT.adapter,
-	adapter_sha256: { compile: '', executor: '' },
-	tokenizer_sha256: '',
-	promptbox_commit: '71268f94861079c34572b04eb87ac5aaa7888f96',
-	about: SAVANT.about
-});
-const stubHost = (s: SavantStub) => ({
-	gpu: s.gpu ?? 'a stand-in GPU',
-	cpu: null,
-	avx512f: null,
-	runtime: 'a test stand-in',
-	dtype: SAVANT.dtype
-});
+const fallbackModel = modelById('r3');
 
 export class StubBackend {
 	onmessage: ((m: FromWorker) => void) | null = null;
 	private timers = new Set<ReturnType<typeof setTimeout>>();
 	private cancelled = new Set<number>();
+	private shown = {
+		name: fallbackModel.name,
+		adapter: fallbackModel.adapter,
+		about: fallbackModel.about,
+		dtype: fallbackModel.dtype
+	};
 	constructor(private stub: SavantStub) {}
+
+	private modelInfo() {
+		return {
+			name: this.shown.name,
+			compile_adapter: this.shown.adapter,
+			executor_adapter: this.shown.adapter,
+			adapter_sha256: { compile: '', executor: '' },
+			tokenizer_sha256: '',
+			promptbox_commit: '71268f94861079c34572b04eb87ac5aaa7888f96',
+			about: this.shown.about
+		};
+	}
+
+	private hostInfo() {
+		return {
+			gpu: this.stub.gpu ?? 'a stand-in GPU',
+			cpu: null,
+			avx512f: null,
+			runtime: 'a test stand-in',
+			dtype: this.shown.dtype
+		};
+	}
 
 	private emit(m: FromWorker, after: number) {
 		const t = setTimeout(() => {
@@ -335,6 +348,12 @@ export class StubBackend {
 		const s = this.stub;
 		const d = s.delay ?? 15;
 		if (m.type === 'load') {
+			this.shown = {
+				name: m.model.name,
+				adapter: m.model.adapter,
+				about: m.model.about,
+				dtype: m.dtype
+			};
 			const ms = s.loadMs ?? 400;
 			const total = 2.9e9;
 			for (let k = 1; k <= 8; k++)
@@ -357,10 +376,10 @@ export class StubBackend {
 					{
 						type: 'loaded',
 						loaded: {
-							model: stubModel(),
-							host: stubHost(s),
+							model: this.modelInfo(),
+							host: this.hostInfo(),
 							device: 'webgpu',
-							dtype: SAVANT.dtype,
+							dtype: this.shown.dtype,
 							lastOnly: true,
 							seconds: ms / 1000
 						}
@@ -380,8 +399,8 @@ export class StubBackend {
 				title: m.opts.title ?? base.title,
 				live: true,
 				where: 'browser',
-				model: stubModel(),
-				host: stubHost(s),
+				model: this.modelInfo(),
+				host: this.hostInfo(),
 				source: 'savant-browser',
 				truth: m.opts.truth?.answer ?? null,
 				score: m.opts.truth ? base.score : undefined,
@@ -423,8 +442,8 @@ export class StubBackend {
 							prompt: m.question,
 							live: true,
 							where: 'browser' as const,
-							model: stubModel(),
-							host: stubHost(s),
+							model: this.modelInfo(),
+							host: this.hostInfo(),
 							source: 'savant-browser'
 						}
 					}))

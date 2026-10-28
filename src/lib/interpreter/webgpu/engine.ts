@@ -12,7 +12,7 @@
  *             certified row's
  *   answer    `\n<final> X=v </final>\n` after the program, then greedy words (300 tokens at most)
  *   poke      force a state entering tick k, real ticks to the end, the words again
- *   calls     with `multiCall` (REASON_FORMAT, config MULTI_CALL), the words may hold several calls: each `<exec/>`
+ *   calls     with `multiCall` (REASON_FORMAT, the selected model's flag), the words may hold several calls: each `<exec/>`
  *             is run as above with Π built fresh, its `<final>` line (or an error line) is fed like a prompt, and the
  *             model resumes, until its end token
  *
@@ -137,7 +137,7 @@ export interface AskOptions {
 	truth?: Truth | null;
 	/** a suggested addition: the two numbers the page wrote into the question, to score the run against */
 	addition?: { a: string; b: string } | null;
-	/** REASON_FORMAT: calls in the middle of the words, resumed after each `<final>` (config MULTI_CALL) */
+	/** REASON_FORMAT: calls in the middle of the words, resumed after each `<final>` (the selected model's flag) */
 	multiCall?: boolean;
 	signal?: AbortSignal;
 }
