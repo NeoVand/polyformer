@@ -855,6 +855,11 @@
 		line-height: 1.5;
 		resize: vertical;
 		field-sizing: content;
+		/* long unbroken inputs (a bit string, a big number) wrap instead of widening the box and the column */
+		max-width: 100%;
+		min-width: 0;
+		overflow-wrap: anywhere;
+		word-break: break-all;
 	}
 	textarea:focus {
 		outline: none;
