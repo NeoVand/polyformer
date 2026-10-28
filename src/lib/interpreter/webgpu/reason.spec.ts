@@ -14,8 +14,10 @@ import {
 	errorFinalText,
 	exactDifference,
 	HARD_STOP_CALLS,
+	hasNewProgram,
 	isSubtracter,
 	lastCallStart,
+	lastExecStart,
 	limitAt,
 	locate,
 	match,
@@ -23,6 +25,7 @@ import {
 	notesOf,
 	readCall,
 	relaxedPattern,
+	resultNumbers,
 	resultValueOf,
 	sourcesOf
 } from './reason.ts';
@@ -97,6 +100,22 @@ describe('limits and lines (§5, §6)', () => {
 		]);
 	});
 
+	it('needs a <program> after the last final for an <exec/> to run (§12.1)', () => {
+		expect(hasNewProgram('Words.\n\n<program>\ntask: t\n</program>\n<exec/>')).toBe(true);
+		expect(hasNewProgram('<program>…<exec/>\n<final> c=0 s=4 </final>\nAgain.\n\n<exec/>')).toBe(
+			false
+		);
+		expect(
+			hasNewProgram('<program>…<exec/>\n<final> error: no program </final>\n<program>…<exec/>')
+		).toBe(true);
+		expect(hasNewProgram('No program at all. <exec/>')).toBe(false);
+	});
+
+	it('numbers results by the calls that ran: an error line takes none (§12)', () => {
+		expect(resultNumbers(['12', null, '7', null, null, '3'])).toEqual([1, null, 2, null, null, 3]);
+		expect(resultNumbers([])).toEqual([]);
+	});
+
 	it('reads a final line’s value: the last name=value field; none for an error line', () => {
 		expect(resultValueOf('\n<final> t= honest </final>\n')).toBe('honest');
 		expect(resultValueOf('\n<final> c=0 s=4173 </final>\n')).toBe('4173');
@@ -168,12 +187,17 @@ function checks(label: string, getTok: () => Tok) {
 					const tok = getTok();
 					expect(tok.decode(c.response_ids)).toBe(c.response_text);
 					const results: (string | null)[] = [];
+					expect(resultNumbers(c.calls.map((x) => x.value))).toEqual(
+						c.calls.map((x) => x.result_number)
+					);
 					for (const call of c.calls) {
 						const upTo = c.response_ids.slice(0, call.end);
 						const text = tok.decode(upTo);
 						expect(notesOf(text)).toBe(call.notes);
 						expect(sourcesOf(c.question, text)).toEqual([c.question, call.notes]);
 						expect(lastCallStart(tok, upTo)).toBe(call.start);
+						expect(hasNewProgram(text)).toBe(true);
+						expect(lastExecStart(tok, upTo, call.start)).toBe(call.end - 3);
 						const prog = parseGenerated(tok, upTo.slice(call.start), nl, { results: true });
 						const got = readCall(tok, c.question, text, prog, results);
 						expect(got.mode).toBe(call.mode);
@@ -190,6 +214,24 @@ function checks(label: string, getTok: () => Tok) {
 					}
 				});
 			});
+
+		it('a cited result counts only the calls that ran', () => {
+			const tok = getTok();
+			const chain = reason.cases.find((x) => x.name === 'chain_add_add_sub')!;
+			const call = chain.calls[2];
+			const upTo = chain.response_ids.slice(0, call.end);
+			const prog = parseGenerated(tok, upTo.slice(call.start), nl, { results: true });
+			const text = tok.decode(upTo);
+			const [a, b] = chain.calls.map((x) => x.value!);
+			// results 1 and 2 are the 1st and 3rd calls when the 2nd ended in an error line
+			expect(readCall(tok, chain.question, text, prog, [a, null, b]).numbers).toEqual([a, b]);
+			expect(readCall(tok, chain.question, text, prog, [a, null]).error).toBe(
+				'second number: no result 2'
+			);
+			expect(readCall(tok, chain.question, text, prog, [null, null, a]).error).toBe(
+				'second number: no result 2'
+			);
+		});
 
 		it('parses `first: result k` only when asked, and today’s parse is unchanged', () => {
 			const tok = getTok();

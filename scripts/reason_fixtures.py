@@ -24,7 +24,8 @@ SRC = pathlib.Path(sys.argv[1] if len(sys.argv) > 1 else ROOT.parent / "reason" 
 OUT = ROOT / "src" / "lib" / "interpreter" / "webgpu" / "fixtures" / "reason.json"
 CHAT = "<|im_start|>user\n{q}<|im_end|>\n<|im_start|>assistant\n<think>\n\n</think>\n\n"
 # error lines the page's tests write besides the fixtures' own (REASON_FORMAT §5, §6)
-MESSAGES = ["too many calls", "first number: no result 1", "first number: no result 5",
+MESSAGES = ["too many calls", "no program", "first number: no result 1", "first number: no result 2",
+            "first number: no result 5",
             "second number: no result 3", "first number: anchors not found in the prompt",
             "second number: anchors not found in the prompt", "anchors not found in the prompt"]
 

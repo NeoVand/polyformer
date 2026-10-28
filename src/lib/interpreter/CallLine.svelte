@@ -14,6 +14,8 @@
 		program,
 		call = null,
 		live = false,
+		note = null,
+		callOf = null,
 		shown = false,
 		onshow
 	}: {
@@ -24,6 +26,10 @@
 		call?: ReasonCall | null;
 		/** the model is writing it or the clock has it */
 		live?: boolean;
+		/** for a call with no record: why (cut off before its <exec/>) */
+		note?: string | null;
+		/** result n → the call that made it (results count only the calls that ran) */
+		callOf?: Map<number, number> | null;
 		/** the page's panels show this call */
 		shown?: boolean;
 		onshow?: () => void;
@@ -63,6 +69,11 @@
 			.filter(Boolean)
 			.join(' · ');
 	});
+	/** "result 2", and the call that made it when the numbers differ (an error line takes no number) */
+	const citeOf = (n: number) => {
+		const c = callOf?.get(n);
+		return c !== undefined && c !== n ? `result ${n}, call ${c}` : `result ${n}`;
+	};
 	/** where each number or the tape was read: the question, the notes, or an earlier result */
 	const reads = $derived.by(() => {
 		if (!call) return [];
@@ -74,7 +85,7 @@
 				which: call.mode === 'numbers' ? (i ? 'second' : 'first') : 'tape',
 				from:
 					'result' in r.from
-						? `result ${r.from.result}`
+						? citeOf(r.from.result)
 						: r.from.source === 0
 							? 'the question'
 							: 'the notes',
@@ -103,9 +114,12 @@
 		<p class={['status', 'num', call.error && 'err']}>
 			<span>{status}</span>
 			{#if call.value !== null}
-				<span class="val" aria-label="Result {k}">→ {call.value}</span>
+				<span class="val" aria-label="Result of call {k}">→ {call.value}</span>
+				{#if call.result !== null && call.result !== k}<span>as result {call.result}</span>{/if}
 			{/if}
 		</p>
+	{:else if note}
+		<p class="status num">{note}</p>
 	{/if}
 	{#if open && call}
 		<div class="detail">

@@ -338,8 +338,10 @@ export interface ReasonCall {
 	/** the line the clock appended, and its ids (null: the 12th call gets none) */
 	final_text: string | null;
 	final_ids: number[] | null;
-	/** result k: the last name=value field of the final line; null for an error */
+	/** the result: the last name=value field of the final line; null for an error */
 	value: string | null;
+	/** its number for `first: result n`: the calls that ran, counted (null for an error line, §12) */
+	result: number | null;
 	/** every register certified (null when nothing ran) */
 	certified: boolean | null;
 	/** the run in the shape the panels read (its registers, tape or numbers); its `note` says why nothing ran */
@@ -356,8 +358,11 @@ export interface ReasonRecord {
 	calls: ReasonCall[];
 	/** the whole response: the model's ids and the clock's finals */
 	response_ids: number[];
-	/** the model's end token, the token budget, or the 12th call */
-	end: 'stop' | 'length' | 'hard stop';
+	/**
+	 * why it ended: the model's end token, the token budget, the context, or the 12th call. Only 'stop' is a finished
+	 * response; the others have no answer (§12.3)
+	 */
+	end: 'stop' | 'length' | 'context' | 'hard stop';
 }
 
 /** An LLM run: PROMPTBOX's model wrote the program and ran it (kind 'llm' of polyformer.trace/0). */

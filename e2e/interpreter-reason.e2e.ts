@@ -61,7 +61,7 @@ test('a reply with calls in the middle: the words, three certified calls and the
 	const calls = chain.reason.calls;
 	for (const c of calls) {
 		await expect(callLine(page, c.k)).toContainText('task: ');
-		await expect(reply(page).getByLabel(`Result ${c.k}`)).toHaveText(`→ ${c.value}`);
+		await expect(reply(page).getByLabel(`Result of call ${c.k}`)).toHaveText(`→ ${c.value}`);
 	}
 	await expect(reply(page).locator('.call .status').first()).toContainText(
 		'certified · 200 rows · run exact'
@@ -120,7 +120,11 @@ test('an error line where the clock cannot read a call, then the retry', async (
 		'error: first number: no result 5'
 	);
 	await expect(reply(page)).toContainText('There is no result 5; I meant result 1.');
-	await expect(reply(page).getByLabel('Result 3')).toHaveText(`→ ${retry.reason.calls[2].value}`);
+	await expect(reply(page).getByLabel('Result of call 3')).toHaveText(
+		`→ ${retry.reason.calls[2].value}`
+	);
+	// the error line took no number: call 3 made result 2 (REASON_FORMAT §12)
+	await expect(reply(page).locator('.call').nth(2).locator('.status')).toContainText('as result 2');
 	// the error call opens to its program and the clock's reason
 	await callLine(page, 2).click();
 	await expect(reply(page).locator('.call.open')).toContainText(
@@ -168,7 +172,7 @@ test('a tape read from the notes runs as a call, and its result is a state', asy
 	await expect(reply(page).locator('.reason .summary')).toHaveText('1 call · certified', {
 		timeout: 20_000
 	});
-	await expect(reply(page).getByLabel('Result 1')).toHaveText('→ honest');
+	await expect(reply(page).getByLabel('Result of call 1')).toHaveText('→ honest');
 	await callLine(page, 1).click();
 	const open = reply(page).locator('.call.open');
 	await expect(open.locator('.reads')).toContainText('40 events');

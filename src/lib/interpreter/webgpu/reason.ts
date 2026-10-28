@@ -3,8 +3,9 @@
  * ba619ecc): calls in the middle of a transcript. A call reads from two sources, the question (S0) and the notes (S1:
  * the response before the call with every `<program>…<exec/>` deleted); `locate` finds a quote pair over them, exact
  * first and then with whitespace relaxed, falling through S0 to S1; a number line may cite an earlier call's result
- * (`first: result 2`); a call that cannot run gets `\n<final> error: <msg> </final>\n`; at most 8 calls run, and the
- * 12th `<exec/>` ends the response. Π, the tick, the certificate and a run's final line are today's (pb.ts, arith.ts,
+ * (`first: result 2`, the 2nd call that ran: an error line takes no number); a call that cannot run gets
+ * `\n<final> error: <msg> </final>\n`, and so does an `<exec/>` with no new `<program>` since the last final; at most 8
+ * calls run, and the 12th `<exec/>` ends the response (REASON_FORMAT §12 as of 28 Oct, 15:20 UTC). Π, the tick, the certificate and a run's final line are today's (pb.ts, arith.ts,
  * engine.ts). reason.spec.ts checks this file against the reference's fixtures (fixtures/reason.json).
  */
 import { digitIds, digitPairs, readNumber } from './arith.ts';
@@ -14,6 +15,8 @@ import { pyFind, pyRepr, pyStrip, walk, type Program, type Tok } from './pb.ts';
 export const MAX_CALLS = 8;
 export const HARD_STOP_CALLS = 11;
 export const TOO_MANY = 'too many calls';
+/** §12.1: an `<exec/>` with no new `<program>` since the last final */
+export const NO_PROGRAM = 'no program';
 
 const PROGRAM_BLOCK = /<program>[\s\S]*?<exec\/>/g;
 /** §12: the relaxed match's whitespace is ASCII, so Python and JS agree */
@@ -128,6 +131,29 @@ export const resultValue = (tok: Tok, finalIds: number[]) => resultValueOf(tok.d
 export const errorFinalText = (msg: string) => `\n<final> error: ${msg} </final>\n`;
 export const errorFinalIds = (tok: Tok, msg: string) => tok.encode(errorFinalText(msg));
 
+/**
+ * §12.1 (reason_core.clock_step): the text after the last `</final>` holds a `<program>` of its own. Without one the
+ * `<exec/>` gets an error line and never re-runs an earlier program.
+ */
+export function hasNewProgram(responseText: string): boolean {
+	const at = responseText.lastIndexOf('</final>');
+	return (at < 0 ? responseText : responseText.slice(at + '</final>'.length)).includes('<program>');
+}
+
+/** Index of the token holding the '<' of the last '<exec/>' at or after `from` (`from` if there is none). */
+export function lastExecStart(tok: Tok, ids: number[], from = 0): number {
+	for (let i = ids.length - 1; i >= from; i--)
+		if (tok.decode([ids[i]]).includes('<') && tok.decode(ids.slice(i, i + 6)).includes('<exec/>'))
+			return i;
+	return from;
+}
+
+/** The result numbers of calls in order: the k-th call that ran is result k; an error line takes none (§5, §12). */
+export function resultNumbers(values: (string | null)[]): (number | null)[] {
+	let n = 0;
+	return values.map((v) => (v === null ? null : ++n));
+}
+
 /** What the clock does at an `<exec/>` after `calls` calls: run it, refuse it with an error line, or end. */
 export function limitAt(calls: number): 'run' | 'too many' | 'end' {
 	if (calls >= HARD_STOP_CALLS) return 'end';
@@ -156,7 +182,7 @@ export interface CallReading {
 
 /**
  * reason_core.read_call: the clock's reading for one parsed call (parsed with `results: true`). `results` holds the
- * values of the earlier calls (null for an error). Tape mode walks the span's tokens in the tokenisation of its own
+ * values of the earlier calls in order (null for one that ended in an error line); `result k` is the k-th that ran. Tape mode walks the span's tokens in the tokenisation of its own
  * source; number mode reads the first number from (0, 0) and the second from the end of the first, retrying once from
  * (0, 0); a cited result needs no locating.
  */
@@ -195,7 +221,9 @@ export function readCall(
 	for (const which of ['first', 'second'] as const) {
 		const cite = prog.cites?.[which];
 		if (cite !== undefined) {
-			const val = cite >= 1 && cite <= results.length ? results[cite - 1] : null;
+			// results are numbered by the calls that ran only (§12)
+			const ok = results.filter((v): v is string => v !== null);
+			const val = cite >= 1 && cite <= ok.length ? ok[cite - 1] : null;
 			if (val === null) {
 				out.error = `${which} number: no result ${cite}`;
 				return out;

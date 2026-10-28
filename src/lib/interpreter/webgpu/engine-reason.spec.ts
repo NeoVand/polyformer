@@ -73,6 +73,7 @@ describe('the reference’s transcripts on a scripted model', { timeout: 120_000
 				expect(got.final_ids).toEqual(want.final_ids);
 				expect(got.final_text).toBe(want.final_text);
 				expect(got.value).toBe(want.value);
+				expect(got.result).toBe(want.result_number);
 				expect(got.error).toBe(want.error);
 				expect(got.mode).toBe(want.mode);
 				expect(got.spans).toEqual(want.spans);
@@ -208,6 +209,8 @@ describe('the reference’s transcripts on a scripted model', { timeout: 120_000
 		const calls = out.reason!.calls;
 		expect(calls).toHaveLength(12);
 		expect(out.reason!.end).toBe('hard stop');
+		// §12.3: a response the 12th call stopped has no answer
+		expect(out.answer).toBe('');
 		expect(calls.slice(0, 8).every((k) => k.value === one.value && k.certified)).toBe(true);
 		for (const k of calls.slice(8, 11)) {
 			expect(k.error).toBe('too many calls');
@@ -226,6 +229,67 @@ describe('the reference’s transcripts on a scripted model', { timeout: 120_000
 		expect(lm.ticks).toBe(400 + 8 * 2 * calls[0].run.arith!.columns);
 		engine.dispose();
 		expect(lm.live.size).toBe(0);
+	});
+
+	it('an <exec/> with no new <program> gets an error line, takes no number, and runs nothing (§12.1)', async () => {
+		const c = caseNamed('chain_add_add_sub');
+		const [one, two, three] = c.calls;
+		const exec = c.response_ids.slice(one.end - 3, one.end); // the ids of <exec/>
+		const afterOne = one.end + one.final_ids.length;
+		const pieces = [
+			c.response_ids.slice(0, one.end),
+			// "That is store X's total." then <exec/> with no program of its own
+			[...c.response_ids.slice(afterOne, two.start), ...exec],
+			// call 2 as the reference writes it (its words again, then its program quoting the question)
+			c.response_ids.slice(afterOne, two.end),
+			// call 3 cites results 1 and 2: the 1st and 3rd calls, since the error line took no number
+			c.response_ids.slice(two.end + two.final_ids.length, three.end),
+			c.response_ids.slice(three.end + three.final_ids.length)
+		];
+		const lm = lmFor(c, pieces);
+		const engine = engineFor(lm);
+		const out = await engine.ask(c.question, { id: 'x', multiCall: true }, () => {});
+		const calls = out.reason!.calls;
+		expect(calls.map((k) => [k.k, k.error, k.result, k.value])).toEqual([
+			[1, null, 1, one.value],
+			[2, 'no program', null, null],
+			[3, null, 2, two.value],
+			[4, null, 3, three.value]
+		]);
+		const bad = calls[1];
+		expect(bad.final_text).toBe(errorFinalText('no program'));
+		expect(bad.final_ids).toEqual(tok.encode(errorFinalText('no program')));
+		expect([bad.mode, bad.spans, bad.certified, bad.run.registers]).toEqual([null, [], null, []]);
+		// the error call is its own <exec/>, after the words before it; call 1's program is never run again
+		expect(bad.program).toBe('<exec/>');
+		expect([bad.start, bad.end]).toEqual([two.start, two.start + 3]);
+		expect(out.reason!.segments[2]).toEqual({ kind: 'text', text: "That is store X's total.\n\n" });
+		// ticks: the adder certified once and run twice (calls 1 and 3), the subtracter once
+		const cols = (k: number) => calls[k].run.arith!.columns;
+		expect(lm.ticks).toBe(400 + 2 * cols(0) + 2 * cols(2) + 400 + 2 * cols(3));
+		expect(out.answer).toBe(pyStrip(tok.decode(pieces[4])));
+		engine.dispose();
+		expect(lm.live.size).toBe(0);
+	});
+
+	it('a response the token budget cuts off is unfinished: no answer (§12.3)', async () => {
+		const c = caseNamed('chain_add_add_sub');
+		const one = c.calls[0];
+		const words = c.response_ids.slice(one.end + one.final_ids.length, c.calls[1].start);
+		// words with no end in sight: more than the round's 3,000 tokens (plus the last result's length)
+		const pieces = [c.response_ids.slice(0, one.end), Array(500).fill(words).flat()];
+		const out = await engineFor(lmFor(c, pieces)).ask(
+			c.question,
+			{ id: 'x', multiCall: true },
+			() => {}
+		);
+		expect(out.reason!.end).toBe('length');
+		expect(out.compile.finish).toBe('length');
+		expect(out.answer).toBe('');
+		expect(out.reason!.calls).toHaveLength(1);
+		expect(out.reason!.response_ids.length - (one.end + one.final_ids.length)).toBe(
+			3000 + one.value!.length
+		);
 	});
 
 	it('a stop mid-transcript frees every cache', async () => {

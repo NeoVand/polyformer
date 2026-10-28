@@ -395,6 +395,7 @@
 						<ReasonReply
 							segments={multi.reason.segments}
 							calls={multi.reason.calls}
+							end={multi.reason.end}
 							shown={shownCall?.key === turn.key ? shownCall.k : null}
 							onshow={oncall ? (k) => oncall(turn.key, k) : undefined}
 						/>

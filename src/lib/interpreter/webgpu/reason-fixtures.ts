@@ -5,6 +5,8 @@ import { FixtureTok } from './testkit.ts';
 
 export interface ReasonFixtureCall {
 	call: number;
+	/** its number for `result n`: the calls that ran, counted; null for an error line (§12) */
+	result_number: number | null;
 	/** the call's ids in the response: [start, end), from its <program> to its <exec/> */
 	start: number;
 	end: number;

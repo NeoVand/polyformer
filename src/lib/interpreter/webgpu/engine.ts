@@ -24,9 +24,12 @@ import { clockPairs, digitIds, exactSum, finalIdsMealy } from './arith.ts';
 import {
 	errorFinalIds,
 	exactDifference,
+	hasNewProgram,
 	isSubtracter,
 	lastCallStart,
+	lastExecStart,
 	limitAt,
+	NO_PROGRAM,
 	readCall,
 	resultValueOf,
 	TOO_MANY,
@@ -1494,11 +1497,13 @@ export class Engine {
 				let lastEmit = 0;
 				const first = !calls.length;
 				const prev = results.at(-1);
+				// the page's budget per round (§12.2: the reference's evaluation allows 12,000): room to copy the last
+				// result into the words, as a single call's words have (ARITH_FORMAT §7)
+				const budget = COMPILE_MAX_TOKENS + (prev ? prev.length : 0);
 				const gen = await this.greedy(
 					logits,
 					cache,
-					// room to copy the last result into the words, as a single call's words have (ARITH_FORMAT §7)
-					COMPILE_MAX_TOKENS + (prev ? prev.length : 0),
+					budget,
 					// `<check>` opens the older rule-style format: as today, only before any call
 					first ? ['<exec/>', '<check>'] : ['<exec/>'],
 					signal,
@@ -1527,7 +1532,7 @@ export class Engine {
 					exec,
 					finish: gen.finish
 				});
-				if (first && !exec) {
+				if (first && !exec && (gen.finish === 'stop' || gen.text.includes('<check>'))) {
 					// no call at all: today's reply (or today's rule-style stop), in today's shape
 					const trace = this.blank(question, opts, gen.text, gen.ids.length, gen.finish, seconds);
 					const plain = !gen.text.includes('<check>');
@@ -1541,21 +1546,26 @@ export class Engine {
 					return trace;
 				}
 				if (!exec) {
-					end = gen.finish === 'length' ? 'length' : 'stop';
+					// §12.3: only the end token finishes a response; the budget or the context cuts it off
+					end = gen.finish === 'stop' ? 'stop' : gen.ids.length < budget ? 'context' : 'length';
 					break;
 				}
 
-				// the clock: the call's own ids, from its last <program> to <exec/>
+				// the clock: the call's own ids, from its last <program> to <exec/>; §12.1: a <program> of its own,
+				// after the last final, or an error line (never an earlier program run again)
 				const k = calls.length + 1;
-				const at = lastCallStart(this.tok, response) ?? 0;
+				const limit = limitAt(calls.length);
+				const fresh = hasNewProgram(this.tok.decode(response));
+				const at = fresh
+					? (lastCallStart(this.tok, response) ?? 0)
+					: lastExecStart(this.tok, response, textFrom);
 				const program = this.tok.decode(response.slice(at));
 				const before = this.tok.decode(response.slice(textFrom, Math.max(textFrom, at)));
 				segments.push({ kind: 'text', text: before }, { kind: 'call', k });
 				emit({ type: 'call', k, before, program, start: at, end: response.length });
 				const sub = this.callTrace(question, opts, k, program, response.length - at, seconds);
-				const limit = limitAt(calls.length);
 				if (limit === 'end') {
-					const call = this.refused(k, at, response.length, program, sub, null);
+					const call = this.refused(k, at, response.length, program, sub, 'hard stop');
 					calls.push(call);
 					emit({ type: 'final', call });
 					end = 'hard stop';
@@ -1563,8 +1573,11 @@ export class Engine {
 				}
 				const call =
 					limit === 'too many'
-						? this.refused(k, at, response.length, program, sub, errorFinalIds(this.tok, TOO_MANY))
-						: await this.runCall(question, opts, k, at, response, results, sub, emit);
+						? this.refused(k, at, response.length, program, sub, TOO_MANY)
+						: !fresh
+							? this.refused(k, at, response.length, program, sub, NO_PROGRAM)
+							: await this.runCall(question, opts, k, at, response, results, sub, emit);
+				call.result = call.value === null ? null : results.filter((v) => v !== null).length + 1;
 				calls.push(call);
 				results.push(call.value);
 				emit({ type: 'final', call });
@@ -1585,13 +1598,13 @@ export class Engine {
 				opts,
 				this.tok.decode(response),
 				written,
-				end === 'length' ? 'length' : 'stop',
+				end === 'stop' ? 'stop' : 'length',
 				timing.compile
 			);
 			if (!opts.title)
 				trace.title = `Your question, ${calls.length} call${calls.length === 1 ? '' : 's'}`;
-			// §7: the answer is the text after the last final
-			trace.answer = pyStrip(this.tok.decode(response.slice(textFrom)));
+			// §7, §12.3: the answer is the text after the last final, and only a response its end token finished has one
+			trace.answer = end === 'stop' ? pyStrip(this.tok.decode(response.slice(textFrom))) : '';
 			const last = calls.findLast((c) => c.final_text !== null);
 			trace.final_text = last ? pyStrip(last.final_text!) : null;
 			trace.reason = { format: 'REASON_FORMAT', segments, calls, response_ids: response, end };
@@ -1626,18 +1639,25 @@ export class Engine {
 		return t;
 	}
 
-	/** A call the clock does not run: beyond the 8th (an error line), or the 12th (no line; the response ends). */
+	/**
+	 * A call the clock does not run: beyond the 8th, or with no `<program>` of its own (an error line each), or the
+	 * 12th (no line: the response ends there).
+	 */
 	private refused(
 		k: number,
 		start: number,
 		end: number,
 		program: string,
 		sub: LlmTrace,
-		fin: number[] | null
+		why: typeof TOO_MANY | typeof NO_PROGRAM | 'hard stop'
 	): ReasonCall {
-		sub.note = fin
-			? `the clock runs at most 8 calls, so call ${k} got an error line`
-			: `call ${k} ends the response: the clock runs at most 8 calls, and the 12th stops the words`;
+		sub.note =
+			why === TOO_MANY
+				? `the clock runs at most 8 calls, so call ${k} got an error line`
+				: why === NO_PROGRAM
+					? `call ${k} has no program: an <exec/> with no new <program> since the last final gets an error line, and no earlier program runs again`
+					: `call ${k} ends the response: the clock runs at most 8 calls, and the 12th stops the words`;
+		const fin = why === 'hard stop' ? null : errorFinalIds(this.tok, why);
 		const text = fin ? this.tok.decode(fin) : null;
 		sub.final_text = text === null ? null : pyStrip(text);
 		return {
@@ -1646,13 +1666,14 @@ export class Engine {
 			end,
 			program,
 			mode: null,
-			error: fin ? TOO_MANY : 'hard stop',
+			error: why,
 			spans: [],
 			how: [],
 			read: [],
 			final_text: text,
 			final_ids: fin,
 			value: null,
+			result: null,
 			certified: null,
 			run: sub
 		};
@@ -1702,6 +1723,7 @@ export class Engine {
 				final_text: text,
 				final_ids: fin,
 				value: null,
+				result: null,
 				certified: null,
 				run: sub
 			};
@@ -1790,6 +1812,7 @@ export class Engine {
 			final_text: text,
 			final_ids: fin,
 			value: resultValueOf(text),
+			result: null,
 			certified: sub.registers.every((r) => r.certificate.all_ok),
 			run: sub
 		};
@@ -1848,7 +1871,7 @@ export class Engine {
 function readOf(reading: CallReading, results: (string | null)[]): ReasonCall['read'] {
 	return reading.spans.map((sp) =>
 		sp[0] === 'result'
-			? { from: { result: sp[1] }, text: results[sp[1] - 1] ?? '' }
+			? { from: { result: sp[1] }, text: results.filter((v) => v !== null)[sp[1] - 1] ?? '' }
 			: { from: { source: sp[0] as 0 | 1 }, text: reading.sources[sp[0]].slice(sp[1], sp[2]) }
 	);
 }

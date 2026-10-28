@@ -1,8 +1,9 @@
 # MULTI_CALL port: REASON_FORMAT in the browser runtime and the chat
 
-Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reason/REASON_FORMAT.md` (branch `reason`,
-42828bc3, with its §12 clarification). Reference: `research/reason/reason_core.py` and
-`research/reason/fixtures/reason_fixtures.json` at ba619ecc. Spend: $0. Nothing pushed.
+Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reason/REASON_FORMAT.md` (branch `reason`)
+as of a62314a9, including §12's four settled points from 15:20 UTC. Reference: `research/reason/reason_core.py` at that
+commit. Fixtures: `research/reason/fixtures/reason_fixtures.json` at f5b71665, which adds `result_number`; the ids are
+unchanged from ba619ecc. Spend: $0. Nothing pushed.
 
 ## What changed
 
@@ -13,9 +14,14 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
   - `match`: exact first; then whitespace-relaxed over ASCII `[ \t\n\r\f\v]` only.
   - `locate`: falls through S0 to S1. An empty `before` stays in its own source.
   - `readCall`: the second number is retried once from (0, 0). `result k` citations come with the reference's error
-    messages.
+    messages. `result k` is the k-th call that ran: an error line takes no number (§12), so `resultNumbers` counts
+    only the successes.
+  - `hasNewProgram` (§12.1, `reason_core.clock_step`): the text after the last `</final>` must hold a `<program>`.
+    Without one the `<exec/>` gets `\n<final> error: no program </final>\n`. That counts towards the call limit,
+    takes no result number, and never re-runs an earlier program. `lastExecStart` finds where such a call sits.
   - Also `lastCallStart`, `resultValueOf`, `errorFinalText`/`errorFinalIds`, and `limitAt`: 8 calls run, the 9th to
-    11th get `error: too many calls`, and the 12th ends the response.
+    11th get `error: too many calls`, and the 12th ends the response. The checks run in the reference's order: hard
+    stop, then too many calls, then no program.
   - `isSubtracter` and `exactDifference` exist only for the page's own check.
 - `pb.ts`: `parseGenerated(tok, ids, nl, { results: true })` reads `first|second: result k` into `prog.cites`. A later
   line of the same name replaces an earlier one, and the line falls through to the row check as in `parse_call`.
@@ -27,7 +33,11 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
     into the session cache and resumes.
   - The Mealy certify-and-run was moved out of `numbers()` into `mealyCall()` unchanged; both paths use it.
   - New events: `call` and `final`.
-  - A response with no call returns today's trace shape: the plain reply, or the rule-style note.
+  - §12.3: the answer is the text after the last final, and only a response its end token finished has one.
+    `reason.end` is `stop`, `length` (the page's budget), `context` or `hard stop`, and `answer` is empty unless it
+    is `stop`.
+  - A response with no call that ends on its end token returns today's trace shape: the plain reply, or the
+    rule-style note. One the budget cuts off before any call is unfinished, like any other.
   - `feed` now frees its intermediate cache when a forward throws (found by the stop-mid-transcript test).
 - `trace.ts`: `LlmTrace.reason` holds the segments (text, call, …, text), the calls and the response ids. Each
   `ReasonCall.run` is a per-call `LlmTrace` that the panels read unchanged. `ArithRecord` gains `op` and `from`.
@@ -44,7 +54,10 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
   shows the call the clock has and the words being written. The chat's status line says "Call 3 · Certifying
   register · row 59 of 200".
 - `CallLine.svelte` (new): `call k`, the program's `task:` line truncated, "certified · 200 rows · run exact" and
-  `→ value`. An error call shows its line, followed by the retry.
+  `→ value`. When the result number differs from the call number, "as result 2" is added. An error call shows its
+  line, followed by the retry; a `no program` call shows `<exec/>` as its program.
+- An unfinished response (hard stop, budget, context) adds "unfinished" to the header and ends with "Unfinished: …,
+  so there is no answer". A call cut off before its `<exec/>` is shown as a call that did not run, not as words.
   - Opened, a call shows where each input was read ("first 1320…203 from result 1"; "tape 40 events from the
     notes"), then today's `RunPanel` (MealyRun for Mealy) and `CertificatePanel` (MealyCertGrid). An error call
     shows its program and the reason instead.
@@ -73,13 +86,15 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
 
 - `pnpm check`: 0 errors, 0 warnings.
 - Unit tests (`vitest --project server`):
-  - With the real tokenizer: 377 pass. That is the 336 that existed, unchanged, plus 41 new.
+  - With the real tokenizer: 383 pass. That is the 336 that existed, unchanged, plus 47 new.
   - With `QWEN_TOKENIZER=none`: everything in `src/lib/interpreter` passes, with only tokenizer-gated tests skipped.
 - `reason.spec.ts` covers:
   - the reference's six `locate` cases, plus `locate` against today's `findSpan` and the §12 whitespace rules;
   - for every fixture call: the notes, `lastCallStart`, the parse, `readCall`'s spans, `how` and errors, the final
     text, the value and the error line;
   - `result k` parsing, with today's parse unchanged;
+  - result numbers against the fixtures' `result_number`, and citations that skip error lines;
+  - `hasNewProgram`;
   - the limits;
   - the subtracter against its own table run.
 - `engine-reason.spec.ts` covers:
@@ -88,7 +103,13 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
     equal the reference. The rebuilt response ids equal the fixture's.
   - Every tick ran right after its own Π at position |Π|, and each Π was certified once.
   - The events rebuild the run, and every cache is freed.
-  - 8 calls run, the 9th to 11th get error lines, and the 12th ends the response.
+  - Each call's result number equals the fixture's `result_number`.
+  - An `<exec/>` with no new `<program>` (§12.1): the chain with one inserted after call 1. The bad call gets the
+    `no program` line, takes no number and runs nothing (no extra ticks). The next call becomes result 2, and the
+    chain's last call, citing results 1 and 2, still gives the reference's difference.
+  - 8 calls run, the 9th to 11th get error lines, and the 12th ends the response, with no answer.
+  - A response the budget cuts off ends `length`, with no answer, after exactly 3,000 plus the last result's length
+    in tokens.
   - Stopping mid-transcript frees everything.
   - One call at the start of a response gives today's final ids and words. No call gives today's trace.
   - The stand-in's playback rebuilds each recorded run.
@@ -107,28 +128,36 @@ Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reas
   not a state" (TS adds `!r.rows.length`). It was left alone so the single-call path stays bit for bit, and calls
   inherit it.
 
-## What the spec leaves open (and what the port does)
+## Settled by §12 (28 Oct, 15:20 UTC), mirrored here
 
-1. **"The budget" (§7) has no number.** The first segment gets 3,000 tokens (today's compile budget). Each later
-   segment gets 3,000 plus the length of the previous result, so the words can copy it as ARITH §7 allows. All of
-   this is capped by the 40,960-token context.
-2. **An `<exec/>` with no `<program>` since the last final.** `last_call_start` scans the whole response, so the clock
-   re-reads the previous call's program, together with its final line and the words after it. The port does the
-   same. An error such as "no program" may be the intent.
-3. **The 12th `<exec/>`** is recorded as call 12 with error `hard stop`, no final, and the response ends. §7's answer,
-   "the text after the last final", then includes the 12th call's program text. The port follows that literally;
-   the chat shows the call as "not run".
-4. **Calls 9 to 11** are not parsed (the reference does not), so their mode is null.
-5. **Anchors not found in the notes** still read "anchors not found in the prompt", the reference's message.
-6. **`<check>`** (the old rule-style format) stops only the first segment, as today. Later segments ignore it.
-7. **Pokes** are not offered on multi-call runs (`ctx` is null), and no session cache is kept after one. A poke would
-   change a result that later calls and words read, and the spec says nothing about re-running the rest.
-8. **"run exact"** in the status line means every step landed on its row's destination and output: the run is its
+1. **An `<exec/>` with no new `<program>`** gets `error: no program`, counts towards the limit, takes no result number
+   and never re-runs a program. Before §12 the port re-ran the previous program, as `last_call_start` did.
+2. **Budget.** The page keeps its own: 3,000 tokens per round plus the length of the last result, capped by the
+   40,960-token context. The reference's evaluation (`reason_loop --max_new`) allows 12,000 per round. Only a
+   response that one of the budgets cuts off can differ, and such a response has no answer either way.
+3. **The answer is the text after the last final.** A response that does not end with `<|im_end|>` has no answer and
+   is shown as unfinished: the 12th call, the budget, or the context. Text after the last final that belongs to an
+   unfinished call is not an answer.
+4. **No pokes on multi-call runs** (`ctx` is null), and no session cache is kept after one.
+5. **Results are numbered by the calls that ran** (§12, "before any training"). The engine's `ReasonCall.result`
+   matches the fixtures' `result_number`.
+
+## Still open, and what the port does
+
+1. **Two forms of the §12.1 test in the reference.** `reason_core.clock_step` looks at the text after the last
+   `</final>`; `reason_loop` looks at the round's own ids. They differ only if the model writes `</final>` itself.
+   The port follows `clock_step`.
+2. **The 12th `<exec/>` in `reason_loop`** is still appended and given a final (`too many calls`) before the loop
+   stops, while `clock_step` gives it none. The port follows `clock_step`: call 12 has no final, and the response ends.
+3. **Calls 9 to 11** are not parsed (the reference does not), so their mode is null.
+4. **Anchors not found in the notes** still read "anchors not found in the prompt", the reference's message.
+5. **`<check>`** (the old rule-style format) stops only the first segment, as today. Later segments ignore it.
+6. **"run exact"** in the status line means every step landed on its row's destination and output: the run is its
    table's run (Theorem P). Whether the table is right is a separate question. For a run the page recognises,
    `arith.check` holds the true sum or difference, and `arith.op` names the table.
-9. **A tape read from the notes** has its `char_spans` indexed into the notes. No panel uses them today.
-10. **A cited number has no span in its source.** Its `arith.spans` entry is [0, 0], and `arith.from` says
-    `{ result: k }`.
+7. **A tape read from the notes** has its `char_spans` indexed into the notes. No panel uses them today.
+8. **A cited number has no span in its source.** Its `arith.spans` entry is [0, 0], and `arith.from` says
+   `{ result: k }`.
 
 ## The adder check (the Mealy path)
 
