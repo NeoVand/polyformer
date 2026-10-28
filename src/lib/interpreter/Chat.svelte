@@ -9,6 +9,8 @@
 	import Icon from '#lib/ui/Icon.svelte';
 	import { Send } from '#lib/ui/icons.ts';
 	import ModelPanel from './ModelPanel.svelte';
+	import Reply from './Reply.svelte';
+	import { PLAIN_NOTE } from './webgpu/engine.ts';
 	import type { Health } from './live.ts';
 	import {
 		adapterName,
@@ -367,12 +369,17 @@
 					{#if !t}
 						{@const file = id ? fileFor(id) : undefined}
 						{#if file}
-							{#if file.answer}<p class="msg answer">{file.answer}</p>{/if}
-							<p class="note">
-								{file.note ?? 'The model wrote no table that could run'}, so there is no run; what
-								it wrote is on the right.{#if file.truth}
-									No answer (truth: {file.truth}).{/if}
-							</p>
+							{#if file.note === PLAIN_NOTE}
+								{#if file.answer}<div class="msg answer"><Reply text={file.answer} /></div>{/if}
+								<p class="note">Answered directly, in words: this question needed no program.</p>
+							{:else}
+								{#if file.answer}<p class="msg answer">{file.answer}</p>{/if}
+								<p class="note">
+									{file.note ?? 'The model wrote no table that could run'}, so there is no run; what
+									it wrote is on the right.{#if file.truth}
+										No answer (truth: {file.truth}).{/if}
+								</p>
+							{/if}
 						{:else}
 							<p class="quiet">Loading the recorded run…</p>
 						{/if}
@@ -719,6 +726,9 @@
 	}
 	.answer {
 		font-size: var(--text-ui);
+	}
+	.msg :global(.reply) {
+		white-space: normal;
 	}
 	.streaming {
 		color: var(--color-ink-2);

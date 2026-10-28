@@ -71,6 +71,8 @@ export interface LM {
 // ------------------------------------------------------------------ constants (dl_core, pb_loop)
 
 export const COMPILE_MAX_TOKENS = 3000;
+/** A reply with no program at all: the model answered in words (since the language repair, ordinary questions). */
+export const PLAIN_NOTE = 'the model answered without writing a program';
 /** What the page says when the model falls back to its older rule-style programs (arithmetic, for one). */
 export const RULE_STYLE_NOTE =
 	"the model wrote a rule-style program, the older format it learned for arithmetic, and this preview's clock runs only literal tables, so there is no run. Arithmetic in the runnable format comes with the next model";
@@ -568,7 +570,7 @@ export class Engine {
 			return trace;
 		};
 		if (!exec && text.includes('<check>')) return finish(RULE_STYLE_NOTE);
-		if (!exec) return finish('the model answered without writing a program', pyStrip(text));
+		if (!exec) return finish(PLAIN_NOTE, pyStrip(text));
 
 		const prog = parseGenerated(this.tok, ids, this.ids.nl);
 		if (prog.mode === 'numbers')

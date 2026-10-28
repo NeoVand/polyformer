@@ -1,17 +1,28 @@
 <script lang="ts">
 	/** A Qwen3-4B question that never reached the run: what the model wrote, and where the loop stopped. */
+	import Reply from './Reply.svelte';
 	import { adapterName, cpuName, int, type LlmTrace } from './trace.ts';
+	import { PLAIN_NOTE } from './webgpu/engine.ts';
 
 	let { file }: { file: LlmTrace } = $props();
 
 	const anchors = $derived(file.input?.anchors ?? null);
 	const score = $derived(file.score ?? null);
+	const plain = $derived(file.note === PLAIN_NOTE);
 </script>
 
 <section class="norun" aria-label="No run">
 	<p class="eyebrow">{file.title}</p>
-	<h2>No run: the loop stopped before the first tick</h2>
-	<p class="why">{file.note ?? 'The model wrote no table that could run'}.</p>
+	{#if plain}
+		<h2>Answered in words</h2>
+		<p class="why">
+			No program this time: the model answered directly. It writes a program for questions about a
+			long list of events; for everyday questions it just answers.
+		</p>
+	{:else}
+		<h2>No run: the loop stopped before the first tick</h2>
+		<p class="why">{file.note ?? 'The model wrote no table that could run'}.</p>
+	{/if}
 	{#if anchors}
 		<p class="quiet">
 			It quoted the tape as starting after <code>{JSON.stringify(anchors[0])}</code> and ending
@@ -28,7 +39,9 @@
 				: ''}.
 		</p>
 	{/if}
-	{#if file.compile?.text}
+	{#if plain && file.compile?.text}
+		<div class="words"><Reply text={file.compile.text} /></div>
+	{:else if file.compile?.text}
 		<pre class="src">{file.compile.text}</pre>
 	{/if}
 	<p class="prov num">
@@ -49,6 +62,14 @@
 </section>
 
 <style>
+	.words {
+		padding: 14px 16px;
+		border: 1px solid var(--color-edge);
+		border-radius: 6px;
+		font-size: var(--text-sm);
+		line-height: 1.55;
+		color: var(--color-ink);
+	}
 	.norun {
 		display: flex;
 		flex-direction: column;

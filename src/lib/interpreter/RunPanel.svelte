@@ -31,7 +31,8 @@
 	const tapeTotal = $derived(trace.llm?.file.input.events?.length ?? trace.steps.length);
 	const count = $derived(trace.steps.length);
 	/** Cells either side of the current event: fewer, wider cells when event names are long. */
-	const half = $derived(Math.max(...trace.program.events.map((e) => e.length)) > 4 ? 5 : 6);
+	const longest = $derived(Math.max(...trace.program.events.map((e) => e.length)));
+	const half = $derived(longest > 5 ? 2 : longest > 4 ? 3 : longest > 3 ? 4 : longest > 2 ? 5 : 6);
 	/** the question's events: the run's own steps, or (while certifying) the tape the clock read */
 	const events = $derived(trace.llm?.file.input.events ?? null);
 	const tape = $derived.by(() => {
@@ -313,8 +314,9 @@
 		color: var(--color-ink-3);
 		font: inherit;
 		overflow: hidden;
-		text-overflow: clip;
+		text-overflow: ellipsis;
 		white-space: nowrap;
+		padding-inline: 2px;
 		cursor: pointer;
 	}
 	.cell.done {
