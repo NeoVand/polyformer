@@ -44,6 +44,7 @@ export { default as Wave } from '@hugeicons/core-free-icons/Cosine01Icon';
 export { default as Scissors } from '@hugeicons/core-free-icons/ScissorIcon';
 export { default as Workflow } from '@hugeicons/core-free-icons/WorkflowSquare01Icon';
 export { default as Github } from '@hugeicons/core-free-icons/GithubIcon';
+export { default as Send } from '@hugeicons/core-free-icons/ArrowUp02Icon';
 
 /*
  * Marks drawn for this project on the same 24px grid and 1.5px stroke, so they sit beside

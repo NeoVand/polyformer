@@ -2,6 +2,8 @@
 	import { page } from '$app/state';
 	import { resolve } from '$app/paths';
 	import { getBench } from '#lib/engine/bench.svelte.ts';
+	import { connection } from '#lib/interpreter/connection.svelte.ts';
+	import { savant } from '#lib/interpreter/webgpu/savant.svelte.ts';
 	import Icon from './Icon.svelte';
 	import Logo from './Logo.svelte';
 	import { Book, Compare, Cube, Github } from './icons.ts';
@@ -21,11 +23,18 @@
 		'/explore/diagrams': 'Feynman attention, a sum over diagrams',
 		'/explore/newton': 'Newton attention',
 		'/explore/groups': 'Learned rotations',
-		'/compare': 'Bench'
+		'/compare': 'Bench',
+		'/interpreter': 'Interpreter, replayed'
 	};
 
 	const route = $derived(page.route.id ?? '/');
-	const crumb = $derived(titles[route] ?? '');
+	const crumb = $derived(
+		route === '/interpreter' && savant.status === 'ready'
+			? 'Interpreter, in your browser'
+			: route === '/interpreter' && connection.live
+				? 'Interpreter, live'
+				: (titles[route] ?? '')
+	);
 	/** Shown only while a model trains, so the bar stays quiet otherwise. */
 	const live = $derived(
 		[sets, chase].find((b) => b.status === 'training' || b.status === 'pausing') ?? null
