@@ -133,6 +133,12 @@ export interface FakeScript {
 	wrong?: Map<string, number>;
 	/** ticks whose logits differ in their last bits from the certified row's, by tick count */
 	jitter?: (call: number) => boolean;
+	/**
+	 * ARITH_FORMAT's Mealy block instead of PROMPTBOX's: Π is rows of six tokens (s a b t o newline); forward 1 on
+	 * [s][a][b] puts the top logit on the row's t, forward 2 on [t] puts it on the row's o. `wrongT` and `wrongO`
+	 * give other argmaxes for some cells, keyed "s,a,b".
+	 */
+	mealy?: { nl: number; wrongT?: Map<string, number>; wrongO?: Map<string, number> };
 	vocab?: number;
 }
 
@@ -178,6 +184,33 @@ export class FakeLM implements LM {
 			} else if (at < 0) logits[0] = 1;
 			else if (at < this.s.program.length) logits[this.s.program[at]] = 5;
 			else logits[this.s.end] = 5;
+		} else if (this.s.mealy) {
+			this.ticks++;
+			const M = this.s.mealy;
+			const find = (pi: number[], s: number, a: number, b: number) => {
+				for (let i = 0, k = 0; i + 4 < pi.length; i += 6, k++)
+					if (pi[i] === s && pi[i + 1] === a && pi[i + 2] === b)
+						return { t: pi[i + 3], o: pi[i + 4], k };
+				return null;
+			};
+			if (!past) logits[0] = 1;
+			else if (ids.length === 3) {
+				const [s, a, b] = ids;
+				const r = find(before, s, a, b);
+				const top = M.wrongT?.get(`${s},${a},${b}`) ?? r?.t ?? before[0];
+				const runner = top === M.nl ? before[0] : M.nl;
+				logits[runner] = 2;
+				logits[top] = 10 + ((r?.k ?? 0) % 5) * 0.25;
+			} else {
+				const pi = before.slice(0, -3);
+				const [s, a, b] = before.slice(-3);
+				const r = find(pi, s, a, b);
+				const top = M.wrongO?.get(`${s},${a},${b}`) ?? r?.o ?? before[0];
+				const runner = top === M.nl ? before[0] : M.nl;
+				logits[runner] = 3;
+				logits[top] = 11 + ((r?.k ?? 0) % 3) * 0.5;
+			}
+			if (this.s.jitter?.(this.ticks)) logits[this.V - 1] = 1e-30;
 		} else {
 			// a tick: Π then the block [s][e]
 			this.ticks++;

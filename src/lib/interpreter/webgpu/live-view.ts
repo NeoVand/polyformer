@@ -21,7 +21,14 @@ export interface LiveRun {
 		finish: string | null;
 		exec: boolean | null;
 	};
-	tape: { events: string[]; span: [number, number]; char_spans: [number, number][] | null } | null;
+	tape: {
+		events: string[];
+		span: [number, number];
+		char_spans: [number, number][] | null;
+		/** number mode: the two numbers the clock read, and where */
+		numbers?: [string, string];
+		spans?: [[number, number], [number, number]];
+	} | null;
 	registers: LlmRegister[];
 	/** the register being certified or run, and how far it is */
 	at: { register: number; rows: number; ticks: number } | null;
@@ -66,7 +73,9 @@ function pendingRegister(
 	ev: Extract<EngineEvent, { type: 'register' }>,
 	names: string[]
 ): LlmRegister {
-	const rows: ProgramRow[] = ev.rows.map((r) => ({ s: r.s, b: r.b, t: r.t }));
+	const rows: ProgramRow[] = ev.rows.map((r) =>
+		r.a !== undefined ? { s: r.s, a: r.a, b: r.b, t: r.t, o: r.o } : { s: r.s, b: r.b, t: r.t }
+	);
 	return {
 		name: ev.name,
 		program: {
@@ -77,6 +86,7 @@ function pendingRegister(
 			rows,
 			row_lines: rowLines(run.compile.text, ev.name, rows.length),
 			registers: names,
+			...(ev.mealy ? { mealy: ev.mealy } : {}),
 			...(ev.states.length <= 40
 				? { diagram: { kind: 'ring' as const, pos: ring(ev.states.length), dims: null } }
 				: {})
@@ -108,7 +118,8 @@ function pendingRegister(
 }
 
 /** Register names in the program text, in order (for the panels' register list before every register exists). */
-const namesIn = (text: string) => [...text.matchAll(/^register (\w+): start/gm)].map((m) => m[1]);
+const namesIn = (text: string) =>
+	[...text.matchAll(/^register (\w+)(?: \(output \w+\))?: start/gm)].map((m) => m[1]);
 
 export function applyEvent(run: LiveRun, ev: EngineEvent): LiveRun {
 	switch (ev.type) {
@@ -139,7 +150,12 @@ export function applyEvent(run: LiveRun, ev: EngineEvent): LiveRun {
 					run.title === 'Your question'
 						? `Your question, ${ev.events.length.toLocaleString('en-US')} events`
 						: run.title,
-				tape: { events: ev.events, span: ev.span, char_spans: ev.char_spans }
+				tape: {
+					events: ev.events,
+					span: ev.span,
+					char_spans: ev.char_spans,
+					...(ev.numbers && ev.spans ? { numbers: ev.numbers, spans: ev.spans } : {})
+				}
 			};
 		case 'register': {
 			const regs = [...run.registers];
@@ -261,7 +277,20 @@ export function liveTrace(run: LiveRun): LlmTrace {
 		},
 		registers: run.registers.filter(Boolean),
 		timing: null,
-		ctx: null
+		ctx: null,
+		...(run.tape?.numbers && run.tape.spans
+			? {
+					arith: {
+						numbers: run.tape.numbers,
+						spans: run.tape.spans,
+						quotes: { first: ['', ''] as [string, string], second: ['', ''] as [string, string] },
+						columns: run.tape.events.length,
+						sum: null,
+						check: '',
+						adder: false
+					}
+				}
+			: {})
 	};
 }
 

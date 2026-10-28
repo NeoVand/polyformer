@@ -17,6 +17,7 @@
  * advancing; the last event carries the whole run in the page's `polyformer.trace/0` form.
  */
 import { answerCorrect, type AnswerKey } from './answer.ts';
+import { clockPairs, digitIds, exactSum, finalIdsMealy } from './arith.ts';
 import { makeCodebook, type Codebook } from './codebook.ts';
 import {
 	charSpans,
@@ -29,10 +30,19 @@ import {
 	pyStrip,
 	round4,
 	top2,
+	type MealyRegister,
 	type Program,
 	type Tok
 } from './pb.ts';
-import type { LlmCtx, LlmRegister, LlmTrace, Poke, ProgramRow, Xyz } from '../trace.ts';
+import type {
+	ArithRecord,
+	LlmCtx,
+	LlmRegister,
+	LlmTrace,
+	Poke,
+	ProgramRow,
+	Xyz
+} from '../trace.ts';
 
 // ------------------------------------------------------------------ the model, abstractly
 
@@ -103,6 +113,8 @@ export interface AskOptions {
 	title?: string;
 	family?: string | null;
 	truth?: Truth | null;
+	/** a suggested addition: the two numbers the page wrote into the question, to score the run against */
+	addition?: { a: string; b: string } | null;
 	signal?: AbortSignal;
 }
 
@@ -145,6 +157,9 @@ export type EngineEvent =
 			events: string[];
 			span: [number, number];
 			char_spans: [number, number][] | null;
+			/** number mode: the two numbers read and their spans */
+			numbers?: [string, string];
+			spans?: [[number, number], [number, number]];
 	  }
 	| {
 			type: 'register';
@@ -153,7 +168,9 @@ export type EngineEvent =
 			start: string;
 			states: string[];
 			events: string[];
-			rows: { s: string; b: string; t: string }[];
+			rows: { s: string; a?: string; b: string; t: string; o?: string }[];
+			/** a Mealy register: its output's name */
+			mealy?: { output: string };
 	  }
 	| { type: 'row'; index: number; k: number; row: ProgramRow }
 	| {
@@ -221,11 +238,40 @@ interface PiEntry {
 }
 
 const pair = (s: number, e: number) => `${s},${e}`;
+const cell = (s: number, a: number, b: number) => `${s},${a},${b}`;
+
+/** One row of a Mealy certificate (ARITH_FORMAT §5): both forwards' argmaxes and margins. */
+export interface MealyCertRow {
+	s: number;
+	a: number;
+	b: number;
+	t: number;
+	o: number;
+	tArg: number;
+	oArg: number;
+	m1: number;
+	m2: number;
+	ok: boolean;
+}
+
+/** The certified state of one Mealy Π: its cache, and per row both forwards' fingerprints and state logits. */
+interface MealyEntry {
+	key: string;
+	past: KV;
+	P: number;
+	rows: MealyCertRow[];
+	bits: Map<string, [string, string]>;
+	z: Map<string, Float32Array>;
+	stateIds: number[];
+	seconds: number;
+}
 
 const ALPHABET = '0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ';
 
 export class Engine {
 	private pis = new Map<string, PiEntry>();
+	/** Mealy certificates by Π (ARITH_FORMAT §5): the adder's Π is the same every time, so it is certified once */
+	private mealyPis = new Map<string, MealyEntry>();
 	/** the cache of the chat prompt and the program, but the program's last token: the words reuse it */
 	private session: { key: string; past: KV; last: number } | null = null;
 	private busy = false;
@@ -246,6 +292,8 @@ export class Engine {
 	dispose() {
 		for (const p of this.pis.values()) p.past.dispose();
 		this.pis.clear();
+		for (const p of this.mealyPis.values()) p.past.dispose();
+		this.mealyPis.clear();
 		this.session?.past.dispose();
 		this.session = null;
 	}
@@ -523,6 +571,8 @@ export class Engine {
 		if (!exec) return finish('the model answered without writing a program', pyStrip(text));
 
 		const prog = parseGenerated(this.tok, ids, this.ids.nl);
+		if (prog.mode === 'numbers')
+			return this.numbers(question, opts, prog, ids, trace, timing, tAll, finish, emit);
 		const ct = prog.error ? { tape: null, why: prog.error } : clockTape(this.tok, question, prog);
 		trace.input = { events: null, char_spans: null, anchors: prog.anchors, error: ct.why };
 		if (prog.error || ct.tape === null) {
@@ -563,8 +613,11 @@ export class Engine {
 
 		emit({ type: 'stage', stage: 'answer' });
 		t0 = now();
-		const words = await this.words(prog.registers, finals, signal, (text, n) =>
-			emit({ type: 'answer', text, tokens: n })
+		const words = await this.words(
+			finIds(this.tok, prog.registers, finals),
+			ANSWER_MAX_TOKENS,
+			signal,
+			(text, n) => emit({ type: 'answer', text, tokens: n })
 		);
 		timing.answer = secs(t0);
 		timing.total = secs(tAll);
@@ -722,23 +775,521 @@ export class Engine {
 		return { view, final, run: rec.states };
 	}
 
-	/** The words after `<final>`: greedy from the cached prompt + program, then the program's last token and the line. */
+	/**
+	 * The words after `<final>`: greedy from the cached prompt + program, then the program's last token and the line.
+	 * `budget` is ANSWER_MAX_TOKENS, plus the sum's digits for a Mealy run (ARITH_FORMAT §7: the words repeat it).
+	 */
 	private async words(
-		registers: { name: string }[],
-		finals: Record<string, number>,
+		fin: number[],
+		budget: number,
 		signal?: AbortSignal,
 		onToken?: (text: string, n: number) => void
 	) {
 		const sess = this.session;
 		if (!sess) throw new Error('no program cached for the words');
-		const fin = finIds(this.tok, registers, finals);
 		const f = await this.feed([sess.last, ...fin], sess.past, signal);
 		try {
-			const out = await this.greedy(f.logits, f.past, ANSWER_MAX_TOKENS, [], signal, onToken);
+			const out = await this.greedy(f.logits, f.past, budget, [], signal, onToken);
 			if (out.past !== f.past) out.past.dispose();
 			return { ids: out.ids, text: out.text, finish: out.finish, fin };
 		} finally {
 			f.past.dispose();
+		}
+	}
+
+	// -------------------------------------------------------------- number mode (ARITH_FORMAT)
+
+	/**
+	 * One Mealy tick (§4): the block [s][a][b] at |Π| … |Π|+2 over Π's cache gives t; then [t] at |Π|+3 gives o. The
+	 * fed t is always forward 1's argmax. The extended cache is discarded, so Π's is never written.
+	 */
+	private async mealyTick(entry: MealyEntry, s: number, a: number, b: number) {
+		const f1 = await this.lm.forward([s, a, b], entry.past, true);
+		const one = top2(f1.logits);
+		let f2: Forward;
+		try {
+			f2 = await this.lm.forward([one.arg], f1.past!, false);
+		} finally {
+			f1.past?.dispose();
+		}
+		const two = top2(f2.logits);
+		return {
+			t: one.arg,
+			m1: round4(one.margin),
+			o: two.arg,
+			m2: round4(two.margin),
+			ok: one.margin > 0 && two.margin > 0,
+			bits: [f1.bits, f2.bits] as [string, string],
+			z: pick(f1.logits, entry.stateIds)
+		};
+	}
+
+	/** §5: every row (s, a, b, t, o) as one tick over the same cached Π; kept per Π like the Moore certificates. */
+	private async certifiedMealy(
+		pi: number[],
+		rows: MealyRegister['rows'],
+		stateIds: number[],
+		signal?: AbortSignal,
+		onRow?: (k: number, r: MealyCertRow) => void
+	): Promise<{ entry: MealyEntry; cached: boolean }> {
+		const key = pi.join(',');
+		const have = this.mealyPis.get(key);
+		if (have) {
+			this.mealyPis.delete(key);
+			this.mealyPis.set(key, have);
+			have.rows.forEach((r, k) => onRow?.(k, r));
+			return { entry: have, cached: true };
+		}
+		const t0 = now();
+		check(signal);
+		const pre = await this.lm.forward(pi, null, true);
+		const entry: MealyEntry = {
+			key,
+			past: pre.past!,
+			P: pi.length,
+			rows: [],
+			bits: new Map(),
+			z: new Map(),
+			stateIds,
+			seconds: 0
+		};
+		try {
+			for (const [s, a, b, t, o] of rows) {
+				check(signal);
+				const k = await this.mealyTick(entry, s, a, b);
+				const r: MealyCertRow = {
+					s,
+					a,
+					b,
+					t,
+					o,
+					tArg: k.t,
+					oArg: k.o,
+					m1: k.m1,
+					m2: k.m2,
+					ok: k.t === t && k.o === o && k.ok
+				};
+				entry.rows.push(r);
+				entry.bits.set(cell(s, a, b), k.bits);
+				entry.z.set(cell(s, a, b), k.z);
+				onRow?.(entry.rows.length - 1, r);
+			}
+		} catch (err) {
+			entry.past.dispose();
+			throw err;
+		}
+		entry.seconds = secs(t0);
+		this.mealyPis.set(key, entry);
+		while (this.mealyPis.size > this.maxPis) {
+			const [k, old] = this.mealyPis.entries().next().value!;
+			old.past.dispose();
+			this.mealyPis.delete(k);
+		}
+		return { entry, cached: false };
+	}
+
+	/**
+	 * §6: (s_i, o_i) from the tick on (s_{i-1}, a_i, b_i); a real tick is bitwise equal when both logit vectors equal
+	 * its certified row's. Lookup mode reads a certified table's later steps from the rows' two argmaxes.
+	 */
+	private async mealyRun(
+		entry: MealyEntry,
+		s0: number,
+		pairs: [number, number][],
+		signal: AbortSignal | undefined,
+		onTick: (
+			i: number,
+			s: number,
+			t: number,
+			o: number,
+			m1: number,
+			m2: number,
+			eq: boolean | null,
+			z: Float32Array
+		) => void,
+		lookupAfter: number | null = null
+	) {
+		const t0 = now();
+		const row = new Map(entry.rows.map((r) => [cell(r.s, r.a, r.b), r]));
+		const certified = entry.rows.every((r) => r.ok);
+		let s = s0;
+		const states: number[] = [];
+		const outputs: number[] = [];
+		const margins: number[] = [];
+		const same: boolean[] = [];
+		let looked = 0;
+		for (let i = 0; i < pairs.length; i++) {
+			const [a, b] = pairs[i];
+			const r = row.get(cell(s, a, b));
+			if (lookupAfter !== null && certified && i >= lookupAfter && r) {
+				states.push(r.tArg);
+				outputs.push(r.oArg);
+				margins.push(Math.min(r.m1, r.m2));
+				looked++;
+				onTick(i, s, r.tArg, r.oArg, r.m1, r.m2, null, entry.z.get(cell(s, a, b))!);
+				s = r.tArg;
+				if (looked % 256 === 0) await new Promise((res) => setTimeout(res, 0));
+				continue;
+			}
+			check(signal);
+			const k = await this.mealyTick(entry, s, a, b);
+			const want = entry.bits.get(cell(s, a, b));
+			const eq = !!want && want[0] === k.bits[0] && want[1] === k.bits[1];
+			states.push(k.t);
+			outputs.push(k.o);
+			margins.push(Math.min(k.m1, k.m2));
+			same.push(eq);
+			onTick(i, s, k.t, k.o, k.m1, k.m2, eq, k.z);
+			s = k.t;
+		}
+		return { states, outputs, margins, same, looked, seconds: secs(t0) };
+	}
+
+	/** Number mode, from the parsed program to the words (ARITH_FORMAT §3 to §7). */
+	private async numbers(
+		question: string,
+		opts: AskOptions,
+		prog: Program,
+		ids: number[],
+		trace: LlmTrace,
+		timing: Record<string, number>,
+		tAll: number,
+		finish: (note: string | null, answer?: string) => LlmTrace,
+		emit: (ev: EngineEvent) => void
+	): Promise<LlmTrace> {
+		const { signal } = opts;
+		const cp = clockPairs(this.tok, question, prog);
+		trace.input = { events: null, char_spans: null, anchors: null, error: cp.why };
+		const reg = prog.mealy[0];
+		const digit = digitIds(this.tok);
+		const adder = !!reg && isAdder(reg, digit);
+		if (prog.error || !cp.pairs || cp.reading?.numbers === null || !cp.reading) {
+			if (opts.addition)
+				trace.score = {
+					parsed: !prog.error,
+					table_exact: adder,
+					tape_exact: false,
+					certified: false,
+					run_final_right: false,
+					answer_correct: false,
+					sum_right: false
+				};
+			return finish(`the loop stopped before the run: ${cp.why}`);
+		}
+		const pairs = cp.pairs;
+		const [n1, n2] = cp.reading.numbers;
+		const spans = cp.reading.spans;
+		const events = pairs.map(([a, b]) => `${this.name(a)}+${this.name(b)}`);
+		trace.input = { events, char_spans: null, anchors: null, error: null };
+		const arith: ArithRecord = {
+			numbers: [n1, n2],
+			spans,
+			quotes: { first: prog.numbers.first!, second: prog.numbers.second! },
+			columns: pairs.length,
+			sum: null,
+			check: exactSum(n1, n2),
+			adder
+		};
+		trace.arith = arith;
+		if (!opts.title) trace.title = `Your addition, ${pairs.length.toLocaleString('en-US')} columns`;
+		emit({ type: 'tape', events, span: spans[0], char_spans: null, numbers: [n1, n2], spans });
+
+		// certify (§5): 400 forwards for the adder, or none when this Π was certified before
+		const rows = reg.rows;
+		const stateIds = [...new Set(rows.map((r) => r[0]))];
+		const states = stateIds.map(this.name);
+		emit({ type: 'stage', stage: 'certify', register: reg.name, total: rows.length });
+		emit({
+			type: 'register',
+			index: 0,
+			name: reg.name,
+			start: this.name(reg.start),
+			states,
+			events: [...new Set(rows.map((r) => `${this.name(r[1])}+${this.name(r[2])}`))],
+			rows: rows.map(([s, a, b, t, o]) => ({
+				s: this.name(s),
+				a: this.name(a),
+				b: this.name(b),
+				t: this.name(t),
+				o: this.name(o)
+			})),
+			mealy: { output: reg.output }
+		});
+		const outRows: ProgramRow[] = [];
+		const rowView = (c: MealyCertRow): ProgramRow => ({
+			s: this.name(c.s),
+			a: this.name(c.a),
+			b: this.name(c.b),
+			t: this.name(c.t),
+			o: this.name(c.o),
+			m: c.m1,
+			m2: c.m2,
+			ok: c.ok,
+			...(c.tArg !== c.t ? { argmax: this.name(c.tArg) } : {}),
+			...(c.oArg !== c.o ? { argmax2: this.name(c.oArg) } : {})
+		});
+		const { entry } = await this.certifiedMealy(reg.pi, rows, stateIds, signal, (k, c) => {
+			outRows[k] = rowView(c);
+			emit({ type: 'row', index: 0, k, row: outRows[k] });
+		});
+		const cert = entry.rows;
+		const pass = cert.every((c) => c.ok);
+		const rowsWrong = cert.filter((c) => !c.ok).length;
+		const minMargin = Math.min(...cert.map((c) => Math.min(c.m1, c.m2)));
+		timing[`certify:${reg.name}`] = entry.seconds;
+		const { codebook, project } = makeCodebook(
+			states,
+			rows.map(([s, a, b]) => entry.z.get(cell(s, a, b))!),
+			cert.map((c) => stateIds.indexOf(c.tArg))
+		);
+		emit({
+			type: 'certificate',
+			index: 0,
+			pass,
+			rows: rows.length,
+			rows_wrong: rowsWrong,
+			min_margin: minMargin,
+			seconds: entry.seconds,
+			codebook
+		});
+
+		// run (§6)
+		emit({ type: 'stage', stage: 'run', register: reg.name, total: pairs.length });
+		const rowOf = new Map(rows.map(([s, a, b], k) => [cell(s, a, b), k]));
+		const steps: LlmRegister['steps'] = [];
+		let batch: LlmRegister['steps'] = [];
+		let lastEmit = now();
+		const rec = await this.mealyRun(
+			entry,
+			reg.start,
+			pairs,
+			signal,
+			(i, s, t, o, m1, m2, eq, z) => {
+				const [a, b] = pairs[i];
+				const st = {
+					i,
+					event: events[i],
+					s: this.name(s),
+					row: rowOf.get(cell(s, a, b)) ?? -1,
+					t: this.name(t),
+					margin: m1,
+					pair: [this.name(a), this.name(b)] as [string, string],
+					o: this.name(o),
+					m2,
+					...(eq === null ? { lookup: true as const } : { eq }),
+					xyz: project(z) as Xyz
+				};
+				steps.push(st);
+				batch.push(st);
+				const tn = now();
+				if (tn - lastEmit > 60 || i === pairs.length - 1) {
+					lastEmit = tn;
+					emit({ type: 'ticks', index: 0, steps: batch, done: i + 1, total: pairs.length });
+					batch = [];
+				}
+			},
+			opts.lookupAfter ?? null
+		);
+		timing[`run:${reg.name}`] = rec.seconds;
+		const final = rec.states.length ? rec.states[rec.states.length - 1] : reg.start;
+		const real = rec.same.length;
+		const equal = rec.same.filter(Boolean).length;
+		const view: LlmRegister = {
+			name: reg.name,
+			program: {
+				text: trace.compile.text,
+				states,
+				events: [...new Set(rows.map((r) => `${this.name(r[1])}+${this.name(r[2])}`))],
+				start: this.name(reg.start),
+				rows: outRows,
+				row_lines: rowLines(trace.compile.text, reg.name, rows.length),
+				registers: [reg.name],
+				mealy: { output: reg.output },
+				...(states.length <= 40
+					? { diagram: { kind: 'ring' as const, pos: ring(states.length), dims: null } }
+					: {})
+			},
+			certificate: {
+				kind: 'logit',
+				pairs_checked: rows.length,
+				all_ok: pass,
+				certified: pass,
+				rows_wrong: rowsWrong,
+				min_margin: minMargin,
+				N_star: null,
+				A: rows.length / Math.max(1, states.length),
+				covers:
+					'execution of this table on every pair of numbers of any length (Theorem P for the Mealy block), on ' +
+					'this GPU and code path; not whether the table is the adder, nor whether the spans are the numbers',
+				path:
+					"two forwards per row and per tick: [c][a][b] at |Π|…|Π|+2 over Π's cached keys and values, then " +
+					'[c′] at |Π|+3; batch 1, in this browser',
+				ticks_real: real,
+				ticks_equal: equal
+			},
+			attention: null,
+			codebook,
+			steps,
+			final: this.name(final),
+			ticks: {
+				real,
+				bitwise_equal_to_certified_row: equal,
+				seconds: rec.seconds,
+				ms_per_tick: real ? Math.round((100000 * rec.seconds) / real) / 100 : null,
+				...(rec.looked ? { lookup: rec.looked, lookup_after: opts.lookupAfter ?? null } : {})
+			},
+			exact: null,
+			first_wrong_step: null,
+			pokes: [],
+			ablation: null
+		};
+		trace.registers.push(view);
+
+		// the final line and the words (§7)
+		const fin = finalIdsMealy(this.tok, reg, final, rec.outputs);
+		arith.sum = sumOf(this.tok, fin, reg);
+		emit({ type: 'stage', stage: 'answer' });
+		const t0 = now();
+		const words = await this.words(fin, ANSWER_MAX_TOKENS + rec.outputs.length, signal, (text, n) =>
+			emit({ type: 'answer', text, tokens: n })
+		);
+		timing.answer = secs(t0);
+		timing.total = secs(tAll);
+		trace.answer = pyStrip(words.text);
+		trace.final_text = pyStrip(this.tok.decode(fin));
+		trace.timing = timing;
+		trace.ctx = {
+			program_ids: ids,
+			nl: this.ids.nl,
+			registers: [],
+			tape: [],
+			finals: { [reg.name]: final },
+			mealy: {
+				name: reg.name,
+				output: reg.output,
+				start: reg.start,
+				rows: reg.rows,
+				run: rec.states,
+				outputs: rec.outputs
+			},
+			pairs
+		};
+		if (opts.addition) {
+			const want = exactSum(opts.addition.a, opts.addition.b);
+			trace.truth = want;
+			const truePairs = digitPairsIds(opts.addition.a, opts.addition.b, digit);
+			trace.score = {
+				parsed: true,
+				table_exact: adder,
+				tape_exact: sameIds(truePairs, pairs),
+				certified: pass,
+				run_final_right: arith.sum === want,
+				sum_right: arith.sum === want,
+				answer_correct: lastNumber(trace.answer) === want
+			};
+			const trueOut = trueOutputIds(opts.addition.a, opts.addition.b, digit);
+			const got = rec.outputs;
+			const wrong: number[] = [];
+			for (let k = 0; k < Math.min(got.length, trueOut.length); k++)
+				if (got[k] !== trueOut[k]) wrong.push(k);
+			if (got.length !== trueOut.length && !wrong.length)
+				wrong.push(Math.min(got.length, trueOut.length));
+			view.exact = !wrong.length;
+			view.first_wrong_step = wrong.length ? wrong[0] : null;
+			view.steps_wrong = wrong.length;
+		}
+		emit({ type: 'trace', trace });
+		return trace;
+	}
+
+	/**
+	 * A poke on a Mealy run (§6): force the carry entering column `step`, real ticks to the end, the final line and
+	 * the words. The prediction is the table's own run from the forced carry, after the run's own first outputs.
+	 */
+	private async pokeMealy(
+		question: string,
+		ctx: LlmCtx,
+		step: number,
+		forced: number,
+		opts: { signal?: AbortSignal; from?: string; lookupAfter?: number | null },
+		emit: (ev: EngineEvent) => void
+	): Promise<Poke & { min_margin: number | null; seconds: Record<string, number> }> {
+		if (this.busy) throw new Error('the model is busy with another question');
+		this.busy = true;
+		try {
+			question = question.normalize('NFC');
+			const t0 = now();
+			const m = ctx.mealy!;
+			const pairs = ctx.pairs ?? [];
+			const stateIds = [...new Set(m.rows.map((r) => r[0]))];
+			const forcedId = stateIds[forced];
+			if (forcedId === undefined)
+				throw new Error('the forced state is not one of the table’s states');
+			if (step < 0 || step >= pairs.length) throw new Error('the step is off the tape');
+			const pi = m.rows.flatMap((row) => [...row, ctx.nl]);
+			emit({ type: 'stage', stage: 'poke', register: m.name, total: pairs.length - step });
+			const { entry, cached } = await this.certifiedMealy(pi, m.rows, stateIds, opts.signal);
+			const rest = pairs.slice(step);
+			let last = now();
+			const rec = await this.mealyRun(
+				entry,
+				forcedId,
+				rest,
+				opts.signal,
+				(i) => {
+					if (now() - last > 120) {
+						last = now();
+						emit({ type: 'prefill', done: i + 1, total: rest.length });
+					}
+				},
+				opts.lookupAfter ?? null
+			);
+			const delta = new Map(m.rows.map(([s, a, b, t, o]) => [cell(s, a, b), [t, o] as const]));
+			let pred: number | null = forcedId;
+			const predOut: number[] = [];
+			for (const [a, b] of rest) {
+				const d = delta.get(cell(pred, a, b));
+				if (!d) {
+					pred = null;
+					break;
+				}
+				pred = d[0];
+				predOut.push(d[1]);
+			}
+			const final = rec.states.length ? rec.states[rec.states.length - 1] : forcedId;
+			const outputs = [...m.outputs.slice(0, step), ...rec.outputs];
+			const predicted = pred === null ? null : [...m.outputs.slice(0, step), ...predOut];
+			const fin = finalIdsMealy(this.tok, m, final, outputs);
+			const sumAfter = sumOf(this.tok, fin, m);
+			const predictedSum =
+				predicted && pred !== null
+					? sumOf(this.tok, finalIdsMealy(this.tok, m, pred, predicted), m)
+					: null;
+			await this.ensureSession(question, ctx.program_ids, opts.signal);
+			const tw = now();
+			const words = await this.words(fin, ANSWER_MAX_TOKENS + outputs.length, opts.signal);
+			const answer = pyStrip(words.text);
+			return {
+				step,
+				from: opts.from ?? this.name(step > 0 ? (m.run[step - 1] ?? m.start) : m.start),
+				forced: this.name(forcedId),
+				final: this.name(final),
+				predicted_state: pred === null ? null : this.name(pred),
+				answer_after: answer,
+				predicted: predictedSum === null ? null : `the sum ${predictedSum}`,
+				match: pred !== null && final === pred && sameList(outputs, predicted!),
+				answer_states_prediction:
+					predictedSum === null ? null : lastNumber(answer) === predictedSum,
+				ticks: rec.states.length,
+				ticks_equal: rec.same.filter(Boolean).length,
+				min_margin: rec.margins.length ? Math.min(...rec.margins) : null,
+				live: true,
+				sum_after: sumAfter ?? undefined,
+				predicted_sum: predictedSum,
+				seconds: { ticks: rec.seconds, answer: secs(tw), total: secs(t0), cached: cached ? 1 : 0 }
+			};
+		} finally {
+			this.busy = false;
 		}
 	}
 
@@ -760,6 +1311,8 @@ export class Engine {
 		} = {},
 		emit: (ev: EngineEvent) => void = () => {}
 	): Promise<Poke & { min_margin: number | null; seconds: Record<string, number> }> {
+		if (ctx.mealy && register === ctx.mealy.name)
+			return this.pokeMealy(question, ctx, step, forced, opts, emit);
 		if (this.busy) throw new Error('the model is busy with another question');
 		this.busy = true;
 		try {
@@ -800,7 +1353,11 @@ export class Engine {
 			const finals = { ...ctx.finals, [register]: final };
 			await this.ensureSession(question, ctx.program_ids, opts.signal);
 			const tw = now();
-			const words = await this.words(ctx.registers, finals, opts.signal);
+			const words = await this.words(
+				finIds(this.tok, ctx.registers, finals),
+				ANSWER_MAX_TOKENS,
+				opts.signal
+			);
 			const answer = pyStrip(words.text);
 			const finalName = this.name(final);
 			const k = ctx.registers.indexOf(reg);
@@ -898,7 +1455,9 @@ export function ring(n: number): [number, number][] {
 /** dl_page.row_lines: the line (in the page's program lines) of each row of a register. */
 export function rowLines(text: string, register: string, nRows: number): number[] {
 	const lines = text.split('\n').filter((l) => !/^<\/?program>$/.test(l.trim()));
-	const at = lines.findIndex((l) => l.startsWith(`register ${register}:`));
+	const at = lines.findIndex(
+		(l) => l.startsWith(`register ${register}:`) || l.startsWith(`register ${register} (output `)
+	);
 	if (at < 0) return new Array(nRows).fill(-1);
 	return Array.from({ length: nRows }, (_, k) => (at + 1 + k < lines.length ? at + 1 + k : -1));
 }
@@ -995,3 +1554,61 @@ function attachTruth(
 		rv.steps_wrong = wrong.length;
 	});
 }
+
+// ------------------------------------------------------------------ number mode helpers
+
+/** The table is the adder's: 200 rows, carry and digits as bare digit tokens, c'·10 + s = c + a + b, start 0. */
+export function isAdder(reg: MealyRegister, digit: number[]): boolean {
+	if (reg.start !== digit[0] || reg.rows.length !== 200) return false;
+	const want = new Map<string, string>();
+	for (let c = 0; c < 2; c++)
+		for (let a = 0; a < 10; a++)
+			for (let b = 0; b < 10; b++) {
+				const v = c + a + b;
+				want.set(
+					cell(digit[c], digit[a], digit[b]),
+					`${digit[Math.floor(v / 10)]},${digit[v % 10]}`
+				);
+			}
+	return (
+		reg.rows.every(([s, a, b, t, o]) => want.get(cell(s, a, b)) === `${t},${o}`) &&
+		new Set(reg.rows.map(([s, a, b]) => cell(s, a, b))).size === 200
+	);
+}
+
+/** The clock's sum: the `s=` part of the final line, as text. */
+function sumOf(tok: Tok, fin: number[], reg: { output: string }): string | null {
+	const text = tok.decode(fin);
+	const m = new RegExp(` ${reg.output}=(\\S*) </final>`).exec(text);
+	return m ? m[1] : null;
+}
+
+/** pb_families.last_number: the last number in a text, digit groups joined across commas and spaces. */
+export function lastNumber(text: string): string | null {
+	const runs = text.match(/\d(?:[\d,\u2009\u202f ]*\d)?/g);
+	return runs ? runs[runs.length - 1].replace(/\D/g, '') : null;
+}
+
+function digitPairsIds(a: string, b: string, digit: number[]): [number, number][] {
+	const n = Math.max(a.length, b.length);
+	const ra = [...a].reverse().join('').padEnd(n, '0');
+	const rb = [...b].reverse().join('').padEnd(n, '0');
+	const out: [number, number][] = [];
+	for (let i = 0; i < n; i++) out.push([digit[Number(ra[i])], digit[Number(rb[i])]]);
+	out.push([digit[0], digit[0]]);
+	return out;
+}
+
+function trueOutputIds(a: string, b: string, digit: number[]): number[] {
+	let c = 0;
+	return digitPairsIds(a, b, digit).map(([x, y]) => {
+		const v = c + digit.indexOf(x) + digit.indexOf(y);
+		c = Math.floor(v / 10);
+		return digit[v % 10];
+	});
+}
+
+const sameList = (a: number[], b: number[]) =>
+	a.length === b.length && a.every((x, i) => x === b[i]);
+const sameIds = (a: [number, number][], b: [number, number][]) =>
+	a.length === b.length && a.every(([x, y], i) => x === b[i][0] && y === b[i][1]);

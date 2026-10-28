@@ -26,10 +26,27 @@ export interface Register {
 	pi: number[];
 }
 
+/** ARITH_FORMAT's Mealy register: rows [s][a][b][t][o], from state s on the digit pair (a, b) to t, writing o. */
+export interface MealyRegister {
+	name: string;
+	/** the output's name, from `register <name> (output <output>): start <s>` */
+	output: string;
+	start: number;
+	rows: [number, number, number, number, number][];
+	pi: number[];
+}
+
 export interface Program {
+	/** PROMPTBOX's Moore registers (tape mode) */
 	registers: Register[];
 	anchors: [string, string] | null;
 	error: string | null;
+	/** ARITH_FORMAT: `numbers` when any `first:` or `second:` line was written */
+	mode: 'tape' | 'numbers';
+	/** the Mealy registers, in number mode exactly one */
+	mealy: MealyRegister[];
+	/** the `first:` and `second:` quotes (null where the line did not parse) */
+	numbers: { first?: [string, string] | null; second?: [string, string] | null };
 }
 
 export const SYSTEMLESS_TEMPLATE =
@@ -132,8 +149,13 @@ export function linesOf(tok: Tok, ids: number[], nl: number): number[][] {
 	return out;
 }
 
+const QUOTE = '("(?:[^"\\\\]|\\\\.)*")';
 const TAPE_RE = /^tape: after ("(?:[^"\\]|\\.)*") until ("(?:[^"\\]|\\.)*")\s*$/u;
+const NUMBER_LINE_RE = new RegExp(`^(first|second): after ${QUOTE} until ${QUOTE}\\s*$`, 'u');
 const REGISTER_RE = /^register ([\p{L}\p{N}_]+): start/u;
+const MEALY_RE = /^register ([\p{L}\p{N}_]+) \(output ([\p{L}\p{N}_]+)\): start/u;
+/** ARITH_FORMAT: a Mealy row is [s][a][b][t][o]; a Moore row (PROMPTBOX) is [s][e][t] */
+export const MEALY_ROW = 5;
 
 /** Python's json.loads on a quoted string, or undefined where it raises. */
 function jsonString(q: string): string | undefined {
@@ -145,12 +167,18 @@ function jsonString(q: string): string | undefined {
 	}
 }
 
-/** The model's program, read from its token ids (pb_loop.parse_generated). */
+/**
+ * The model's program, read from its token ids (pb_loop.parse_generated, extended by ARITH_FORMAT §2 as
+ * arith_core.parse_generated). Tape mode is PROMPTBOX's, unchanged: Moore registers with 3-token rows and a `tape:`
+ * line. Number mode (any `first:` or `second:` line) runs exactly one Mealy register with 5-token rows.
+ */
 export function parseGenerated(tok: Tok, ids: number[], nl: number): Program {
-	const regs: Register[] = [];
+	type Any = (Register & { kind: 'moore' }) | (MealyRegister & { kind: 'mealy' });
+	const regs: Any[] = [];
 	let anchors: [string, string] | null = null;
+	const numbers: Program['numbers'] = {};
 	let err: string | null = null;
-	let openRows = false;
+	let openRows = 0;
 	for (const line of linesOf(tok, ids, nl)) {
 		const text = stripChars(tok.decode(line), '\n');
 		if (text.startsWith('tape:')) {
@@ -161,37 +189,95 @@ export function parseGenerated(tok: Tok, ids: number[], nl: number): Program {
 				const b = jsonString(m[2]);
 				anchors = a !== undefined && b !== undefined ? [a, b] : null;
 			}
+		} else if (text.startsWith('first:') || text.startsWith('second:')) {
+			const which = text.slice(0, text.indexOf(':')) as 'first' | 'second';
+			const m = NUMBER_LINE_RE.exec(text);
+			const a = m ? jsonString(m[2]) : undefined;
+			const b = m ? jsonString(m[3]) : undefined;
+			numbers[which] = a !== undefined && b !== undefined ? [a, b] : null;
 		} else if (text.startsWith('register ')) {
-			const m = REGISTER_RE.exec(tok.decode(line.slice(0, -1)));
+			const head = tok.decode(line.slice(0, -1));
+			const mealy = MEALY_RE.exec(head);
+			if (mealy) {
+				regs.push({
+					kind: 'mealy',
+					name: mealy[1],
+					output: mealy[2],
+					start: line[line.length - 1],
+					rows: [],
+					pi: []
+				});
+				openRows = MEALY_ROW;
+				continue;
+			}
+			const m = REGISTER_RE.exec(head);
 			if (!m) {
+				// as pb_loop: the rows stay open for the register before (the error stops the run anyway)
 				err ??= `bad register line ${pyRepr(text)}`;
 				continue;
 			}
-			regs.push({ name: m[1], start: line[line.length - 1], rows: [], pi: [] });
-			openRows = true;
+			regs.push({ kind: 'moore', name: m[1], start: line[line.length - 1], rows: [], pi: [] });
+			openRows = 3;
 			continue;
 		}
-		if (openRows && line.length === 3 && line.every((x) => !tok.decode([x]).includes('\n'))) {
-			const [s, e, t] = line;
+		if (
+			openRows &&
+			line.length === openRows &&
+			line.every((x) => !tok.decode([x]).includes('\n'))
+		) {
 			const r = regs[regs.length - 1];
-			r.rows.push([s, e, t]);
-			r.pi.push(s, e, t, nl);
+			if (r.kind === 'mealy') r.rows.push(line as MealyRegister['rows'][number]);
+			else r.rows.push(line as Register['rows'][number]);
+			r.pi.push(...line, nl);
 			continue;
 		}
-		openRows = false;
+		openRows = 0;
 	}
 	for (const r of regs) {
-		const states = new Set(r.rows.map(([s]) => s));
-		const events = new Set(r.rows.map(([, e]) => e));
-		const keys = new Set(r.rows.map(([s, e]) => `${s},${e}`));
-		if (keys.size !== r.rows.length || r.rows.length !== states.size * events.size)
-			err ??= `register ${r.name}: table is not total and single-valued`;
-		if (r.rows.some(([, , t]) => !states.has(t)) || !states.has(r.start))
-			err ??= `register ${r.name}: a destination or the start is not a state`;
+		if (r.kind === 'moore') {
+			// pb_loop's checks, unchanged
+			const states = new Set(r.rows.map(([s]) => s));
+			const events = new Set(r.rows.map(([, e]) => e));
+			const keys = new Set(r.rows.map(([s, e]) => `${s},${e}`));
+			if (keys.size !== r.rows.length || r.rows.length !== states.size * events.size)
+				err ??= `register ${r.name}: table is not total and single-valued`;
+			if (r.rows.some(([, , t]) => !states.has(t)) || !states.has(r.start))
+				err ??= `register ${r.name}: a destination or the start is not a state`;
+		} else {
+			// ARITH_FORMAT §2 (arith_core.parse_generated)
+			const states = new Set(r.rows.map((x) => x[0]));
+			const as = new Set(r.rows.map((x) => x[1]));
+			const bs = new Set(r.rows.map((x) => x[2]));
+			const keys = new Set(r.rows.map((x) => `${x[0]},${x[1]},${x[2]}`));
+			if (
+				!r.rows.length ||
+				keys.size !== r.rows.length ||
+				r.rows.length !== states.size * as.size * bs.size
+			)
+				err ??= `register ${r.name}: table is not total and single-valued`;
+			if (r.rows.some((x) => !states.has(x[3])) || !states.has(r.start))
+				err ??= `register ${r.name}: a destination or the start is not a state`;
+		}
 	}
 	if (!regs.length) err ??= 'no register';
-	if (anchors === null) err ??= 'no tape line';
-	return { registers: regs, anchors, error: err };
+	const mode = 'first' in numbers || 'second' in numbers ? 'numbers' : 'tape';
+	if (mode === 'numbers') {
+		if (!numbers.first || !numbers.second)
+			err ??= 'number mode needs a well-formed first: and second: line';
+		if (regs.length !== 1 || regs[0].kind !== 'mealy')
+			err ??= 'number mode runs exactly one register with an output';
+	} else {
+		if (regs.some((r) => r.kind === 'mealy'))
+			err ??= 'a register with an output needs first: and second: lines';
+		if (anchors === null) err ??= 'no tape line';
+	}
+	const registers: Register[] = [];
+	const mealy: MealyRegister[] = [];
+	for (const r of regs)
+		if (r.kind === 'moore')
+			registers.push({ name: r.name, start: r.start, rows: r.rows, pi: r.pi });
+		else mealy.push({ name: r.name, output: r.output, start: r.start, rows: r.rows, pi: r.pi });
+	return { registers, anchors, error: err, mode, mealy, numbers };
 }
 
 /** Python's repr of a str (the form error messages quote), for the characters programs contain. */

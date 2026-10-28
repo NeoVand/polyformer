@@ -35,6 +35,11 @@ export interface TraceStep {
 	eq?: boolean;
 	/** LLM, lookup mode: this step was read from its certified row, not run */
 	lookup?: boolean;
+	/** Mealy (ARITH_FORMAT): the digit pair read at this column, first number's digit first */
+	pair?: [string, string];
+	/** Mealy: the output digit written at this column, and the second forward's margin */
+	o?: string;
+	m2?: number;
 }
 
 export interface PanelSource {
@@ -55,6 +60,11 @@ export interface ProgramRow {
 	argmax?: string;
 	/** LLM: [row, weight] of the chosen head at the event position, largest first */
 	attn?: [number, number][];
+	/** Mealy rows [s][a][b][t][o]: the first digit (`b` is the second), the output, its margin and its argmax */
+	a?: string;
+	o?: string;
+	m2?: number;
+	argmax2?: string;
 }
 
 export interface Poke {
@@ -74,6 +84,9 @@ export interface Poke {
 	ticks_equal?: number;
 	/** run on the live model in this session, not recorded */
 	live?: boolean;
+	/** Mealy: the clock's sum after the poke, and the table's own sum from the forced carry */
+	sum_after?: string;
+	predicted_sum?: string | null;
 }
 
 export interface Ablation {
@@ -160,6 +173,8 @@ export interface Trace {
 		};
 		labels?: Record<string, string>;
 		lines?: number;
+		/** a Mealy register (ARITH_FORMAT): rows [s][a][b][t][o], each tick two forwards, output named here */
+		mealy?: { output: string };
 	};
 	certificate: {
 		all_ok: boolean;
@@ -267,6 +282,32 @@ export interface LlmCtx {
 	registers: { name: string; start: number; rows: [number, number, number][]; run?: number[] }[];
 	tape: number[];
 	finals: Record<string, number>;
+	/** number mode (ARITH_FORMAT): the Mealy register, its run and outputs, and the digit pairs read */
+	mealy?: {
+		name: string;
+		output: string;
+		start: number;
+		rows: [number, number, number, number, number][];
+		run: number[];
+		outputs: number[];
+	};
+	pairs?: [number, number][];
+}
+
+/** A number-mode run (ARITH_FORMAT): what the clock read, what it wrote, and the page's own check. */
+export interface ArithRecord {
+	/** the two numbers the clock read (digits only) and where they are in the question */
+	numbers: [string, string];
+	spans: [[number, number], [number, number]];
+	quotes: { first: [string, string]; second: [string, string] };
+	/** columns run: the longer number's digits and one more 0 0 pair */
+	columns: number;
+	/** the clock's sum: the output tape, last first, leading zeros dropped */
+	sum: string | null;
+	/** BigInt of the two numbers read: the page's check, not the model's or the clock's */
+	check: string;
+	/** the table is digit for digit the adder's 200 rows */
+	adder: boolean;
 }
 
 /** An LLM run: PROMPTBOX's model wrote the program and ran it (kind 'llm' of polyformer.trace/0). */
@@ -317,6 +358,8 @@ export interface LlmTrace {
 	panels: Trace['panels'];
 	input: Trace['input'] & { anchors?: [string, string] | null; error?: string | null };
 	registers: LlmRegister[];
+	/** number mode (ARITH_FORMAT) */
+	arith?: ArithRecord;
 	timing: Record<string, number> | null;
 	ctx: LlmCtx | null;
 	score?: {
@@ -328,6 +371,8 @@ export interface LlmTrace {
 		answer_correct: boolean;
 		rows_wrong?: number;
 		table_from?: string | null;
+		/** number mode: the clock's sum is the true sum */
+		sum_right?: boolean;
 	};
 	cost?: { container_seconds: number; wall_seconds: number; usd: number };
 	provenance?: { recorded_at: string; demolive_commit: string; promptbox_commit: string };
