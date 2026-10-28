@@ -46,7 +46,7 @@ export const MODELS: readonly SavantModel[] = [
 		short: 'Savant-4B',
 		description: 'Certified addition and the six task families, one program per question.',
 		repo: 'mohsenvand/savant-4b-preview',
-		revision: 'e2a8de056586e6095b5be74c23f16d5750950776',
+		revision: '41b273e33a2251204da47c002f660bb57f173dfc',
 		devUrl: '/models/savant-4b-preview-r3/',
 		/** the q4f16 graph, its two weight files, the tokenizer and configs: 3,330 MB */
 		bytes: 3.33e9,
@@ -68,9 +68,9 @@ export const MODELS: readonly SavantModel[] = [
 		short: 'Savant-4B Loom',
 		description: 'Reasons in words and calls programs mid-thought.',
 		repo: 'mohsenvand/savant-4b-loom-preview',
-		revision: '9782850566a4d13c0b7c00a7c6655b02bfe987ab',
+		revision: 'bf72f6bf462d71a3e0b2e39c3539d964194a96bd',
 		devUrl: '/models/savant-4b-loom-preview/',
-		/** the q4f16 graph, its two weight files, the tokenizer and configs: 3,344 MB (all 17 files verified by sha256) */
+		/** the q4f16 graph, its two weight files, the tokenizer and configs: 3,344 MB (all 16 files verified by sha256) */
 		bytes: 3.34e9,
 		adapter: 'reason-s1/adapter_step500',
 		dtype: 'q4f16',

@@ -47,7 +47,7 @@ describe('the two models', () => {
 		expect(MODELS.map((m) => m.id)).toEqual(['r3', 'reason']);
 		expect(r3).toMatchObject({
 			name: 'Savant-4B preview r3',
-			revision: 'e2a8de056586e6095b5be74c23f16d5750950776',
+			revision: '41b273e33a2251204da47c002f660bb57f173dfc',
 			repo: 'mohsenvand/savant-4b-preview',
 			bytes: 3.33e9,
 			adapter: 'arith-s1r2/adapter_step500',
@@ -59,7 +59,7 @@ describe('the two models', () => {
 		expect(reason.multiCall).toBe(true);
 		expect(reason).toMatchObject({
 			repo: 'mohsenvand/savant-4b-loom-preview',
-			revision: '9782850566a4d13c0b7c00a7c6655b02bfe987ab',
+			revision: 'bf72f6bf462d71a3e0b2e39c3539d964194a96bd',
 			adapter: 'reason-s1/adapter_step500'
 		});
 		expect(weightsReady(reason)).toBe(true);
