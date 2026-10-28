@@ -502,6 +502,10 @@
 					{/if}
 				</div>
 			{/if}
+			<p class="hint scope">
+				This preview runs questions like these six. Arithmetic and other new kinds of question are
+				not in it yet.
+			</p>
 			{#if older.length}
 				<button class="more" aria-expanded={showOlder} onclick={() => (showOlder = !showOlder)}
 					>{showOlder ? 'Hide' : 'More'} recorded runs: the frozen INTERP core</button

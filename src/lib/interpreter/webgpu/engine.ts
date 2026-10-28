@@ -61,6 +61,9 @@ export interface LM {
 // ------------------------------------------------------------------ constants (dl_core, pb_loop)
 
 export const COMPILE_MAX_TOKENS = 3000;
+/** What the page says when the model falls back to its older rule-style programs (arithmetic, for one). */
+export const RULE_STYLE_NOTE =
+	"the model wrote a rule-style program, the older format it learned for arithmetic, and this preview's clock runs only literal tables, so there is no run. Arithmetic in the runnable format comes with the next model";
 export const ANSWER_MAX_TOKENS = 300;
 export const MAX_MODEL_LEN = 40960;
 export const SCHEMA = 'polyformer.trace/0';
@@ -475,7 +478,8 @@ export class Engine {
 			head.logits,
 			head.past,
 			COMPILE_MAX_TOKENS,
-			['<exec/>'],
+			// `<check>` opens the older rule-style format (PROMPTBOX stage (b+c)); the clock cannot run it, so stop there
+			['<exec/>', '<check>'],
 			signal,
 			(text, n) => {
 				const t = now();
@@ -515,6 +519,7 @@ export class Engine {
 			emit({ type: 'trace', trace });
 			return trace;
 		};
+		if (!exec && text.includes('<check>')) return finish(RULE_STYLE_NOTE);
 		if (!exec) return finish('the model answered without writing a program', pyStrip(text));
 
 		const prog = parseGenerated(this.tok, ids, this.ids.nl);

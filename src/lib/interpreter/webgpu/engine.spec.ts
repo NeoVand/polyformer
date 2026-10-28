@@ -7,7 +7,7 @@
 import { readFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
 import { symEig } from './codebook.ts';
-import { Cancelled, Engine, type EngineEvent, type Truth } from './engine.ts';
+import { Cancelled, Engine, RULE_STYLE_NOTE, type EngineEvent, type Truth } from './engine.ts';
 import { applyEvent, liveTrace, startRun } from './live-view.ts';
 import { chatPrompt, type Tok } from './pb.ts';
 import { findTokenizer, realTok } from './realtok.ts';
@@ -196,6 +196,23 @@ describe('where the loop stops, and what goes wrong', { timeout: 60_000 }, () =>
 		engine.dispose();
 		expect(lm.live.size).toBe(0);
 	});
+
+	it.skipIf(!tokPath)(
+		'a rule-style program stops at <check> and says the clock cannot run it',
+		async () => {
+			const rule =
+				'<program>\ntask: add the two numbers\nevents: digit pairs\nc: 0..1\n' +
+				'on each pair a b: s=(a+b+c) mod 10, c=(a+b+c)//10 mod 2\n</program>\n<check>\n c0 000✓\n c0 010✓';
+			const lm = new FakeLM(script(t, { program: tok.encode(rule) }));
+			const engine = engineFor(lm);
+			const out = await engine.ask(t.prompt, { id: 'x' }, () => {});
+			expect(out.note).toBe(RULE_STYLE_NOTE);
+			expect(out.compile.text.endsWith('<check>')).toBe(true);
+			expect(out.registers).toEqual([]);
+			engine.dispose();
+			expect(lm.live.size).toBe(0);
+		}
+	);
 
 	it('a tape the clock cannot read stops before the run, with the Python reason', async () => {
 		const c = ref.cases.find((x: { name: string }) => x.name === 'crafted:not_event');
