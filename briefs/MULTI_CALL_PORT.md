@@ -1,9 +1,9 @@
 # MULTI_CALL port: REASON_FORMAT in the browser runtime and the chat
 
 Branch `site-reason` (from `site-savant` 9ff5fc4b), 28 Oct. Spec: `research/reason/REASON_FORMAT.md` (branch `reason`)
-as of a62314a9, including §12's four settled points from 15:20 UTC. Reference: `research/reason/reason_core.py` at that
-commit. Fixtures: `research/reason/fixtures/reason_fixtures.json` at f5b71665, which adds `result_number`; the ids are
-unchanged from ba619ecc. Spend: $0. Nothing pushed.
+as of 59c4d6aa, including §12's settled points from 15:20 and 15:35 UTC. Reference: `research/reason/reason_core.py` at
+that commit. Fixtures: `research/reason/fixtures/reason_fixtures.json` at f5b71665, which adds `result_number`; the ids
+are unchanged from ba619ecc, and 59c4d6aa regenerates them byte for byte. Spend: $0. Nothing pushed.
 
 ## What changed
 
@@ -16,9 +16,12 @@ unchanged from ba619ecc. Spend: $0. Nothing pushed.
   - `readCall`: the second number is retried once from (0, 0). `result k` citations come with the reference's error
     messages. `result k` is the k-th call that ran: an error line takes no number (§12), so `resultNumbers` counts
     only the successes.
-  - `hasNewProgram` (§12.1, `reason_core.clock_step`): the text after the last `</final>` must hold a `<program>`.
-    Without one the `<exec/>` gets `\n<final> error: no program </final>\n`. That counts towards the call limit,
-    takes no result number, and never re-runs an earlier program. `lastExecStart` finds where such a call sits.
+  - `roundCallStart` (§12, `reason_core.clock_step` with `round_start`): the call is the ids from the last `<program>`
+    in the round. The round is the model's own ids since the clock last appended anything: from the end of the last
+    final, or from the response's start, to this `<exec/>`. A round with no `<program>` gets
+    `\n<final> error: no program </final>\n`. That counts towards the call limit, takes no result number, and never
+    re-runs an earlier program. The decoded text is not consulted, so a `</final>` the model writes itself changes
+    nothing. `lastExecStart` finds where such a call sits.
   - Also `lastCallStart`, `resultValueOf`, `errorFinalText`/`errorFinalIds`, and `limitAt`: 8 calls run, the 9th to
     11th get `error: too many calls`, and the 12th ends the response. The checks run in the reference's order: hard
     stop, then too many calls, then no program.
@@ -86,7 +89,7 @@ unchanged from ba619ecc. Spend: $0. Nothing pushed.
 
 - `pnpm check`: 0 errors, 0 warnings.
 - Unit tests (`vitest --project server`):
-  - With the real tokenizer: 383 pass. That is the 336 that existed, unchanged, plus 47 new.
+  - With the real tokenizer: 386 pass. That is the 336 that existed, unchanged, plus 50 new.
   - With `QWEN_TOKENIZER=none`: everything in `src/lib/interpreter` passes, with only tokenizer-gated tests skipped.
 - `reason.spec.ts` covers:
   - the reference's six `locate` cases, plus `locate` against today's `findSpan` and the §12 whitespace rules;
@@ -94,7 +97,9 @@ unchanged from ba619ecc. Spend: $0. Nothing pushed.
     text, the value and the error line;
   - `result k` parsing, with today's parse unchanged;
   - result numbers against the fixtures' `result_number`, and citations that skip error lines;
-  - `hasNewProgram`;
+  - `roundCallStart`: each fixture call found in its own round, a round of words and `<exec/>` with none (though an
+    earlier program is in the response), and, on Qwen3's tokenizer, a `</final>` the model writes itself not ending
+    its round;
   - the limits;
   - the subtracter against its own table run.
 - `engine-reason.spec.ts` covers:
@@ -104,10 +109,12 @@ unchanged from ba619ecc. Spend: $0. Nothing pushed.
   - Every tick ran right after its own Π at position |Π|, and each Π was certified once.
   - The events rebuild the run, and every cache is freed.
   - Each call's result number equals the fixture's `result_number`.
-  - An `<exec/>` with no new `<program>` (§12.1): the chain with one inserted after call 1. The bad call gets the
+  - An `<exec/>` whose round has no `<program>` (§12): the chain with one inserted after call 1. The bad call gets the
     `no program` line, takes no number and runs nothing (no extra ticks). The next call becomes result 2, and the
     chain's last call, citing results 1 and 2, still gives the reference's difference.
   - 8 calls run, the 9th to 11th get error lines, and the 12th ends the response, with no answer.
+  - A model that only replays `<exec/>`: calls 1 to 8 get `no program`, 9 to 11 `too many calls`, and the 12th ends
+    the response with nothing appended. Nothing ever ticks, and there is no answer.
   - A response the budget cuts off ends `length`, with no answer, after exactly 3,000 plus the last result's length
     in tokens.
   - Stopping mid-transcript frees everything.
@@ -128,10 +135,13 @@ unchanged from ba619ecc. Spend: $0. Nothing pushed.
   not a state" (TS adds `!r.rows.length`). It was left alone so the single-call path stays bit for bit, and calls
   inherit it.
 
-## Settled by §12 (28 Oct, 15:20 UTC), mirrored here
+## Settled by §12 (28 Oct, 15:20 and 15:35 UTC), mirrored here
 
-1. **An `<exec/>` with no new `<program>`** gets `error: no program`, counts towards the limit, takes no result number
-   and never re-runs a program. Before §12 the port re-ran the previous program, as `last_call_start` did.
+1. **An `<exec/>` whose round has no `<program>`** gets `error: no program`, counts towards the limit, takes no result
+   number and never re-runs a program. The round is the model's own ids since the clock last appended anything,
+   and the call is the ids from the last `<program>` in it. Before §12 the port re-ran the previous program, as
+   `last_call_start` over the whole response did. From 15:20 to 15:35 it decided on the text after the last
+   `</final>`; now `clock_step` and `reason_loop` agree on the round's ids, and so does the port.
 2. **Budget.** The page keeps its own: 3,000 tokens per round plus the length of the last result, capped by the
    40,960-token context. The reference's evaluation (`reason_loop --max_new`) allows 12,000 per round. Only a
    response that one of the budgets cuts off can differ, and such a response has no answer either way.
@@ -141,22 +151,19 @@ unchanged from ba619ecc. Spend: $0. Nothing pushed.
 4. **No pokes on multi-call runs** (`ctx` is null), and no session cache is kept after one.
 5. **Results are numbered by the calls that ran** (§12, "before any training"). The engine's `ReasonCall.result`
    matches the fixtures' `result_number`.
+6. **The 12th `<exec/>` ends the response with nothing appended**, and calls 9 to 11 get `error: too many calls`. The
+   reference's `reason_loop` now does the same as `clock_step`, and so does the port.
 
 ## Still open, and what the port does
 
-1. **Two forms of the §12.1 test in the reference.** `reason_core.clock_step` looks at the text after the last
-   `</final>`; `reason_loop` looks at the round's own ids. They differ only if the model writes `</final>` itself.
-   The port follows `clock_step`.
-2. **The 12th `<exec/>` in `reason_loop`** is still appended and given a final (`too many calls`) before the loop
-   stops, while `clock_step` gives it none. The port follows `clock_step`: call 12 has no final, and the response ends.
-3. **Calls 9 to 11** are not parsed (the reference does not), so their mode is null.
-4. **Anchors not found in the notes** still read "anchors not found in the prompt", the reference's message.
-5. **`<check>`** (the old rule-style format) stops only the first segment, as today. Later segments ignore it.
-6. **"run exact"** in the status line means every step landed on its row's destination and output: the run is its
+1. **Calls 9 to 11** are not parsed (the reference does not), so their mode is null.
+2. **Anchors not found in the notes** still read "anchors not found in the prompt", the reference's message.
+3. **`<check>`** (the old rule-style format) stops only the first segment, as today. Later segments ignore it.
+4. **"run exact"** in the status line means every step landed on its row's destination and output: the run is its
    table's run (Theorem P). Whether the table is right is a separate question. For a run the page recognises,
    `arith.check` holds the true sum or difference, and `arith.op` names the table.
-7. **A tape read from the notes** has its `char_spans` indexed into the notes. No panel uses them today.
-8. **A cited number has no span in its source.** Its `arith.spans` entry is [0, 0], and `arith.from` says
+5. **A tape read from the notes** has its `char_spans` indexed into the notes. No panel uses them today.
+6. **A cited number has no span in its source.** Its `arith.spans` entry is [0, 0], and `arith.from` says
    `{ result: k }`.
 
 ## The adder check (the Mealy path)

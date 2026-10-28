@@ -272,6 +272,41 @@ describe('the reference’s transcripts on a scripted model', { timeout: 120_000
 		expect(lm.live.size).toBe(0);
 	});
 
+	it('a model that only replays <exec/>: 8 no-program lines, 3 too-many lines, and the 12th appends nothing', async () => {
+		const c = caseNamed('chain_add_add_sub');
+		const one = c.calls[0];
+		const exec = c.response_ids.slice(one.end - 3, one.end);
+		// its words, then <exec/> with no program; then eleven more rounds of nothing but <exec/>
+		const pieces = [[...c.response_ids.slice(0, one.start), ...exec], ...Array(11).fill(exec)];
+		const lm = lmFor(c, pieces);
+		const engine = engineFor(lm);
+		const out = await engine.ask(c.question, { id: 'x', multiCall: true }, () => {});
+		const calls = out.reason!.calls;
+		expect(calls.map((k) => k.error)).toEqual([
+			...Array(8).fill('no program'),
+			...Array(3).fill('too many calls'),
+			'hard stop'
+		]);
+		calls.slice(0, 11).forEach((k, i) => {
+			expect(k.final_text).toBe(errorFinalText(i < 8 ? 'no program' : 'too many calls'));
+			expect(k.final_ids).toEqual(tok.encode(k.final_text!));
+			expect([k.value, k.result, k.mode, k.program]).toEqual([null, null, null, '<exec/>']);
+		});
+		// the 12th ends the response: nothing appended after its <exec/>, no answer, and nothing ever ran
+		expect([calls[11].final_ids, calls[11].final_text]).toEqual([null, null]);
+		expect(out.reason!.end).toBe('hard stop');
+		expect(out.reason!.response_ids).toHaveLength(calls[11].end);
+		expect(tok.decode(out.reason!.response_ids.slice(calls[11].start))).toBe('<exec/>');
+		expect(out.answer).toBe('');
+		expect(lm.ticks).toBe(0);
+		expect(out.reason!.segments[0]).toEqual({
+			kind: 'text',
+			text: tok.decode(c.response_ids.slice(0, one.start))
+		});
+		engine.dispose();
+		expect(lm.live.size).toBe(0);
+	});
+
 	it('a response the token budget cuts off is unfinished: no answer (§12.3)', async () => {
 		const c = caseNamed('chain_add_add_sub');
 		const one = c.calls[0];

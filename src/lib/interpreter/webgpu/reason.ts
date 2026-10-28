@@ -4,8 +4,9 @@
  * the response before the call with every `<program>…<exec/>` deleted); `locate` finds a quote pair over them, exact
  * first and then with whitespace relaxed, falling through S0 to S1; a number line may cite an earlier call's result
  * (`first: result 2`, the 2nd call that ran: an error line takes no number); a call that cannot run gets
- * `\n<final> error: <msg> </final>\n`, and so does an `<exec/>` with no new `<program>` since the last final; at most 8
- * calls run, and the 12th `<exec/>` ends the response (REASON_FORMAT §12 as of 28 Oct, 15:20 UTC). Π, the tick, the certificate and a run's final line are today's (pb.ts, arith.ts,
+ * `\n<final> error: <msg> </final>\n`, and so does an `<exec/>` whose round (the model's own ids since the clock last
+ * appended anything) holds no `<program>`; at most 8 calls run, and the 12th `<exec/>` ends the response with nothing
+ * appended (REASON_FORMAT §12 as of 28 Oct, 15:35 UTC; reason_core at 59c4d6aa). Π, the tick, the certificate and a run's final line are today's (pb.ts, arith.ts,
  * engine.ts). reason.spec.ts checks this file against the reference's fixtures (fixtures/reason.json).
  */
 import { digitIds, digitPairs, readNumber } from './arith.ts';
@@ -132,12 +133,14 @@ export const errorFinalText = (msg: string) => `\n<final> error: ${msg} </final>
 export const errorFinalIds = (tok: Tok, msg: string) => tok.encode(errorFinalText(msg));
 
 /**
- * §12.1 (reason_core.clock_step): the text after the last `</final>` holds a `<program>` of its own. Without one the
- * `<exec/>` gets an error line and never re-runs an earlier program.
+ * §12 (reason_core.clock_step with `round_start`): where the call starts, the last `<program>` among the model's own
+ * ids of this round, from `roundStart` (the end of the last final, or 0) to the `<exec/>` that ends `ids`. Null when
+ * the round has none: the `<exec/>` gets `error: no program` and never re-runs an earlier program. The decoded text
+ * is not consulted, so a `</final>` the model writes itself changes nothing.
  */
-export function hasNewProgram(responseText: string): boolean {
-	const at = responseText.lastIndexOf('</final>');
-	return (at < 0 ? responseText : responseText.slice(at + '</final>'.length)).includes('<program>');
+export function roundCallStart(tok: Tok, ids: number[], roundStart: number): number | null {
+	const at = lastCallStart(tok, ids.slice(roundStart));
+	return at === null ? null : roundStart + at;
 }
 
 /** Index of the token holding the '<' of the last '<exec/>' at or after `from` (`from` if there is none). */

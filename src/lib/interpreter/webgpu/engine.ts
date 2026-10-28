@@ -24,14 +24,13 @@ import { clockPairs, digitIds, exactSum, finalIdsMealy } from './arith.ts';
 import {
 	errorFinalIds,
 	exactDifference,
-	hasNewProgram,
 	isSubtracter,
-	lastCallStart,
 	lastExecStart,
 	limitAt,
 	NO_PROGRAM,
 	readCall,
 	resultValueOf,
+	roundCallStart,
 	TOO_MANY,
 	type CallReading
 } from './reason.ts';
@@ -1551,14 +1550,14 @@ export class Engine {
 					break;
 				}
 
-				// the clock: the call's own ids, from its last <program> to <exec/>; §12.1: a <program> of its own,
-				// after the last final, or an error line (never an earlier program run again)
+				// the clock: the call is the round's ids from its last <program> to <exec/>, the round being the model's
+				// own ids since the clock last appended (§12); a round with no <program> gets an error line and never
+				// re-runs an earlier program
 				const k = calls.length + 1;
 				const limit = limitAt(calls.length);
-				const fresh = hasNewProgram(this.tok.decode(response));
-				const at = fresh
-					? (lastCallStart(this.tok, response) ?? 0)
-					: lastExecStart(this.tok, response, textFrom);
+				const own = roundCallStart(this.tok, response, textFrom);
+				const fresh = own !== null;
+				const at = own ?? lastExecStart(this.tok, response, textFrom);
 				const program = this.tok.decode(response.slice(at));
 				const before = this.tok.decode(response.slice(textFrom, Math.max(textFrom, at)));
 				segments.push({ kind: 'text', text: before }, { kind: 'call', k });

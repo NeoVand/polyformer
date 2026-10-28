@@ -14,7 +14,6 @@ import {
 	errorFinalText,
 	exactDifference,
 	HARD_STOP_CALLS,
-	hasNewProgram,
 	isSubtracter,
 	lastCallStart,
 	lastExecStart,
@@ -27,6 +26,7 @@ import {
 	relaxedPattern,
 	resultNumbers,
 	resultValueOf,
+	roundCallStart,
 	sourcesOf
 } from './reason.ts';
 import { reason, reasonTok } from './reason-fixtures.ts';
@@ -98,17 +98,6 @@ describe('limits and lines (§5, §6)', () => {
 			'end',
 			'end'
 		]);
-	});
-
-	it('needs a <program> after the last final for an <exec/> to run (§12.1)', () => {
-		expect(hasNewProgram('Words.\n\n<program>\ntask: t\n</program>\n<exec/>')).toBe(true);
-		expect(hasNewProgram('<program>…<exec/>\n<final> c=0 s=4 </final>\nAgain.\n\n<exec/>')).toBe(
-			false
-		);
-		expect(
-			hasNewProgram('<program>…<exec/>\n<final> error: no program </final>\n<program>…<exec/>')
-		).toBe(true);
-		expect(hasNewProgram('No program at all. <exec/>')).toBe(false);
 	});
 
 	it('numbers results by the calls that ran: an error line takes none (§12)', () => {
@@ -187,6 +176,8 @@ function checks(label: string, getTok: () => Tok) {
 					const tok = getTok();
 					expect(tok.decode(c.response_ids)).toBe(c.response_text);
 					const results: (string | null)[] = [];
+					/** where the clock last stopped appending: the end of the last final, or 0 */
+					let round = 0;
 					expect(resultNumbers(c.calls.map((x) => x.value))).toEqual(
 						c.calls.map((x) => x.result_number)
 					);
@@ -196,7 +187,7 @@ function checks(label: string, getTok: () => Tok) {
 						expect(notesOf(text)).toBe(call.notes);
 						expect(sourcesOf(c.question, text)).toEqual([c.question, call.notes]);
 						expect(lastCallStart(tok, upTo)).toBe(call.start);
-						expect(hasNewProgram(text)).toBe(true);
+						expect(roundCallStart(tok, upTo, round)).toBe(call.start);
 						expect(lastExecStart(tok, upTo, call.start)).toBe(call.end - 3);
 						const prog = parseGenerated(tok, upTo.slice(call.start), nl, { results: true });
 						const got = readCall(tok, c.question, text, prog, results);
@@ -211,9 +202,27 @@ function checks(label: string, getTok: () => Tok) {
 							expect(errorFinalIds(tok, call.error)).toEqual(call.final_ids);
 						}
 						results.push(call.value);
+						round = call.end + call.final_ids.length;
 					}
 				});
 			});
+
+		it('finds a call only in the model’s own ids since the clock last appended (§12)', () => {
+			const tok = getTok();
+			const chain = reason.cases.find((x) => x.name === 'chain_add_add_sub')!;
+			const [one, two] = chain.calls;
+			const afterOne = one.end + one.final_ids.length;
+			const exec = chain.response_ids.slice(one.end - 3, one.end);
+			// call 2's round holds its program
+			expect(roundCallStart(tok, chain.response_ids.slice(0, two.end), afterOne)).toBe(two.start);
+			// a round of words and <exec/> has none, though call 1's program is in the response
+			const bare = [...chain.response_ids.slice(0, two.start), ...exec];
+			expect(roundCallStart(tok, bare, afterOne)).toBeNull();
+			expect(roundCallStart(tok, bare, 0)).toBe(one.start);
+			expect(lastExecStart(tok, bare, afterOne)).toBe(two.start);
+			// before any call the round starts at 0
+			expect(roundCallStart(tok, exec, 0)).toBeNull();
+		});
 
 		it('a cited result counts only the calls that ran', () => {
 			const tok = getTok();
@@ -270,6 +279,19 @@ if (tokPath) {
 			expect(real.encode('<exec/>')).toEqual(reason.encoded['<exec/>']);
 		});
 		checks('Qwen3’s real tokenizer', getReal);
+
+		it('a </final> the model writes itself does not end its round', () => {
+			const tok = getReal();
+			const ids = tok.encode('Words.\n\n<program>\ntask: t\n</final>\n</program>\n<exec/>');
+			expect(roundCallStart(tok, ids, 0)).toBe(tok.encode('Words.\n\n').length);
+			const bare = tok.encode(
+				'<program>\ntask: t\n</program>\n<exec/>\n<final> n=1 </final>\nNo program </final> here <exec/>'
+			);
+			const round = tok.encode(
+				'<program>\ntask: t\n</program>\n<exec/>\n<final> n=1 </final>\n'
+			).length;
+			expect(roundCallStart(tok, bare, round)).toBeNull();
+		});
 
 		it('a later number line replaces an earlier one, citation or quote', () => {
 			const tok = getReal();
