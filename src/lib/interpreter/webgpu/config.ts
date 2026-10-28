@@ -1,12 +1,11 @@
 /**
  * The models the interpreter can run, one entry each. The browser cache keys files by revision, so two models never
- * share a file. Savant-4B preview r3 is live. The reasoning model's repo and revision stay placeholders until the
- * orchestrator fills them after upload; until then the picker hides that choice. The page's test stand-in still
- * offers it, so the choice can be exercised before the upload.
+ * share a file. Savant-4B preview r3 and Savant-4B Loom (preview) are both published and pinned by revision. A model
+ * whose repo or revision is UNPUBLISHED is hidden by the picker.
  */
 
-/** Working name. The final name is pending, so every label reads this constant. */
-export const REASON_MODEL_NAME = 'Savant-4B Reason (preview)';
+/** The reasoning model's name (Neo, 28 Oct 2026). Every label reads this constant. */
+export const REASON_MODEL_NAME = 'Savant-4B Loom (preview)';
 
 /**
  * Placeholder for a repo or revision the orchestrator replaces after upload. A model whose repo or revision is still
@@ -66,22 +65,23 @@ export const MODELS: readonly SavantModel[] = [
 	{
 		id: 'reason',
 		name: REASON_MODEL_NAME,
-		short: 'Savant-4B Reason',
+		short: 'Savant-4B Loom',
 		description: 'Reasons in words and calls programs mid-thought.',
-		repo: UNPUBLISHED,
-		revision: UNPUBLISHED,
-		devUrl: '/models/savant-4b-reason/',
-		/** PLACEHOLDER until the upload records a size: the same q4f16 layout as r3. */
-		bytes: 3.33e9,
-		adapter: UNPUBLISHED,
+		repo: 'mohsenvand/savant-4b-loom-preview',
+		revision: '9782850566a4d13c0b7c00a7c6655b02bfe987ab',
+		devUrl: '/models/savant-4b-loom-preview/',
+		/** the q4f16 graph, its two weight files, the tokenizer and configs: 3,344 MB (all 17 files verified by sha256) */
+		bytes: 3.34e9,
+		adapter: 'reason-s1/adapter_step500',
 		dtype: 'q4f16',
 		base: 'Qwen/Qwen3-4B',
-		card: null,
+		card: 'https://huggingface.co/mohsenvand/savant-4b-loom-preview',
 		multiCall: true,
 		arithmetic: true,
 		about:
-			`${REASON_MODEL_NAME}: Qwen3-4B continued from ARITH, trained to reason in words and call programs ` +
-			'mid-thought. The weights are not uploaded yet.'
+			`${REASON_MODEL_NAME}: Qwen3-4B with REASON's adapter (ARITH's adapter continued on multi-call reasoning, ` +
+			'reason-s1 step 500) merged, exported to ONNX (4-bit weights, v and down projections 8-bit, fp16 activations) ' +
+			'and run by transformers.js on WebGPU in this browser. It reasons in words and calls programs mid-thought.'
 	}
 ];
 

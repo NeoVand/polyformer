@@ -43,7 +43,7 @@ function memory(): ChoiceStore & { map: Map<string, string> } {
 }
 
 describe('the two models', () => {
-	it('pins r3 and leaves the reasoning model unpublished', () => {
+	it('pins both published models by revision', () => {
 		expect(MODELS.map((m) => m.id)).toEqual(['r3', 'reason']);
 		expect(r3).toMatchObject({
 			name: 'Savant-4B preview r3',
@@ -57,10 +57,12 @@ describe('the two models', () => {
 		expect(weightsReady(r3)).toBe(true);
 		expect(reason.name).toBe(REASON_MODEL_NAME);
 		expect(reason.multiCall).toBe(true);
-		expect(reason.repo).toBe(UNPUBLISHED);
-		expect(reason.revision).toBe(UNPUBLISHED);
-		expect(reason.adapter).toBe(UNPUBLISHED);
-		expect(weightsReady(reason)).toBe(false);
+		expect(reason).toMatchObject({
+			repo: 'mohsenvand/savant-4b-loom-preview',
+			revision: '9782850566a4d13c0b7c00a7c6655b02bfe987ab',
+			adapter: 'reason-s1/adapter_step500'
+		});
+		expect(weightsReady(reason)).toBe(true);
 		for (const m of MODELS) {
 			expect(m.description.includes('\n')).toBe(false);
 			expect(m.description.length).toBeGreaterThan(20);
@@ -70,23 +72,23 @@ describe('the two models', () => {
 	});
 
 	it('hides an unpublished model unless the stand-in asks for it', () => {
-		expect(modelsOffered(false).map((m) => m.id)).toEqual(['r3']);
-		expect(modelsOffered(true).map((m) => m.id)).toEqual(['r3', 'reason']);
-		const filled = { ...reason, repo: 'mohsenvand/savant-4b-reason', revision: 'abc1234' };
-		expect(weightsReady(filled)).toBe(true);
-		expect(modelsOffered(false, [r3, filled]).map((m) => m.id)).toEqual(['r3', 'reason']);
+		expect(modelsOffered(false).map((m) => m.id)).toEqual(['r3', 'reason']);
+		const unpublished = { ...reason, repo: UNPUBLISHED, revision: UNPUBLISHED };
+		expect(weightsReady(unpublished)).toBe(false);
+		expect(modelsOffered(false, [r3, unpublished]).map((m) => m.id)).toEqual(['r3']);
+		expect(modelsOffered(true, [r3, unpublished]).map((m) => m.id)).toEqual(['r3', 'reason']);
 	});
 
 	it('gives each model its own cache prefix, including two revisions of one repo', () => {
 		const prod = { dev: false };
 		const dev = { dev: true };
 		expect(modelUrl(r3, prod)).toBe(hfUrl(r3.repo, r3.revision));
-		expect(modelUrl(reason, prod)).toBe(reason.devUrl);
+		expect(modelUrl(reason, prod)).toBe(hfUrl(reason.repo, reason.revision));
 		expect(cachePrefixesOverlap(modelUrl(r3, prod), modelUrl(reason, prod))).toBe(false);
 		expect(cachePrefixesOverlap(modelUrl(r3, dev), modelUrl(reason, dev))).toBe(false);
 		const forced = 'https://example.test/one-export';
 		expect(modelUrl(r3, { dev: false, forced })).toBe(`${forced}/`);
-		expect(modelUrl(reason, { dev: false, forced })).toBe(reason.devUrl);
+		expect(modelUrl(reason, { dev: false, forced })).toBe(hfUrl(reason.repo, reason.revision));
 		expect(
 			cachePrefixesOverlap(
 				modelUrl(r3, { dev: false, forced }),
@@ -131,7 +133,7 @@ describe('the remembered choice', () => {
 describe('forgetting one model', () => {
 	it('drops that revision’s files and keeps the other model’s', () => {
 		const a = hfUrl(r3.repo, r3.revision);
-		const b = 'http://127.0.0.1:4173/models/savant-4b-reason/';
+		const b = 'http://127.0.0.1:4173/models/savant-4b-loom-preview/';
 		const keys = [
 			`${a}onnx/model`,
 			`${a}tokenizer.json`,

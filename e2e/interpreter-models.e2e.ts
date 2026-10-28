@@ -1,6 +1,6 @@
 /**
- * The visitor picks which Savant to download. r3 is live. The reasoning model’s weights are still a placeholder, so
- * the published page hides it; the stand-in offers it, and a question then goes out with that model’s multiCall flag.
+ * The visitor picks which Savant to download: r3 or Loom, both published and pinned by revision. A question goes out
+ * with the chosen model’s multiCall flag.
  * Forgetting a download deletes that model’s cache prefix and leaves the other model’s files.
  */
 import { readFileSync } from 'node:fs';
@@ -23,7 +23,7 @@ async function stub(page: Page, delay = 4) {
 const model = (page: Page) => page.getByRole('region', { name: 'The model' });
 const choice = (page: Page, name: RegExp) => model(page).getByRole('radio', { name });
 const r3 = (page: Page) => choice(page, /Savant-4B preview r3/);
-const reason = (page: Page) => choice(page, /Savant-4B Reason \(preview\)/);
+const reason = (page: Page) => choice(page, /Savant-4B Loom \(preview\)/);
 
 async function bases(page: Page) {
 	await expect(reason(page)).toBeVisible();
@@ -34,16 +34,16 @@ async function bases(page: Page) {
 	return [new URL(a!, page.url()).href, new URL(b!, page.url()).href] as const;
 }
 
-test('the published page hides the reasoning model until its weights are filled in', async ({
-	page
-}) => {
+test('the published page offers both models, r3 first', async ({ page }) => {
 	await page.route('**/api/**', (r) => r.fulfill({ status: 404, body: '' }));
 	await page.goto('/interpreter');
 	await expect(page.getByText('Certified addition and the six task families')).toBeVisible();
-	await expect(page.getByRole('button', { name: /^Load Savant-4B(?! Reason)/ })).toContainText(
-		'~3.3 GB'
-	);
-	await expect(reason(page)).toHaveCount(0);
+	// Not the load button: headless Chromium under a parallel run sometimes gets no GPU adapter, and the page then
+	// says so instead of offering a download. The choice itself does not depend on the GPU.
+	await expect(r3(page)).toContainText('~3.3 GB');
+	await expect(reason(page)).toContainText('~3.3 GB');
+	await expect(r3(page)).toHaveAttribute('aria-checked', 'true');
+	await expect(reason(page)).toHaveCount(1);
 	await expect(page.getByTitle('Story', { exact: true })).toBeVisible();
 	await expect(page.getByRole('button', { name: 'Two stores', exact: true })).toHaveCount(0);
 });
@@ -90,14 +90,14 @@ test('selecting each model sends that model’s call flag, and a reasoning run s
 	await stub(page, 8);
 	await page.goto('/interpreter');
 	await reason(page).click();
-	await page.getByRole('button', { name: /Load Savant-4B Reason/ }).click();
+	await page.getByRole('button', { name: /Load Savant-4B Loom/ }).click();
 	await expect(page.getByText(/Running in this tab on/)).toBeVisible();
 	await page.getByRole('textbox', { name: 'Your question' }).fill(chain.prompt);
 	await page.getByRole('button', { name: 'Send' }).click();
 	await expect(page.locator('.bot .reason .summary')).toHaveText('3 calls · all certified', {
 		timeout: 20_000
 	});
-	await expect(page.locator('.bot .prov')).toContainText('Savant-4B Reason (preview)');
+	await expect(page.locator('.bot .prov')).toContainText('Savant-4B Loom (preview)');
 	if (SHOTS) await page.screenshot({ path: `${SHOTS}/model-picker-reason.png` });
 
 	await r3(page).click();
@@ -141,7 +141,7 @@ test('forgetting one download leaves the other model’s files', async ({ page }
 		.toEqual([new URL('onnx/b', reasonUrl).href]);
 
 	await reason(page).click();
-	await page.getByRole('button', { name: /Load Savant-4B Reason/ }).click();
+	await page.getByRole('button', { name: /Load Savant-4B Loom/ }).click();
 	await expect(page.getByText(/Running in this tab on/)).toBeVisible();
 	await page.getByRole('button', { name: 'Forget the download' }).click();
 	await expect
