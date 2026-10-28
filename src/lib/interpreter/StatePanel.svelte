@@ -65,6 +65,12 @@
 					Head off: the readout sees no output and picks <b>{stuck}</b> every step.
 				{:else if isLlm && !trace.steps.length}
 					The first tick lands here once the run starts.
+				{:else if isLlm && cur.o !== undefined}
+					Lands on carry <b>{cur.t}</b>, {cur.margin.toFixed(2)} above the next token in the whole vocabulary,
+					among {trace.codebook.names.length} carries ({(
+						trace.codebook.variance_kept * 100
+					).toFixed(0)}% of the rows' spread in this view); the second forward writes
+					<b>{cur.o}</b>{#if cur.m2 !== undefined}, {cur.m2.toFixed(2)} above the next{/if}.
 				{:else if isLlm}
 					Lands on <b>{cur.t}</b>, {cur.margin.toFixed(2)} above the next token in the whole vocabulary,
 					among {trace.codebook.names.length} state names ({(

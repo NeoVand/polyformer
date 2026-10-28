@@ -223,6 +223,7 @@ class Savant {
 			family?: string | null;
 			truth?: Truth | null;
 			lookupAfter?: number | null;
+			addition?: { a: string; b: string } | null;
 		},
 		onEvent: (e: EngineEvent) => void
 	): { rid: number; done: Promise<LlmTrace> } {

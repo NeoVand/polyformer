@@ -2,6 +2,7 @@
 	/** Panel 1: the program, as its rules and as a machine (automaton) or as its listing (REGS). */
 	import type { Attachment } from 'svelte/attachments';
 	import MachineDiagram from './MachineDiagram.svelte';
+	import MealyDiagram from './MealyDiagram.svelte';
 	import Pane from './Pane.svelte';
 	import { int, programLines, ruleLine, type Trace, type TraceStep } from './trace.ts';
 
@@ -23,8 +24,11 @@
 	const index = $derived(new Map(trace.program.states.map((s, i) => [s, i])));
 	const from = $derived(index.get(stuck ?? cur.s) ?? 0);
 	const to = $derived(index.get(stuck ?? cur.t) ?? 0);
+	const mealy = $derived(!!trace.program.mealy);
 	const size = $derived(
-		`${trace.program.states.length} states × ${trace.program.events.length} events`
+		mealy
+			? `${trace.program.states.length} carries × ${trace.program.events.length} digit pairs`
+			: `${trace.program.states.length} states × ${trace.program.events.length} events`
 	);
 	const short = $derived(
 		isRegs
@@ -57,13 +61,29 @@
 					</li>
 				{/each}
 			</ol>
-			{#if !isRegs && trace.program.diagram}
+			{#if mealy && trace.program.states.length === 2}
+				<div class="diagram">
+					<MealyDiagram
+						{trace}
+						{from}
+						{to}
+						pair={stuck === null ? (cur.pair ?? null) : null}
+						output={cur.o ?? null}
+					/>
+				</div>
+			{:else if !isRegs && trace.program.diagram}
 				<div class="diagram">
 					<MachineDiagram
 						{trace}
 						{from}
 						{to}
-						event={stuck === null ? cur.event : isLlm ? 'adapter off' : 'head off'}
+						event={stuck === null
+							? cur.o !== undefined
+								? `${cur.event} / ${cur.o}`
+								: cur.event
+							: isLlm
+								? 'adapter off'
+								: 'head off'}
 					/>
 				</div>
 			{/if}
@@ -74,7 +94,13 @@
 					? `; this is register ${llmFile.registers[trace.llm?.register ?? 0]?.name} of ${trace.program.registers.join(', ')}`
 					: ''}
 			<p class="caveat">
-				{#if llmFile.where === 'browser'}
+				{#if mealy}
+					Written by {llmFile.model.name}{llmFile.where === 'browser' ? ' in this browser' : ''} in
+					{int(llmFile.compile.tokens)} tokens and read back from those tokens: where the two numbers
+					are in the question, and a register with an output, five digits a row (carry, the two digits,
+					the next carry, the digit written). The clock runs it one column per tick, two forwards each,
+					on the same weights.
+				{:else if llmFile.where === 'browser'}
 					Written by {llmFile.model.name} in this browser in {int(llmFile.compile.tokens)} tokens and
 					read back from those tokens. The table runs one tick per event on the same weights{which}.
 				{:else}

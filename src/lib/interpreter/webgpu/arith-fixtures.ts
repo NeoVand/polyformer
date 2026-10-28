@@ -33,6 +33,7 @@ export interface Example {
 	final_ids: number[];
 	final_text: string;
 	answer_ids: number[];
+	answer_text: string;
 	sum: string;
 }
 

@@ -39,6 +39,7 @@
 	import {
 		exactPrompt,
 		LOOKUP_AFTER,
+		type Addition,
 		type PromptSet,
 		type SuggestedPrompt
 	} from '#lib/interpreter/webgpu/prompts.ts';
@@ -58,6 +59,9 @@
 	let fast = $state(false);
 	let picked = $state.raw<TraceEntry | null>(null);
 	let pickedPrompt = $state.raw<SuggestedPrompt | null>(null);
+	let pickedAddition = $state.raw<Addition | null>(null);
+	/** suggested additions sent, by turn: their numbers go with the question to score the run */
+	const additions = new SvelteMap<number, Addition>();
 	let active = $state<number | null>(null);
 	const done = new SvelteSet<number>();
 	/** Runs in this browser, by turn: rebuilt from the engine's events as they arrive. */
@@ -113,7 +117,16 @@
 		const checked = rows.filter((r) => r.ok !== undefined).length;
 		const k = Math.min(rows.length - 1, checked);
 		const r = rows[k];
-		return { i: 0, event: r.b, s: r.s, row: k, attn: [], t: r.t, margin: r.m ?? NaN };
+		return {
+			i: 0,
+			event: r.a !== undefined ? `${r.a}+${r.b}` : r.b,
+			s: r.s,
+			row: k,
+			attn: [],
+			t: r.t,
+			margin: r.m ?? NaN,
+			...(r.a !== undefined ? { pair: [r.a, r.b] as [string, string], o: r.o, m2: r.m2 } : {})
+		};
 	});
 	const preview = $derived(active === null);
 	/** With the head (INTERP) or the executor adapter (LLM) off: the state at this step, else null. */
@@ -294,12 +307,16 @@
 		if (!text) return;
 		const exact = entries.find((e) => e.prompt.trim() === text) ?? null;
 		const suggested = exactPrompt(prompts, text);
+		const addition = pickedAddition?.question.trim() === text ? pickedAddition : null;
 		const frozenCore = !!exact && exact.group !== 'llm';
 		// Savant-4B in this browser runs everything but the frozen-core recordings, which it cannot run
-		if (!frozenCore && savant.status === 'ready') return browserSend(text, suggested);
+		if (!frozenCore && savant.status === 'ready') return browserSend(text, suggested, addition);
 		if (server && !frozenCore) return liveSend(text);
-		if (!frozenCore && savant.status === 'loading' && !exact) return browserSend(text, suggested);
+		if (!frozenCore && savant.status === 'loading' && !exact)
+			return browserSend(text, suggested, addition);
 		const entry = exact ?? picked;
+		if (addition) additions.set(nextKey, addition);
+		pickedAddition = null;
 		const turn: Turn = {
 			key: nextKey++,
 			text,
@@ -321,8 +338,14 @@
 	}
 
 	/** A question for Savant-4B: a new turn, run now or as soon as the model has loaded. */
-	function browserSend(text: string, suggested: SuggestedPrompt | null) {
+	function browserSend(
+		text: string,
+		suggested: SuggestedPrompt | null,
+		addition: Addition | null = null
+	) {
 		const key = nextKey++;
+		if (addition) additions.set(key, addition);
+		pickedAddition = null;
 		turns = [
 			...turns,
 			{
@@ -345,12 +368,13 @@
 		const turn = turns.find((t) => t.key === key);
 		if (!turn) return;
 		const suggested = prompts?.prompts.find((p) => p.id === turn.prompt) ?? null;
+		const addition = additions.get(key) ?? null;
 		const id = `savant-${key}-${++attempt}`;
 		turn.browser = id;
 		turn.needsModel = false;
 		const opts = {
-			title: suggested?.title,
-			family: suggested?.family ?? null,
+			title: suggested?.title ?? addition?.title,
+			family: suggested?.family ?? (addition ? 'addition' : null),
 			model: savant.loaded?.model ?? {
 				name: SAVANT.name,
 				compile_adapter: SAVANT.adapter,
@@ -379,10 +403,11 @@
 				turn.text,
 				{
 					id,
-					title: suggested?.title,
-					family: suggested?.family ?? null,
+					title: suggested?.title ?? addition?.title,
+					family: suggested?.family ?? (addition ? 'addition' : null),
 					truth: suggested?.truth ?? null,
-					lookupAfter: fast ? LOOKUP_AFTER : null
+					lookupAfter: fast ? LOOKUP_AFTER : null,
+					...(addition ? { addition: { a: addition.a, b: addition.b } } : {})
 				},
 				(ev) => {
 					run = applyEvent(run, ev);
@@ -606,7 +631,7 @@
 				? `Certifying in this browser: row ${int((going.at?.rows ?? 0) + 1)} of ${int(trace?.program.rows.length ?? 0)}`
 				: going.stage === 'answer'
 					? 'Writing the answer in this browser'
-					: `Running in this browser: tick ${int(count)} of ${int(going.tape?.events.length ?? 0)}`
+					: `Running in this browser: ${trace?.program.mealy ? 'column' : 'tick'} ${int(count)} of ${int(going.tape?.events.length ?? 0)}`
 			: preview
 				? llm
 					? 'Preview of a run recorded from the live model: send a question to replay it'
@@ -649,6 +674,7 @@
 			bind:fast
 			bind:picked
 			bind:pickedPrompt
+			bind:pickedAddition
 			traceFor={(id) => {
 				const f = files.get(id);
 				return f ? (asTrace(f) ?? undefined) : undefined;

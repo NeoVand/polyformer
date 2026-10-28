@@ -49,3 +49,44 @@ export const ticksOf = (p: SuggestedPrompt, lookupAfter: number | null = null) =
 		(a, r) => a + r.rows + Math.min(p.truth.events, lookupAfter ?? Infinity),
 		0
 	);
+
+/**
+ * A suggested addition (ARITH_FORMAT number mode): two random numbers of `digits` digits, written into the question
+ * the arithmetic model was trained on. The page keeps the numbers to score the run against; the clock reads them
+ * from the question itself.
+ */
+export interface Addition {
+	digits: number;
+	a: string;
+	b: string;
+	question: string;
+	title: string;
+}
+
+/** The lengths the page offers, in digits per number. */
+export const ADDITION_DIGITS = [10, 100, 1000];
+
+/** One number of exactly `digits` digits (no leading zero), from `random` (Math.random unless a test passes one). */
+export function randomNumber(digits: number, random: () => number = Math.random): string {
+	let s = String(1 + Math.floor(random() * 9));
+	for (let k = 1; k < digits; k++) s += String(Math.floor(random() * 10));
+	return s;
+}
+
+export function makeAddition(digits: number, random: () => number = Math.random): Addition {
+	const a = randomNumber(digits, random);
+	const b = randomNumber(digits, random);
+	// the clock runs one column per digit of the longer number, then one more 0 0 pair
+	const columns = digits + 1;
+	return {
+		digits,
+		a,
+		b,
+		question: `What is ${a} plus ${b}?`,
+		title: `Addition of two ${digits.toLocaleString('en-US')}-digit numbers, ${columns.toLocaleString('en-US')} columns`
+	};
+}
+
+/** Ticks an addition runs: one per row of the adder's 200 (each two forwards), then one per column. */
+export const additionTicks = (add: Addition, lookupAfter: number | null = null) =>
+	200 + Math.min(add.digits + 1, lookupAfter ?? Infinity);

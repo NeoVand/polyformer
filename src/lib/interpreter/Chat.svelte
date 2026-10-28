@@ -22,16 +22,21 @@
 		type TraceEntry,
 		type Turn
 	} from './trace.ts';
-	import { SAVANT } from './webgpu/config.ts';
+	import { ARITHMETIC, SAVANT } from './webgpu/config.ts';
 	import type { LiveRun } from './webgpu/live-view.ts';
 	import {
+		ADDITION_DIGITS,
+		additionTicks,
 		FAMILIES,
 		LOOKUP_AFTER,
+		makeAddition,
 		ticksOf,
+		type Addition,
 		type PromptSet,
 		type SuggestedPrompt
 	} from './webgpu/prompts.ts';
 	import { savant } from './webgpu/savant.svelte.ts';
+	import { stubOf } from './webgpu/stub.ts';
 
 	let {
 		entries,
@@ -47,6 +52,7 @@
 		fast = $bindable(),
 		picked = $bindable(),
 		pickedPrompt = $bindable(),
+		pickedAddition = $bindable(null),
 		traceFor,
 		fileFor,
 		runFor,
@@ -71,6 +77,8 @@
 		fast: boolean;
 		picked: TraceEntry | null;
 		pickedPrompt: SuggestedPrompt | null;
+		/** a suggested addition: its numbers go with the question so the run can be scored */
+		pickedAddition?: Addition | null;
 		traceFor: (id: string) => Trace | undefined;
 		fileFor: (id: string) => LlmTrace | undefined;
 		runFor: (key: number) => LiveRun | undefined;
@@ -85,8 +93,12 @@
 	const ready = $derived(savant.status === 'ready');
 	const edited = $derived(
 		(!!picked && draft.trim() !== picked.prompt.trim()) ||
-			(!!pickedPrompt && draft.trim() !== pickedPrompt.question.trim())
+			(!!pickedPrompt && draft.trim() !== pickedPrompt.question.trim()) ||
+			(!!pickedAddition && draft.trim() !== pickedAddition.question.trim())
 	);
+	/** the Addition suggestion: on once the pinned model can add, and always in development and under test */
+	const arithmetic = ARITHMETIC || import.meta.env.DEV || stubOf() !== null;
+	const ADDITION = 'addition';
 
 	let family = $state<string | null>(null);
 	const ofFamily = $derived(
@@ -137,7 +149,9 @@
 				};
 			case 'run':
 				return {
-					text: `Running register${regName} · tick ${int(r.at?.ticks ?? 0)} of ${int(r.tape?.events.length ?? 0)}`,
+					text: reg?.program.mealy
+						? `Adding · column ${int(r.at?.ticks ?? 0)} of ${int(r.tape?.events.length ?? 0)}`
+						: `Running register${regName} · tick ${int(r.at?.ticks ?? 0)} of ${int(r.tape?.events.length ?? 0)}`,
 					frac: r.tape ? (r.at?.ticks ?? 0) / r.tape.events.length : null
 				};
 			case 'answer':
@@ -175,18 +189,31 @@
 	function pick(e: TraceEntry) {
 		picked = e;
 		pickedPrompt = null;
+		pickedAddition = null;
 		draft = e.prompt;
 		focusBox();
 	}
 	function pickPrompt(p: SuggestedPrompt) {
 		pickedPrompt = p;
+		pickedAddition = null;
 		family = p.family;
 		picked = p.recorded ? (entries.find((e) => e.id === p.recorded) ?? null) : null;
 		draft = p.question;
 		focusBox();
 	}
+	/** Two new random numbers of this length each time. */
+	function pickAddition(digits: number) {
+		const add = makeAddition(digits);
+		pickedAddition = add;
+		pickedPrompt = null;
+		picked = null;
+		family = ADDITION;
+		draft = add.question;
+		focusBox();
+	}
 	function pickFamily(id: string) {
 		family = id;
+		if (id === ADDITION) return pickAddition(ADDITION_DIGITS[0]);
 		const p =
 			prompts?.prompts.find((x) => x.family === id && x.default) ??
 			prompts?.prompts.find((x) => x.family === id);
@@ -199,8 +226,11 @@
 		}
 	}
 	const lengthLabel = (p: SuggestedPrompt) => int(p.truth.events);
-	const estimate = (p: SuggestedPrompt) => {
-		const n = ticksOf(p, fast ? LOOKUP_AFTER : null);
+	const estimate = (p: SuggestedPrompt | Addition) => {
+		const n =
+			'digits' in p
+				? additionTicks(p, fast ? LOOKUP_AFTER : null)
+				: ticksOf(p, fast ? LOOKUP_AFTER : null);
 		return msPerTick
 			? `about ${Math.max(1, Math.round((n * msPerTick) / 1000 + 4))} s`
 			: `${int(n)} ticks`;
@@ -379,7 +409,15 @@
 										f.model.compile_adapter
 									)}; every tick ran on the executor {adapterName(f.model.executor_adapter)}.
 								{/if}
-								{#if f.truth !== null}
+								{#if f.arith}
+									{@const right = f.arith.sum !== null && f.arith.sum === f.arith.check}
+									{right ? 'Right' : 'Wrong'}: the clock’s sum {right ? 'is' : 'is not'} the sum of the
+									two numbers it read, checked on this page with exact integers{#if f.score && !f.score.tape_exact},
+										but it read other numbers than the question’s{/if}{#if f.score}; the words {f
+											.score.answer_correct
+											? 'state it'
+											: 'do not state it'}{/if}.
+								{:else if f.truth !== null}
 									{f.score?.answer_correct ? 'Right' : 'Wrong'} (truth: {f.truth}).
 								{:else}
 									No reference answer: the question is not one of the suggested ones.
@@ -476,8 +514,28 @@
 						onclick={() => pickFamily(f.id)}>{f.label}</button
 					>
 				{/each}
+				{#if arithmetic}
+					<button
+						class="sugg"
+						aria-pressed={family === ADDITION}
+						title="Addition"
+						onclick={() => pickFamily(ADDITION)}>Addition</button
+					>
+				{/if}
 			</div>
-			{#if family}
+			{#if family === ADDITION}
+				<div class="items lengths" role="group" aria-label="Length">
+					<span class="k">digits</span>
+					{#each ADDITION_DIGITS as d (d)}
+						<button
+							class="len num"
+							aria-pressed={pickedAddition?.digits === d}
+							title="Two new random {int(d)}-digit numbers"
+							onclick={() => pickAddition(d)}>{int(d)}</button
+						>
+					{/each}
+				</div>
+			{:else if family}
 				<div class="items lengths" role="group" aria-label="Length">
 					<span class="k">{FAMILIES.find((f) => f.id === family)?.unit}</span>
 					{#each ofFamily as p (p.id)}
@@ -503,8 +561,13 @@
 				</div>
 			{/if}
 			<p class="hint scope">
-				This preview runs questions like these six. Arithmetic and other new kinds of question are
-				not in it yet.
+				{#if arithmetic}
+					This preview runs questions like these seven, additions of any length among them. Other
+					new kinds of question are not in it yet.
+				{:else}
+					This preview runs questions like these six. Arithmetic and other new kinds of question are
+					not in it yet.
+				{/if}
 			</p>
 			{#if older.length}
 				<button class="more" aria-expanded={showOlder} onclick={() => (showOlder = !showOlder)}
@@ -556,8 +619,9 @@
 		<p class="hint num">
 			{#if ready && !(picked && !pickedPrompt && !edited)}
 				<span class="live-word">{SAVANT.short}</span>
-				{edited ? 'Edited: ' : ''}Enter runs it in this browser{pickedPrompt && !edited
-					? ` · ${estimate(pickedPrompt)}`
+				{edited ? 'Edited: ' : ''}Enter runs it in this browser{(pickedPrompt ?? pickedAddition) &&
+				!edited
+					? ` · ${estimate((pickedPrompt ?? pickedAddition)!)}`
 					: ''}{savant.busy ? ' · after the current run' : ''}
 			{:else if server && (!picked || picked.group === 'llm')}
 				<span class="live-word">live</span>

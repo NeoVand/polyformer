@@ -3,6 +3,7 @@
 	 * Panel 4: the certificate. Every (state, event) row stepped once from exact codes before the run, with its margin;
 	 * the size bound N* that makes the answer exact at every input length. REGS: the composition certificate.
 	 */
+	import MealyCertGrid from './MealyCertGrid.svelte';
 	import Pane from './Pane.svelte';
 	import { int, type Trace, type TraceStep } from './trace.ts';
 
@@ -30,9 +31,14 @@
 		const raw = Math.max(A, Math.ceil(Math.sqrt(n * 5)));
 		return A <= 8 ? Math.ceil(raw / A) * A : raw;
 	});
+	const mealy = $derived(!!trace.program.mealy);
 	const checked = $derived(rows.filter((r) => r.m !== undefined && !Number.isNaN(r.m)));
-	const lo = $derived(checked.length ? Math.min(...checked.map((r) => r.m!)) : 0);
-	const hi = $derived(checked.length ? Math.max(...checked.map((r) => r.m!)) : 0);
+	/** both cells' margins for a Mealy register */
+	const all = $derived(
+		checked.flatMap((r) => (mealy && r.m2 !== undefined ? [r.m!, r.m2] : [r.m!]))
+	);
+	const lo = $derived(all.length ? Math.min(...all) : 0);
+	const hi = $derived(all.length ? Math.max(...all) : 0);
 	const inBrowser = $derived(trace.llm?.file.where === 'browser');
 	/** lookup mode: steps read from their certified rows instead of run */
 	const looked = $derived(trace.llm?.file.registers[trace.llm.register]?.ticks.lookup ?? 0);
@@ -46,9 +52,11 @@
 		mock: false,
 		note: isRegs
 			? 'REGS Theorem R1, checked on this machine'
-			: isLlm
-				? 'pb_pin.certify: every row as one tick on the run’s own code path'
-				: 'INTERP one-step map on every row, on this machine'
+			: mealy
+				? 'arith_core.certify: every row as one tick of two forwards on the run’s own code path'
+				: isLlm
+					? 'pb_pin.certify: every row as one tick on the run’s own code path'
+					: 'INTERP one-step map on every row, on this machine'
 	});
 	const passed = $derived(
 		rows.filter((r) => r.ok === true || (r.ok === undefined && !pending)).length
@@ -95,38 +103,63 @@
 					>smallest margin <b>{c.min_margin.toFixed(2)}</b>
 				{/if}
 			</p>
-			<svg
-				class="grid"
-				style:width="min(100%, {cols * 15}px)"
-				viewBox="0 0 {cols * CELL} {Math.ceil(rows.length / cols) * CELL}"
-				role="img"
-				aria-label="Every row's margin; all rows pass"
-			>
-				{#each rows as r, k (k)}
-					{@const x = (k % cols) * CELL}
-					{@const y = Math.floor(k / cols) * CELL}
-					<rect
-						{x}
-						{y}
-						width={CELL - 1.5}
-						height={CELL - 1.5}
-						rx="1"
-						class={['cell', r.ok === false && 'wrong', r.ok === undefined && pending && 'todo']}
-						style:opacity={r.ok === false ? 1 : r.ok === undefined && pending ? 1 : shade(r.m ?? 0)}
-					/>
-					{#if k === cur.row && stuck === null}
+			{#if mealy}
+				<MealyCertGrid
+					{rows}
+					states={trace.program.states}
+					current={stuck === null ? cur.row : -1}
+					{pending}
+				/>
+			{:else}
+				<svg
+					class="grid"
+					style:width="min(100%, {cols * 15}px)"
+					viewBox="0 0 {cols * CELL} {Math.ceil(rows.length / cols) * CELL}"
+					role="img"
+					aria-label="Every row's margin; all rows pass"
+				>
+					{#each rows as r, k (k)}
+						{@const x = (k % cols) * CELL}
+						{@const y = Math.floor(k / cols) * CELL}
 						<rect
-							x={x - 1.25}
-							y={y - 1.25}
-							width={CELL + 1}
-							height={CELL + 1}
-							rx="1.5"
-							class="now"
+							{x}
+							{y}
+							width={CELL - 1.5}
+							height={CELL - 1.5}
+							rx="1"
+							class={['cell', r.ok === false && 'wrong', r.ok === undefined && pending && 'todo']}
+							style:opacity={r.ok === false
+								? 1
+								: r.ok === undefined && pending
+									? 1
+									: shade(r.m ?? 0)}
 						/>
-					{/if}
-				{/each}
-			</svg>
-			{#if isLlm}
+						{#if k === cur.row && stuck === null}
+							<rect
+								x={x - 1.25}
+								y={y - 1.25}
+								width={CELL + 1}
+								height={CELL + 1}
+								rx="1.5"
+								class="now"
+							/>
+						{/if}
+					{/each}
+				</svg>
+			{/if}
+			{#if mealy}
+				<p class="note num">
+					A block per carry, the first digit down and the second across. Left half: the carry cell;
+					right half: the digit written; lighter for a larger margin ({lo.toFixed(2)} to {hi.toFixed(
+						2
+					)}){rows.some((r) => r.ok === false)
+						? '; an outlined half is a cell whose argmax is not what the row wrote'
+						: ''}{pending ? '; hollow: not checked yet' : ''}. A row passes when both forwards'
+					argmaxes over the whole vocabulary are what it wrote{inBrowser
+						? ', on this GPU and the run’s own code path'
+						: ''}.
+				</p>
+			{:else if isLlm}
 				<p class="note num">
 					One square per row, lighter for a larger margin ({lo.toFixed(2)} to {hi.toFixed(
 						2
@@ -148,7 +181,11 @@
 		<p class={['verdict', verdict || pending ? 'ok' : 'bad']}>
 			{#if pending}
 				Checking row {int(Math.min(rows.length, (cur.row ?? 0) + 1))} of {int(rows.length)}: the
-				block [{cur.s}][{cur.event}] after the cached table.
+				block {mealy && cur.pair
+					? `[${cur.s}][${cur.pair[0]}][${cur.pair[1]}], then [${cur.t}],`
+					: `[${cur.s}][${cur.event}]`} after the cached table.
+			{:else if verdict && mealy}
+				Certified: {N} carries and {A} digit pairs, both cells of every row right.
 			{:else if verdict && isLlm}
 				Certified: {N} states and {A} events, every row right.
 			{:else if verdict}
@@ -163,8 +200,8 @@
 		</p>
 		{#if isLlm && c.ticks_real !== undefined}
 			<p class="note num">
-				In the run, {int(c.ticks_equal ?? 0)} of {int(c.ticks_real)} ticks had logits bitwise equal to
-				their certified row's.{#if looked}
+				In the run, {int(c.ticks_equal ?? 0)} of {int(c.ticks_real)}
+				{mealy ? 'columns had both forwards' : 'ticks had logits'} bitwise equal to their certified row's.{#if looked}
 					The other {int(looked)} steps were read from their certified rows (lookup mode).{/if}
 			</p>
 		{/if}

@@ -4,7 +4,9 @@
  * column, give the fixture's states, outputs and `<final>` ids, budget the words for the sum, score the run, poke a
  * carry to where the table says, stop where the reference stops, and free every cache it made.
  */
+import { readFileSync, writeFileSync } from 'node:fs';
 import { beforeAll, describe, expect, it } from 'vitest';
+import type { LlmTrace } from '../trace.ts';
 import { arith } from './arith-fixtures.ts';
 import { ANSWER_MAX_TOKENS, Engine, type EngineEvent } from './engine.ts';
 import { applyEvent, liveTrace, startRun } from './live-view.ts';
@@ -203,6 +205,30 @@ describe('number mode on a scripted model', { timeout: 60_000 }, () => {
 			engine.dispose();
 			expect(lm.live.size).toBe(0);
 		});
+
+	it('is the run the page’s stand-in plays (e2e/fixtures/arith-run.json)', async () => {
+		// the browser tests replay this run as the engine's events; the stand-in reruns its table on other numbers
+		const file = new URL('../../../../e2e/fixtures/arith-run.json', import.meta.url);
+		const lm = new FakeLM(script(e));
+		const engine = engineFor(lm);
+		const out = await engine.ask(
+			e.question,
+			{ id: 'arith-run', addition: { a: '4096', b: '77' } },
+			() => {}
+		);
+		engine.dispose();
+		// times vary run to run
+		const got: LlmTrace = JSON.parse(JSON.stringify(out));
+		got.at = '2026-10-27T00:00:00.000Z';
+		got.compile.seconds = 0.5;
+		got.timing = Object.fromEntries(Object.keys(got.timing ?? {}).map((k) => [k, 0.5]));
+		for (const r of got.registers) {
+			r.ticks.seconds = 0.05;
+			r.ticks.ms_per_tick = 10;
+		}
+		if (process.env.WRITE_FIXTURES) writeFileSync(file, JSON.stringify(got) + '\n');
+		expect(JSON.parse(readFileSync(file, 'utf8'))).toEqual(got);
+	});
 
 	it.skipIf(!tokPath)('gives the words room for a 1,000-digit sum (ARITH_FORMAT §7)', async () => {
 		const a = '7'.repeat(1000);

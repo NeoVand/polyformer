@@ -3,10 +3,11 @@
  * the engine's own events, with a pause between them, and answers pokes by running the run's table. The page uses
  * it only when a test has set `globalThis.__SAVANT_STUB__` before the page loaded.
  */
+import { digitPairs, exactSum, readNumbers } from './arith.ts';
 import type { EngineEvent } from './engine.ts';
 import type { FromWorker, ToWorker } from './protocol.ts';
 import { SAVANT } from './config.ts';
-import type { LlmRegister, LlmTrace } from '../trace.ts';
+import type { LlmRegister, LlmTrace, ProgramRow } from '../trace.ts';
 
 export interface SavantStub {
 	/** the GPU to report; absent means the browser has no WebGPU */
@@ -22,6 +23,7 @@ export interface SavantStub {
 	/** recorded on the page for the test to read */
 	asked?: string[];
 	lookups?: (number | null)[];
+	additions?: ({ a: string; b: string } | null)[];
 	poked?: { register: string; step: number; forced: number }[];
 }
 
@@ -55,7 +57,8 @@ export function eventsFromTrace(t: LlmTrace): EngineEvent[] {
 			type: 'tape',
 			events: t.input.events,
 			span: [0, 0],
-			char_spans: t.input.char_spans ?? null
+			char_spans: t.input.char_spans ?? null,
+			...(t.arith ? { numbers: t.arith.numbers, spans: t.arith.spans } : {})
 		});
 		t.registers.forEach((r, index) => {
 			ev.push({ type: 'stage', stage: 'certify', register: r.name, total: r.program.rows.length });
@@ -66,7 +69,12 @@ export function eventsFromTrace(t: LlmTrace): EngineEvent[] {
 				start: r.program.start,
 				states: r.program.states,
 				events: r.program.events,
-				rows: r.program.rows.map((x) => ({ s: x.s, b: x.b, t: x.t }))
+				rows: r.program.rows.map((x) =>
+					x.a !== undefined
+						? { s: x.s, a: x.a, b: x.b, t: x.t, o: x.o }
+						: { s: x.s, b: x.b, t: x.t }
+				),
+				...(r.program.mealy ? { mealy: r.program.mealy } : {})
 			});
 			r.program.rows.forEach((row, k) => ev.push({ type: 'row', index, k, row }));
 			ev.push({
@@ -80,12 +88,14 @@ export function eventsFromTrace(t: LlmTrace): EngineEvent[] {
 				codebook: r.codebook
 			});
 			ev.push({ type: 'stage', stage: 'run', register: r.name, total: r.steps.length });
-			for (let i = 0; i < r.steps.length; i += 64)
+			// a number-mode run goes a column at a time, so the written sum fills in
+			const batch = r.program.mealy ? 1 : 64;
+			for (let i = 0; i < r.steps.length; i += batch)
 				ev.push({
 					type: 'ticks',
 					index,
-					steps: r.steps.slice(i, i + 64),
-					done: Math.min(r.steps.length, i + 64),
+					steps: r.steps.slice(i, i + batch),
+					done: Math.min(r.steps.length, i + batch),
 					total: r.steps.length
 				});
 		});
@@ -105,6 +115,126 @@ function tableRun(r: LlmRegister, step: number, forced: string) {
 		if (s === null) break;
 	}
 	return s;
+}
+
+/** A Mealy register's table run on digit pairs from carry `from`: the carries and the sum digits it writes. */
+function mealyRun(r: LlmRegister, pairs: [string, string][], from: string) {
+	const rowOf = new Map(r.program.rows.map((x, k) => [`${x.s},${x.a},${x.b}`, k]));
+	let s: string | null = from;
+	const rows: number[] = [];
+	for (const [a, b] of pairs) {
+		const k: number | undefined = rowOf.get(`${s},${a},${b}`);
+		if (k === undefined) return null;
+		rows.push(k);
+		s = r.program.rows[k].t;
+	}
+	return { rows, final: s };
+}
+
+const sumOf = (outs: string[]) =>
+	[...outs]
+		.reverse()
+		.join('')
+		.replace(/^0+(?=.)/, '');
+
+/**
+ * A recorded number-mode run, rerun on the numbers of another question: the clock's reading with the program's own
+ * quotes, then the recorded table (a certified executor does what its rows say), as the engine would make it.
+ */
+function rerunAddition(
+	t: LlmTrace,
+	question: string,
+	addition: { a: string; b: string } | null,
+	title: string | undefined
+) {
+	const arith = t.arith!;
+	const q = arith.quotes;
+	const reading = readNumbers(question, [q.first[0], q.first[1], q.second[0], q.second[1]]);
+	if (reading.numbers === null)
+		return {
+			...t,
+			registers: [],
+			arith: undefined,
+			answer: '',
+			final_text: null,
+			ctx: null,
+			note: `the loop stopped before the run: ${reading.why}`
+		};
+	const [n1, n2] = reading.numbers;
+	const pairs = digitPairs(n1, n2);
+	const r = t.registers[0];
+	const run = mealyRun(r, pairs, r.program.start);
+	if (!run)
+		return {
+			...t,
+			registers: [],
+			note: 'the loop stopped before the run: a digit is not an event of the table'
+		};
+	const xyz = new Map(r.codebook.names.map((n, k) => [n, r.codebook.xyz[k]]));
+	let s = r.program.start;
+	const steps = run.rows.map((k, i) => {
+		const row = r.program.rows[k];
+		const st = {
+			i,
+			event: `${pairs[i][0]}+${pairs[i][1]}`,
+			s,
+			row: k,
+			t: row.t,
+			margin: row.m ?? 0,
+			pair: pairs[i],
+			o: row.o,
+			m2: row.m2,
+			eq: true,
+			xyz: xyz.get(row.t)
+		};
+		s = row.t;
+		return st;
+	});
+	const outs = steps.map((x) => x.o ?? '0');
+	const sum = sumOf(outs);
+	const check = exactSum(n1, n2);
+	const want = addition ? exactSum(addition.a, addition.b) : null;
+	const answer = `The sum is ${sum}.`;
+	const register: LlmRegister = {
+		...r,
+		steps,
+		final: run.final ?? r.program.start,
+		ticks: { ...r.ticks, real: steps.length, bitwise_equal_to_certified_row: steps.length },
+		certificate: { ...r.certificate, ticks_real: steps.length, ticks_equal: steps.length },
+		exact: want === null ? null : sum === want,
+		first_wrong_step: null,
+		steps_wrong: 0
+	};
+	return {
+		...t,
+		title: title ?? `Your addition, ${pairs.length.toLocaleString('en-US')} columns`,
+		input: { ...t.input, events: steps.map((x) => x.event) },
+		registers: [register],
+		arith: {
+			...arith,
+			numbers: reading.numbers,
+			spans: reading.spans,
+			columns: pairs.length,
+			sum,
+			check
+		},
+		answer,
+		final_text: `<final> ${r.name}=${run.final} ${r.program.mealy?.output ?? 's'}=${sum} </final>`,
+		truth: want,
+		score:
+			want === null
+				? undefined
+				: {
+						parsed: true,
+						table_exact: arith.adder,
+						tape_exact: true,
+						certified: r.certificate.all_ok,
+						run_final_right: sum === want,
+						sum_right: sum === want,
+						answer_correct: sum === want
+					},
+		ctx: t.ctx ? { ...t.ctx, pairs: [] } : null
+	};
 }
 
 const stubModel = () => ({
@@ -136,6 +266,16 @@ export class StubBackend {
 			this.onmessage?.(m);
 		}, after);
 		this.timers.add(t);
+	}
+
+	/** The recorded run for a question: its own, else a number-mode run for an addition, else the first. */
+	private baseFor(question: string): LlmTrace {
+		const t = this.stub.traces;
+		return (
+			t.find((x) => x.prompt === question) ??
+			(/\d\s*(plus|\+|and)\s*\d/.test(question) ? t.find((x) => x.arith) : undefined) ??
+			t[0]
+		);
 	}
 
 	postMessage(m: ToWorker) {
@@ -179,8 +319,8 @@ export class StubBackend {
 		} else if (m.type === 'ask') {
 			(s.asked ??= []).push(m.question);
 			(s.lookups ??= []).push(m.opts.lookupAfter ?? null);
-			const base = s.traces.find((t) => t.prompt === m.question) ?? s.traces[0];
-			const trace: LlmTrace = {
+			const base = this.baseFor(m.question);
+			let trace: LlmTrace = {
 				...base,
 				id: m.opts.id,
 				prompt: m.question,
@@ -202,19 +342,25 @@ export class StubBackend {
 					attention: null,
 					program: {
 						...r.program,
-						rows: r.program.rows.map((x) => ({
+						rows: r.program.rows.map((x): ProgramRow => ({
 							s: x.s,
+							...(x.a !== undefined ? { a: x.a } : {}),
 							b: x.b,
 							t: x.t,
+							...(x.o !== undefined ? { o: x.o, m2: x.m2 } : {}),
 							m: x.m,
 							ok: x.ok,
-							argmax: x.argmax
+							argmax: x.argmax,
+							...(x.argmax2 !== undefined ? { argmax2: x.argmax2 } : {})
 						}))
 					},
 					pokes: [],
 					ablation: null
 				}))
 			};
+			(s.additions ??= []).push(m.opts.addition ?? null);
+			if (base.arith && base.registers[0]?.program.mealy)
+				trace = rerunAddition(trace, m.question, m.opts.addition ?? null, m.opts.title);
 			const events = eventsFromTrace(trace);
 			events.forEach((event, k) => {
 				const t = setTimeout(
@@ -236,9 +382,47 @@ export class StubBackend {
 			setTimeout(() => clearInterval(stop), d * (events.length + 2));
 		} else if (m.type === 'poke') {
 			(s.poked ??= []).push({ register: m.register, step: m.step, forced: m.forced });
-			const base = s.traces.find((t) => t.prompt === m.question) ?? s.traces[0];
+			const base = this.baseFor(m.question);
 			const r = base.registers.find((x) => x.name === m.register) ?? base.registers[0];
 			const forced = r.program.states[m.forced];
+			if (r.program.mealy && base.arith) {
+				const q = base.arith.quotes;
+				const got = readNumbers(m.question, [q.first[0], q.first[1], q.second[0], q.second[1]]);
+				const pairs = got.numbers ? digitPairs(...got.numbers) : [];
+				const before = mealyRun(r, pairs.slice(0, m.step), r.program.start);
+				const after = mealyRun(r, pairs.slice(m.step), forced);
+				const outs = [...(before?.rows ?? []), ...(after?.rows ?? [])].map(
+					(k) => r.program.rows[k].o ?? '0'
+				);
+				const sum = sumOf(outs);
+				const n = pairs.length - m.step;
+				this.emit(
+					{
+						type: 'poked',
+						rid: m.rid,
+						poke: {
+							step: m.step,
+							from: m.from ?? '',
+							forced,
+							final: after?.final ?? forced,
+							predicted_state: after?.final ?? null,
+							answer_after: `The sum is ${sum}.`,
+							predicted: `the sum ${sum}`,
+							sum_after: sum,
+							predicted_sum: sum,
+							match: true,
+							answer_states_prediction: true,
+							ticks: n,
+							ticks_equal: n,
+							min_margin: 8,
+							live: true,
+							seconds: { ticks: 0.1, answer: 0.1, total: 0.2 }
+						}
+					},
+					d * 10
+				);
+				return;
+			}
 			const final = tableRun(r, m.step, forced);
 			const n = r.steps.length - m.step;
 			this.emit(

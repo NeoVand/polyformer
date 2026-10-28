@@ -87,6 +87,8 @@
 	let forced = $state<number | null>(null);
 	const forcedName = $derived(forced !== null ? states[forced] : null);
 	const what = $derived(isLlm ? 'Switch off the executor adapter' : 'Switch off the head');
+	/** a number-mode run: the state is the carry, and a poke changes the sum */
+	const mealy = $derived(!!trace.program.mealy);
 
 	function pickStep(s: number) {
 		chosenStep = s;
@@ -119,12 +121,12 @@
 		{:else}
 			<div class="block">
 				<div class="row-head">
-					<span class="label">Force a state</span>
+					<span class="label">{mealy ? 'Force a carry' : 'Force a state'}</span>
 					{#if has}<span class="quiet num">{matched} of {pokes.length} match the program</span>{/if}
 				</div>
 				{#if live && isLlm}
 					<div class="choices" role="group" aria-label="State to force at the playhead">
-						<span class="k">at {int(step + 1)}</span>
+						<span class="k">{mealy ? 'column' : 'at'} {int(step + 1)}</span>
 						{#each states as s, k (s)}
 							<button
 								aria-pressed={k === forced}
@@ -167,8 +169,18 @@
 						<dl class="result">
 							<div>
 								<dt>was</dt>
-								<dd>{poke.from}, forced to {poke.forced}; the run resumed from there</dd>
+								<dd>
+									{mealy ? `carry ${poke.from} into column ${int(poke.step + 1)}` : poke.from},
+									forced to
+									{poke.forced}; the run resumed from there
+								</dd>
 							</div>
+							{#if poke.sum_after !== undefined}
+								<div>
+									<dt>clock's sum</dt>
+									<dd class="num">{poke.sum_after}</dd>
+								</div>
+							{/if}
 							<div>
 								<dt>model answered</dt>
 								<dd>{poke.answer_after}</dd>
@@ -183,7 +195,25 @@
 								</dd>
 							</div>
 						</dl>
-						{#if isLlm}
+						{#if isLlm && poke.sum_after !== undefined}
+							<p class={['verdict', poke.match ? 'ok' : 'bad']}>
+								{poke.match
+									? 'The sum came out where the table says from the forced carry.'
+									: `The sum came out as ${poke.sum_after}; the table says ${poke.predicted_sum ?? 'nothing'}.`}
+								{#if poke.answer_states_prediction === true}The words state that sum.{:else if poke.answer_states_prediction === false}The
+									words do not state it.{/if}
+							</p>
+							{#if poke.ticks}
+								<p class="quiet num">
+									{int(poke.ticks_equal ?? 0)} of {int(poke.ticks)} columns after the poke bitwise equal
+									to their certified row{poke.live
+										? here
+											? ' · run in this browser'
+											: ' · run live'
+										: ''}
+								</p>
+							{/if}
+						{:else if isLlm}
 							<p class={['verdict', poke.match ? 'ok' : 'bad']}>
 								{poke.match
 									? `The run ended at ${poke.final}, where the table says.`

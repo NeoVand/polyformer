@@ -3,6 +3,7 @@
 	 * Panel 2: the run. The input tape at the playhead, the head's attention as arrows to the table rows it reads
 	 * (the read row held at the centre), and the step the row encodes. REGS adds the machine's memory.
 	 */
+	import MealyRun from './MealyRun.svelte';
 	import Pane from './Pane.svelte';
 	import RegsMemory from './RegsMemory.svelte';
 	import { int, type Trace, type TraceStep } from './trace.ts';
@@ -83,7 +84,7 @@
 		isRegs
 			? 'REGS on the frozen INTERP core'
 			: isLlm
-				? `${trace.llm?.file.where === 'browser' ? 'Savant-4B' : 'Qwen3-4B'}, one tick per event`
+				? `${trace.llm?.file.where === 'browser' ? 'Savant-4B' : 'Qwen3-4B'}, ${trace.program.mealy ? 'two forwards per column' : 'one tick per event'}`
 				: 'the frozen INTERP core'
 	);
 	const readsLabel = $derived(
@@ -102,159 +103,164 @@
 </script>
 
 <Pane n={2} title="The run" source={trace.panels.run} {short}>
-	<div class={['run', isRegs && 'regs']}>
-		<div class="main">
-			<div class="tape-wrap">
-				<div class="label">{isRegs ? 'instructions' : 'input tape'}</div>
-				<div
-					class="tape"
-					style:--cells={2 * half + 1}
-					role="group"
-					aria-label="Input tape around the current step"
-				>
-					{#each tape as c (c.i)}
-						<button
-							class={['cell', c.i === cur.i && !pending && 'now', c.i < cur.i && 'done']}
-							disabled={!c.ev || pending}
-							tabindex={c.i === cur.i ? 0 : -1}
-							aria-label={c.ev ? `Step ${c.i + 1}: ${c.ev}` : undefined}
-							onclick={() => onseek(c.i)}>{c.ev}</button
-						>
-					{/each}
-				</div>
-				<div class="mini" aria-hidden="true">
-					<span
-						class="fill"
-						style:width="{pending ? 0 : ((cur.i + 1) / Math.max(count, tapeTotal)) * 100}%"
-					></span>
-				</div>
-			</div>
-
-			<div class="read">
-				<div class="head">
-					<span class="label">{readsLabel}</span>
-					<span class="query">
-						{#if isRegs}
-							line {cur.s}
-						{:else}
-							({stuck ?? cur.s}, {cur.event})
-						{/if}
-					</span>
-					<span class="meta num">
-						{#if off}
-							{isLlm ? 'base weights' : 'output zeroed'}
-						{:else if pending}
-							{int(cur.row + 1)} of {int(rowCount)}
-						{:else if noAttn}
-							{cur.row >= 0 ? `row ${int(cur.row)}` : 'no row: off the table'}
-						{:else if isLlm && !cur.attn.length}
-							no row read
-						{:else}
-							weight {fmtW(top)}
-						{/if}
-					</span>
-				</div>
-				<svg
-					class="arrows"
-					viewBox="0 0 60 {RH * ROWS}"
-					preserveAspectRatio="none"
-					aria-hidden="true"
-				>
-					{#if !off}
-						{#each visible as r (r.k)}
-							{#if r.w > 0}
-								{@const y = (r.k - cur.row + (ROWS - 1) / 2) * RH + RH / 2}
-								<path
-									d="M0,{(RH * ROWS) / 2} C30,{(RH * ROWS) / 2} 30,{y} 56,{y}"
-									style:opacity={Math.max(0.12, r.w)}
-									style:stroke-width={0.6 + r.w * 1.1}
-								/>
-							{/if}
+	{#if trace.program.mealy && stuck === null}
+		<MealyRun {trace} {cur} {onseek} {pending} />
+	{:else}
+		<div class={['run', isRegs && 'regs']}>
+			<div class="main">
+				<div class="tape-wrap">
+					<div class="label">{isRegs ? 'instructions' : 'input tape'}</div>
+					<div
+						class="tape"
+						style:--cells={2 * half + 1}
+						role="group"
+						aria-label="Input tape around the current step"
+					>
+						{#each tape as c (c.i)}
+							<button
+								class={['cell', c.i === cur.i && !pending && 'now', c.i < cur.i && 'done']}
+								disabled={!c.ev || pending}
+								tabindex={c.i === cur.i ? 0 : -1}
+								aria-label={c.ev ? `Step ${c.i + 1}: ${c.ev}` : undefined}
+								onclick={() => onseek(c.i)}>{c.ev}</button
+							>
 						{/each}
-					{/if}
-				</svg>
-				<ol class="rows" style:--rh="{RH}px" aria-label={isRegs ? 'Program lines' : 'Table rows'}>
-					{#each visible as r (r.k)}
-						<li class={[r.k === cur.row && !off && 'lit', !r.text && 'empty']}>
-							<span class="k num">{r.text ? r.k : ''}</span>
-							<span class="t">{r.text}</span>
-							{#if r.w > 0 && !off}<span class="w num">{fmtW(r.w)}</span>{/if}
-						</li>
-					{/each}
-				</ol>
-			</div>
-			{#if noAttn && !off}
-				<p class="how">
-					The lit row is the one whose state and event the tick carries. Attention weights are not
-					measured in the browser: the exported model does not return them.
-				</p>
-			{/if}
-			{#if !off && elsewhere > 1e-6}
-				<p class="foot num">weight on rows out of view {fmtW(elsewhere)}</p>
-			{/if}
-			{#if isLlm && att && !att.error}
-				<p class="how">
-					Attention measured once per certified row in a separate eager pass, not on the tick's own
-					code path; the head with the most weight on the matching row ({att.mean_on_matching_row.toFixed(
-						3
-					)} on average, top on {att.rows_where_matching_row_is_top} of {att.rows} rows) was picked after
-					the fact.
-				</p>
-			{/if}
+					</div>
+					<div class="mini" aria-hidden="true">
+						<span
+							class="fill"
+							style:width="{pending ? 0 : ((cur.i + 1) / Math.max(count, tapeTotal)) * 100}%"
+						></span>
+					</div>
+				</div>
 
-			<div class="step num">
-				{#if pending}
-					<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b> as written</span>
-					<span class="quiet"
-						>{Number.isFinite(cur.margin)
-							? `argmax ${cur.margin > 0 ? 'matches' : 'checked'}, margin ${cur.margin.toFixed(2)}`
-							: 'one tick over the cached table'} · then {int(tapeTotal)} ticks, one per event</span
+				<div class="read">
+					<div class="head">
+						<span class="label">{readsLabel}</span>
+						<span class="query">
+							{#if isRegs}
+								line {cur.s}
+							{:else}
+								({stuck ?? cur.s}, {cur.event})
+							{/if}
+						</span>
+						<span class="meta num">
+							{#if off}
+								{isLlm ? 'base weights' : 'output zeroed'}
+							{:else if pending}
+								{int(cur.row + 1)} of {int(rowCount)}
+							{:else if noAttn}
+								{cur.row >= 0 ? `row ${int(cur.row)}` : 'no row: off the table'}
+							{:else if isLlm && !cur.attn.length}
+								no row read
+							{:else}
+								weight {fmtW(top)}
+							{/if}
+						</span>
+					</div>
+					<svg
+						class="arrows"
+						viewBox="0 0 60 {RH * ROWS}"
+						preserveAspectRatio="none"
+						aria-hidden="true"
 					>
-				{:else if off && isLlm}
-					<span>the base weights give <b>{stuck}</b></span>
-					<span class="quiet"
-						>with the adapter on, this tick gives {cur.t}{stuck === cur.t ? ' too' : ''}</span
-					>
-				{:else if off}
-					<span>state stays <b>{stuck}</b></span>
-					<span class="quiet">with the head off, the readout falls back to one name every step</span
-					>
-				{:else if isLlm && cur.lookup}
-					<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b></span>
-					<span class="quiet"
-						>read from certified row {int(cur.row)}, not run (lookup mode) · margin {cur.margin.toFixed(
-							2
-						)}</span
-					>
-				{:else if isLlm}
-					<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b></span>
-					<span class="quiet"
-						>margin {cur.margin.toFixed(2)} · {cur.row >= 0
-							? `row ${int(cur.row)} of ${int(rowCount)}`
-							: 'no row: the run left the table'} · logits {cur.eq
-							? 'bitwise equal to the certified row'
-							: 'not equal to a certified row'}</span
-					>
-				{:else if isRegs}
-					<span><b>{cur.event}</b> {cur.note}</span>
-					<span class="quiet"
-						>next line {cur.t} · smallest margin {cur.margin.toFixed(2)} ({cur.ms})</span
-					>
-				{:else}
-					<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b></span>
-					<span class="quiet"
-						>margin {cur.margin.toFixed(2)} · row {int(cur.row)} of {int(rowCount)}</span
-					>
+						{#if !off}
+							{#each visible as r (r.k)}
+								{#if r.w > 0}
+									{@const y = (r.k - cur.row + (ROWS - 1) / 2) * RH + RH / 2}
+									<path
+										d="M0,{(RH * ROWS) / 2} C30,{(RH * ROWS) / 2} 30,{y} 56,{y}"
+										style:opacity={Math.max(0.12, r.w)}
+										style:stroke-width={0.6 + r.w * 1.1}
+									/>
+								{/if}
+							{/each}
+						{/if}
+					</svg>
+					<ol class="rows" style:--rh="{RH}px" aria-label={isRegs ? 'Program lines' : 'Table rows'}>
+						{#each visible as r (r.k)}
+							<li class={[r.k === cur.row && !off && 'lit', !r.text && 'empty']}>
+								<span class="k num">{r.text ? r.k : ''}</span>
+								<span class="t">{r.text}</span>
+								{#if r.w > 0 && !off}<span class="w num">{fmtW(r.w)}</span>{/if}
+							</li>
+						{/each}
+					</ol>
+				</div>
+				{#if noAttn && !off}
+					<p class="how">
+						The lit row is the one whose state and event the tick carries. Attention weights are not
+						measured in the browser: the exported model does not return them.
+					</p>
 				{/if}
+				{#if !off && elsewhere > 1e-6}
+					<p class="foot num">weight on rows out of view {fmtW(elsewhere)}</p>
+				{/if}
+				{#if isLlm && att && !att.error}
+					<p class="how">
+						Attention measured once per certified row in a separate eager pass, not on the tick's
+						own code path; the head with the most weight on the matching row ({att.mean_on_matching_row.toFixed(
+							3
+						)} on average, top on {att.rows_where_matching_row_is_top} of {att.rows} rows) was picked
+						after the fact.
+					</p>
+				{/if}
+
+				<div class="step num">
+					{#if pending}
+						<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b> as written</span>
+						<span class="quiet"
+							>{Number.isFinite(cur.margin)
+								? `argmax ${cur.margin > 0 ? 'matches' : 'checked'}, margin ${cur.margin.toFixed(2)}`
+								: 'one tick over the cached table'} · then {int(tapeTotal)} ticks, one per event</span
+						>
+					{:else if off && isLlm}
+						<span>the base weights give <b>{stuck}</b></span>
+						<span class="quiet"
+							>with the adapter on, this tick gives {cur.t}{stuck === cur.t ? ' too' : ''}</span
+						>
+					{:else if off}
+						<span>state stays <b>{stuck}</b></span>
+						<span class="quiet"
+							>with the head off, the readout falls back to one name every step</span
+						>
+					{:else if isLlm && cur.lookup}
+						<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b></span>
+						<span class="quiet"
+							>read from certified row {int(cur.row)}, not run (lookup mode) · margin {cur.margin.toFixed(
+								2
+							)}</span
+						>
+					{:else if isLlm}
+						<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b></span>
+						<span class="quiet"
+							>margin {cur.margin.toFixed(2)} · {cur.row >= 0
+								? `row ${int(cur.row)} of ${int(rowCount)}`
+								: 'no row: the run left the table'} · logits {cur.eq
+								? 'bitwise equal to the certified row'
+								: 'not equal to a certified row'}</span
+						>
+					{:else if isRegs}
+						<span><b>{cur.event}</b> {cur.note}</span>
+						<span class="quiet"
+							>next line {cur.t} · smallest margin {cur.margin.toFixed(2)} ({cur.ms})</span
+						>
+					{:else}
+						<span><b>{cur.s}</b> —{cur.event}→ <b>{cur.t}</b></span>
+						<span class="quiet"
+							>margin {cur.margin.toFixed(2)} · row {int(cur.row)} of {int(rowCount)}</span
+						>
+					{/if}
+				</div>
 			</div>
+			{#if isRegs}
+				<div class="side">
+					<div class="label">memory after this instruction</div>
+					<RegsMemory {trace} step={cur.i} />
+				</div>
+			{/if}
 		</div>
-		{#if isRegs}
-			<div class="side">
-				<div class="label">memory after this instruction</div>
-				<RegsMemory {trace} step={cur.i} />
-			</div>
-		{/if}
-	</div>
+	{/if}
 </Pane>
 
 <style>

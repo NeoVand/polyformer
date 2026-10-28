@@ -4,6 +4,7 @@
  * and the ticks advance. When the run finishes, its `trace` is the engine's own record of it.
  */
 import type { EngineEvent, ModelInfo, HostInfo, Stage } from './engine.ts';
+import { exactSum } from './arith.ts';
 import { browserPanels, ring, rowLines } from './engine.ts';
 import type { LlmRegister, LlmTrace, ProgramRow } from '../trace.ts';
 
@@ -286,7 +287,7 @@ export function liveTrace(run: LiveRun): LlmTrace {
 						quotes: { first: ['', ''] as [string, string], second: ['', ''] as [string, string] },
 						columns: run.tape.events.length,
 						sum: null,
-						check: '',
+						check: exactSum(...run.tape.numbers),
 						adder: false
 					}
 				}

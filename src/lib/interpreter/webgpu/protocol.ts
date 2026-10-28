@@ -27,6 +27,8 @@ export type ToWorker =
 				family?: string | null;
 				truth?: Truth | null;
 				lookupAfter?: number | null;
+				/** a suggested addition: the two numbers written into the question, to score the run */
+				addition?: { a: string; b: string } | null;
 			};
 	  }
 	| {

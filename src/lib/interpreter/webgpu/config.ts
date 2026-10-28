@@ -12,6 +12,12 @@ export const SAVANT_CARD = 'https://huggingface.co/mohsenvand/savant-4b-preview'
 /** `pnpm dev` serves the local export here (vite.config.ts, from ../models/savant-4b-preview). */
 export const SAVANT_DEV_URL = '/models/savant-4b-preview/';
 
+/**
+ * The Addition suggestion (ARITH_FORMAT number mode). Off until SAVANT_URL points at a model version trained to write
+ * the adder: the preview's weights do not. Development builds and the page's test stand-in show it regardless.
+ */
+export const ARITHMETIC: boolean = false;
+
 export const SAVANT = {
 	name: 'Savant-4B preview',
 	short: 'Savant-4B',
