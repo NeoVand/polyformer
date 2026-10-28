@@ -29,7 +29,7 @@
 		type TraceStep,
 		type Turn
 	} from '#lib/interpreter/trace.ts';
-	import { SAVANT } from '#lib/interpreter/webgpu/config.ts';
+	import { MULTI_CALL, SAVANT } from '#lib/interpreter/webgpu/config.ts';
 	import {
 		applyEvent,
 		liveTrace,
@@ -407,7 +407,8 @@
 					family: suggested?.family ?? (addition ? 'addition' : null),
 					truth: suggested?.truth ?? null,
 					lookupAfter: fast ? LOOKUP_AFTER : null,
-					...(addition ? { addition: { a: addition.a, b: addition.b } } : {})
+					...(addition ? { addition: { a: addition.a, b: addition.b } } : {}),
+					...(MULTI_CALL ? { multiCall: true } : {})
 				},
 				(ev) => {
 					run = applyEvent(run, ev);

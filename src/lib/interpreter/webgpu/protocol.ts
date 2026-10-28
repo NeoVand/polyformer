@@ -29,6 +29,8 @@ export type ToWorker =
 				lookupAfter?: number | null;
 				/** a suggested addition: the two numbers written into the question, to score the run */
 				addition?: { a: string; b: string } | null;
+				/** REASON_FORMAT: calls in the middle of the words (config MULTI_CALL) */
+				multiCall?: boolean;
 			};
 	  }
 	| {

@@ -23,6 +23,14 @@ export const SAVANT_DEV_URL = '/models/savant-4b-preview-r2/';
  */
 export const ARITHMETIC: boolean = false;
 
+/**
+ * Calls in the middle of the words (REASON_FORMAT): the model reasons in words and, mid-reasoning, writes a program,
+ * the clock runs it and appends its `<final>` line, and the model reads the result and goes on, possibly over several
+ * calls. Off until SAVANT_URL points at a model trained in that format: with it off the page runs today's single call
+ * exactly as before. The engine, the chat and the page's test stand-in support it either way.
+ */
+export const MULTI_CALL: boolean = false;
+
 export const SAVANT = {
 	name: 'Savant-4B preview r2',
 	short: 'Savant-4B',

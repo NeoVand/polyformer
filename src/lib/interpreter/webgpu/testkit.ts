@@ -281,3 +281,126 @@ function lastIndexOf(a: number[], b: number[]) {
 	}
 	return -1;
 }
+
+// ------------------------------------------------------------------ a scripted LM for calls in the middle (REASON)
+
+export interface TranscriptScript {
+	/** the chat prompt's ids: a context starting with them is a generation, anything else a Π */
+	prompt: number[];
+	/** what the model writes, piece by piece; after every piece but the last the clock appends a final line */
+	pieces: number[][];
+	/** the end-of-turn token, written after the last piece */
+	end: number;
+	/** decodes ids, to see where the clock's final line ends (`</final>\n`) */
+	decode: (ids: number[]) => string;
+	/** Π rows end with the newline id */
+	nl: number;
+	vocab?: number;
+}
+
+/**
+ * A scripted model for transcripts with calls in the middle (REASON_FORMAT): it writes `pieces` in order and, after
+ * each piece but the last, expects the clock's final line (anything up to `</final>\n`) before writing the next. A
+ * context that leaves the script throws. Ticks run whatever table they are shown, exactly: a Moore tick ([s][e] over
+ * rows of four) lands on the row's destination; a Mealy forward ([s][a][b], then [s][a][b][t], over rows of six,
+ * keeping nothing) puts its top logit on the row's t, then its o. Every tick records its block and its cache, so a
+ * test can check that each call's Π was built fresh at positions 0 ….
+ */
+export class TranscriptLM implements LM {
+	readonly chunk = 64;
+	readonly live = new Set<FakeKV>();
+	calls = 0;
+	ticks = 0;
+	/** every tick block: its ids, the position of its first token, and the cache it ran over (its Π) */
+	readonly blocks: { ids: number[]; at: number; pi: number[] }[] = [];
+	private V: number;
+	private finals = new Map<number, number[]>();
+	constructor(private s: TranscriptScript) {
+		this.V = s.vocab ?? 151936;
+	}
+
+	async forward(ids: number[], past: KV | null, keep: boolean): Promise<Forward> {
+		this.calls++;
+		if (past && (past as FakeKV).disposed) throw new Error('forward on a disposed cache');
+		const before = past ? (past as FakeKV).tokens : [];
+		const ctx = [...before, ...ids];
+		const logits = new Float32Array(this.V);
+		const { prompt, nl } = this.s;
+		/** generation's logits are never compared bit for bit: skip hashing 600 kB per token */
+		let bits: string | null = null;
+		if (startsWith(ctx, prompt) || startsWith(prompt, ctx)) {
+			const next = ctx.length >= prompt.length ? this.next(ctx.slice(prompt.length)) : null;
+			logits[next ?? 0] = 5;
+			bits = `generation ${next}`;
+		} else if (!past) {
+			logits[0] = 1;
+		} else if (ids.length === 2) {
+			// a Moore tick: Π (rows of s e t newline) then [s][e]
+			this.ticks++;
+			this.blocks.push({ ids: [...ids], at: before.length, pi: before });
+			const [s, e] = ids;
+			let dest = before[0];
+			for (let i = 0; i + 3 < before.length; i += 4)
+				if (before[i] === s && before[i + 1] === e && before[i + 3] === nl) {
+					dest = before[i + 2];
+					break;
+				}
+			logits[dest === before[0] ? before[4] : before[0]] = 2;
+			logits[dest] = 10;
+		} else if (ids.length === 3 || ids.length === 4) {
+			// a Mealy forward: Π (rows of s a b t o newline) then [s][a][b] or [s][a][b][t], never kept
+			if (keep || before.length % 6 !== 0 || before.at(-1) !== nl)
+				throw new Error('a Mealy forward must run on Π’s own cache and keep nothing');
+			this.ticks++;
+			this.blocks.push({ ids: [...ids], at: before.length, pi: before });
+			const [s, a, b] = ids;
+			let top = before[0];
+			for (let i = 0; i + 5 < before.length; i += 6)
+				if (before[i] === s && before[i + 1] === a && before[i + 2] === b) {
+					top = ids.length === 3 ? before[i + 3] : before[i + 4];
+					break;
+				}
+			logits[top] = 40;
+			logits[top === nl ? before[0] : nl] = 32;
+		} else throw new Error(`no tick feeds ${ids.length} ids over a Π`);
+		const kv = new FakeKV(ctx, this.live);
+		if (!keep) kv.dispose();
+		return {
+			logits,
+			bits: bits ?? fingerprint(new Uint8Array(logits.buffer)),
+			past: keep ? kv : null
+		};
+	}
+
+	/**
+	 * The id the script writes after `resp`: the next of its piece, or the end token after the last. Null while `resp`
+	 * ends inside the clock's final line (the engine is feeding it); throws when `resp` is off the script.
+	 */
+	private next(resp: number[]): number | null {
+		const { pieces } = this.s;
+		let at = 0;
+		for (let i = 0; i < pieces.length; i++) {
+			const p = pieces[i];
+			for (let j = 0; j < p.length; j++) {
+				if (at + j === resp.length) return p[j];
+				if (resp[at + j] !== p[j])
+					throw new Error(`the transcript left the script at response position ${at + j}`);
+			}
+			at += p.length;
+			if (i === pieces.length - 1) break;
+			// the clock's line, up to and including `</final>\n`
+			const memo = this.finals.get(at);
+			if (memo && memo.every((x, j) => resp[at + j] === x)) {
+				at += memo.length;
+				continue;
+			}
+			let k = at;
+			while (k < resp.length && !this.s.decode(resp.slice(at, k + 1)).endsWith('</final>\n')) k++;
+			if (k >= resp.length) return null;
+			this.finals.set(at, resp.slice(at, k + 1));
+			at = k + 1;
+		}
+		if (at === resp.length) return this.s.end;
+		throw new Error('the transcript ran past the script');
+	}
+}

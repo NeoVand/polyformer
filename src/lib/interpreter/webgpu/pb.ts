@@ -47,6 +47,11 @@ export interface Program {
 	mealy: MealyRegister[];
 	/** the `first:` and `second:` quotes (null where the line did not parse) */
 	numbers: { first?: [string, string] | null; second?: [string, string] | null };
+	/**
+	 * REASON_FORMAT §2: `first: result k` / `second: result k`, a number cited from call k's result. Parsed only when
+	 * asked for (`results: true`, the multi-call loop); a later line of the same name replaces an earlier one.
+	 */
+	cites?: { first?: number; second?: number };
 }
 
 export const SYSTEMLESS_TEMPLATE =
@@ -152,6 +157,8 @@ export function linesOf(tok: Tok, ids: number[], nl: number): number[][] {
 const QUOTE = '("(?:[^"\\\\]|\\\\.)*")';
 const TAPE_RE = /^tape: after ("(?:[^"\\]|\\.)*") until ("(?:[^"\\]|\\.)*")\s*$/u;
 const NUMBER_LINE_RE = new RegExp(`^(first|second): after ${QUOTE} until ${QUOTE}\\s*$`, 'u');
+/** REASON_FORMAT §2 (reason_core.RESULT_LINE_RE) */
+const RESULT_LINE_RE = /^(first|second): result ([0-9]+)\s*$/u;
 const REGISTER_RE = /^register ([\p{L}\p{N}_]+): start/u;
 const MEALY_RE = /^register ([\p{L}\p{N}_]+) \(output ([\p{L}\p{N}_]+)\): start/u;
 /** ARITH_FORMAT: a Mealy row is [s][a][b][t][o]; a Moore row (PROMPTBOX) is [s][e][t] */
@@ -170,13 +177,20 @@ function jsonString(q: string): string | undefined {
 /**
  * The model's program, read from its token ids (pb_loop.parse_generated, extended by ARITH_FORMAT §2 as
  * arith_core.parse_generated). Tape mode is PROMPTBOX's, unchanged: Moore registers with 3-token rows and a `tape:`
- * line. Number mode (any `first:` or `second:` line) runs exactly one Mealy register with 5-token rows.
+ * line. Number mode (any `first:` or `second:` line) runs exactly one Mealy register with 5-token rows. With
+ * `results` (REASON_FORMAT's calls, reason_core.parse_call) a number line may also be `first: result <k>`.
  */
-export function parseGenerated(tok: Tok, ids: number[], nl: number): Program {
+export function parseGenerated(
+	tok: Tok,
+	ids: number[],
+	nl: number,
+	opts: { results?: boolean } = {}
+): Program {
 	type Any = (Register & { kind: 'moore' }) | (MealyRegister & { kind: 'mealy' });
 	const regs: Any[] = [];
 	let anchors: [string, string] | null = null;
 	const numbers: Program['numbers'] = {};
+	const cites: NonNullable<Program['cites']> = {};
 	let err: string | null = null;
 	let openRows = 0;
 	for (const line of linesOf(tok, ids, nl)) {
@@ -191,10 +205,17 @@ export function parseGenerated(tok: Tok, ids: number[], nl: number): Program {
 			}
 		} else if (text.startsWith('first:') || text.startsWith('second:')) {
 			const which = text.slice(0, text.indexOf(':')) as 'first' | 'second';
-			const m = NUMBER_LINE_RE.exec(text);
-			const a = m ? jsonString(m[2]) : undefined;
-			const b = m ? jsonString(m[3]) : undefined;
-			numbers[which] = a !== undefined && b !== undefined ? [a, b] : null;
+			const cite = opts.results ? RESULT_LINE_RE.exec(text) : null;
+			if (cite) {
+				delete numbers[which];
+				cites[which] = Number(cite[2]);
+			} else {
+				const m = NUMBER_LINE_RE.exec(text);
+				const a = m ? jsonString(m[2]) : undefined;
+				const b = m ? jsonString(m[3]) : undefined;
+				numbers[which] = a !== undefined && b !== undefined ? [a, b] : null;
+				delete cites[which];
+			}
 		} else if (text.startsWith('register ')) {
 			const head = tok.decode(line.slice(0, -1));
 			const mealy = MEALY_RE.exec(head);
@@ -260,9 +281,13 @@ export function parseGenerated(tok: Tok, ids: number[], nl: number): Program {
 		}
 	}
 	if (!regs.length) err ??= 'no register';
-	const mode = 'first' in numbers || 'second' in numbers ? 'numbers' : 'tape';
+	const mode =
+		'first' in numbers || 'second' in numbers || 'first' in cites || 'second' in cites
+			? 'numbers'
+			: 'tape';
 	if (mode === 'numbers') {
-		if (!numbers.first || !numbers.second)
+		const has = (w: 'first' | 'second') => cites[w] !== undefined || !!numbers[w];
+		if (!has('first') || !has('second'))
 			err ??= 'number mode needs a well-formed first: and second: line';
 		if (regs.length !== 1 || regs[0].kind !== 'mealy')
 			err ??= 'number mode runs exactly one register with an output';
@@ -277,7 +302,15 @@ export function parseGenerated(tok: Tok, ids: number[], nl: number): Program {
 		if (r.kind === 'moore')
 			registers.push({ name: r.name, start: r.start, rows: r.rows, pi: r.pi });
 		else mealy.push({ name: r.name, output: r.output, start: r.start, rows: r.rows, pi: r.pi });
-	return { registers, anchors, error: err, mode, mealy, numbers };
+	return {
+		registers,
+		anchors,
+		error: err,
+		mode,
+		mealy,
+		numbers,
+		...(opts.results ? { cites } : {})
+	};
 }
 
 /** Python's repr of a str (the form error messages quote), for the characters programs contain. */

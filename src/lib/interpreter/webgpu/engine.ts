@@ -12,12 +12,26 @@
  *             certified row's
  *   answer    `\n<final> X=v </final>\n` after the program, then greedy words (300 tokens at most)
  *   poke      force a state entering tick k, real ticks to the end, the words again
+ *   calls     with `multiCall` (REASON_FORMAT, config MULTI_CALL), the words may hold several calls: each `<exec/>`
+ *             is run as above with Π built fresh, its `<final>` line (or an error line) is fed like a prompt, and the
+ *             model resumes, until its end token
  *
  * Every step emits an event, so the page can show the program streaming in, the certificate filling and the ticks
  * advancing; the last event carries the whole run in the page's `polyformer.trace/0` form.
  */
 import { answerCorrect, type AnswerKey } from './answer.ts';
 import { clockPairs, digitIds, exactSum, finalIdsMealy } from './arith.ts';
+import {
+	errorFinalIds,
+	exactDifference,
+	isSubtracter,
+	lastCallStart,
+	limitAt,
+	readCall,
+	resultValueOf,
+	TOO_MANY,
+	type CallReading
+} from './reason.ts';
 import { makeCodebook, type Codebook } from './codebook.ts';
 import {
 	charSpans,
@@ -41,6 +55,10 @@ import type {
 	LlmTrace,
 	Poke,
 	ProgramRow,
+	ReasonCall,
+	ReasonFrom,
+	ReasonRecord,
+	ReasonSegment,
 	Xyz
 } from '../trace.ts';
 
@@ -117,6 +135,8 @@ export interface AskOptions {
 	truth?: Truth | null;
 	/** a suggested addition: the two numbers the page wrote into the question, to score the run against */
 	addition?: { a: string; b: string } | null;
+	/** REASON_FORMAT: calls in the middle of the words, resumed after each `<final>` (config MULTI_CALL) */
+	multiCall?: boolean;
 	signal?: AbortSignal;
 }
 
@@ -187,6 +207,10 @@ export type EngineEvent =
 	  }
 	| { type: 'ticks'; index: number; steps: LlmRegister['steps']; done: number; total: number }
 	| { type: 'answer'; text: string; tokens: number }
+	/** REASON: the clock takes call k (the text before it, and the call from <program> to <exec/>) */
+	| { type: 'call'; k: number; before: string; program: string; start: number; end: number }
+	/** REASON: call k is done; its final line (or error line) follows in the transcript */
+	| { type: 'final'; call: ReasonCall }
 	| { type: 'trace'; trace: LlmTrace }
 	| { type: 'error'; error: string };
 
@@ -311,12 +335,17 @@ export class Engine {
 	): Promise<{ logits: Float32Array; past: KV }> {
 		let cur = past;
 		let out: Forward | null = null;
-		for (let i = 0; i < ids.length; i += this.lm.chunk) {
-			check(signal);
-			out = await this.lm.forward(ids.slice(i, i + this.lm.chunk), cur, true);
+		try {
+			for (let i = 0; i < ids.length; i += this.lm.chunk) {
+				check(signal);
+				out = await this.lm.forward(ids.slice(i, i + this.lm.chunk), cur, true);
+				if (cur && cur !== past) cur.dispose();
+				cur = out.past!;
+				progress?.(Math.min(ids.length, i + this.lm.chunk));
+			}
+		} catch (err) {
 			if (cur && cur !== past) cur.dispose();
-			cur = out.past!;
-			progress?.(Math.min(ids.length, i + this.lm.chunk));
+			throw err;
 		}
 		if (!out || !cur) throw new Error('nothing to feed');
 		return { logits: out.logits, past: cur };
@@ -495,7 +524,8 @@ export class Engine {
 		if (this.busy) throw new Error('the model is busy with another question');
 		this.busy = true;
 		try {
-			return await this.askInner(question.normalize('NFC'), opts, emit);
+			const q = question.normalize('NFC');
+			return await (opts.multiCall ? this.askMulti(q, opts, emit) : this.askInner(q, opts, emit));
 		} finally {
 			this.busy = false;
 		}
@@ -993,6 +1023,91 @@ export class Engine {
 		if (!opts.title) trace.title = `Your addition, ${pairs.length.toLocaleString('en-US')} columns`;
 		emit({ type: 'tape', events, span: spans[0], char_spans: null, numbers: [n1, n2], spans });
 
+		const { view, final, rec, pass, fin } = await this.mealyCall(
+			reg,
+			pairs,
+			events,
+			trace.compile.text,
+			timing,
+			signal,
+			emit,
+			opts.lookupAfter ?? null
+		);
+		trace.registers.push(view);
+
+		// the final line and the words (§7)
+		arith.sum = sumOf(this.tok, fin, reg);
+		emit({ type: 'stage', stage: 'answer' });
+		const t0 = now();
+		const words = await this.words(fin, ANSWER_MAX_TOKENS + rec.outputs.length, signal, (text, n) =>
+			emit({ type: 'answer', text, tokens: n })
+		);
+		timing.answer = secs(t0);
+		timing.total = secs(tAll);
+		trace.answer = pyStrip(words.text);
+		trace.final_text = pyStrip(this.tok.decode(fin));
+		trace.timing = timing;
+		trace.ctx = {
+			program_ids: ids,
+			nl: this.ids.nl,
+			registers: [],
+			tape: [],
+			finals: { [reg.name]: final },
+			mealy: {
+				name: reg.name,
+				output: reg.output,
+				start: reg.start,
+				rows: reg.rows,
+				run: rec.states,
+				outputs: rec.outputs
+			},
+			pairs
+		};
+		if (opts.addition) {
+			const want = exactSum(opts.addition.a, opts.addition.b);
+			trace.truth = want;
+			const truePairs = digitPairsIds(opts.addition.a, opts.addition.b, digit);
+			trace.score = {
+				parsed: true,
+				table_exact: adder,
+				tape_exact: sameIds(truePairs, pairs),
+				certified: pass,
+				run_final_right: arith.sum === want,
+				sum_right: arith.sum === want,
+				answer_correct: lastNumber(trace.answer) === want
+			};
+			const trueOut = trueOutputIds(opts.addition.a, opts.addition.b, digit);
+			const got = rec.outputs;
+			const wrong: number[] = [];
+			for (let k = 0; k < Math.min(got.length, trueOut.length); k++)
+				if (got[k] !== trueOut[k]) wrong.push(k);
+			if (got.length !== trueOut.length && !wrong.length)
+				wrong.push(Math.min(got.length, trueOut.length));
+			view.exact = !wrong.length;
+			view.first_wrong_step = wrong.length ? wrong[0] : null;
+			view.steps_wrong = wrong.length;
+		}
+		emit({ type: 'trace', trace });
+		return trace;
+	}
+
+	/**
+	 * Certifies one Mealy register (§5; none of it when its Π was certified before) and runs it over the digit pairs
+	 * (§6), emitting the register, its rows, the certificate and the ticks; then the `<final>` ids (§7). Number mode
+	 * and REASON's calls share it: the clock runs whatever rows are certified, the adder's or any other.
+	 */
+	private async mealyCall(
+		reg: MealyRegister,
+		pairs: [number, number][],
+		events: string[],
+		text: string,
+		timing: Record<string, number>,
+		signal: AbortSignal | undefined,
+		emit: (ev: EngineEvent) => void,
+		lookupAfter: number | null,
+		/** between a pair's two digits in the event names: `+` (the adder's, and today's for any table), `−` */
+		sep = '+'
+	) {
 		// certify (§5): 400 forwards for the adder, or none when this Π was certified before
 		const rows = reg.rows;
 		const stateIds = [...new Set(rows.map((r) => r[0]))];
@@ -1004,7 +1119,7 @@ export class Engine {
 			name: reg.name,
 			start: this.name(reg.start),
 			states,
-			events: [...new Set(rows.map((r) => `${this.name(r[1])}+${this.name(r[2])}`))],
+			events: [...new Set(rows.map((r) => `${this.name(r[1])}${sep}${this.name(r[2])}`))],
 			rows: rows.map(([s, a, b, t, o]) => ({
 				s: this.name(s),
 				a: this.name(a),
@@ -1087,7 +1202,7 @@ export class Engine {
 					batch = [];
 				}
 			},
-			opts.lookupAfter ?? null
+			lookupAfter
 		);
 		timing[`run:${reg.name}`] = rec.seconds;
 		const final = rec.states.length ? rec.states[rec.states.length - 1] : reg.start;
@@ -1096,12 +1211,12 @@ export class Engine {
 		const view: LlmRegister = {
 			name: reg.name,
 			program: {
-				text: trace.compile.text,
+				text,
 				states,
-				events: [...new Set(rows.map((r) => `${this.name(r[1])}+${this.name(r[2])}`))],
+				events: [...new Set(rows.map((r) => `${this.name(r[1])}${sep}${this.name(r[2])}`))],
 				start: this.name(reg.start),
 				rows: outRows,
-				row_lines: rowLines(trace.compile.text, reg.name, rows.length),
+				row_lines: rowLines(text, reg.name, rows.length),
 				registers: [reg.name],
 				mealy: { output: reg.output },
 				...(states.length <= 40
@@ -1135,70 +1250,15 @@ export class Engine {
 				bitwise_equal_to_certified_row: equal,
 				seconds: rec.seconds,
 				ms_per_tick: real ? Math.round((100000 * rec.seconds) / real) / 100 : null,
-				...(rec.looked ? { lookup: rec.looked, lookup_after: opts.lookupAfter ?? null } : {})
+				...(rec.looked ? { lookup: rec.looked, lookup_after: lookupAfter } : {})
 			},
 			exact: null,
 			first_wrong_step: null,
 			pokes: [],
 			ablation: null
 		};
-		trace.registers.push(view);
-
-		// the final line and the words (§7)
 		const fin = finalIdsMealy(this.tok, reg, final, rec.outputs);
-		arith.sum = sumOf(this.tok, fin, reg);
-		emit({ type: 'stage', stage: 'answer' });
-		const t0 = now();
-		const words = await this.words(fin, ANSWER_MAX_TOKENS + rec.outputs.length, signal, (text, n) =>
-			emit({ type: 'answer', text, tokens: n })
-		);
-		timing.answer = secs(t0);
-		timing.total = secs(tAll);
-		trace.answer = pyStrip(words.text);
-		trace.final_text = pyStrip(this.tok.decode(fin));
-		trace.timing = timing;
-		trace.ctx = {
-			program_ids: ids,
-			nl: this.ids.nl,
-			registers: [],
-			tape: [],
-			finals: { [reg.name]: final },
-			mealy: {
-				name: reg.name,
-				output: reg.output,
-				start: reg.start,
-				rows: reg.rows,
-				run: rec.states,
-				outputs: rec.outputs
-			},
-			pairs
-		};
-		if (opts.addition) {
-			const want = exactSum(opts.addition.a, opts.addition.b);
-			trace.truth = want;
-			const truePairs = digitPairsIds(opts.addition.a, opts.addition.b, digit);
-			trace.score = {
-				parsed: true,
-				table_exact: adder,
-				tape_exact: sameIds(truePairs, pairs),
-				certified: pass,
-				run_final_right: arith.sum === want,
-				sum_right: arith.sum === want,
-				answer_correct: lastNumber(trace.answer) === want
-			};
-			const trueOut = trueOutputIds(opts.addition.a, opts.addition.b, digit);
-			const got = rec.outputs;
-			const wrong: number[] = [];
-			for (let k = 0; k < Math.min(got.length, trueOut.length); k++)
-				if (got[k] !== trueOut[k]) wrong.push(k);
-			if (got.length !== trueOut.length && !wrong.length)
-				wrong.push(Math.min(got.length, trueOut.length));
-			view.exact = !wrong.length;
-			view.first_wrong_step = wrong.length ? wrong[0] : null;
-			view.steps_wrong = wrong.length;
-		}
-		emit({ type: 'trace', trace });
-		return trace;
+		return { view, final, rec, pass, fin };
 	}
 
 	/**
@@ -1386,6 +1446,350 @@ export class Engine {
 		}
 	}
 
+	// -------------------------------------------------------------- calls in the middle (REASON_FORMAT)
+
+	/**
+	 * REASON_FORMAT §7: generate until `<exec/>` or the end token; at an `<exec/>`, parse the call from its own ids,
+	 * read its input from the sources (§3) or the results (§5), build Π fresh at positions 0 …, certify and run it as a
+	 * single call is run, append its final line (or an error line, §6), feed the final's ids into the cache like a
+	 * prompt, and resume. At most 8 calls run; an `<exec/>` beyond the 8th gets an error line and the 12th ends the
+	 * response. A response with no call is today's reply, in today's shape.
+	 */
+	private async askMulti(
+		question: string,
+		opts: AskOptions,
+		emit: (ev: EngineEvent) => void
+	): Promise<LlmTrace> {
+		const { signal } = opts;
+		const tAll = now();
+		const timing: Record<string, number> = {};
+		const promptIds = this.enc(chatPrompt(question));
+		this.session?.past.dispose();
+		this.session = null;
+
+		emit({ type: 'stage', stage: 'prefill', total: promptIds.length });
+		let t0 = now();
+		const head = await this.feed(promptIds, null, signal, (done) =>
+			emit({ type: 'prefill', done, total: promptIds.length })
+		);
+		timing.prefill = secs(t0);
+		timing.compile = 0;
+
+		/** the cache of everything fed so far, and the logits for the next token */
+		let cache = head.past;
+		let logits = head.logits;
+		/** the response: the model's ids and the clock's finals, in order */
+		const response: number[] = [];
+		const calls: ReasonCall[] = [];
+		const segments: ReasonSegment[] = [];
+		const results: (string | null)[] = [];
+		/** where the text after the last final starts */
+		let textFrom = 0;
+		let written = 0;
+		let end: ReasonRecord['end'];
+		try {
+			for (;;) {
+				emit({ type: 'stage', stage: 'compile' });
+				t0 = now();
+				let lastEmit = 0;
+				const first = !calls.length;
+				const prev = results.at(-1);
+				const gen = await this.greedy(
+					logits,
+					cache,
+					// room to copy the last result into the words, as a single call's words have (ARITH_FORMAT §7)
+					COMPILE_MAX_TOKENS + (prev ? prev.length : 0),
+					// `<check>` opens the older rule-style format: as today, only before any call
+					first ? ['<exec/>', '<check>'] : ['<exec/>'],
+					signal,
+					(text, n) => {
+						const t = now();
+						if (t - lastEmit > 40) {
+							lastEmit = t;
+							emit({ type: 'compile', text, tokens: n, seconds: secs(t0) });
+						}
+					}
+				);
+				if (gen.past !== cache) {
+					cache.dispose();
+					cache = gen.past;
+				}
+				const seconds = secs(t0);
+				timing.compile += seconds;
+				written += gen.ids.length;
+				response.push(...gen.ids);
+				const exec = gen.text.includes('<exec/>');
+				emit({
+					type: 'program',
+					text: gen.text,
+					tokens: gen.ids.length,
+					seconds,
+					exec,
+					finish: gen.finish
+				});
+				if (first && !exec) {
+					// no call at all: today's reply (or today's rule-style stop), in today's shape
+					const trace = this.blank(question, opts, gen.text, gen.ids.length, gen.finish, seconds);
+					const plain = !gen.text.includes('<check>');
+					timing.total = secs(tAll);
+					Object.assign(trace, {
+						answer: plain ? pyStrip(gen.text) : '',
+						note: plain ? PLAIN_NOTE : RULE_STYLE_NOTE,
+						timing
+					});
+					emit({ type: 'trace', trace });
+					return trace;
+				}
+				if (!exec) {
+					end = gen.finish === 'length' ? 'length' : 'stop';
+					break;
+				}
+
+				// the clock: the call's own ids, from its last <program> to <exec/>
+				const k = calls.length + 1;
+				const at = lastCallStart(this.tok, response) ?? 0;
+				const program = this.tok.decode(response.slice(at));
+				const before = this.tok.decode(response.slice(textFrom, Math.max(textFrom, at)));
+				segments.push({ kind: 'text', text: before }, { kind: 'call', k });
+				emit({ type: 'call', k, before, program, start: at, end: response.length });
+				const sub = this.callTrace(question, opts, k, program, response.length - at, seconds);
+				const limit = limitAt(calls.length);
+				if (limit === 'end') {
+					const call = this.refused(k, at, response.length, program, sub, null);
+					calls.push(call);
+					emit({ type: 'final', call });
+					end = 'hard stop';
+					break;
+				}
+				const call =
+					limit === 'too many'
+						? this.refused(k, at, response.length, program, sub, errorFinalIds(this.tok, TOO_MANY))
+						: await this.runCall(question, opts, k, at, response, results, sub, emit);
+				calls.push(call);
+				results.push(call.value);
+				emit({ type: 'final', call });
+				// the final's ids go into the cache like a prompt, after the call's last token (never fed yet)
+				const fin = call.final_ids!;
+				response.push(...fin);
+				textFrom = response.length;
+				const f = await this.feed([gen.ids[gen.ids.length - 1], ...fin], cache, signal);
+				cache.dispose();
+				cache = f.past;
+				logits = f.logits;
+			}
+
+			if (end !== 'hard stop')
+				segments.push({ kind: 'text', text: this.tok.decode(response.slice(textFrom)) });
+			const trace = this.blank(
+				question,
+				opts,
+				this.tok.decode(response),
+				written,
+				end === 'length' ? 'length' : 'stop',
+				timing.compile
+			);
+			if (!opts.title)
+				trace.title = `Your question, ${calls.length} call${calls.length === 1 ? '' : 's'}`;
+			// §7: the answer is the text after the last final
+			trace.answer = pyStrip(this.tok.decode(response.slice(textFrom)));
+			const last = calls.findLast((c) => c.final_text !== null);
+			trace.final_text = last ? pyStrip(last.final_text!) : null;
+			trace.reason = { format: 'REASON_FORMAT', segments, calls, response_ids: response, end };
+			timing.total = secs(tAll);
+			trace.timing = timing;
+			emit({ type: 'trace', trace });
+			return trace;
+		} finally {
+			cache.dispose();
+		}
+	}
+
+	/** A call's run in the panels' shape, before it has a tape or registers. */
+	private callTrace(
+		question: string,
+		opts: AskOptions,
+		k: number,
+		program: string,
+		tokens: number,
+		seconds: number
+	): LlmTrace {
+		const t = this.blank(
+			question,
+			{ ...opts, title: `Call ${k}`, truth: null },
+			program,
+			tokens,
+			'stop',
+			seconds
+		);
+		t.id = `${opts.id}/call-${k}`;
+		t.timing = {};
+		return t;
+	}
+
+	/** A call the clock does not run: beyond the 8th (an error line), or the 12th (no line; the response ends). */
+	private refused(
+		k: number,
+		start: number,
+		end: number,
+		program: string,
+		sub: LlmTrace,
+		fin: number[] | null
+	): ReasonCall {
+		sub.note = fin
+			? `the clock runs at most 8 calls, so call ${k} got an error line`
+			: `call ${k} ends the response: the clock runs at most 8 calls, and the 12th stops the words`;
+		const text = fin ? this.tok.decode(fin) : null;
+		sub.final_text = text === null ? null : pyStrip(text);
+		return {
+			k,
+			start,
+			end,
+			program,
+			mode: null,
+			error: fin ? TOO_MANY : 'hard stop',
+			spans: [],
+			how: [],
+			read: [],
+			final_text: text,
+			final_ids: fin,
+			value: null,
+			certified: null,
+			run: sub
+		};
+	}
+
+	/**
+	 * One call (§2 to §6): parse it from its own ids with result citations, read its input, then certify and run each
+	 * register on a Π built fresh, as a single call's; the final line or the error line.
+	 */
+	private async runCall(
+		question: string,
+		opts: AskOptions,
+		k: number,
+		at: number,
+		response: number[],
+		results: (string | null)[],
+		sub: LlmTrace,
+		emit: (ev: EngineEvent) => void
+	): Promise<ReasonCall> {
+		const { signal } = opts;
+		const lookupAfter = opts.lookupAfter ?? null;
+		const timing = sub.timing!;
+		const t0 = now();
+		emit({ type: 'stage', stage: 'tape' });
+		const prog = parseGenerated(this.tok, response.slice(at), this.ids.nl, { results: true });
+		const reading = readCall(this.tok, question, this.tok.decode(response), prog, results);
+		const base = {
+			k,
+			start: at,
+			end: response.length,
+			program: sub.compile.text,
+			mode: prog.mode,
+			spans: reading.spans,
+			how: reading.how,
+			read: readOf(reading, results)
+		};
+		sub.input = { events: null, char_spans: null, anchors: prog.anchors, error: reading.error };
+		if (reading.error) {
+			const fin = errorFinalIds(this.tok, reading.error);
+			const text = this.tok.decode(fin);
+			sub.note = `the clock could not run call ${k}: ${reading.error}`;
+			sub.final_text = pyStrip(text);
+			timing.total = secs(t0);
+			return {
+				...base,
+				error: reading.error,
+				final_text: text,
+				final_ids: fin,
+				value: null,
+				certified: null,
+				run: sub
+			};
+		}
+		let fin: number[];
+		if (prog.mode === 'tape') {
+			const tape = reading.tape!;
+			const [src, b, e] = reading.spans[0] as [number, number, number];
+			const events = tape.map(this.name);
+			sub.input = {
+				events,
+				char_spans: charSpans(this.tok, reading.sources[src], [b, e], tape),
+				anchors: prog.anchors,
+				error: null
+			};
+			sub.title = `Call ${k}, ${tape.length.toLocaleString('en-US')} events`;
+			emit({ type: 'tape', events, span: [b, e], char_spans: sub.input.char_spans ?? null });
+			const finals: Record<string, number> = {};
+			for (let index = 0; index < prog.registers.length; index++) {
+				const r = prog.registers[index];
+				const v = await this.register(r, index, prog, tape, sub, timing, signal, emit, lookupAfter);
+				v.view.exact = followsTable(v.view);
+				sub.registers.push(v.view);
+				finals[r.name] = v.final;
+			}
+			fin = finIds(this.tok, prog.registers, finals);
+		} else {
+			const reg = prog.mealy[0];
+			const digit = digitIds(this.tok);
+			const op = isAdder(reg, digit) ? 'add' : isSubtracter(reg, digit) ? 'sub' : null;
+			const sep = op === 'sub' ? '−' : '+';
+			const pairs = reading.pairs!;
+			const [n1, n2] = reading.numbers!;
+			const events = pairs.map(([a, b]) => `${this.name(a)}${sep}${this.name(b)}`);
+			const spans = reading.spans.map((sp): [number, number] =>
+				sp[0] === 'result' ? [0, 0] : [sp[1], sp[2]]
+			) as [[number, number], [number, number]];
+			const from = reading.spans.map((sp): ReasonFrom =>
+				sp[0] === 'result' ? { result: sp[1] } : { source: sp[0] as 0 | 1 }
+			) as [ReasonFrom, ReasonFrom];
+			const arith: ArithRecord = {
+				numbers: [n1, n2],
+				spans,
+				quotes: {
+					first: prog.numbers.first ?? ['', ''],
+					second: prog.numbers.second ?? ['', '']
+				},
+				columns: pairs.length,
+				sum: null,
+				check: op === 'add' ? exactSum(n1, n2) : op === 'sub' ? exactDifference(n1, n2) : '',
+				adder: op === 'add',
+				op,
+				from
+			};
+			sub.input = { events, char_spans: null, anchors: null, error: null };
+			sub.arith = arith;
+			sub.title = `Call ${k}, ${pairs.length.toLocaleString('en-US')} columns`;
+			emit({ type: 'tape', events, span: spans[0], char_spans: null, numbers: [n1, n2], spans });
+			const m = await this.mealyCall(
+				reg,
+				pairs,
+				events,
+				sub.compile.text,
+				timing,
+				signal,
+				emit,
+				lookupAfter,
+				sep
+			);
+			m.view.exact = followsTable(m.view);
+			sub.registers.push(m.view);
+			fin = m.fin;
+			arith.sum = sumOf(this.tok, fin, reg);
+		}
+		const text = this.tok.decode(fin);
+		sub.final_text = pyStrip(text);
+		timing.total = secs(t0);
+		return {
+			...base,
+			error: null,
+			final_text: text,
+			final_ids: fin,
+			value: resultValueOf(text),
+			certified: sub.registers.every((r) => r.certificate.all_ok),
+			run: sub
+		};
+	}
+
 	/** Makes sure the cache of prompt + program (but its last token) is the one for this run. */
 	private async ensureSession(question: string, programIds: number[], signal?: AbortSignal) {
 		const key = sessionKey(question, programIds);
@@ -1433,6 +1837,26 @@ export class Engine {
 			ctx: null
 		};
 	}
+}
+
+/** What each of a call's spans holds: the text read from its source, or the result cited. */
+function readOf(reading: CallReading, results: (string | null)[]): ReasonCall['read'] {
+	return reading.spans.map((sp) =>
+		sp[0] === 'result'
+			? { from: { result: sp[1] }, text: results[sp[1] - 1] ?? '' }
+			: { from: { source: sp[0] as 0 | 1 }, text: reading.sources[sp[0]].slice(sp[1], sp[2]) }
+	);
+}
+
+/**
+ * The run is its own table's run: every step lands where its row says, and writes the row's output (Theorem P says
+ * a certified table's always does). True for a run of no steps.
+ */
+export function followsTable(r: LlmRegister): boolean {
+	return r.steps.every((st) => {
+		const row = r.program.rows[st.row];
+		return !!row && row.t === st.t && (row.o === undefined || row.o === st.o);
+	});
 }
 
 const sessionKey = (question: string, ids: number[]) => `${question}\u0000${ids.join(',')}`;

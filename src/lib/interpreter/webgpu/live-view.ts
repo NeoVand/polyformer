@@ -6,7 +6,19 @@
 import type { EngineEvent, ModelInfo, HostInfo, Stage } from './engine.ts';
 import { exactSum } from './arith.ts';
 import { browserPanels, ring, rowLines } from './engine.ts';
-import type { LlmRegister, LlmTrace, ProgramRow } from '../trace.ts';
+import type { LlmRegister, LlmTrace, ProgramRow, ReasonCall, ReasonSegment } from '../trace.ts';
+
+/**
+ * A response with calls in the middle (REASON_FORMAT), as far as it has gone: the text and the finished calls in
+ * order, and the call the clock has now. The run's own fields (compile, tape, registers, at) are the current call's
+ * while the clock has one, and the text being written between calls otherwise.
+ */
+export interface LiveReason {
+	segments: ReasonSegment[];
+	calls: ReasonCall[];
+	/** the call being read, certified or run */
+	current: { k: number; program: string } | null;
+}
 
 export interface LiveRun {
 	id: string;
@@ -36,6 +48,8 @@ export interface LiveRun {
 	answer: string;
 	error: string | null;
 	trace: LlmTrace | null;
+	/** REASON: set at the first call */
+	reason: LiveReason | null;
 	started: number;
 	/** seconds per stage as they finish */
 	model: ModelInfo;
@@ -61,6 +75,7 @@ export function startRun(
 		answer: '',
 		error: null,
 		trace: null,
+		reason: null,
 		started: Date.now(),
 		model: opts.model,
 		host: opts.host
@@ -147,8 +162,9 @@ export function applyEvent(run: LiveRun, ev: EngineEvent): LiveRun {
 		case 'tape':
 			return {
 				...run,
-				title:
-					run.title === 'Your question'
+				title: run.reason?.current
+					? `Call ${run.reason.current.k}, ${ev.events.length.toLocaleString('en-US')} ${ev.numbers ? 'columns' : 'events'}`
+					: run.title === 'Your question'
 						? `Your question, ${ev.events.length.toLocaleString('en-US')} events`
 						: run.title,
 				tape: {
@@ -227,6 +243,38 @@ export function applyEvent(run: LiveRun, ev: EngineEvent): LiveRun {
 		}
 		case 'answer':
 			return { ...run, answer: ev.text };
+		case 'call': {
+			// the clock takes call k: the panels follow it from its program text on
+			const prev = run.reason ?? { segments: [], calls: [], current: null };
+			return {
+				...run,
+				title: `Call ${ev.k}`,
+				compile: { ...run.compile, text: ev.program },
+				tape: null,
+				registers: [],
+				at: null,
+				reason: {
+					segments: [...prev.segments, { kind: 'text', text: ev.before }],
+					calls: prev.calls,
+					current: { k: ev.k, program: ev.program }
+				}
+			};
+		}
+		case 'final': {
+			const prev = run.reason ?? { segments: [], calls: [], current: null };
+			return {
+				...run,
+				compile: { ...run.compile, text: '', tokens: 0, finish: null, exec: null },
+				tape: null,
+				registers: [],
+				at: null,
+				reason: {
+					segments: [...prev.segments, { kind: 'call', k: ev.call.k }],
+					calls: [...prev.calls, ev.call],
+					current: null
+				}
+			};
+		}
 		case 'trace':
 			return {
 				...run,
@@ -234,7 +282,14 @@ export function applyEvent(run: LiveRun, ev: EngineEvent): LiveRun {
 				trace: ev.trace,
 				title: ev.trace.title,
 				registers: ev.trace.registers,
-				answer: ev.trace.answer
+				answer: ev.trace.answer,
+				reason: ev.trace.reason
+					? {
+							segments: ev.trace.reason.segments,
+							calls: ev.trace.reason.calls,
+							current: null
+						}
+					: run.reason
 			};
 		case 'error':
 			return { ...run, stage: 'error', error: ev.error };

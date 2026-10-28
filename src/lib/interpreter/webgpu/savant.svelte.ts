@@ -224,6 +224,7 @@ class Savant {
 			truth?: Truth | null;
 			lookupAfter?: number | null;
 			addition?: { a: string; b: string } | null;
+			multiCall?: boolean;
 		},
 		onEvent: (e: EngineEvent) => void
 	): { rid: number; done: Promise<LlmTrace> } {

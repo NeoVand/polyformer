@@ -308,6 +308,56 @@ export interface ArithRecord {
 	check: string;
 	/** the table is digit for digit the adder's 200 rows */
 	adder: boolean;
+	/** REASON's calls: which table the page recognises (the adder, the subtracter, or neither) */
+	op?: 'add' | 'sub' | null;
+	/** REASON's calls: where each number came from (0 the question, 1 the notes), or the result it cites */
+	from?: [ReasonFrom, ReasonFrom];
+}
+
+/** Where a call read a number or its tape: a source (0 the question, 1 the notes), or result k. */
+export type ReasonFrom = { source: 0 | 1 } | { result: number };
+
+/** One call of a transcript with calls in the middle (REASON_FORMAT): what the clock read, ran and appended. */
+export interface ReasonCall {
+	/** 1, 2, … in the order the calls reached <exec/> */
+	k: number;
+	/** where the call sits in the response's ids: from its <program> to its <exec/>, inclusive */
+	start: number;
+	end: number;
+	/** the call's text, <program> to <exec/> */
+	program: string;
+	/** null when the clock did not parse it (beyond the 8th call) */
+	mode: 'tape' | 'numbers' | null;
+	/** why the clock could not run it: its error line's message; 'hard stop' for the 12th, which ends the response */
+	error: string | null;
+	/** reason_core's spans: [source, start, end], or ['result', k] for a cited number */
+	spans: ([number, number, number] | ['result', number])[];
+	how: ('exact' | 'relaxed')[];
+	/** what each span holds, for the page (the tape's text, or a number) */
+	read: { from: ReasonFrom; text: string }[];
+	/** the line the clock appended, and its ids (null: the 12th call gets none) */
+	final_text: string | null;
+	final_ids: number[] | null;
+	/** result k: the last name=value field of the final line; null for an error */
+	value: string | null;
+	/** every register certified (null when nothing ran) */
+	certified: boolean | null;
+	/** the run in the shape the panels read (its registers, tape or numbers); its `note` says why nothing ran */
+	run: LlmTrace;
+}
+
+export type ReasonSegment = { kind: 'text'; text: string } | { kind: 'call'; k: number };
+
+/** A response with calls in the middle: its segments in order, its calls, and why it ended. */
+export interface ReasonRecord {
+	format: 'REASON_FORMAT';
+	/** text, call, text, call, …, text (a text may be empty) */
+	segments: ReasonSegment[];
+	calls: ReasonCall[];
+	/** the whole response: the model's ids and the clock's finals */
+	response_ids: number[];
+	/** the model's end token, the token budget, or the 12th call */
+	end: 'stop' | 'length' | 'hard stop';
 }
 
 /** An LLM run: PROMPTBOX's model wrote the program and ran it (kind 'llm' of polyformer.trace/0). */
@@ -360,6 +410,8 @@ export interface LlmTrace {
 	registers: LlmRegister[];
 	/** number mode (ARITH_FORMAT) */
 	arith?: ArithRecord;
+	/** a response with calls in the middle (REASON_FORMAT); its calls' runs are in `reason.calls[k].run` */
+	reason?: ReasonRecord;
 	timing: Record<string, number> | null;
 	ctx: LlmCtx | null;
 	score?: {
