@@ -144,7 +144,7 @@
 				<p class="quiet">
 					Π built fresh for this call, its rows at positions 0 …, never where the call sits in the
 					words.{#if onshow && !shown}
-						<button class="link" onclick={onshow}>Show it in the panels</button>{/if}
+						<button class="link show" onclick={onshow}>Show it in the panels</button>{/if}
 				</p>
 			{:else}
 				<pre class="src">{program}</pre>
@@ -303,6 +303,9 @@
 	}
 	.link:hover {
 		color: var(--color-ink);
+	}
+	.show {
+		margin-left: 0.4em;
 	}
 	.src {
 		margin: 0;
