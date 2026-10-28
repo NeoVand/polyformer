@@ -9,6 +9,8 @@
 	import Icon from '#lib/ui/Icon.svelte';
 	import { Send } from '#lib/ui/icons.ts';
 	import ModelPanel from './ModelPanel.svelte';
+	import { opOfRows } from './mealy.ts';
+	import ReasonReply from './ReasonReply.svelte';
 	import Reply from './Reply.svelte';
 	import { PLAIN_NOTE } from './webgpu/engine.ts';
 	import type { Health } from './live.ts';
@@ -62,7 +64,9 @@
 		onreplay,
 		onbase,
 		onstop,
-		onretry
+		onretry,
+		oncall,
+		shownCall = null
 	}: {
 		entries: TraceEntry[];
 		prompts: PromptSet | null;
@@ -89,6 +93,10 @@
 		onbase: (id: string) => void;
 		onstop: (key: number) => void;
 		onretry: (key: number) => void;
+		/** a reply with calls in the middle: show call k of this turn in the panels */
+		oncall?: (key: number, k: number) => void;
+		/** the turn and call the panels show */
+		shownCall?: { key: number; k: number } | null;
 	} = $props();
 
 	const older = $derived(entries.filter((e) => e.group !== 'llm'));
@@ -130,6 +138,16 @@
 
 	/** One line for a run in this browser, and how far along its bar is. */
 	function browserLine(r: LiveRun): { text: string; frac: number | null } {
+		const line = stageLine(r);
+		// calls in the middle (REASON_FORMAT): which call the clock has, and the words between calls
+		const call = r.reason?.current;
+		if (call && line.text) return { ...line, text: `Call ${call.k} · ${line.text}` };
+		if (r.reason && r.stage === 'compile')
+			return { text: `Writing · ${int(r.compile.tokens)} tokens`, frac: null };
+		return line;
+	}
+
+	function stageLine(r: LiveRun): { text: string; frac: number | null } {
 		const reg = r.at ? r.registers[r.at.register] : null;
 		const regName = reg && r.registers.length > 1 ? ` ${reg.name}` : '';
 		switch (r.stage) {
@@ -143,7 +161,10 @@
 			case 'compile':
 				return { text: `Writing the program · ${int(r.compile.tokens)} tokens`, frac: null };
 			case 'tape':
-				return { text: 'Reading the tape from the question', frac: null };
+				return {
+					text: r.reason?.current ? 'Reading its input' : 'Reading the tape from the question',
+					frac: null
+				};
 			case 'certify':
 				return {
 					text: `Certifying register${regName} · row ${int(r.at?.rows ?? 0)} of ${int(reg?.program.rows.length ?? 0)}`,
@@ -152,7 +173,7 @@
 			case 'run':
 				return {
 					text: reg?.program.mealy
-						? `Adding · column ${int(r.at?.ticks ?? 0)} of ${int(r.tape?.events.length ?? 0)}`
+						? `${opOfRows(reg.program.rows) === 'sub' ? 'Subtracting' : 'Adding'} · column ${int(r.at?.ticks ?? 0)} of ${int(r.tape?.events.length ?? 0)}`
 						: `Running register${regName} · tick ${int(r.at?.ticks ?? 0)} of ${int(r.tape?.events.length ?? 0)}`,
 					frac: r.tape ? (r.at?.ticks ?? 0) / r.tape.events.length : null
 				};
@@ -296,6 +317,9 @@
 						</div>
 					{:else}
 						{@const line = browserLine(run)}
+						{#if run.reason}
+							<ReasonReply segments={run.reason.segments} calls={run.reason.calls} live={run} />
+						{/if}
 						<p class="quiet num" role="status">
 							<span class="live-word">{SAVANT.short}</span>
 							{line.text}
@@ -366,7 +390,32 @@
 							original question.
 						</p>
 					{/if}
-					{#if !t}
+					{@const multi = id ? fileFor(id) : undefined}
+					{#if multi?.reason}
+						<ReasonReply
+							segments={multi.reason.segments}
+							calls={multi.reason.calls}
+							shown={shownCall?.key === turn.key ? shownCall.k : null}
+							onshow={oncall ? (k) => oncall(turn.key, k) : undefined}
+						/>
+						<p class="prov num">
+							{#if multi.where === 'browser'}
+								<span class="live-word">here</span>
+								Written by {multi.model.name} in this browser on {multi.host.gpu}; every call run by
+								the clock on a table certified first{multi.timing?.total
+									? `, ${multi.timing.total.toFixed(1)} s in all`
+									: ''}.
+							{:else}
+								Written by {multi.model.name}; every call run by the clock on a table certified
+								first.
+							{/if}
+						</p>
+						{#if turn.key !== active}
+							<div class="actions">
+								<button class="link" onclick={() => onreplay(turn.key)}>Show this run</button>
+							</div>
+						{/if}
+					{:else if !t}
 						{@const file = id ? fileFor(id) : undefined}
 						{#if file}
 							{#if file.note === PLAIN_NOTE}

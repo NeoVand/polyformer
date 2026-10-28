@@ -7,13 +7,42 @@ import type { ProgramRow, Trace, TraceStep } from './trace.ts';
 
 export const isMealy = (t: Trace) => !!t.program.mealy;
 
-/** The digit pair of column `i`: the step's own pair, else (before the tick) the tape the clock read ("6+7"). */
+const DIGIT = /^[0-9]$/;
+
+/**
+ * Which digit table a Mealy register's rows spell (REASON_FORMAT §2): the adder's (c′·10 + s = c + a + b) or the
+ * subtracter's (d − 10·b′ = a − c − b), or neither. The clock runs any table; this only names its parts.
+ */
+export function opOfRows(rows: ProgramRow[]): 'add' | 'sub' | null {
+	if (!rows.length) return null;
+	const n = (x: string | undefined) => (x !== undefined && DIGIT.test(x) ? Number(x) : NaN);
+	const all = (f: (s: number, a: number, b: number, t: number, o: number) => boolean) =>
+		rows.every((r) => f(n(r.s), n(r.a), n(r.b), n(r.t), n(r.o)));
+	if (all((s, a, b, t, o) => s <= 1 && t * 10 + o === s + a + b)) return 'add';
+	if (all((s, a, b, t, o) => s <= 1 && t <= 1 && o - 10 * t === a - b - s)) return 'sub';
+	return null;
+}
+
+/** The register's table: the run's own record of it, else read from its rows. */
+export const opOf = (t: Trace) => t.llm?.file.arith?.op ?? opOfRows(t.program.rows);
+
+/**
+ * What a number-mode run's parts are called: a carry and a sum for the adder (and, as before, for any other table),
+ * a borrow and a difference for the subtracter.
+ */
+export function mealyWords(t: Trace) {
+	return opOf(t) === 'sub'
+		? { state: 'borrow', states: 'borrows', out: 'difference', sign: '−' }
+		: { state: 'carry', states: 'carries', out: 'sum', sign: '+' };
+}
+
+/** The digit pair of column `i`: the step's own pair, else (before the tick) the tape the clock read ("6+7", "6−7"). */
 export function pairAt(t: Trace, i: number): [string, string] | null {
 	const st = t.steps[i];
 	if (st?.pair) return st.pair;
 	const ev = t.llm?.file.input.events?.[i];
 	if (!ev) return null;
-	const k = ev.indexOf('+');
+	const k = ev.search(/[+−]/);
 	return k > 0 ? [ev.slice(0, k), ev.slice(k + 1)] : null;
 }
 
@@ -88,13 +117,17 @@ export interface MealyEdge {
 	from: number;
 	to: number;
 	rows: number;
-	/** the adder's rule for this edge when every row on it follows it (o = c + a + b − 10 c′), else null */
+	/**
+	 * the edge's rule when every row on it follows the adder's (o = c + a + b − 10 c′) or the subtracter's
+	 * (d = a − c − b + 10 b′), else null
+	 */
 	rule: string | null;
 }
 
-const DIGIT = /^[0-9]$/;
-
-/** The table's transitions merged per (carry, carry′), each with its rows and, when they all add, their rule. */
+/**
+ * The table's transitions merged per (carry, carry′), each with its rows and, when they all add (or all subtract),
+ * their rule.
+ */
 export function mealyEdges(rows: ProgramRow[], states: string[]): MealyEdge[] {
 	const index = new Map(states.map((s, i) => [s, i]));
 	const m = new Map<string, { from: number; to: number; rows: ProgramRow[] }>();
@@ -117,6 +150,33 @@ export function mealyEdges(rows: ProgramRow[], states: string[]): MealyEdge[] {
 }
 
 function ruleOf(rows: ProgramRow[]): string | null {
+	return addRule(rows) ?? subRule(rows);
+}
+
+const signed = (n: number) => (n < 0 ? `−${-n}` : `${n}`);
+
+/** The subtracter's rule for an edge: borrow b to b′ when a − c − b is negative or not, writing a − c − b + 10 b′. */
+function subRule(rows: ProgramRow[]): string | null {
+	const r0 = rows[0];
+	if (!r0) return null;
+	const b = Number(r0.s);
+	const b2 = Number(r0.t);
+	let lo = Infinity;
+	let hi = -Infinity;
+	for (const r of rows) {
+		if (![r.s, r.a, r.b, r.t, r.o].every((x) => x !== undefined && DIGIT.test(x))) return null;
+		const diff = Number(r.a) - Number(r.b);
+		if (Number(r.s) !== b || Number(r.t) !== b2 || b > 1 || b2 > 1) return null;
+		if (diff - b + 10 * b2 !== Number(r.o) || diff - b < 0 !== (b2 === 1)) return null;
+		lo = Math.min(lo, diff);
+		hi = Math.max(hi, diff);
+	}
+	const off = 10 * b2 - b;
+	const out = off === 0 ? 'a−b' : off > 0 ? `a−b+${off}` : `a−b−${-off}`;
+	return `${b2 ? `a−b ≤ ${signed(hi)}` : `a−b ≥ ${signed(lo)}`} / ${out}`;
+}
+
+function addRule(rows: ProgramRow[]): string | null {
 	const r0 = rows[0];
 	if (!r0) return null;
 	const c = Number(r0.s);

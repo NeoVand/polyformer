@@ -1772,6 +1772,11 @@ export class Engine {
 				sep
 			);
 			m.view.exact = followsTable(m.view);
+			if (op !== 'add')
+				m.view.certificate.covers = m.view.certificate.covers.replace(
+					'the table is the adder',
+					op === 'sub' ? 'the table is the subtracter' : 'the table is the one the step needs'
+				);
 			sub.registers.push(m.view);
 			fin = m.fin;
 			arith.sum = sumOf(this.tok, fin, reg);

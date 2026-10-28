@@ -3,6 +3,7 @@
 	import type { Attachment } from 'svelte/attachments';
 	import MachineDiagram from './MachineDiagram.svelte';
 	import MealyDiagram from './MealyDiagram.svelte';
+	import { mealyWords } from './mealy.ts';
 	import Pane from './Pane.svelte';
 	import { int, programLines, ruleLine, type Trace, type TraceStep } from './trace.ts';
 
@@ -27,7 +28,7 @@
 	const mealy = $derived(!!trace.program.mealy);
 	const size = $derived(
 		mealy
-			? `${trace.program.states.length} carries × ${trace.program.events.length} digit pairs`
+			? `${trace.program.states.length} ${mealyWords(trace).states} × ${trace.program.events.length} digit pairs`
 			: `${trace.program.states.length} states × ${trace.program.events.length} events`
 	);
 	const short = $derived(
@@ -97,9 +98,9 @@
 				{#if mealy}
 					Written by {llmFile.model.name}{llmFile.where === 'browser' ? ' in this browser' : ''} in
 					{int(llmFile.compile.tokens)} tokens and read back from those tokens: where the two numbers
-					are in the question, and a register with an output, five digits a row (carry, the two digits,
-					the next carry, the digit written). The clock runs it one column per tick, two forwards each,
-					on the same weights.
+					are in the question, and a register with an output, five digits a row ({mealyWords(trace)
+						.state}, the two digits, the next {mealyWords(trace).state}, the digit written). The
+					clock runs it one column per tick, two forwards each, on the same weights.
 				{:else if llmFile.where === 'browser'}
 					Written by {llmFile.model.name} in this browser in {int(llmFile.compile.tokens)} tokens and
 					read back from those tokens. The table runs one tick per event on the same weights{which}.

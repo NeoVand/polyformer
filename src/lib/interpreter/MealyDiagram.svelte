@@ -1,10 +1,10 @@
 <script lang="ts">
 	/**
 	 * A two-state Mealy register as a machine: carry 0 and carry 1, the table's rows merged into four edges, each
-	 * labelled with when it is taken and the digit it writes (when its rows follow the adder's rule, else its row
-	 * count). The edge taken at the playhead is lit, with its digit pair and output.
+	 * labelled with when it is taken and the digit it writes (when its rows follow the adder's rule or the subtracter's,
+	 * else its row count). The edge taken at the playhead is lit, with its digit pair and output.
 	 */
-	import { mealyEdges, type MealyEdge } from './mealy.ts';
+	import { mealyEdges, mealyWords, opOf, type MealyEdge } from './mealy.ts';
 	import { int, type Trace } from './trace.ts';
 
 	let {
@@ -33,6 +33,8 @@
 		{ x: 200, y: Y }
 	];
 	const edges = $derived(mealyEdges(trace.program.rows, states));
+	const w = $derived(mealyWords(trace));
+	const table = $derived(opOf(trace) === 'sub' ? 'subtracter' : 'adder');
 
 	/** Each edge's path, its label's place, and where its second line (row count, or the pair now) goes. */
 	function geometry(e: Pick<MealyEdge, 'from' | 'to'>) {
@@ -67,7 +69,11 @@
 	const current = $derived(edges.find((e) => e.from === from && e.to === to));
 </script>
 
-<svg viewBox="0 0 {W} {H}" role="img" aria-label="The adder as a machine: carry 0 and carry 1">
+<svg
+	viewBox="0 0 {W} {H}"
+	role="img"
+	aria-label="The {table} as a machine: {w.state} 0 and {w.state} 1"
+>
 	<defs>
 		<marker
 			id="{uid}-a"
@@ -98,7 +104,7 @@
 		<path d={g.d} class={['edge', on && 'on']} marker-end="url(#{uid}-{on ? 'b' : 'a'})" />
 		<text x={g.lx} y={g.ly} class={['elabel', on && 'on']}>{e.rule ?? `${int(e.rows)} rows`}</text>
 		{#if on}
-			<text x={g.lx} y={g.ly + g.sub} class="now">{pair[0]}+{pair[1]} / {output}</text>
+			<text x={g.lx} y={g.ly + g.sub} class="now">{pair[0]}{w.sign}{pair[1]} / {output}</text>
 		{:else if e.rule}
 			<text x={g.lx} y={g.ly + g.sub} class="count">{int(e.rows)} rows</text>
 		{/if}
@@ -111,7 +117,7 @@
 			class={['node', i === to && 'to', i === from && i !== to && 'from']}
 		/>
 		<text x={p.x} y={p.y + 4.5} class={['nlabel', i === to && 'dark']}>{states[i]}</text>
-		<text x={p.x} y={p.y + R + 13} class="caption">carry</text>
+		<text x={p.x} y={p.y + R + 13} class="caption">{w.state}</text>
 	{/each}
 	<text x={W / 2} y={H - 6} class="caption">each edge: when it is taken / the digit written</text>
 </svg>

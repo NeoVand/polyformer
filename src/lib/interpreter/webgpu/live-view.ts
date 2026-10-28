@@ -302,7 +302,8 @@ export function liveTrace(run: LiveRun): LlmTrace {
 	return {
 		schema: 'polyformer.trace/0',
 		source: 'savant-browser',
-		id: run.id,
+		// a call's run has its own id, so the panels start afresh for each call (as the finished run's calls do)
+		id: run.reason?.current ? `${run.id}/call-${run.reason.current.k}` : run.id,
 		kind: 'llm',
 		title: run.title,
 		family: run.family,

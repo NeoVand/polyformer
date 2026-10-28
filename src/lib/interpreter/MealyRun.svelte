@@ -4,7 +4,7 @@
 	 * the carry entering each column above it and the digit written below; then the tick at the playhead (its two
 	 * forwards, the row it reads and both margins) and the output tape building up the sum.
 	 */
-	import { columnsAround, mealyRowText, sumSoFar } from './mealy.ts';
+	import { columnsAround, mealyRowText, mealyWords, sumSoFar } from './mealy.ts';
 	import { int, type Trace, type TraceStep } from './trace.ts';
 
 	let {
@@ -21,6 +21,8 @@
 	} = $props();
 
 	const WIDTH = 13;
+	/** carry and sum, or borrow and difference */
+	const w = $derived(mealyWords(trace));
 	const count = $derived(trace.steps.length);
 	const total = $derived(trace.llm?.file.input.events?.length ?? count);
 	const at = $derived(pending ? -1 : cur.i);
@@ -47,9 +49,9 @@
 			class="sheet num"
 			style:--cols={WIDTH}
 			role="group"
-			aria-label="The sum, column by column, around the current column"
+			aria-label="The {w.out}, column by column, around the current column"
 		>
-			<span class="k">carry</span>
+			<span class="k">{w.state}</span>
 			{#each blanks as k (k)}<span></span>{/each}
 			{#each cols as c (c.i)}
 				<span class={['carry', c.now && 'now']}>{c.cin ?? ''}</span>
@@ -62,7 +64,7 @@
 					class={['d', c.padA && 'pad', c.now && 'now', c.done && 'done']}
 					disabled={pending || c.i >= count}
 					tabindex={c.now ? 0 : -1}
-					aria-label="Column {c.i + 1}: {c.a} + {c.b}"
+					aria-label="Column {c.i + 1}: {c.a} {w.sign} {c.b}"
 					onclick={() => onseek(c.i)}>{c.a}</button
 				>
 			{/each}
@@ -75,7 +77,7 @@
 
 			<span class="rule" style:grid-column="2 / -1"></span>
 
-			<span class="k">sum</span>
+			<span class="k">{w.out}</span>
 			{#each blanks as k (k)}<span></span>{/each}
 			{#each cols as c (c.i)}
 				<span class={['d', 'out', c.now && 'now']}>{c.o ?? ''}</span>
@@ -91,16 +93,19 @@
 		{#if pending}
 			<span
 				>certifying row {int(cur.row + 1)} of {int(rows.length)}: <b>{cur.s}</b>
-				{cur.pair?.[0]} + {cur.pair?.[1]} → <b>{cur.t}</b>, writes <b>{cur.o}</b></span
+				{cur.pair?.[0]}
+				{w.sign}
+				{cur.pair?.[1]} → <b>{cur.t}</b>, writes <b>{cur.o}</b></span
 			>
 			<span class="quiet"
 				>{Number.isFinite(cur.margin)
-					? `margins ${fmt(cur.margin)} on the carry, ${fmt(cur.m2)} on the digit`
+					? `margins ${fmt(cur.margin)} on the ${w.state}, ${fmt(cur.m2)} on the digit`
 					: 'two forwards over the cached table'} · then {int(total)} columns, two forwards each</span
 			>
 		{:else}
 			<span
-				>carry <b>{cur.s}</b>, <b>{cur.pair?.[0]}</b> + <b>{cur.pair?.[1]}</b> → carry
+				>{w.state} <b>{cur.s}</b>, <b>{cur.pair?.[0]}</b>
+				{w.sign} <b>{cur.pair?.[1]}</b> → {w.state}
 				<b>{cur.t}</b>, writes <b>{cur.o}</b></span
 			>
 			<span class="quiet">
@@ -113,7 +118,7 @@
 				{/if}
 			</span>
 			<span class="quiet"
-				>margins {fmt(cur.margin)} on the carry, {fmt(cur.m2)} on the digit{cur.lookup
+				>margins {fmt(cur.margin)} on the {w.state}, {fmt(cur.m2)} on the digit{cur.lookup
 					? ''
 					: cur.eq
 						? ' · both forwards bitwise equal to the certified row'
@@ -125,9 +130,9 @@
 	{#if sum}
 		<div class="tape">
 			<div class="label num">
-				the sum so far · {int(sum.digits)} of {int(total)} digits, the newest first
+				the {w.out} so far · {int(sum.digits)} of {int(total)} digits, the newest first
 			</div>
-			<p class="digits num" aria-label="The sum so far">
+			<p class="digits num" aria-label="The {w.out} so far">
 				<span class="new">{sum.newest}</span>{sum.rest}
 			</p>
 		</div>

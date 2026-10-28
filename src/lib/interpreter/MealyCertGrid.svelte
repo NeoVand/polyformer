@@ -11,13 +11,16 @@
 		rows,
 		states,
 		current,
-		pending = false
+		pending = false,
+		state = 'carry'
 	}: {
 		rows: ProgramRow[];
 		states: string[];
 		/** the row the playhead reads, or -1 */
 		current: number;
 		pending?: boolean;
+		/** what a block's state is called: a carry, or a borrow */
+		state?: string;
 	} = $props();
 
 	const CELL = 9;
@@ -42,7 +45,7 @@
 	aria-label="Every row's two cells and their margins"
 >
 	{#each layout.blocks as b (b.x)}
-		<text x={b.x * CELL} y={6} class="blabel">carry {b.label}</text>
+		<text x={b.x * CELL} y={6} class="blabel">{state} {b.label}</text>
 	{/each}
 	{#each layout.cells as c (c.k)}
 		{@const r = rows[c.k]}

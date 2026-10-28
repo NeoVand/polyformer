@@ -4,6 +4,7 @@
 	 * the size bound N* that makes the answer exact at every input length. REGS: the composition certificate.
 	 */
 	import MealyCertGrid from './MealyCertGrid.svelte';
+	import { mealyWords } from './mealy.ts';
 	import Pane from './Pane.svelte';
 	import { int, type Trace, type TraceStep } from './trace.ts';
 
@@ -32,6 +33,7 @@
 		return A <= 8 ? Math.ceil(raw / A) * A : raw;
 	});
 	const mealy = $derived(!!trace.program.mealy);
+	const w = $derived(mealyWords(trace));
 	const checked = $derived(rows.filter((r) => r.m !== undefined && !Number.isNaN(r.m)));
 	/** both cells' margins for a Mealy register */
 	const all = $derived(
@@ -109,6 +111,7 @@
 					states={trace.program.states}
 					current={stuck === null ? cur.row : -1}
 					{pending}
+					state={w.state}
 				/>
 			{:else}
 				<svg
@@ -149,8 +152,8 @@
 			{/if}
 			{#if mealy}
 				<p class="note num">
-					A block per carry, the first digit down and the second across. Left half: the carry cell;
-					right half: the digit written; lighter for a larger margin ({lo.toFixed(2)} to {hi.toFixed(
+					A block per {w.state}, the first digit down and the second across. Left half: the {w.state}
+					cell; right half: the digit written; lighter for a larger margin ({lo.toFixed(2)} to {hi.toFixed(
 						2
 					)}){rows.some((r) => r.ok === false)
 						? '; an outlined half is a cell whose argmax is not what the row wrote'
@@ -185,7 +188,7 @@
 					? `blocks [${cur.s}][${cur.pair[0]}][${cur.pair[1]}] and [${cur.s}][${cur.pair[0]}][${cur.pair[1]}][${cur.t}], each`
 					: `block [${cur.s}][${cur.event}]`} after the cached table.
 			{:else if verdict && mealy}
-				Certified: {N} carries and {A} digit pairs, both cells of every row right.
+				Certified: {N} {w.states} and {A} digit pairs, both cells of every row right.
 			{:else if verdict && isLlm}
 				Certified: {N} states and {A} events, every row right.
 			{:else if verdict}

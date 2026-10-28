@@ -11,6 +11,7 @@ import type { LlmTrace } from '../trace.ts';
 import { arith } from './arith-fixtures.ts';
 import { Engine, PLAIN_NOTE, type EngineEvent } from './engine.ts';
 import { applyEvent, liveTrace, startRun } from './live-view.ts';
+import { eventsFromTrace } from './stub.ts';
 import { parseGenerated, pyStrip, type Tok } from './pb.ts';
 import { piecesOf, reason, reasonTok, type ReasonFixtureCase } from './reason-fixtures.ts';
 import { errorFinalText } from './reason.ts';
@@ -329,6 +330,29 @@ describe(
 	'the runs the page’s stand-in plays (e2e/fixtures/reason-runs.json)',
 	{ timeout: 120_000 },
 	() => {
+		it('play back as events that rebuild them, call by call', () => {
+			const runs: LlmTrace[] = JSON.parse(
+				readFileSync(new URL('../../../../e2e/fixtures/reason-runs.json', import.meta.url), 'utf8')
+			);
+			for (const t of runs) {
+				let live = startRun(t.id, t.prompt, { model, host });
+				const seen: number[] = [];
+				for (const ev of eventsFromTrace(t)) {
+					live = applyEvent(live, ev);
+					if (ev.type === 'ticks') {
+						// mid-call the panels read the current call's run
+						const cur = liveTrace(live);
+						expect(cur.id).toBe(`${t.id}/call-${live.reason!.current!.k}`);
+						expect(cur.registers[ev.index].steps.length).toBe(ev.done);
+					}
+					if (ev.type === 'final') seen.push(ev.call.k);
+				}
+				expect(seen).toEqual(t.reason!.calls.map((c) => c.k));
+				expect(live.trace).toBe(t);
+				expect(live.reason?.segments).toEqual(t.reason!.segments);
+			}
+		});
+
 		it('are the engine’s own', async () => {
 			const file = new URL('../../../../e2e/fixtures/reason-runs.json', import.meta.url);
 			const got: LlmTrace[] = [];

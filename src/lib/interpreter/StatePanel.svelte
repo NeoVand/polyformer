@@ -3,6 +3,7 @@
 	import CodeSpace from './CodeSpace.svelte';
 	import MarginTrace from './MarginTrace.svelte';
 	import Pane from './Pane.svelte';
+	import { mealyWords } from './mealy.ts';
 	import type { Trace, TraceStep } from './trace.ts';
 
 	let {
@@ -21,6 +22,7 @@
 
 	const isRegs = $derived(trace.kind === 'regs');
 	const isLlm = $derived(trace.kind === 'llm');
+	const w = $derived(mealyWords(trace));
 	/** a run in this browser before its rows are all certified: no view to draw yet */
 	const waiting = $derived(trace.codebook.names.length === 0);
 	const index = $derived(new Map(trace.codebook.names.map((s, i) => [s, i])));
@@ -66,10 +68,10 @@
 				{:else if isLlm && !trace.steps.length}
 					The first tick lands here once the run starts.
 				{:else if isLlm && cur.o !== undefined}
-					Lands on carry <b>{cur.t}</b>, {cur.margin.toFixed(2)} above the next token in the whole vocabulary,
-					among {trace.codebook.names.length} carries ({(
-						trace.codebook.variance_kept * 100
-					).toFixed(0)}% of the rows' spread in this view); the second forward writes
+					Lands on {w.state} <b>{cur.t}</b>, {cur.margin.toFixed(2)} above the next token in the whole
+					vocabulary, among {trace.codebook.names.length}
+					{w.states} ({(trace.codebook.variance_kept * 100).toFixed(0)}% of the rows' spread in this
+					view); the second forward writes
 					<b>{cur.o}</b>{#if cur.m2 !== undefined}, {cur.m2.toFixed(2)} above the next{/if}.
 				{:else if isLlm}
 					Lands on <b>{cur.t}</b>, {cur.margin.toFixed(2)} above the next token in the whole vocabulary,

@@ -71,6 +71,8 @@
 	let shownId = $state<string | null>(null);
 	/** Which register of an LLM run the panels show. */
 	let reg = $state(0);
+	/** A reply with calls in the middle (REASON_FORMAT): which call the panels show (null: the last that ran). */
+	let callPick = $state<number | null>(null);
 	let step = $state(0);
 	let playing = $state(false);
 	let ablated = $state(false);
@@ -95,7 +97,15 @@
 	/** Before the program is parsed there is nothing for the panels: the model writing is shown instead. */
 	const writing = $derived(!!going && !going.registers.length);
 	const liveFile = $derived(going && going.registers.length ? liveTrace(going) : null);
-	const file = $derived(liveFile ?? (shownId ? (files.get(shownId) ?? null) : null));
+	const whole = $derived(liveFile ?? (shownId ? (files.get(shownId) ?? null) : null));
+	/** a finished reply with calls in the middle: the panels show one call's run at a time */
+	const reasonFile = $derived(whole && isLlm(whole) && whole.reason ? whole : null);
+	const shownCall = $derived(reasonFile ? (callPick ?? lastRan(reasonFile)) : null);
+	const file = $derived(
+		reasonFile
+			? (reasonFile.reason!.calls.find((c) => c.k === shownCall)?.run ?? reasonFile)
+			: whole
+	);
 	const llm = $derived(file && isLlm(file) ? file : null);
 	/** the register shown: the one being worked on while following a run, else the visitor's pick */
 	const shownReg = $derived(
@@ -146,6 +156,43 @@
 					? 'server'
 					: null
 	);
+
+	/** The last call of a reply that has a run, else its last call. */
+	function lastRan(f: LlmTrace): number | null {
+		const calls = f.reason?.calls ?? [];
+		return (calls.findLast((c) => c.run.registers.length) ?? calls.at(-1))?.k ?? null;
+	}
+
+	/** The last step of a call's first register, for the playhead. */
+	function lastStep(f: LlmTrace, k: number | null) {
+		const run = f.reason?.calls.find((c) => c.k === k)?.run;
+		return Math.max(0, (run?.registers[0]?.steps.length ?? 1) - 1);
+	}
+
+	/** Call k of a turn's reply, in the panels. */
+	function showCall(key: number, k: number) {
+		const turn = turns.find((t) => t.key === key);
+		const id = turn?.browser && runs.get(key)?.trace ? turn.browser : null;
+		const f = id ? files.get(id) : undefined;
+		if (!id || !f || !isLlm(f)) return;
+		pause();
+		active = key;
+		shownId = id;
+		callPick = k;
+		reg = 0;
+		step = lastStep(f, k);
+		ablated = false;
+		liveError = null;
+	}
+
+	function pickCall(k: number) {
+		if (!reasonFile) return;
+		pause();
+		callPick = k;
+		reg = 0;
+		step = lastStep(reasonFile, k);
+		ablated = false;
+	}
 
 	function load(entry: TraceEntry): Promise<TraceFile | null> {
 		const have = files.get(entry.id);
@@ -293,7 +340,10 @@
 
 	function show(id: string, replay: boolean) {
 		pause();
-		if (shownId !== id) reg = 0;
+		if (shownId !== id) {
+			reg = 0;
+			callPick = null;
+		}
 		shownId = id;
 		step = 0;
 		ablated = false;
@@ -434,6 +484,11 @@
 					shownId = id;
 					reg = Math.min(keep, Math.max(0, out.registers.length - 1));
 					step = Math.max(0, (out.registers[reg]?.steps.length ?? 1) - 1);
+					if (out.reason) {
+						callPick = null;
+						reg = 0;
+						step = lastStep(out, lastRan(out));
+					}
 					ablated = false;
 					liveError = null;
 				}
@@ -651,6 +706,17 @@
 	);
 </script>
 
+{#snippet callPicker()}
+	{#if reasonFile && reasonFile.reason!.calls.length > 1}
+		<span class="regs-pick" role="group" aria-label="Call">
+			<span class="k">call</span>
+			{#each reasonFile.reason!.calls as c (c.k)}
+				<button aria-pressed={c.k === shownCall} onclick={() => pickCall(c.k)}>{c.k}</button>
+			{/each}
+		</span>
+	{/if}
+{/snippet}
+
 <svelte:head>
 	<title>Interpreter · Polyformer</title>
 	<meta
@@ -690,6 +756,10 @@
 			onbase={liveBase}
 			onstop={stop}
 			onretry={retry}
+			oncall={showCall}
+			shownCall={reasonFile && active !== null && shownCall !== null
+				? { key: active, k: shownCall }
+				: null}
 		/>
 		{#if loadError}
 			<p class="error">The recorded runs could not be loaded.</p>
@@ -704,6 +774,7 @@
 				<div class="what">
 					<span class="title">{trace.title}</span>
 					<span class="sub">{sub}</span>
+					{@render callPicker()}
 					{#if llm && llm.registers.length > 1}
 						<span class="regs-pick" role="group" aria-label="Register">
 							<span class="k">register</span>
@@ -805,6 +876,15 @@
 				</footer>
 			{/if}
 		{:else if llm}
+			{#if reasonFile && reasonFile.reason!.calls.length > 1}
+				<div class="bar">
+					<div class="what">
+						<span class="title">{llm.title}</span>
+						<span class="sub">The clock did not run this call</span>
+						{@render callPicker()}
+					</div>
+				</div>
+			{/if}
 			<NoRunPanel file={llm} />
 		{:else if going}
 			<LiveProgram run={going} />

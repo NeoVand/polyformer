@@ -24,14 +24,105 @@ export interface SavantStub {
 	asked?: string[];
 	lookups?: (number | null)[];
 	additions?: ({ a: string; b: string } | null)[];
+	/** each question's `multiCall` option (config MULTI_CALL), null when the page sent none */
+	multiCalls?: (boolean | null)[];
 	poked?: { register: string; step: number; forced: number }[];
 }
 
 export const stubOf = (): SavantStub | null =>
 	(globalThis as { __SAVANT_STUB__?: SavantStub }).__SAVANT_STUB__ ?? null;
 
+/** One register's certificate and run as the engine's events. */
+function registerEvents(ev: EngineEvent[], r: LlmRegister, index: number) {
+	ev.push({ type: 'stage', stage: 'certify', register: r.name, total: r.program.rows.length });
+	ev.push({
+		type: 'register',
+		index,
+		name: r.name,
+		start: r.program.start,
+		states: r.program.states,
+		events: r.program.events,
+		rows: r.program.rows.map((x) =>
+			x.a !== undefined ? { s: x.s, a: x.a, b: x.b, t: x.t, o: x.o } : { s: x.s, b: x.b, t: x.t }
+		),
+		...(r.program.mealy ? { mealy: r.program.mealy } : {})
+	});
+	r.program.rows.forEach((row, k) => ev.push({ type: 'row', index, k, row }));
+	ev.push({
+		type: 'certificate',
+		index,
+		pass: r.certificate.all_ok,
+		rows: r.program.rows.length,
+		rows_wrong: r.certificate.rows_wrong ?? 0,
+		min_margin: r.certificate.min_margin,
+		seconds: 0.1,
+		codebook: r.codebook
+	});
+	ev.push({ type: 'stage', stage: 'run', register: r.name, total: r.steps.length });
+	// a number-mode run goes a column at a time, so the written sum fills in
+	const batch = r.program.mealy ? 1 : 64;
+	for (let i = 0; i < r.steps.length; i += batch)
+		ev.push({
+			type: 'ticks',
+			index,
+			steps: r.steps.slice(i, i + batch),
+			done: Math.min(r.steps.length, i + batch),
+			total: r.steps.length
+		});
+}
+
+/** Words (and a call) being written, as a few `compile` events and the segment's `program` event. */
+function writing(ev: EngineEvent[], text: string, exec: boolean) {
+	ev.push({ type: 'stage', stage: 'compile' });
+	const tokens = Math.max(1, Math.round(text.length / 3));
+	for (let k = 1; k <= 6; k++)
+		ev.push({
+			type: 'compile',
+			text: text.slice(0, Math.round((text.length * k) / 6)),
+			tokens: Math.round((tokens * k) / 6),
+			seconds: (0.5 * k) / 6
+		});
+	ev.push({ type: 'program', text, tokens, seconds: 0.5, exec, finish: 'stop' });
+}
+
+/** A run with calls in the middle (REASON_FORMAT) as the engine's events: words, a call, its final, and so on. */
+function eventsFromReason(t: LlmTrace): EngineEvent[] {
+	const r = t.reason!;
+	const ev: EngineEvent[] = [];
+	ev.push({ type: 'stage', stage: 'prefill', total: 100 });
+	ev.push({ type: 'prefill', done: 100, total: 100 });
+	let before = '';
+	for (const s of r.segments) {
+		if (s.kind === 'text') {
+			before += s.text;
+			continue;
+		}
+		const c = r.calls.find((x) => x.k === s.k)!;
+		writing(ev, before + c.program, true);
+		ev.push({ type: 'call', k: c.k, before, program: c.program, start: c.start, end: c.end });
+		const run = c.run;
+		if (run.registers.length && run.input.events) {
+			ev.push({ type: 'stage', stage: 'tape' });
+			ev.push({
+				type: 'tape',
+				events: run.input.events,
+				span: [0, 0],
+				char_spans: run.input.char_spans ?? null,
+				...(run.arith ? { numbers: run.arith.numbers, spans: run.arith.spans } : {})
+			});
+			run.registers.forEach((x, index) => registerEvents(ev, x, index));
+		}
+		ev.push({ type: 'final', call: c });
+		before = '';
+	}
+	if (r.end !== 'hard stop') writing(ev, before, false);
+	ev.push({ type: 'trace', trace: t });
+	return ev;
+}
+
 /** A finished run as the events the engine emits while making it. */
 export function eventsFromTrace(t: LlmTrace): EngineEvent[] {
+	if (t.reason) return eventsFromReason(t);
 	const ev: EngineEvent[] = [];
 	ev.push({ type: 'stage', stage: 'prefill', total: 100 });
 	ev.push({ type: 'prefill', done: 100, total: 100 });
@@ -60,45 +151,7 @@ export function eventsFromTrace(t: LlmTrace): EngineEvent[] {
 			char_spans: t.input.char_spans ?? null,
 			...(t.arith ? { numbers: t.arith.numbers, spans: t.arith.spans } : {})
 		});
-		t.registers.forEach((r, index) => {
-			ev.push({ type: 'stage', stage: 'certify', register: r.name, total: r.program.rows.length });
-			ev.push({
-				type: 'register',
-				index,
-				name: r.name,
-				start: r.program.start,
-				states: r.program.states,
-				events: r.program.events,
-				rows: r.program.rows.map((x) =>
-					x.a !== undefined
-						? { s: x.s, a: x.a, b: x.b, t: x.t, o: x.o }
-						: { s: x.s, b: x.b, t: x.t }
-				),
-				...(r.program.mealy ? { mealy: r.program.mealy } : {})
-			});
-			r.program.rows.forEach((row, k) => ev.push({ type: 'row', index, k, row }));
-			ev.push({
-				type: 'certificate',
-				index,
-				pass: r.certificate.all_ok,
-				rows: r.program.rows.length,
-				rows_wrong: r.certificate.rows_wrong ?? 0,
-				min_margin: r.certificate.min_margin,
-				seconds: 0.1,
-				codebook: r.codebook
-			});
-			ev.push({ type: 'stage', stage: 'run', register: r.name, total: r.steps.length });
-			// a number-mode run goes a column at a time, so the written sum fills in
-			const batch = r.program.mealy ? 1 : 64;
-			for (let i = 0; i < r.steps.length; i += batch)
-				ev.push({
-					type: 'ticks',
-					index,
-					steps: r.steps.slice(i, i + batch),
-					done: Math.min(r.steps.length, i + batch),
-					total: r.steps.length
-				});
-		});
+		t.registers.forEach((r, index) => registerEvents(ev, r, index));
 		ev.push({ type: 'stage', stage: 'answer' });
 		ev.push({ type: 'answer', text: t.answer, tokens: 8 });
 	}
@@ -358,7 +411,26 @@ export class StubBackend {
 					ablation: null
 				}))
 			};
+			// a recorded run with calls in the middle: its calls are this run's, on this stand-in
+			if (base.reason)
+				trace.reason = {
+					...base.reason,
+					calls: base.reason.calls.map((c) => ({
+						...c,
+						run: {
+							...c.run,
+							id: `${m.opts.id}/call-${c.k}`,
+							prompt: m.question,
+							live: true,
+							where: 'browser' as const,
+							model: stubModel(),
+							host: stubHost(s),
+							source: 'savant-browser'
+						}
+					}))
+				};
 			(s.additions ??= []).push(m.opts.addition ?? null);
+			(s.multiCalls ??= []).push(m.opts.multiCall ?? null);
 			if (base.arith && base.registers[0]?.program.mealy)
 				trace = rerunAddition(trace, m.question, m.opts.addition ?? null, m.opts.title);
 			const events = eventsFromTrace(trace);

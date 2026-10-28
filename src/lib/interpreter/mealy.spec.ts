@@ -4,7 +4,16 @@
  */
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
-import { certLayout, columnsAround, mealyEdges, mealyRowText, pairAt, sumSoFar } from './mealy.ts';
+import {
+	certLayout,
+	columnsAround,
+	mealyEdges,
+	mealyRowText,
+	mealyWords,
+	opOfRows,
+	pairAt,
+	sumSoFar
+} from './mealy.ts';
 import { asTrace, llmNote, type LlmTrace, type Trace } from './trace.ts';
 import { additionTicks, makeAddition, randomNumber } from './webgpu/prompts.ts';
 
@@ -118,6 +127,56 @@ describe('the machine and the certificate', () => {
 	it('says what the run did in one line', () => {
 		expect(llmNote(run)).toBe(
 			'wrote the adder’s 200-row table, added 5 columns, two forwards each · certified, both cells of every row · 5 of 5 columns bitwise equal to their certified row'
+		);
+	});
+});
+
+describe('the subtracter (REASON_FORMAT §2): another table, the same clock', () => {
+	// the engine's own run of reason_core's chain, call 3: first − second, both cited results
+	const runs: LlmTrace[] = JSON.parse(
+		readFileSync(new URL('../../../e2e/fixtures/reason-runs.json', import.meta.url), 'utf8')
+	);
+	const call = runs[0].reason!.calls[2];
+	const sub = asTrace(call.run) as Trace;
+
+	it('names the table from its rows, and the adder stays the adder', () => {
+		expect(opOfRows(sub.program.rows)).toBe('sub');
+		expect(opOfRows(t.program.rows)).toBe('add');
+		expect(opOfRows(t.program.rows.map((r, k) => (k === 5 ? { ...r, o: '9' } : r)))).toBeNull();
+		expect(opOfRows([])).toBeNull();
+		expect(mealyWords(sub)).toEqual({
+			state: 'borrow',
+			states: 'borrows',
+			out: 'difference',
+			sign: '−'
+		});
+		expect(mealyWords(t)).toEqual({ state: 'carry', states: 'carries', out: 'sum', sign: '+' });
+	});
+
+	it('reads its pairs from a tape written with a minus', () => {
+		expect(sub.steps[0].event).toMatch(/^\d−\d$/);
+		expect(pairAt({ ...sub, steps: [] } as Trace, 0)).toEqual(sub.steps[0].pair);
+	});
+
+	it('merges into four edges, each with the subtracter’s rule', () => {
+		const rules = mealyEdges(sub.program.rows, sub.program.states).map((e) => [
+			e.key,
+			e.rows,
+			e.rule
+		]);
+		expect(rules.sort()).toEqual([
+			['0>0', 55, 'a−b ≥ 0 / a−b'],
+			['0>1', 45, 'a−b ≤ −1 / a−b+10'],
+			['1>0', 45, 'a−b ≥ 1 / a−b−1'],
+			['1>1', 55, 'a−b ≤ 0 / a−b+9']
+		]);
+	});
+
+	it('writes the difference, and says so in one line', () => {
+		const outs = sumSoFar(sub.steps, sub.steps.length - 1);
+		expect((outs.newest + outs.rest).replace(/^0+/, '')).toBe(call.value);
+		expect(llmNote(call.run)).toMatch(
+			/^wrote the subtracter’s 200-row table, subtracted 32 columns/
 		);
 	});
 });

@@ -565,12 +565,15 @@ export function llmNote(f: LlmTrace): string {
 	if (!regs.length) return f.note ?? 'no run';
 	if (f.arith) {
 		const r = regs[0];
+		const sub = f.arith.op === 'sub';
 		const table = f.arith.adder
 			? `the adder’s ${r.program.rows.length}-row table`
-			: `a ${r.program.rows.length}-row table with an output`;
+			: sub
+				? `the subtracter’s ${r.program.rows.length}-row table`
+				: `a ${r.program.rows.length}-row table with an output`;
 		const read = r.ticks.lookup ? `, read ${int(r.ticks.lookup)} more from the certified rows` : '';
 		const cert = r.certificate.all_ok ? 'certified, both cells of every row' : 'not certified';
-		return `wrote ${table}, added ${int(r.ticks.real)} columns, two forwards each${read} · ${cert} · ${int(r.ticks.bitwise_equal_to_certified_row)} of ${int(r.ticks.real)} columns bitwise equal to their certified row`;
+		return `wrote ${table}, ${sub ? 'subtracted' : 'added'} ${int(r.ticks.real)} columns, two forwards each${read} · ${cert} · ${int(r.ticks.bitwise_equal_to_certified_row)} of ${int(r.ticks.real)} columns bitwise equal to their certified row`;
 	}
 	const rows = regs.reduce((a, r) => a + r.program.rows.length, 0);
 	const ticks = regs.reduce((a, r) => a + r.ticks.real, 0);
