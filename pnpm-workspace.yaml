@@ -4,3 +4,5 @@ allowBuilds:
   # fetches optional CUDA binaries, which nothing here uses
   onnxruntime-node: false
   protobufjs: false
+  # transformers.js 4.2.0 (the sketchpad's pinned runtime) lists sharp for Node image decoding; the browser never uses it
+  sharp: false

@@ -24,7 +24,8 @@
 		'/explore/newton': 'Newton attention',
 		'/explore/groups': 'Learned rotations',
 		'/compare': 'Bench',
-		'/interpreter': 'Interpreter, replayed'
+		'/interpreter': 'Interpreter, replayed',
+		'/sketchpad': 'Sketchpad'
 	};
 
 	const route = $derived(page.route.id ?? '/');
