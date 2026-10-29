@@ -24,9 +24,10 @@ export const MODELS: Record<Kind, SketchModel> = {
 	},
 	mul: {
 		kind: 'mul',
-		id: 'qwen35-canvas-mul16',
+		// seed 3, hinge 4 (Modal, 29 Oct): 1,553/1,553 on the server (min margin 2.86) and on an M4 with this q4 decoder (0.37)
+		id: 'qwen35-mul-s3h4-q4',
 		name: 'the multiplier',
-		dtype: { embed_tokens: 'q4', vision_encoder: 'fp16', decoder_model_merged: 'fp16' },
+		dtype: { embed_tokens: 'q4', vision_encoder: 'fp16', decoder_model_merged: 'q4' },
 		rows: 1553
 	}
 };
