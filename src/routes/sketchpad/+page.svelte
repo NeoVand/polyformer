@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { asset } from '$app/paths';
 	import { AddSheet } from '#lib/sketchpad/adder.ts';
+	import { Grid } from '#lib/sketchpad/calc-sheet.ts';
 	import { MulWave } from '#lib/sketchpad/multiplier.ts';
 	import Certificate from '#lib/sketchpad/Certificate.svelte';
 	import Chat from '#lib/sketchpad/Chat.svelte';
@@ -10,7 +11,7 @@
 	import Machine from '#lib/sketchpad/Machine.svelte';
 	import StateSpace from '#lib/sketchpad/StateSpace.svelte';
 	import '#lib/sketchpad/panel.css';
-	import { HF_CARD, HF_ROOT, MODELS, type Kind } from '#lib/sketchpad/models.ts';
+	import { HAS_CALC, HF_CARD, HF_ROOT, MODELS, type Kind } from '#lib/sketchpad/models.ts';
 	import { pad } from '#lib/sketchpad/pad.svelte.ts';
 	import type { TickOp } from '#lib/sketchpad/protocol.ts';
 	import Sheet from '#lib/sketchpad/Sheet.svelte';
@@ -28,7 +29,10 @@
 
 	let a = $state('482917305561');
 	let b = $state('739104826637');
-	const LIMIT: Record<Kind, number> = { add: 2000, mul: 20 };
+	const LIMIT: Record<Kind, number> = { add: 2000, mul: 20, calc: 0 };
+	/** the calculator's line (calc-task.ts) */
+	let line = $state('22 ÷ 7 to 10 places');
+	const calcPresets = ['22 ÷ 7 to 10 places', '√2 to 6 places', 'gcd(1071, 462)', '−5 − 12'];
 
 	const presets: { label: string; op: Kind; n: number; m: number }[] = [
 		{ label: '40-digit sum', op: 'add', n: 40, m: 40 },
@@ -56,6 +60,7 @@
 		void pad.version;
 		const s = pad.sheet;
 		if (!s || s.done) return null;
+		if (s instanceof Grid) return null;
 		if (s instanceof MulWave) {
 			const q = s.active()[0];
 			return q ? { op: q.op, cells: s.view(q) } : null;
@@ -66,6 +71,7 @@
 		void pad.version;
 		const s = pad.sheet;
 		if (!s) return '';
+		if (s instanceof Grid) return s.title;
 		if (s instanceof AddSheet) return `${fmt(s.columnsDone)} of ${fmt(s.n)} columns`;
 		if (s instanceof MulWave) {
 			const on = s.active().map((q) => q.j + 1);
@@ -107,6 +113,22 @@
 		return `Loaded in ${l.seconds.toFixed(1)} s: ${parts.join(', ')}.`;
 	});
 
+	/** the panels that draw one tick follow the step the calculator is taking (the adder's or a three-answer step) */
+	const panelKind = $derived<'add' | 'mul'>(
+		pad.op === 'calc' ? (pad.last?.op === 'ADD-FAST' ? 'add' : 'mul') : pad.op
+	);
+
+	/** a calculator line asked for while the tables are being checked starts when the check passes */
+	async function calc(text: string) {
+		if (pad.canCalc) return void pad.runCalc(text);
+		if (!certBusy && !pad.certifying) return;
+		const ask = (queued = { a: text, b: '' });
+		await pad.allSettled();
+		if (queued !== ask) return;
+		queued = null;
+		if (pad.canCalc) void pad.runCalc(text);
+	}
+
 	/** a run asked for while the table is being checked starts when the check passes */
 	let queued = $state.raw<{ a: string; b: string } | null>(null);
 	async function go(x: string, y: string) {
@@ -140,6 +162,7 @@
 		queued = null;
 		await pad.setOp(k);
 		if (pad.op !== k) return false;
+		if (k === 'calc') return true;
 		if (k === 'mul' && (a.length > LIMIT.mul || b.length > LIMIT.mul)) {
 			a = rnd(6);
 			b = rnd(6);
@@ -191,28 +214,43 @@
 			<div class="ops" role="group" aria-label="Operation">
 				<button aria-pressed={pad.op === 'add'} onclick={() => setOp('add')}>Add</button>
 				<button aria-pressed={pad.op === 'mul'} onclick={() => setOp('mul')}>Multiply</button>
+				{#if HAS_CALC}<button aria-pressed={pad.op === 'calc'} onclick={() => setOp('calc')}
+						>Calculate</button
+					>{/if}
 			</div>
-			<div class="nums">
-				<input
-					value={a}
-					oninput={(e) => type('a', e.currentTarget)}
-					inputmode="numeric"
-					autocomplete="off"
-					spellcheck="false"
-					disabled={pad.running}
-					aria-label="First number"
-				/>
-				<span class="sign" aria-hidden="true">{pad.op === 'add' ? '+' : '×'}</span>
-				<input
-					value={b}
-					oninput={(e) => type('b', e.currentTarget)}
-					inputmode="numeric"
-					autocomplete="off"
-					spellcheck="false"
-					disabled={pad.running}
-					aria-label="Second number"
-				/>
-			</div>
+			{#if pad.op === 'calc'}
+				<div class="nums">
+					<input
+						class="line"
+						bind:value={line}
+						onkeydown={(e) => e.key === 'Enter' && calc(line)}
+						autocomplete="off"
+						spellcheck="false"
+						disabled={pad.running}
+						aria-label="A calculation: a − b, a ÷ b to k places, √a to k places, gcd(a, b)"
+					/>
+				</div>
+			{:else}<div class="nums">
+					<input
+						value={a}
+						oninput={(e) => type('a', e.currentTarget)}
+						inputmode="numeric"
+						autocomplete="off"
+						spellcheck="false"
+						disabled={pad.running}
+						aria-label="First number"
+					/>
+					<span class="sign" aria-hidden="true">{pad.op === 'add' ? '+' : '×'}</span>
+					<input
+						value={b}
+						oninput={(e) => type('b', e.currentTarget)}
+						inputmode="numeric"
+						autocomplete="off"
+						spellcheck="false"
+						disabled={pad.running}
+						aria-label="Second number"
+					/>
+				</div>{/if}
 			<div class="actions">
 				{#if pad.gpuOk === false}
 					<p class="note">{pad.gpuReason}</p>
@@ -255,6 +293,14 @@
 					</button>
 				{:else if pad.running}
 					<button class="primary" onclick={() => pad.stop()}>Stop</button>
+				{:else if pad.op === 'calc'}
+					<button
+						class="primary"
+						disabled={!pad.canCalc && !pad.certifying}
+						onclick={() => calc(line)}>Run</button
+					>
+					{#if queued}<span class="sp-hint">starts when the check ends</span>
+					{:else if pad.certifying}<span class="sp-hint">after the certificates</span>{/if}
 				{:else}
 					<button class="primary" disabled={!pad.canRun && !certBusy} onclick={() => go(a, b)}
 						>Run</button
@@ -267,9 +313,21 @@
 				{/if}
 			</div>
 			<div class="presets">
-				{#each presets as p (p.label)}
-					<button disabled={pad.running} onclick={() => preset(p)}>{p.label}</button>
-				{/each}
+				{#if pad.op === 'calc'}
+					{#each calcPresets as p (p)}
+						<button
+							disabled={pad.running}
+							onclick={() => {
+								line = p;
+								calc(p);
+							}}>{p}</button
+						>
+					{/each}
+				{:else}
+					{#each presets as p (p.label)}
+						<button disabled={pad.running} onclick={() => preset(p)}>{p.label}</button>
+					{/each}
+				{/if}
 			</div>
 			{#if pad.op === 'mul'}
 				<button
@@ -295,7 +353,7 @@
 		{#if pad.loadError}<p class="note err">{pad.loadError}</p>{/if}
 
 		<!-- the top row: the sheet (the model's only memory), one tick, and the machine; panels on one grid -->
-		<div class="band">
+		<div class="band" class:tall={pad.op === 'calc'}>
 			<figure class="sp-panel sheet-panel">
 				<figcaption class="sp-cap">
 					<span class="sp-title">The sheet</span>
@@ -315,11 +373,26 @@
 							><span>{progress}</span>
 						</p>
 						<p>
-							{#if pad.sheet && pad.sheet.edits}<span
+							{#if pad.sheet && !(pad.sheet instanceof Grid) && pad.sheet.edits}<span
 									>{pad.sheet.edits} {pad.sheet.edits === 1 ? 'digit' : 'digits'} changed</span
 								>{/if}{#if pad.pushes}<span
 									>{pad.pushes} {pad.pushes === 1 ? 'tick' : 'ticks'} pushed</span
 								>{/if}
+						</p>
+					{:else if pad.op === 'calc' && pad.calcResult}
+						{@const r = pad.calcResult}
+						<p class="verdict">
+							<strong>{r.ok ? 'Exact.' : 'Wrong.'}</strong>
+							{r.text} = {r.got.length > 48 ? `${r.got.slice(0, 48)}…` : r.got}{#if !r.ok}
+								(the page's own arithmetic says {r.want}){/if}
+						</p>
+						<p>
+							<span>{fmt(r.ticks)} views in {fmt(r.steps)} steps, {duration(r.seconds)}</span><span
+								>{#if r.certified}certified on this device{:else if r.unchecked === 0}every view it
+									read passed{:else}{r.unchecked} unchecked {r.unchecked === 1
+										? 'view'
+										: 'views'}{/if}</span
+							>
 						</p>
 					{:else if pad.result}
 						{@const r = pad.result}
@@ -350,6 +423,13 @@
 						</p>
 					{:else if pad.runError}
 						<p>{pad.runError === 'stopped' ? 'Stopped.' : pad.runError}</p>
+					{:else if pad.op === 'calc' && pad.ready}
+						<p title={loadNote}>
+							{pad.certifying
+								? 'Checking the three tables it reads on this device first.'
+								: 'Every digit is the model’s; signs and decimal points are layout.'}
+						</p>
+						<p>a − b, a ÷ b to k places, √a to k places, gcd(a, b)</p>
 					{:else if pad.ready && !certBusy}
 						<p title={loadNote}>
 							{pad.op === 'add'
@@ -365,14 +445,14 @@
 				</div>
 			</figure>
 			<Inset last={pad.last} {next} sprites={SPRITES} />
-			<Machine last={pad.last} kind={pad.op} />
+			<Machine last={pad.last} kind={panelKind} />
 		</div>
 
 		<!-- the inside of the model -->
 		<div class="instruments">
 			<Lens
 				seen={pad.last?.inside ?? null}
-				kind={pad.op}
+				kind={panelKind}
 				ready={!!pad.insideMeta}
 				slow={pad.pace > 0}
 			/>
@@ -380,11 +460,11 @@
 				seen={pad.last?.inside ?? null}
 				wrote={pad.last ? pad.last.out[0] : null}
 				meta={pad.insideMeta}
-				kind={pad.op}
+				kind={panelKind}
 				runKey={pad.sheet}
 				slow={pad.pace > 0}
 				push={pad.push}
-				canPush={pad.ready && !!pad.insideMeta}
+				canPush={pad.ready && !!pad.insideMeta && pad.op !== 'calc'}
 				onpush={(c) => (pad.push = c)}
 			/>
 			<Certificate
@@ -686,6 +766,10 @@
 		gap: 10px 40px;
 		margin-top: 4px;
 	}
+	/* the calculator's sheets have up to ten rows: a taller (still fixed) sheet row */
+	.band.tall {
+		grid-template-rows: auto 272px 40px;
+	}
 	.sheet-body {
 		align-content: start;
 	}
@@ -753,6 +837,9 @@
 			grid-template-columns: minmax(0, 1fr) 250px;
 			grid-template-rows: auto 188px 40px auto 188px 40px;
 		}
+		.band.tall {
+			grid-template-rows: auto 272px 40px auto 188px 40px;
+		}
 		.band :global(.machine) {
 			grid-column: 1 / -1;
 		}
@@ -779,6 +866,9 @@
 		.band {
 			grid-template-columns: minmax(0, 1fr);
 			grid-template-rows: repeat(3, auto 188px auto);
+		}
+		.band.tall {
+			grid-template-rows: auto 272px auto repeat(2, auto 188px auto);
 		}
 		.instruments {
 			grid-template-columns: minmax(0, 1fr);

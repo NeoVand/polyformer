@@ -2,9 +2,10 @@
 import type { Family, InsideTick, Point } from './inside.ts';
 import type { Kind } from './models.ts';
 import type { Op } from './multiplier.ts';
+import type { CalcOp } from './calc-tables.ts';
 
-/** `ADD-FAST` is the adder's one-token step; the multiplier's five ops have their own prompts. */
-export type TickOp = 'ADD-FAST' | Op;
+/** `ADD-FAST` is the adder's one-token step; the multiplier's five ops and the calculator's three have their own prompts. */
+export type TickOp = 'ADD-FAST' | Op | CalcOp;
 
 export interface LoadedInfo {
 	/** the program now loaded (both kinds may share one) */
@@ -55,12 +56,22 @@ export type ToWorker =
 	 * `push`: an answer code to push the stream entering the steer layer toward, on this tick only (an adder tick, or a
 	 * multiply step with a digit of a)
 	 */
-	| { type: 'tick'; rid: number; op: TickOp; cells: string[]; push: string | null }
+	| {
+			type: 'tick';
+			rid: number;
+			op: TickOp;
+			cells: string[];
+			push: string | null;
+			/** false: leave the layer states on the GPU (no lens or path for this tick; a step costs less) */
+			inside?: boolean;
+	  }
 	/** several multiplier views at once (independent rows of one batched generation); a push applies to its own row */
 	| {
 			type: 'tick-batch';
 			rid: number;
 			items: { op: TickOp; cells: string[]; push?: string | null }[];
+			/** false: leave the layer states on the GPU */
+			inside?: boolean;
 	  }
 	| { type: 'chat'; rid: number; question: string; maxNew: number }
 	| { type: 'cancel'; rid: number };

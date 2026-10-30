@@ -3,6 +3,7 @@
  * cells a visitor may change. Both runtimes map onto this, so one renderer draws either.
  */
 import { AddSheet } from './adder.ts';
+import { Grid } from './calc-sheet.ts';
 import { MulSheet, MulWave, type Row } from './multiplier.ts';
 
 export interface SheetRow {
@@ -100,5 +101,39 @@ export function waveSource(s: MulWave): SheetSource {
 	};
 }
 
-export const sourceOf = (s: AddSheet | MulSheet | MulWave) =>
-	s instanceof AddSheet ? addSource(s) : s instanceof MulWave ? waveSource(s) : mulSource(s);
+/** A calculator sheet (calc-sheet.ts): its rows as laid out, an eye for every view of the step under way. */
+export function gridSource(g: Grid): SheetSource {
+	const rows: SheetRow[] = g.specs.map((s, i) => ({
+		key: s.key,
+		label: s.label,
+		sprite: (i % 3) as 0 | 1 | 2,
+		ruleBefore: !!s.rule,
+		dim: s.dim
+	}));
+	const index = new Map(g.specs.map((s, i) => [s.key, i]));
+	const x = (c: number) => g.W - 1 - c;
+	return {
+		rows,
+		cols: g.W,
+		glyph: (r, c) => g.rows[g.specs[r].key][x(c)],
+		fovea: () =>
+			g.done
+				? []
+				: g.fovea.flatMap((cells, v) =>
+						cells.map((cell, k) =>
+							cell ? { r: index.get(cell[0])!, c: x(cell[1]), key: `${v}.${k}` } : null
+						)
+					),
+		editable: () => false,
+		address: (r, c) => [g.specs[r].key, x(c)]
+	};
+}
+
+export const sourceOf = (s: AddSheet | MulSheet | MulWave | Grid) =>
+	s instanceof AddSheet
+		? addSource(s)
+		: s instanceof MulWave
+			? waveSource(s)
+			: s instanceof Grid
+				? gridSource(s)
+				: mulSource(s);

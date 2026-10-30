@@ -1,0 +1,11 @@
+job e7pad_1437; start 2026-10-30 19:37:23; cmds [['python', 'e7_padcheck.py', '/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e7_padcheck.py /vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<02:00,  3.93it/s]Loading weights:  74%|███████▎  | 348/473 [00:00<00:00, 1233.91it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 1164.59it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+{"rows": 242, "unpadded_min": 3.9598007202148438, "padded_min": 3.9600067138671875, "padded_pass": 242, "max_abs_diff": 0.0018367767333984375, "mean_abs_diff": 0.0003744196300664224}
+
+returncode 0; wall so far 71.3s

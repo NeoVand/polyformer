@@ -1,0 +1,15 @@
+job e7smoke_20_1401; start 2026-10-30 19:01:11; cmds [['python', 'e7_calc.py', 'smoke', '/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont', '20']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e7_calc.py smoke /vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont 20
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<01:07,  7.04it/s]Loading weights:  35%|███▌      | 167/473 [00:00<00:00, 812.60it/s]Loading weights:  59%|█████▉    | 278/473 [00:00<00:00, 923.25it/s]Loading weights:  85%|████████▍ | 400/473 [00:00<00:00, 1028.26it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 999.75it/s] 
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+/tmp/work-zeva6a1i/sketch/e5_union.py:173: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  log.append({"step": step, "loss": float(loss), "cert": ok, "rows": len(ROWS), "by_op": by_op,
+{"step": 20, "loss": 1.0109106302261353, "cert": 1877, "rows": 2446, "by_op": {"SUM": 228, "MUL": 1100, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11, "SUB": 33, "EST": 63, "DEC": 0}, "min_margin": {"SUM": -2.62, "MUL": 3.11, "ADD": 0.89, "ADZ": 0.31, "FLS": 7.48, "NXT": 7.03, "SUB": -6.8, "EST": -4.23, "DEC": -1.35}, "ppl_ratio": 0.9999403971315461, "fails": ["SUM:_76", "SUM:_79", "SUM:_89", "SUM:_95", "SUM:_98", "SUM:139", "SUM:148", "SUM:157", "SUM:175", "SUM:179", "SUM:184", "SUM:188"], "seconds": 165}
+smoke adapter e7_adapter_s0_h4_v2_cont
+
+returncode 0; wall so far 247.5s

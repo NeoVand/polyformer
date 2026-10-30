@@ -25,6 +25,7 @@ import {
 	type SketchModel
 } from './models.ts';
 import { analyse, parseAssets, steerCodes, steerVector, type InsideAssets } from './inside.ts';
+import { CALC_DOMAIN, CALC_OPS, calcRef, isCalcOp, type CalcOp } from './calc-tables.ts';
 import { MUL_DOMAIN, outChars, reference, type Op } from './multiplier.ts';
 import type { FromWorker, InsideMeta, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
 import { B, CELL, assembleStrip, type SpriteSheet } from './sprites.ts';
@@ -304,7 +305,12 @@ interface OrtTensor {
 }
 interface OrtSession {
 	inputNames: readonly string[];
-	run(feeds: Record<string, OrtTensor>, opts?: unknown): Promise<Record<string, OrtTensor>>;
+	outputNames: readonly string[];
+	run(
+		feeds: Record<string, OrtTensor>,
+		fetches?: unknown,
+		opts?: unknown
+	): Promise<Record<string, OrtTensor>>;
 }
 
 /** Row `b`'s states at position `pos` of a `hidden_states` output [DEPTH, batch, seq, DIM], as DEPTH x DIM. */
@@ -337,16 +343,22 @@ function tokenStates(b: number) {
 /** the program's placeholder slots after the multiplier's prompt (0: answers generated token by token) */
 const slots = () => MODELS.mul.slots ?? 0;
 
-const MUL_OPS: Op[] = ['MUL', 'ADD', 'ADZ', 'FLS', 'NXT'];
-const promptLength = new Map<Op, number>();
+/** the ops read in one forward of a slotted prompt: the multiplier's five and the calculator's three */
+type SlotOp = Op | CalcOp;
+/** any step in the slotted prompt form: the slotted ops, and the adder when its program pads it (models.ts) */
+type BatchOp = SlotOp | 'ADD-FAST';
+const MUL_OPS: SlotOp[] = ['MUL', 'ADD', 'ADZ', 'FLS', 'NXT', ...CALC_OPS];
+/** the adder's prompt is padded like the slotted ones */
+const padSum = () => !!MODELS.add.padded && slots() > 0;
+const promptLength = new Map<BatchOp, number>();
 /**
- * `?`s after a step's slots, so that every multiplier step's prompt has the length of the longest (the step words are
+ * `?`s after a step's slots, so that every slotted step's prompt has the length of the longest (the step words are
  * one or two tokens): a wave step is then one batch. A token after the answer places cannot change them (every layer
  * is causal), and the certificate checks each view in exactly this padded form.
  */
-function padFor(op: Op) {
+function padFor(op: BatchOp) {
 	if (!promptLength.size)
-		for (const o of MUL_OPS)
+		for (const o of [...MUL_OPS, 'ADD-FAST' as const])
 			promptLength.set(o, tok!.encode(promptFor(o), { add_special_tokens: false }).length);
 	return Math.max(...promptLength.values()) - promptLength.get(op)!;
 }
@@ -362,6 +374,7 @@ function wrapDecoder(m: Model) {
 	if (!s || !s.inputNames.includes('steer')) return false;
 	const gated = s.inputNames.includes('lora_gate');
 	const names = s.inputNames.filter((n) => n !== 'steer' && n !== 'lora_gate');
+	const others = s.outputNames.filter((n) => n !== 'hidden_states');
 	Object.defineProperty(s, 'inputNames', { value: names, configurable: true });
 	const run = s.run.bind(s);
 	s.run = async (feeds, opts) => {
@@ -380,7 +393,10 @@ function wrapDecoder(m: Model) {
 		// float16 bits: 0x3c00 is 1, 0 is 0
 		if (gated)
 			keep.lora_gate = ort(new tjs!.Tensor('float16', new Uint16Array([gate ? 0x3c00 : 0]), [1]));
-		const out = await run({ ...feeds, steer, ...keep }, opts);
+		// the states of every layer leave the GPU only for a tick that reads them
+		const out = capturing
+			? await run({ ...feeds, steer, ...keep }, opts)
+			: await run({ ...feeds, steer, ...keep }, others, opts);
 		const hs = out.hidden_states;
 		if (capturing && hs) {
 			const S = hs.dims[2];
@@ -445,7 +461,7 @@ function armPush(op: TickOp, cells: string[], push: string | null, row: number) 
 				: null;
 	const vec = from && steerVector(inside, op === 'ADD-FAST' ? 'SUM' : 'MUL', from, push);
 	if (!vec) return null;
-	const back = op === 'ADD-FAST' || !slots() ? 1 : 1 + slots() + padFor(op as Op);
+	const back = !slots() || (op === 'ADD-FAST' && !padSum()) ? 1 : 1 + slots() + padFor(op);
 	steerNext = { row, back, vec };
 	return push;
 }
@@ -455,13 +471,14 @@ async function withInside<T>(
 	op: TickOp,
 	cells: string[],
 	push: string | null,
-	fn: () => Promise<T>
+	fn: () => Promise<T>,
+	want = true
 ) {
 	captured = [];
-	capturing = !!inside;
-	const slotted = op !== 'ADD-FAST' && slots();
-	captureLast = slotted ? 1 + slots() + padFor(op as Op) : 1;
-	rowPads = slotted ? [padFor(op as Op)] : [];
+	capturing = !!inside && want;
+	const slotted = (op !== 'ADD-FAST' || padSum()) && slots();
+	captureLast = slotted ? 1 + slots() + padFor(op) : 1;
+	rowPads = slotted ? [padFor(op)] : [];
 	steerNext = null;
 	const pushed = armPush(op, cells, push, 0);
 	try {
@@ -478,6 +495,11 @@ async function withInside<T>(
 // ---- the adder: one forward over "ADD<image>=", the last position's logits give the one answer token -------------
 async function addForward(cells: string[]) {
 	const { strip, image } = stripImage(cells);
+	if (padSum()) {
+		const { inp } = await slotted('ADD-FAST', image);
+		const out = await slottedForward(inp);
+		return { row: logitsAt(out.logits, answerAt(out.logits, 'ADD-FAST', 0)), strip };
+	}
 	const out = await model!(await processor!(promptFor('ADD-FAST'), [image]));
 	const S = out.logits.dims[1];
 	return { row: logitsAt(out.logits, S - 1), strip };
@@ -515,7 +537,7 @@ function appendTokens(inp: Inputs, ids: number[]) {
  * A multiplier prompt with its placeholder slots and padding (padFor), for the one forward pass that reads all three
  * answers; L is the prompt's own length, so the answers sit at L - 1, L and L + 1.
  */
-async function slotted(op: Op, image: unknown) {
+async function slotted(op: BatchOp, image: unknown) {
 	const inp = await processor!(promptFor(op), [image]);
 	const L = appendTokens(inp, Array(slots() + padFor(op)).fill(tokenOf('?')));
 	return { inp, L };
@@ -527,7 +549,7 @@ async function slotted(op: Op, image: unknown) {
  * num_logits_to_keep, so the decoder session's wrapper sets it.
  */
 async function slottedForward(inp: Inputs) {
-	keepLogits = 1 + slots() + Math.max(...MUL_OPS.map(padFor));
+	keepLogits = 1 + slots() + Math.max(...MUL_OPS.map((o) => padFor(o)));
 	try {
 		return await model!(inp);
 	} finally {
@@ -536,7 +558,7 @@ async function slottedForward(inp: Inputs) {
 }
 
 /** where an op's j-th answer sits in a slotted row's logits, counted from the row's end (kept or not) */
-const answerAt = (logits: TTensor, op: Op, j: number) =>
+const answerAt = (logits: TTensor, op: BatchOp, j: number) =>
 	logits.dims[1] - 1 - slots() - padFor(op) + j;
 
 /**
@@ -545,8 +567,11 @@ const answerAt = (logits: TTensor, op: Op, j: number) =>
  * pieces); slotted programs read their three answers
  * at `=` and the slots, exactly as a tick does.
  */
-async function mulScore(op: Op, v: string[]) {
-	const ans = outChars(op, v);
+/** the characters a slotted step's view is answered with (`_` for the multiplier's blank glyph) */
+const answerChars = (op: SlotOp, v: string[]) => (isCalcOp(op) ? calcRef(op, v) : outChars(op, v));
+
+async function mulScore(op: SlotOp, v: string[]) {
+	const ans = answerChars(op, v);
 	const ids = ans.map(tokenOf);
 	const { image } = stripImage(v);
 	let inp: Inputs;
@@ -569,14 +594,14 @@ async function mulScore(op: Op, v: string[]) {
 }
 
 /** three answers from one forward of a slotted prompt, for batch row `row` */
-function readSlots(logits: TTensor, row: number, op: Op) {
+function readSlots(logits: TTensor, row: number, op: BatchOp) {
 	const K = logits.dims[1];
 	return [0, 1, 2].map((j) =>
 		tok!.decode([argmax(logitsAt(logits, row * K + answerAt(logits, op, j)))])
 	);
 }
 
-async function mulTick(op: Op, cells: string[]) {
+async function mulTick(op: SlotOp, cells: string[]) {
 	const { strip, image } = stripImage(cells);
 	if (slots()) {
 		const { inp } = await slotted(op, image);
@@ -599,7 +624,9 @@ async function mulTick(op: Op, cells: string[]) {
  * its rows must share a step word length (the wave batches by it). The rows are independent views; batching only
  * shares the GPU calls.
  */
-async function mulBatch(items: { op: Op; cells: string[] }[]) {
+async function mulBatch(items: { op: BatchOp; cells: string[] }[]) {
+	if (items.some((it) => it.op === 'ADD-FAST') && !padSum())
+		throw new Error('this program reads an adder step on its own');
 	const strips = items.map((it) => stripImage(it.cells));
 	// transformers.js's Qwen image processor reads a list of images as the frames of one video, so each row is
 	// prepared on its own and the rows are stacked: token rows (equal lengths), patches, and one grid row per image
@@ -607,7 +634,7 @@ async function mulBatch(items: { op: Op; cells: string[] }[]) {
 		items.map(async (it, b) =>
 			slots()
 				? (await slotted(it.op, strips[b].image)).inp
-				: processor!(promptFor(it.op), [strips[b].image])
+				: processor!(promptFor(it.op as TickOp), [strips[b].image])
 		)
 	);
 	const inputs: Inputs = {};
@@ -624,7 +651,9 @@ async function mulBatch(items: { op: Op; cells: string[] }[]) {
 		const logits = (await slottedForward(inputs)).logits;
 		return items.map((_, b) => {
 			const ch = readSlots(logits, b, items[b].op);
-			return { out: [ch[0] === '_' ? B : ch[0], ch[1], ch[2]], strip: strips[b].strip };
+			// the adder's one answer is its code at `=`
+			const out = items[b].op === 'ADD-FAST' ? [ch[0]] : [ch[0] === '_' ? B : ch[0], ch[1], ch[2]];
+			return { out, strip: strips[b].strip };
 		});
 	}
 	const out = await model!.generate({ ...inputs, do_sample: false, max_new_tokens: 3 });
@@ -638,11 +667,12 @@ async function mulBatch(items: { op: Op; cells: string[] }[]) {
 
 async function tickBatch(m: Extract<ToWorker, { type: 'tick-batch' }>) {
 	const r = await exclusive(async () => {
-		if (!serves('mul')) throw new Error(`${MODELS.mul.name} is not loaded`);
+		const items = m.items as { op: BatchOp; cells: string[]; push?: string | null }[];
+		const off = items.find((it) => !serves(kindOf(it.op)));
+		if (off) throw new Error(`${MODELS[kindOf(off.op)].name} is not loaded`);
 		const t = performance.now();
 		captured = [];
-		capturing = !!inside;
-		const items = m.items as { op: Op; cells: string[]; push?: string | null }[];
+		capturing = !!inside && m.inside !== false;
 		rowPads = slots() ? items.map((it) => padFor(it.op)) : [];
 		captureLast = slots() ? 1 + slots() + Math.max(...rowPads) : 1;
 		steerNext = null;
@@ -850,7 +880,7 @@ async function certify(rid: number, k: Kind, only?: number[]) {
 		indices = [];
 		sent = performance.now();
 	};
-	const n = k === 'add' ? ADD_DOMAIN.length : MUL_DOMAIN.length;
+	const n = k === 'add' ? ADD_DOMAIN.length : k === 'mul' ? MUL_DOMAIN.length : CALC_DOMAIN.length;
 	const order = only ?? Array.from({ length: n }, (_, i) => i);
 	for (let j = 0; j < order.length; j++) {
 		const i = order[j];
@@ -859,7 +889,12 @@ async function certify(rid: number, k: Kind, only?: number[]) {
 			// a load got in between: these rows would no longer be about this model
 			if (generation !== born || !serves(k)) throw new Cancelled();
 			const t = performance.now();
-			const res = k === 'add' ? await addScore(ADD_DOMAIN[i]) : await mulScore(...MUL_DOMAIN[i]);
+			const res =
+				k === 'add'
+					? await addScore(ADD_DOMAIN[i])
+					: k === 'mul'
+						? await mulScore(...MUL_DOMAIN[i])
+						: await mulScore(...CALC_DOMAIN[i]);
 			compute += performance.now() - t;
 			return res;
 		});
@@ -876,16 +911,24 @@ async function tick(m: Extract<ToWorker, { type: 'tick' }>) {
 		if (!serves(kindOf(m.op))) throw new Error(`${MODELS[kindOf(m.op)].name} is not loaded`);
 		const t = performance.now();
 		if (m.op === 'ADD-FAST') {
-			const { r: f, inside: seen } = await withInside(m.op, m.cells, m.push, () =>
-				addForward(m.cells)
+			const { r: f, inside: seen } = await withInside(
+				m.op,
+				m.cells,
+				m.push,
+				() => addForward(m.cells),
+				m.inside !== false
 			);
 			const a = argmax(f.row);
 			const { m: mg } = margin(f.row, a);
 			const text = tok!.decode([a]);
 			return { out: [text], margin: mg, strip: f.strip, ms: performance.now() - t, inside: seen };
 		}
-		const { r: f, inside: seen } = await withInside(m.op, m.cells, m.push, () =>
-			mulTick(m.op as Op, m.cells)
+		const { r: f, inside: seen } = await withInside(
+			m.op,
+			m.cells,
+			m.push,
+			() => mulTick(m.op as SlotOp, m.cells),
+			m.inside !== false
 		);
 		return { out: f.out, margin: null, strip: f.strip, ms: performance.now() - t, inside: seen };
 	});

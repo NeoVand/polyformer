@@ -79,7 +79,7 @@ def weight(name):
 norm_w = weight("model.layers.24.final_norm_layernorm.weight")
 head = weight("lm_head.MatMul.weight")  # [1024, vocab]
 tok = AutoTokenizer.from_pretrained(hf)
-chars = "0123456789" + "_-MAZFNH" + "abcdefghij"
+chars = "0123456789" + "_-MAZFNH" + "abcdefghij" + "SBC"  # SBC: the calculator's next steps (E7)
 ids = []
 for c in chars:
     t = tok.encode(c, add_special_tokens=False)

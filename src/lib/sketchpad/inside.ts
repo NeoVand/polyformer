@@ -53,6 +53,18 @@ export function lensGroups(op: TickOp): LensGroup[] {
 			next
 		];
 	if (op === 'FLS') return [{ name: 'writes', token: 0, alphabet: '_0123456789' }, next];
+	if (op === 'SUB')
+		return [
+			{ name: 'writes', token: 0, alphabet: '0123456789' },
+			{ name: 'borrows', token: 1, alphabet: '01' },
+			{ name: 'next step', token: 2, alphabet: 'SHB' }
+		];
+	if (op === 'EST')
+		return [
+			{ name: 'guesses', token: 0, alphabet: '0123456789' },
+			{ name: 'next step', token: 2, alphabet: 'MN' }
+		];
+	if (op === 'DEC') return [{ name: 'writes', token: 0, alphabet: '012345678' }];
 	return [next];
 }
 
@@ -221,9 +233,10 @@ export function analyse(
 	pushed: string | null
 ): InsideTick {
 	const normed = states.map((h) => (h ? lensStates(a, h) : undefined));
+	// a group whose characters the lens data has no lm_head rows for is not drawn
 	const lens = lensGroups(op).flatMap((g) => {
 		const n = normed[g.token];
-		return n ? [readLens(a, n, g)] : [];
+		return n && [...g.alphabet].every((c) => a.rows.has(c)) ? [readLens(a, n, g)] : [];
 	});
 	const family = familyOf(op);
 	const path = family && normed[0] ? project(a.families[family], normed[0]) : null;

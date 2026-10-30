@@ -12,7 +12,8 @@
  */
 import type { TickOp } from './protocol.ts';
 
-export type Kind = 'add' | 'mul';
+export type Kind = 'add' | 'mul' | 'calc';
+export const KINDS: Kind[] = ['add', 'mul', 'calc'];
 
 export const BASE_ID = 'base';
 
@@ -52,6 +53,12 @@ export interface SketchModel {
 	 * slotted prompt is padded with more `?`s to the longest step word's length, so a wave step is one batch.
 	 */
 	slots?: number;
+	/**
+	 * The adder's prompt in the slotted form too (`SUM<image>=` then `?`s to the slotted prompts' length; its one answer
+	 * still read at `=`), so any mix of steps is one batch (calculator waves, CALC3.md). Every layer is causal, so the
+	 * padding cannot change the answer; the certificate checks the rows in exactly this form.
+	 */
+	padded?: boolean;
 }
 
 const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
@@ -64,8 +71,13 @@ const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
  * Its graph has a window into itself (research/sketch/patch_onnx_inside.py): an extra `hidden_states` output and a
  * `steer` input that is zero unless a visitor pushes; the folder also holds the lens and map data (inside.ts).
  * Built by research/sketch/build_program.sh (as qwen35-union-e6-s3-inside); published as `arithmetic/`.
+ *
+ * E7 (research/sketch/CALC3.md) is E6 trained on with the calculator's three tables as well (SUB, EST, DEC: 651 rows,
+ * read like the multiplier's steps). Until it is published, the dev page loads it from `arithmetic-e7/` and a build
+ * keeps E6, which has no calculator.
  */
-const UNION = 'arithmetic';
+export const HAS_CALC = !!import.meta.env?.DEV;
+const UNION = HAS_CALC ? 'arithmetic-e7' : 'arithmetic';
 
 export const MODELS: Record<Kind, SketchModel> = {
 	add: {
@@ -74,7 +86,8 @@ export const MODELS: Record<Kind, SketchModel> = {
 		name: 'the model',
 		rows: 242,
 		own: [GRAPH],
-		prompts: { 'ADD-FAST': 'SUM' }
+		prompts: { 'ADD-FAST': 'SUM' },
+		padded: HAS_CALC
 	},
 	mul: {
 		kind: 'mul',
@@ -84,11 +97,21 @@ export const MODELS: Record<Kind, SketchModel> = {
 		own: [GRAPH],
 		prompts: { MUL: 'MUL', ADD: 'ADD', ADZ: 'ADZ', FLS: 'FLS', NXT: 'NXT' },
 		slots: 2
+	},
+	calc: {
+		kind: 'calc',
+		id: UNION,
+		name: 'the model',
+		rows: 651,
+		own: [GRAPH],
+		prompts: { SUB: 'SUB', EST: 'EST', DEC: 'DEC' },
+		slots: 2
 	}
 };
 
 /** Which operation a runtime op belongs to. */
-export const kindOf = (op: TickOp): Kind => (op === 'ADD-FAST' ? 'add' : 'mul');
+export const kindOf = (op: TickOp): Kind =>
+	op === 'ADD-FAST' ? 'add' : op === 'SUB' || op === 'EST' || op === 'DEC' ? 'calc' : 'mul';
 
 /** The prompt for one tick: the op's word, the image, then `=` (raw, no chat template). */
 export function promptFor(op: TickOp): string {
@@ -143,9 +166,9 @@ export const certFiles = () => modelFiles();
  * The format the certificate certifies. Any change to tables, scoring or strip assembly must change this string, so a
  * cached certificate never outlives the format it checked. (The prompts are part of the cache key on their own.)
  */
-export const CERT_FORMAT = `sketchpad-cert-v1;add=fast-242;mul=${
+export const CERT_FORMAT = `sketchpad-cert-v1;add=${MODELS.add.padded ? 'padded-' : ''}fast-242;mul=${
 	MODELS.mul.slots ? `slots${MODELS.mul.slots}-padded-kept` : '3tok'
-}-1553;strip=sprites-rowk-32x96`;
+}-1553;calc=slots2-padded-kept-651;strip=sprites-rowk-32x96`;
 
 /** The browser cache that holds model files, keyed by the URL they are served from. */
 export const FILE_CACHE = 'sketchpad-models-v1';
