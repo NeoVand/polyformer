@@ -48,29 +48,35 @@ function determinant(a: bigint[][]): bigint {
 		0n
 	);
 }
-const samples: Record<string, number[]> = {};
-const refusal = {
-	wrongRoots: { attempts: 0, caught: 0 },
-	evaluationFaults: {
-		attempts: 0,
-		caught: 0,
-		missed: 0,
-		missesWithWrongAnswer: 0,
-		details: [] as { source: string; target: number; status: string; changed: boolean }[]
-	}
+const faultInputs = {
+	light: [] as { source: string; target: number }[],
+	strong: [] as { source: string; target: number }[]
 };
-function record(name: string, c: RefCalc) {
-	(samples[name] ??= []).push(c.total.seconds);
-}
-async function execute(source: string, type: string) {
-	const calc = new RefCalc(),
-		r = await run(source, calc);
-	expect(r.results[0].status, `${source}: ${r.results[0].error}`).toBe('ok');
-	if (r.results[0].algebra) expect(r.results[0].algebra.checks.every((c) => c.passed)).toBe(true);
-	record(type, calc);
-	return r.results[0];
-}
-describe('fixed-seed acceptance populations', () => {
+const offeredInputs = { light: [] as string[], strong: [] as string[] };
+describe.each(['light', 'strong'] as const)('fixed-seed acceptance populations (%s)', (mode) => {
+	const samples: Record<string, number[]> = {};
+	const refusal = {
+		wrongRoots: { attempts: 0, caught: 0 },
+		evaluationFaults: {
+			attempts: 0,
+			caught: 0,
+			missed: 0,
+			missesWithWrongAnswer: 0,
+			details: [] as { source: string; target: number; status: string; changed: boolean }[]
+		}
+	};
+	function record(name: string, c: RefCalc) {
+		(samples[name] ??= []).push(c.total.seconds);
+	}
+	async function execute(source: string, type: string) {
+		const calc = new RefCalc(),
+			r = await run(source, calc, { checkMode: mode });
+		expect(r.results[0].status, `${source}: ${r.results[0].error}`).toBe('ok');
+		if (r.results[0].algebra) expect(r.results[0].algebra.checks.every((c) => c.passed)).toBe(true);
+		record(type, calc);
+		return r.results[0];
+	}
+
 	it('1000 integer and decimal expressions against an independent rational oracle', async () => {
 		const rand = seeded(0x3a11);
 		for (let i = 0; i < 1000; i++) {
@@ -237,9 +243,16 @@ describe('fixed-seed acceptance populations', () => {
 				offset = BigInt(rand(-20, 20));
 			const statement = parse(`solve ${slope}x+(${offset})=${slope * root + offset}`).statements[0];
 			if (statement.kind !== 'solve') throw new Error();
+			offeredInputs[mode].push(
+				`${slope}x+(${offset})=${slope * root + offset}; offered ${root + 1n}`
+			);
 			refusal.wrongRoots.attempts++;
 			try {
-				await checkRoot(new Arithmetic(new RefCalc()), statement.equations[0], integer(root + 1n));
+				await checkRoot(
+					new Arithmetic(new RefCalc(), mode),
+					statement.equations[0],
+					integer(root + 1n)
+				);
 			} catch (error) {
 				if (!(error instanceof CheckFailed)) throw error;
 				refusal.wrongRoots.caught++;
@@ -263,17 +276,21 @@ describe('fixed-seed acceptance populations', () => {
 			const stmt = parse(source).statements[0];
 			if (stmt.kind !== 'solve') throw new Error();
 			const probe = new RefCalc(),
-				arithmetic = new Arithmetic(probe),
-				env = new Map([['x', integer(-1n)]]);
-			const left = await arithmetic.evaluate(stmt.equations[0].left, env, { exact: true }),
-				right = await arithmetic.evaluate(stmt.equations[0].right, env, { exact: true });
+				arithmetic = new Arithmetic(probe, mode),
+				env = new Map([['x', integer(0n)]]);
+			const [left, right] = await arithmetic.evaluateMany(
+				[stmt.equations[0].left, stmt.equations[0].right],
+				env,
+				{ exact: true }
+			);
 			await arithmetic.add(left, right, true);
 			const target = rand(0, probe.calls.length - 1),
 				lying = new LyingCalc(new RefCalc(), target);
-			const baseline = await run(source, new RefCalc()),
-				r = await run(source, lying),
+			const baseline = await run(source, new RefCalc(), { checkMode: mode }),
+				r = await run(source, lying, { checkMode: mode }),
 				status = r.results[0].status;
 			expect(lying.calls.length).toBeGreaterThan(target);
+			faultInputs[mode].push({ source, target });
 			refusal.evaluationFaults.attempts++;
 			if (status === 'refused') refusal.evaluationFaults.caught++;
 			else {
@@ -286,66 +303,77 @@ describe('fixed-seed acceptance populations', () => {
 		expect(refusal.evaluationFaults.attempts).toBe(200);
 		expect(refusal.evaluationFaults.caught + refusal.evaluationFaults.missed).toBe(200);
 	});
-});
-afterAll(async () => {
-	if (!process.env.PROGRAM_REPORT) return;
-	const demos = [];
-	for (const [source, dryRunSeconds] of [
-		['123456 * 654321', 7],
-		['solve 3(x-2)+5=2x+14', 4],
-		['solve 7x+13=2026-4x', 8],
-		['solve 2x+3y=7,x-y=1', 5],
-		['expand (x+2)^5', 23],
-		['expand (2x-3)^4', 21],
-		['expand (x+1)^10', 118],
-		['solve (2x-3)(x+5)=x^2+1-16', 29],
-		['solve x^2-x-6=0', 29]
-	] as const) {
-		const calc = new RefCalc(),
-			result = await run(source, calc);
-		expect(result.results[0].status, source).toBe('ok');
-		demos.push({
-			source,
-			dryRunSeconds,
-			seconds: calc.total.seconds,
-			rows: calc.total.rows,
-			calls: calc.total.calls
-		});
-	}
-	const costs = Object.fromEntries(
-		Object.entries(samples).map(([name, values]) => {
-			const sorted = [...values].sort((a, b) => a - b);
-			return [
-				name,
+	afterAll(async () => {
+		if (!process.env.PROGRAM_REPORT) return;
+		const demos = [];
+		for (const [source, dryRunSeconds] of [
+			['123456 * 654321', 7],
+			['solve 3(x-2)+5=2x+14', 4],
+			['solve 7x+13=2026-4x', 8],
+			['solve 2x+3y=7,x-y=1', 5],
+			['expand (x+2)^5', 23],
+			['expand (2x-3)^4', 21],
+			['expand (x+1)^10', 118],
+			['solve (2x-3)(x+5)=x^2+1-16', 29],
+			['solve x^2-x-6=0', 29],
+			['solve 2x+3y-z=1, x-y+2z=3, 3x+y+z=8', null],
+			['factor x^3-6x^2+11x-6', null]
+		] as const) {
+			const calc = new RefCalc(),
+				result = await run(source, calc, { checkMode: mode });
+			expect(result.results[0].status, source).toBe('ok');
+			demos.push({
+				source,
+				dryRunSeconds,
+				seconds: calc.total.seconds,
+				rows: calc.total.rows,
+				calls: calc.total.calls,
+				rowFloorSeconds: calc.total.rows * 0.037,
+				under12: calc.total.seconds < 12
+			});
+		}
+		const costs = Object.fromEntries(
+			Object.entries(samples).map(([name, values]) => {
+				const sorted = [...values].sort((a, b) => a - b);
+				return [
+					name,
+					{
+						count: values.length,
+						medianSeconds: (sorted[(sorted.length - 1) >> 1] + sorted[sorted.length >> 1]) / 2,
+						p95Seconds: sorted[Math.ceil(sorted.length * 0.95) - 1]
+					}
+				];
+			})
+		);
+		writeFileSync(
+			new URL(`./round2-${mode}.json`, import.meta.url),
+			JSON.stringify(
 				{
-					count: values.length,
-					medianSeconds: (sorted[(sorted.length - 1) >> 1] + sorted[sorted.length >> 1]) / 2,
-					p95Seconds: sorted[Math.ceil(sorted.length * 0.95) - 1]
-				}
-			];
-		})
-	);
-	writeFileSync(
-		new URL('./metrics.json', import.meta.url),
-		JSON.stringify(
-			{
-				seeds: {
-					expressions: 0x3a11,
-					linear: 0x31,
-					quadratic: 0x32,
-					system2: 0x332,
-					system3: 0x333,
-					expand: 0x34,
-					factor: 0x35,
-					wrongRoots: 0x36,
-					evaluationFaults: 0x37
+					seeds: {
+						expressions: 0x3a11,
+						linear: 0x31,
+						quadratic: 0x32,
+						system2: 0x332,
+						system3: 0x333,
+						expand: 0x34,
+						factor: 0x35,
+						wrongRoots: 0x36,
+						evaluationFaults: 0x37
+					},
+					costs,
+					demos,
+					refusal
 				},
-				costs,
-				demos,
-				refusal
-			},
-			null,
-			2
-		) + '\n'
-	);
+				null,
+				2
+			) + '\n'
+		);
+	});
+});
+
+afterAll(() => {
+	expect(offeredInputs.light).toHaveLength(200);
+	expect(offeredInputs.light).toEqual(offeredInputs.strong);
+	expect(faultInputs.light).toHaveLength(200);
+	expect(faultInputs.light).toEqual(faultInputs.strong);
 });
