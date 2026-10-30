@@ -1,7 +1,11 @@
 """Spawn CHAT jobs on the deployed Modal app polyformer-chat, record the call ids in calls.json, and exit.
 
   uvx --with modal python launch.py gate [shards=8] [k] # T5 identity test (gate_identity.py), CPU
+  uvx --with modal python launch.py stock <data>        # stock replies for <data> (a dir under /vol/data)
+  uvx --with modal python launch.py eval <data> <adapter|none> <tag> [chat_eval.py flags]
+  uvx --with modal python launch.py train <data> <init adapter> <out> [chat_train.py flags] [--then-eval[=parts]]
   uvx --with modal python launch.py status              # poll recorded calls
+<data> is a directory on the polyformer-chat volume holding train_full.jsonl, kl.jsonl and heldout_full.jsonl.
 """
 import json
 import pathlib
@@ -31,6 +35,21 @@ def main(argv):
         stamp = time.strftime("%H%M")
         for k in ([int(argv[2])] if len(argv) > 2 else range(n)):
             spawn("run_cpu", f"gate_{stamp}_{k}", [["python", "chat/gate_identity.py", "/vol/onnx", str(k), str(n)]])
+    elif argv[0] == "stock":
+        spawn("run_h100", f"stock_{time.strftime('%H%M')}", [["python", "chat/stock_replies.py", f"/vol/data/{argv[1]}"]])
+    elif argv[0] == "eval":
+        data, adapter, tag = argv[1:4]
+        spawn("run_h100", f"eval_{tag}", [["python", "chat/chat_eval.py", data, adapter, tag] + argv[4:]])
+    elif argv[0] == "train":
+        data, init, out = argv[1:4]
+        rest = [a for a in argv[4:] if not a.startswith("--then-eval")]
+        cmds = [["python", "chat/chat_train.py", data, init, out] + rest]
+        then = [a for a in argv if a.startswith("--then-eval")]  # --then-eval or --then-eval=core,heldout,...
+        if then:
+            parts = then[0].split("=", 1)[1:] or []
+            tables = ["--tables", rest[rest.index("--tables") + 1]] if "--tables" in rest else []
+            cmds.append(["python", "chat/chat_eval.py", data, out, out] + (["--parts", parts[0]] if parts else []) + tables)
+        spawn("run_h100", f"train_{out}", cmds)
     elif argv[0] == "status":
         calls = json.loads(CALLS.read_text())
         for job, c in calls.items():

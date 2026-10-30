@@ -32,18 +32,26 @@ app = modal.App("polyformer-chat")
 base = (modal.Image.debian_slim(python_version="3.12")
         .pip_install("torch==2.14.0", "torchvision", "transformers==5.17.0", "peft", "pillow", "accelerate", "safetensors")
         .pip_install("flash-linear-attention")
-        .pip_install("onnxruntime==1.31.1", "datasets"))
+        .pip_install("onnxruntime==1.31.1", "datasets")
+        .pip_install("lm-eval[ifeval]", "transformers==5.17.0"))  # IFEval's checker
 image = (base.add_local_dir(SKETCH, "/src/sketch",
                             ignore=["**/*.png", "**/*.pt", "**/*.safetensors", "**/*.onnx*", "e3_browser/**", "e0/**",
                                     "modal/**", "chat/out/**", "page_shots/**"])
          .add_local_file("/System/Library/Fonts/Menlo.ttc", "/System/Library/Fonts/Menlo.ttc")
          .add_local_file(SKETCH.parent / "PRIMER.md", "/Users/neo/repos/polyformer/research/PRIMER.md"))
+# CALC's E7 table modules (their files, read from their worktree, never copied into this branch)
+for _f in ("e7_calc.py", "calc_tables.py"):
+    _p = pathlib.Path("/Users/neo/repos/polyformer-wt/sketchpad/research/sketch") / _f
+    if _p.exists():
+        image = image.add_local_file(_p, f"/src/calc/{_f}")
 VOLS = {"/vol": vol, "/sk": sk}
 
 
 def _run(job_id: str, cmds: list, dev: str):
     work = pathlib.Path(tempfile.mkdtemp(prefix="work-")) / "sketch"
     shutil.copytree("/src/sketch", work)
+    for f in pathlib.Path("/src/calc").glob("*.py") if pathlib.Path("/src/calc").exists() else []:
+        shutil.copy2(f, work / f.name)
     f = work / "e2_column.py"
     f.write_text(f.read_text().replace('dev = "mps"', f'dev = "{dev}"'))
     link = pathlib.Path(MODEL_PATH)
