@@ -56,7 +56,7 @@
 		padding: 0 12px;
 		border: 0;
 		border-radius: 4px;
-		background: #121212;
+		background: var(--field);
 		color: var(--color-ink);
 		font: inherit;
 		font-size: var(--text-ui);
@@ -64,7 +64,7 @@
 	}
 	input:hover:not(:disabled),
 	input:focus {
-		background: #171717;
+		background: var(--field-hover);
 		outline: none;
 	}
 	input::placeholder {

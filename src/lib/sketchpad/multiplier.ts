@@ -13,8 +13,6 @@ export const ROWS: Row[] = ['a', 'b', 'cM', 'p', 'cA', 'R'];
 /** one tick's answer: glyph, glyph, next-op letter (M A Z F N H) */
 export type MulOut = [g1: string, g2: string, next: string];
 
-export const mulPrompt = (op: Op) => `${op}<|vision_start|><|image_pad|><|vision_end|>=`;
-
 export function reference(op: Op, v: readonly string[]): MulOut {
 	if (op === 'MUL') {
 		const [a, b, c] = v;

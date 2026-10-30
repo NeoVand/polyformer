@@ -10,6 +10,7 @@
 	import type { TickOp } from '#lib/sketchpad/protocol.ts';
 	import Sheet from '#lib/sketchpad/Sheet.svelte';
 	import { sourceOf } from '#lib/sketchpad/sources.ts';
+	import { theme } from '#lib/sketchpad/theme.svelte.ts';
 
 	const SPRITES = asset('sketchpad/sprites.png');
 	let modelsBase = '';
@@ -34,12 +35,13 @@
 
 	onMount(() => {
 		spritesUrl = new URL(SPRITES, location.href).href;
-		// the weights sit beside the sprites: static/sketchpad/models/<id>/
+		// the weights sit beside the sprites: static/sketchpad/models/<program or base>/
 		modelsBase = new URL('models/', spritesUrl).href;
 		void pad.probe(modelsBase);
 		pad.stage(a, b);
 		// local checks and the screenshot script drive the page through this handle
 		if (import.meta.env.DEV) Object.assign(globalThis, { sketchpad: pad });
+		return theme.watch();
 	});
 
 	const source = $derived(pad.sheet ? sourceOf(pad.sheet) : null);
@@ -60,16 +62,33 @@
 	});
 
 	const fmt = (n: number) => n.toLocaleString('en-US');
-	const gb = (bytes: number | null) =>
-		bytes ? `${(bytes / 1e9).toFixed(bytes > 1.5e9 ? 1 : 2)} GB` : '';
-	const mb = (bytes: number) => fmt(Math.round(bytes / 1e6));
+	/** a download size as a visitor reads it: KB below a megabyte, MB below a gigabyte, GB above */
+	const bytes = (n: number) =>
+		n >= 1e9
+			? `${(n / 1e9).toFixed(2)} GB`
+			: n >= 1e6
+				? `${fmt(Math.round(n / 1e6))} MB`
+				: `${fmt(Math.max(1, Math.round(n / 1e3)))} KB`;
+	const mb = (n: number) => fmt(Math.round(n / 1e6));
 	const duration = (s: number) =>
 		s < 90 ? `${s.toFixed(s < 10 ? 1 : 0)} s` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
 
-	const size = $derived(pad.sizes[pad.op]);
-	const missing = $derived(size === 0);
+	/** what loading this operation's program costs now: one graph once the shared base is cached */
+	const cost = $derived(pad.costs[pad.op]);
+	const missing = $derived(pad.available[pad.op] === false);
 	const certBusy = $derived(cert.status === 'running');
-	const canRun = $derived(pad.ready && !pad.running && !certBusy && !!pad.sheet);
+	const certFailed = $derived(
+		(cert.status === 'done' || cert.status === 'cached') && cert.pass < cert.rows
+	);
+	const loadNote = $derived.by(() => {
+		const l = pad.lastLoad;
+		if (!l || !pad.ready || l.id !== MODELS[pad.op].id) return '';
+		if (!l.network)
+			return `Loaded in ${l.seconds.toFixed(1)} s, all ${bytes(l.cached)} from this browser’s cache.`;
+		const parts = [`${bytes(l.network)} fetched`];
+		if (l.cached) parts.push(`${bytes(l.cached)} from this browser’s cache`);
+		return `Loaded in ${l.seconds.toFixed(1)} s: ${parts.join(', ')}.`;
+	});
 
 	function digits(v: string) {
 		return v.replace(/\D/g, '').slice(0, LIMIT[pad.op]);
@@ -85,23 +104,25 @@
 		pad.stage(a, b);
 	}
 
-	function setOp(k: Kind) {
-		if (pad.running || k === pad.op) return;
-		pad.setOp(k);
+	/** switch the operation (a run in progress stops first); returns whether this switch took effect */
+	async function setOp(k: Kind) {
+		await pad.setOp(k);
+		if (pad.op !== k) return false;
 		if (k === 'mul' && (a.length > LIMIT.mul || b.length > LIMIT.mul)) {
 			a = rnd(6);
 			b = rnd(6);
 		}
 		pad.stage(a, b);
+		return true;
 	}
 
-	function preset(p: (typeof presets)[number]) {
+	async function preset(p: (typeof presets)[number]) {
+		if (!(await setOp(p.op))) return;
 		if (pad.running) return;
-		setOp(p.op);
 		a = rnd(p.n);
 		b = rnd(p.m);
 		pad.stage(a, b);
-		if (pad.ready && !certBusy) void pad.run(a, b);
+		if (pad.canRun) void pad.run(a, b);
 	}
 
 	function edit(r: number, c: number, by: number) {
@@ -140,16 +161,8 @@
 
 			<div class="controls">
 				<div class="ops" role="group" aria-label="Operation">
-					<button
-						aria-pressed={pad.op === 'add'}
-						disabled={pad.running}
-						onclick={() => setOp('add')}>Add</button
-					>
-					<button
-						aria-pressed={pad.op === 'mul'}
-						disabled={pad.running}
-						onclick={() => setOp('mul')}>Multiply</button
-					>
+					<button aria-pressed={pad.op === 'add'} onclick={() => setOp('add')}>Add</button>
+					<button aria-pressed={pad.op === 'mul'} onclick={() => setOp('mul')}>Multiply</button>
 				</div>
 
 				<div class="nums">
@@ -186,41 +199,56 @@
 						<p class="note">{pad.gpuReason}</p>
 					{:else if missing}
 						<p class="note">
-							The weights for {MODELS[pad.op].name} are not on this server (static/sketchpad/models/{MODELS[
-								pad.op
-							].id}).
+							The files for {MODELS[pad.op].name} are not on this server (static/sketchpad/models/).
 						</p>
-					{:else if pad.loading === pad.op}
+					{:else if pad.loading}
+						{@const kind = pad.progressKind ?? pad.loading}
+						{@const total = pad.expect}
 						<div class="loading">
 							<span class="num">
 								{#if pad.loadStage === 'compile'}
-									Preparing the GPU
+									Preparing the GPU for {MODELS[kind].name}
+								{:else if total === 0}
+									Reading {MODELS[kind].name} from this browser’s cache
 								{:else}
-									Downloading {MODELS[pad.op].name}: {mb(pad.received)} of {size ? mb(size) : '…'} MB
+									Downloading {MODELS[kind].name}: {mb(pad.received)} of {total ? mb(total) : '…'} MB
 								{/if}
+								{#if kind !== pad.loading}<span class="dim">, then {MODELS[pad.loading].name}</span
+									>{/if}
 							</span>
 							<span class="bar"
 								><i
-									style:width="{pad.loadStage === 'compile'
+									style:width="{pad.loadStage === 'compile' || total === 0
 										? 100
-										: size
-											? Math.min(100, (pad.received / size) * 100)
+										: total
+											? Math.min(100, (pad.received / total) * 100)
 											: 0}%"
 								></i></span
 							>
 						</div>
+						{#if MODELS[pad.loading].id !== MODELS[pad.op].id}
+							<button class="next" onclick={load}>Load {MODELS[pad.op].name} next</button>
+						{/if}
 					{:else if !pad.ready}
-						<button class="primary" onclick={load} disabled={!!pad.loading || pad.gpuOk === null}>
-							Load {MODELS[pad.op].name}{size ? ` · ${gb(size)}` : ''}
+						<button class="primary" onclick={load} disabled={pad.gpuOk === null}>
+							Load {MODELS[pad.op].name}{cost === null
+								? ''
+								: cost === 0
+									? ' · cached'
+									: ` · ${bytes(cost)}`}
 						</button>
-						{#if pad.loading}<span class="hint">loading the other model…</span>{/if}
 					{:else if pad.running}
 						<button class="primary" onclick={() => pad.stop()}>Stop</button>
 					{:else}
-						<button class="primary" disabled={!canRun} onclick={() => pad.run(a, b)}>Run</button>
-						{#if certBusy}<span class="hint">after the certificate</span>{/if}
+						<button class="primary" disabled={!pad.canRun} onclick={() => pad.run(a, b)}>Run</button
+						>
+						{#if certBusy}<span class="hint">after the certificate</span>
+						{:else if certFailed}<span class="hint"
+								>off: {fmt(cert.rows - cert.pass)} table rows fail on this device</span
+							>{/if}
 					{/if}
 				</div>
+				{#if loadNote && !pad.running}<p class="note load">{loadNote}</p>{/if}
 				{#if pad.loadError}<p class="note err">{pad.loadError}</p>{/if}
 
 				<div class="presets">
@@ -234,7 +262,7 @@
 		<aside class="r">
 			<Certificate
 				{cert}
-				device={pad.loaded === pad.op ? (pad.info?.gpu ?? null) : null}
+				device={pad.ready ? (pad.lastLoad?.gpu ?? null) : null}
 				canCheck={pad.ready && !pad.running && !certBusy}
 				oncheck={() => pad.certify()}
 			/>
@@ -312,7 +340,7 @@
 	<div class="row chat">
 		<p class="m label">Ask it</p>
 		<div class="c">
-			<Chat turns={pad.chat} ready={!!pad.loaded} busy={pad.chatBusy} onask={(q) => pad.ask(q)} />
+			<Chat turns={pad.chat} ready={pad.chatReady} busy={pad.chatBusy} onask={(q) => pad.ask(q)} />
 			<p class="small">
 				The same weights still chat: your question goes through the chat template with thinking off,
 				up to 120 new tokens.
@@ -359,10 +387,46 @@
 </main>
 
 <style>
+	/*
+	 * Light theme: the site is dark-only today, so these tokens apply only when <html data-theme="light"> is set
+	 * (theme.svelte.ts). The top bar and the body read the same tokens.
+	 */
+	:global(:root[data-theme='light']) {
+		color-scheme: light;
+		--color-void: #f3f3f3;
+		--color-well: #ececec;
+		--color-panel: #e6e6e6;
+		--color-lift: #dedede;
+		--color-control: #d6d6d6;
+		--color-edge: #d0d0d0;
+		--color-rule: #a3a3a3;
+		--color-ink-3: #6b6b6b;
+		--color-ink-2: #404040;
+		--color-ink: #0d0d0d;
+		--logo-ink: #1a1a1a;
+	}
+	:global(:root[data-theme='light'] ::selection) {
+		background: #0d0d0d;
+		color: #f3f3f3;
+	}
+	:global(:root[data-theme='light']) .page {
+		--field: #e8e8e8;
+		--field-hover: #e1e1e1;
+		--track: #dcdcdc;
+		--track-on: #8a8a8a;
+		--primary-hover: #000000;
+	}
+
 	.page {
 		--margin-w: 112px;
 		--gutter: 40px;
 		--right-w: 248px;
+		/* tones for fields, tracks and the primary button, so both themes share the rules below */
+		--field: #111111;
+		--field-hover: #171717;
+		--track: #1c1c1c;
+		--track-on: #5a5a5a;
+		--primary-hover: #ffffff;
 		display: grid;
 		grid-template-columns: var(--margin-w) minmax(0, 1fr) var(--right-w);
 		column-gap: var(--gutter);
@@ -465,7 +529,7 @@
 		padding: 0 10px;
 		border: 0;
 		border-radius: 4px;
-		background: #111111;
+		background: var(--field);
 		color: var(--color-ink);
 		font-family: var(--font-mono);
 		font-size: var(--text-sm);
@@ -474,7 +538,7 @@
 	}
 	.nums input:hover:not(:disabled),
 	.nums input:focus {
-		background: #171717;
+		background: var(--field-hover);
 		outline: none;
 	}
 	.nums input:disabled {
@@ -508,16 +572,37 @@
 			color 250ms ease;
 	}
 	.primary:hover:not(:disabled) {
-		background: #ffffff;
+		background: var(--primary-hover);
 	}
 	.primary:disabled {
-		background: #1e1e1e;
+		background: var(--color-lift);
 		color: var(--color-ink-3);
 		cursor: default;
+	}
+	.next {
+		flex: none;
+		border: 0;
+		padding: 0;
+		background: none;
+		font: inherit;
+		font-size: var(--text-xs);
+		color: var(--color-ink-2);
+		cursor: pointer;
+		transition: color 250ms ease;
+	}
+	.next:hover {
+		color: var(--color-ink);
 	}
 	.hint,
 	.note {
 		font-size: var(--text-xs);
+		color: var(--color-ink-3);
+	}
+	.note.load {
+		margin-top: 8px;
+		padding-left: 24px;
+	}
+	.loading .dim {
 		color: var(--color-ink-3);
 	}
 	.note.err {
@@ -534,7 +619,7 @@
 	.bar {
 		position: relative;
 		height: 2px;
-		background: #1c1c1c;
+		background: var(--track);
 	}
 	.bar i {
 		position: absolute;
@@ -659,6 +744,13 @@
 		}
 		.actions,
 		.presets,
+		.note.load {
+			margin-top: 8px;
+			padding-left: 24px;
+		}
+		.loading .dim {
+			color: var(--color-ink-3);
+		}
 		.note.err {
 			padding-left: 0;
 		}

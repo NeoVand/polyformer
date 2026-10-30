@@ -5,7 +5,16 @@
  */
 import { ADD_DOMAIN, AddSheet, addCode, addDecode, addRule } from './adder.ts';
 import { hashText } from './hash.ts';
-import { CERT_FORMAT, MODELS, certFiles, modelFiles, type Kind } from './models.ts';
+import {
+	CERT_FORMAT,
+	DTYPE,
+	FILE_CACHE,
+	MODELS,
+	certFiles,
+	modelFiles,
+	servedPath,
+	type Kind
+} from './models.ts';
 import { MUL_DOMAIN, MulSheet, outChars, type MulOut, type Op } from './multiplier.ts';
 import type { FromWorker, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
 import { B, GLYPHS } from './sprites.ts';
@@ -60,6 +69,8 @@ export class Cert {
 	failures = $state<Failure[]>([]);
 	/** when a cached certificate was made */
 	when = $state<string | null>(null);
+	/** the files, runtime and device this certificate is about (see Pad.keyFor) */
+	key = $state<string | null>(null);
 	/** bumps whenever `margins` changes (the grid redraws from it) */
 	version = $state(0);
 	/** NaN until a row is checked */
@@ -80,6 +91,7 @@ export class Cert {
 		this.seconds = 0;
 		this.failures = [];
 		this.when = null;
+		this.key = null;
 		this.status = 'none';
 		this.version++;
 	}
@@ -199,20 +211,28 @@ class Pad {
 	/** null while probing */
 	gpuOk = $state<boolean | null>(null);
 	gpuReason = $state<string | null>(null);
-	/** bytes to download per model, from the server; null if unknown, 0 if the weights are not served */
-	sizes = $state<Record<Kind, number | null>>({ add: null, mul: null });
+	/** bytes a load of each operation would take from the network now (what this browser has cached is free) */
+	costs = $state<Record<Kind, number | null>>({ add: null, mul: null });
+	/** whether the server has each operation's files (null until known) */
+	available = $state<Record<Kind, boolean | null>>({ add: null, mul: null });
 
 	op = $state<Kind>('add');
-	loaded = $state<Kind | null>(null);
+	/** the program the worker holds, as far as the page knows (null while a load replaces it) */
+	loadedId = $state<string | null>(null);
+	/** the operation whose load is in flight (the newest one asked for) */
 	loading = $state<Kind | null>(null);
-	loadStage = $state<'download' | 'compile'>('download');
+	loadStage = $state<'fetch' | 'compile'>('fetch');
+	/** bytes of the load in flight: from the network, and read from this browser's cache */
 	received = $state(0);
+	readFromCache = $state(0);
+	/** what the load in flight is expected to download, and which operation it is for */
+	expect = $state<number | null>(null);
+	progressKind = $state<Kind | null>(null);
 	loadError = $state<string | null>(null);
-	info = $state.raw<LoadedInfo | null>(null);
-	/** a cached certificate cannot be used because a file's fingerprint is missing */
+	/** the newest load that read or downloaded something (not one that found the program already loaded) */
+	lastLoad = $state.raw<LoadedInfo | null>(null);
+	/** a certificate cannot be cached because a file's fingerprint is missing */
 	cacheNote = $state<string | null>(null);
-	/** the loaded model's certificate identity (see cacheKey) */
-	private certKey: string | null = null;
 
 	certs: Record<Kind, Cert> = { add: new Cert('add'), mul: new Cert('mul') };
 
@@ -231,10 +251,19 @@ class Pad {
 
 	private worker: Worker | null = null;
 	private rid = 0;
+	private lid = 0;
+	/** the newest load asked for */
+	private latest: { lid: number; kind: Kind; id: string } | null = null;
+	/** what each loaded program reported (fingerprints), by program id */
+	private infos: Record<string, LoadedInfo> = {};
 	private pending = new Map<number, Pending>();
 	private certRid: number | null = null;
+	private certKind: Kind | null = null;
 	private stopRun = false;
-	private probed = false;
+	private runDone: Promise<void> = Promise.resolve();
+	private switchToken = 0;
+	private root = '';
+	private sizeOf = new Map<string, Promise<number | null>>();
 
 	get model() {
 		return MODELS[this.op];
@@ -244,18 +273,33 @@ class Pad {
 		return this.certs[this.op];
 	}
 
+	/** the operation's program is loaded and nothing is replacing it */
 	get ready() {
-		return this.loaded === this.op;
+		return this.loadedId === MODELS[this.op].id && !this.loading;
+	}
+
+	/** the operation's table passed in full, on this device, for the files loaded now */
+	get certified() {
+		const c = this.cert;
+		return this.ready && c.certified && c.key !== null && c.key === this.keyFor(this.op);
+	}
+
+	get canRun() {
+		return this.certified && !this.running && !!this.sheet;
 	}
 
 	get chatBusy() {
 		return this.chat.some((t) => t.busy);
 	}
 
-	/** GPU support and download sizes; safe to call more than once */
-	async probe(base: string) {
-		if (this.probed) return;
-		this.probed = true;
+	get chatReady() {
+		return !!this.loadedId && !this.loading;
+	}
+
+	/** GPU support and download costs; safe to call more than once */
+	async probe(root: string) {
+		if (this.root) return;
+		this.root = root;
 		const gpu = typeof navigator !== 'undefined' ? navigator.gpu : undefined;
 		if (!gpu) {
 			this.gpuOk = false;
@@ -272,22 +316,40 @@ class Pad {
 				this.gpuReason = 'This GPU has no 16-bit floats in shaders, which the vision tower needs.';
 			} else this.gpuOk = true;
 		}
-		for (const k of ['add', 'mul'] as Kind[]) void this.size(base, k);
+		await this.refreshCosts();
 	}
 
-	private async size(base: string, k: Kind) {
-		const m = MODELS[k];
-		try {
-			const lens = await Promise.all(
-				modelFiles(m).map(async (f) => {
-					const r = await fetch(`${base}${m.id}/${f}`, { method: 'HEAD', cache: 'no-store' });
-					if (!r.ok) throw new Error(f);
-					return Number(r.headers.get('Content-Length') ?? 0);
+	/** a served file's size, asked once */
+	private size(url: string) {
+		let p = this.sizeOf.get(url);
+		if (!p) {
+			p = fetch(url, { method: 'HEAD', cache: 'no-store' })
+				.then((r) => (r.ok ? Number(r.headers.get('Content-Length') ?? 0) : null))
+				.catch(() => null);
+			this.sizeOf.set(url, p);
+		}
+		return p;
+	}
+
+	/** what loading each operation would download now: its files' sizes, less what this browser has cached */
+	async refreshCosts() {
+		if (!this.root) return;
+		const cache =
+			typeof caches !== 'undefined' ? await caches.open(FILE_CACHE).catch(() => null) : null;
+		for (const k of ['add', 'mul'] as Kind[]) {
+			const m = MODELS[k];
+			let cost = 0;
+			let ok = true;
+			await Promise.all(
+				modelFiles().map(async (f) => {
+					const url = this.root + servedPath(m, f);
+					const n = await this.size(url);
+					if (n === null) ok = false;
+					else if (!(cache && (await cache.match(url)))) cost += n;
 				})
 			);
-			this.sizes[k] = lens.reduce((a, b) => a + b, 0);
-		} catch {
-			this.sizes[k] = 0;
+			this.available[k] = ok;
+			this.costs[k] = ok ? cost : null;
 		}
 	}
 
@@ -298,6 +360,7 @@ class Pad {
 		w.onerror = (e) => {
 			this.loadError = e.message || 'the worker failed';
 			this.loading = null;
+			this.loadedId = null;
 		};
 		this.worker = w;
 		return w;
@@ -309,15 +372,22 @@ class Pad {
 
 	private receive(m: FromWorker) {
 		if (m.type === 'progress') {
-			const vals = Object.values(m.files);
-			this.received = vals.reduce((a, f) => a + f.loaded, 0);
+			// an older load may still be running ahead of the newest; its bytes are real, so show them as its own
+			if (!this.loading) return;
+			this.progressKind = m.kind;
+			this.received = m.network;
+			this.expect = m.expect;
+			this.readFromCache = m.cached;
 			this.loadStage = m.stage;
 			return;
 		}
-		if (m.type === 'loaded') return this.onLoaded(m.info);
+		if (m.type === 'loaded') return this.onLoaded(m.lid, m.info);
+		if (m.type === 'load-skipped') return;
 		if (m.type === 'load-error') {
+			if (m.lid !== this.latest?.lid) return;
 			this.loadError = m.error;
 			this.loading = null;
+			this.loadedId = null;
 			return;
 		}
 		const p = this.pending.get(m.rid);
@@ -342,44 +412,78 @@ class Pad {
 		});
 	}
 
-	/** switch the operation; the other model is loaded only when asked for */
-	setOp(k: Kind) {
-		if (this.running || k === this.op) return;
+	/**
+	 * Switch the operation. A run in progress is stopped first; the newest switch wins. The other program loads only
+	 * when asked for (unless one program serves both operations).
+	 */
+	async setOp(k: Kind) {
+		const token = ++this.switchToken;
+		if (this.running) {
+			this.stop();
+			await this.runDone;
+		}
+		if (token !== this.switchToken || k === this.op) return;
 		this.op = k;
 		this.result = null;
 		this.runError = null;
 		this.last = null;
+		if (this.ready) this.ensureCert(k);
 	}
 
-	load(base: string, sprites: string) {
+	load(root: string, sprites: string) {
 		const k = this.op;
-		if (this.loading || this.loaded === k || this.running) return;
-		if (this.certRid !== null) this.send({ type: 'cancel', rid: this.certRid });
+		const id = MODELS[k].id;
+		if (this.running) return;
+		if (this.loadedId === id && !this.loading) return this.ensureCert(k);
+		if (this.loading && this.latest?.id === id) return;
+		// a certificate of the program being replaced would be cancelled by the worker anyway; say so now
+		if (this.certRid !== null && this.certKind && MODELS[this.certKind].id !== id)
+			this.send({ type: 'cancel', rid: this.certRid });
+		const lid = ++this.lid;
+		this.latest = { lid, kind: k, id };
+		if (this.loadedId !== id) this.loadedId = null;
 		this.loading = k;
-		this.loaded = null;
 		this.received = 0;
-		this.loadStage = 'download';
+		this.readFromCache = 0;
+		this.loadStage = 'fetch';
 		this.loadError = null;
-		this.send({ type: 'load', kind: k, base, sprites });
+		this.expect = this.costs[k];
+		this.progressKind = k;
+		this.send({ type: 'load', lid, kind: k, root, sprites });
 	}
 
-	/** the certificate's identity: format, model files, sprites, GPU and runtime; null if a file went unseen */
-	private cacheKey(info: LoadedInfo): string | null {
-		const m = MODELS[info.kind];
-		const need = certFiles(m);
+	private onLoaded(lid: number, info: LoadedInfo) {
+		this.infos[info.id] = info;
+		// an older load finished; the newest one is still queued behind it and will replace or reuse it
+		if (lid !== this.latest?.lid) return;
+		this.loadedId = info.id;
+		this.loading = null;
+		if (!info.reused) this.lastLoad = info;
+		void this.refreshCosts();
+		this.ensureCert(this.latest.kind);
+		if (this.op !== this.latest.kind) this.ensureCert(this.op);
+	}
+
+	/**
+	 * The certificate's identity: format, operation, prompts, the program's files, sprites, GPU and runtime. Without a
+	 * fingerprint for every file it is bound to this load only (and never cached).
+	 */
+	private keyFor(k: Kind): string | null {
+		const m = MODELS[k];
+		const info = this.infos[m.id];
+		if (!info || this.loadedId !== m.id) return null;
+		const need = certFiles();
 		const missing = need.filter((f) => !info.prints[f]);
-		if (missing.length) {
-			this.cacheNote = `no fingerprint for ${missing.join(', ')}`;
-			return null;
-		}
-		this.cacheNote = null;
-		const files = need.map((f) => [f, info.prints[f]]);
+		this.cacheNote = missing.length ? `no fingerprint for ${missing.join(', ')}` : null;
+		if (missing.length) return `session:${m.id}:${this.latest?.lid}`;
 		return hashText(
 			JSON.stringify({
 				format: CERT_FORMAT,
-				model: m.id,
-				dtype: m.dtype,
-				files,
+				kind: k,
+				program: m.id,
+				prompts: m.prompts,
+				dtype: DTYPE,
+				files: need.map((f) => [servedPath(m, f), info.prints[f]]),
 				sprites: info.sprites,
 				gpu: info.gpu,
 				transformers: info.transformers
@@ -387,46 +491,58 @@ class Pad {
 		);
 	}
 
-	private onLoaded(info: LoadedInfo) {
-		this.info = info;
-		this.loaded = info.kind;
-		this.loading = null;
-		const cert = this.certs[info.kind];
-		const key = (this.certKey = this.cacheKey(info));
-		const stored = key ? readStore(info.kind) : null;
+	/** make sure the operation's certificate is there: kept from this session, cached, or checked now */
+	private ensureCert(k: Kind) {
+		const m = MODELS[k];
+		if (this.loadedId !== m.id) return;
+		const key = this.keyFor(k);
+		const cert = this.certs[k];
+		if (key && cert.key === key && (cert.status === 'done' || cert.status === 'cached')) return;
+		if (this.certRid !== null && this.certKind === k) return;
+		const stored = key && !key.startsWith('session:') ? readStore(k) : null;
 		if (stored && stored.key === key && stored.rows === cert.rows) {
 			cert.reset();
-			stored.margins.forEach((m, i) => (cert.margins[i] = m));
+			stored.margins.forEach((x, i) => (cert.margins[i] = x));
 			cert.checked = cert.rows;
 			cert.pass = stored.pass;
 			cert.minMargin = stored.minMargin;
 			cert.seconds = stored.seconds;
 			cert.failures = stored.failures;
 			cert.when = stored.when;
+			cert.key = key;
 			cert.status = 'cached';
 			cert.version++;
-		} else void this.certify();
+			return;
+		}
+		void this.certify(k);
 	}
 
-	/** check every row of the loaded model's table on this device */
-	async certify() {
-		const k = this.loaded;
-		if (!k || this.certRid !== null) return;
+	/** check every row of an operation's table on this device (again, if asked) */
+	async certify(k: Kind = this.op) {
+		const m = MODELS[k];
+		if (this.loadedId !== m.id || this.loading) return;
+		if (this.certRid !== null) {
+			if (this.certKind === k) return;
+			// one table at a time: the other operation's check stops and runs again when it is shown
+			this.send({ type: 'cancel', rid: this.certRid });
+		}
+		const key = this.keyFor(k);
 		const cert = this.certs[k];
 		const rid = ++this.rid;
 		this.certRid = rid;
+		this.certKind = k;
 		cert.start();
+		cert.key = key;
 		try {
 			const done = await this.request<{ seconds: number }>(
 				{ type: 'certify', rid, kind: k },
-				(m) => {
-					if (m.type === 'cert-rows') cert.add(m.start, m.margins, m.got);
+				(msg) => {
+					if (msg.type === 'cert-rows') cert.add(msg.start, msg.margins, msg.got);
 				}
 			);
 			cert.seconds = done.seconds;
 			cert.status = 'done';
-			const key = this.certKey;
-			if (key && this.loaded === k)
+			if (key && !key.startsWith('session:'))
 				writeStore(k, {
 					key,
 					pass: cert.pass,
@@ -434,14 +550,18 @@ class Pad {
 					minMargin: cert.minMargin,
 					seconds: cert.seconds,
 					when: new Date().toISOString(),
-					margins: Array.from(cert.margins, (m) => Math.round(m * 1000) / 1000),
+					margins: Array.from(cert.margins, (x) => Math.round(x * 1000) / 1000),
 					failures: cert.failures
 				});
 		} catch (e) {
-			cert.status = 'none';
+			// a check that stopped part way certifies nothing
+			cert.reset();
 			if (!(e instanceof Cancelled)) this.loadError = (e as Error).message;
 		} finally {
-			this.certRid = null;
+			if (this.certRid === rid) {
+				this.certRid = null;
+				this.certKind = null;
+			}
 		}
 	}
 
@@ -471,7 +591,7 @@ class Pad {
 	/** Change an unread digit; the next ticks read the new one. */
 	bump(row: string, x: number, by = 1) {
 		const s = this.sheet;
-		if (!s || s.done) return false;
+		if (!s || s.done || !this.running) return false;
 		const ok =
 			s instanceof AddSheet
 				? (row === 'top' || row === 'bottom') && s.bump(row, x, by)
@@ -485,12 +605,14 @@ class Pad {
 	}
 
 	async run(a: string, b: string) {
-		if (this.running || !this.ready) return;
+		if (this.running || !this.certified) return;
 		this.stage(a, b);
 		const sheet = this.sheet;
 		if (!sheet) return;
 		const kind = this.op;
 		const cert = this.certs[kind];
+		let finish = () => {};
+		this.runDone = new Promise((r) => (finish = r));
 		this.running = true;
 		this.stopRun = false;
 		const t0 = performance.now();
@@ -562,12 +684,13 @@ class Pad {
 			this.running = false;
 			this.wallMs = performance.now() - t0;
 			this.version++;
+			finish();
 		}
 	}
 
 	async ask(question: string) {
 		const q = question.trim();
-		if (!q || !this.loaded || this.chatBusy) return;
+		if (!q || !this.chatReady || this.chatBusy) return;
 		const turn: ChatTurn = { q, a: '', busy: true, ms: null, error: null };
 		this.chat = [...this.chat.slice(-2), turn];
 		const live = this.chat[this.chat.length - 1];

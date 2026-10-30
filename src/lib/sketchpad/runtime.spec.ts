@@ -191,3 +191,35 @@ describe('table rows a run reads', () => {
 		expect(views).toBeGreaterThan(300);
 	});
 });
+
+describe('one base, one graph per program', () => {
+	it('routes base files to the shared folder and the graph to the program', async () => {
+		const { BASE_ID, MODELS, modelFiles, route, servedPath } = await import('./models.ts');
+		const root = 'http://h/sketchpad/models/';
+		for (const m of Object.values(MODELS)) {
+			const own = modelFiles().filter((f) => servedPath(m, f).startsWith(m.id + '/'));
+			expect(own).toEqual(['onnx/decoder_model_merged_q4.onnx']);
+			for (const f of modelFiles())
+				expect(route(`${root}${m.id}/${f}`, root)).toBe(
+					root + (own.includes(f) ? m.id : BASE_ID) + '/' + f
+				);
+		}
+		// both programs ask for the same base URL, so the browser keeps one copy
+		const a = route(`${root}${MODELS.add.id}/onnx/vision_encoder_fp16.onnx_data`, root);
+		const b = route(`${root}${MODELS.mul.id}/onnx/vision_encoder_fp16.onnx_data`, root);
+		expect(a).toBe(b);
+		expect(route(`${root}${BASE_ID}/tokenizer.json`, root)).toBe(
+			`${root}${BASE_ID}/tokenizer.json`
+		);
+		expect(route('http://h/models/x/config.json', root)).toBe(null);
+		expect(route(`${root}unknown/config.json`, root)).toBe(null);
+	});
+
+	it('builds every prompt from its operation', async () => {
+		const { kindOf, promptFor } = await import('./models.ts');
+		expect(promptFor('ADD-FAST')).toBe('ADD<|vision_start|><|image_pad|><|vision_end|>=');
+		expect(promptFor('NXT')).toBe('NXT<|vision_start|><|image_pad|><|vision_end|>=');
+		expect(kindOf('ADD-FAST')).toBe('add');
+		expect(kindOf('ADD')).toBe('mul');
+	});
+});

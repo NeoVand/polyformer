@@ -1,40 +1,80 @@
 /**
- * The two sketchpad models: Qwen3.5-0.8B with a small adapter merged, exported to ONNX for transformers.js. The dev
- * server serves them from static/sketchpad/models/<id>/ (never committed). Each operation loads only its own model.
+ * What the sketchpad loads. Both operations run on one base, Qwen3.5-0.8B exported to ONNX (embedding q4, vision tower
+ * fp16, decoder q4). An operation is a *program* on that base: a small adapter whose weights are initializers inside its
+ * own decoder graph (`onnx/decoder_model_merged_q4.onnx`, about 42 MB). Everything else (the decoder's external data,
+ * the embedding, the vision tower, the configs and the tokenizer) is the base and is served from one folder, so the
+ * browser downloads it once and a switch between operations costs one graph.
+ *
+ * Layout (static/sketchpad/models/, never committed): `<BASE_ID>/` holds the base files; `<program id>/` holds at
+ * least the program's own files. When one adapter learns both operations, both kinds name the same program id: a switch
+ * then reloads nothing, and only the prompts below differ.
  */
+import type { TickOp } from './protocol.ts';
+
 export type Kind = 'add' | 'mul';
+
+export const BASE_ID = 'qwen35-0.8b-base';
+
+/** the ONNX precision of each session, shared by every program on the base */
+export const DTYPE = {
+	embed_tokens: 'q4',
+	vision_encoder: 'fp16',
+	decoder_model_merged: 'q4'
+} as const;
 
 export interface SketchModel {
 	kind: Kind;
+	/** the program's folder */
 	id: string;
 	/** what the visitor reads */
 	name: string;
-	dtype: Record<'embed_tokens' | 'vision_encoder' | 'decoder_model_merged', 'q4' | 'fp16'>;
 	/** table rows the certificate checks */
 	rows: number;
+	/** files that come from the program's own folder; every other file comes from the base */
+	own: string[];
+	/** the word before the image for each runtime op (the prompt is `<word><image>=`) */
+	prompts: Partial<Record<TickOp, string>>;
 }
+
+const GRAPH = 'onnx/decoder_model_merged_q4.onnx';
 
 export const MODELS: Record<Kind, SketchModel> = {
 	add: {
 		kind: 'add',
 		id: 'qwen35-canvas-fast',
 		name: 'the adder',
-		dtype: { embed_tokens: 'q4', vision_encoder: 'fp16', decoder_model_merged: 'q4' },
-		rows: 242
+		rows: 242,
+		own: [GRAPH],
+		prompts: { 'ADD-FAST': 'ADD' }
 	},
 	mul: {
 		kind: 'mul',
 		// seed 3, hinge 4 (Modal, 29 Oct): 1,553/1,553 on the server (min margin 2.86) and on an M4 with this q4 decoder (0.37)
 		id: 'qwen35-mul-s3h4-q4',
 		name: 'the multiplier',
-		dtype: { embed_tokens: 'q4', vision_encoder: 'fp16', decoder_model_merged: 'q4' },
-		rows: 1553
+		rows: 1553,
+		own: [GRAPH],
+		prompts: { MUL: 'MUL', ADD: 'ADD', ADZ: 'ADZ', FLS: 'FLS', NXT: 'NXT' }
 	}
 };
 
-/** Every file transformers.js fetches for a model, relative to the model's folder. */
-export function modelFiles(m: SketchModel): string[] {
-	const onnx = Object.entries(m.dtype).flatMap(([name, d]) => [
+/** Which operation a runtime op belongs to. */
+export const kindOf = (op: TickOp): Kind => (op === 'ADD-FAST' ? 'add' : 'mul');
+
+/** The prompt for one tick: the op's word, the image, then `=` (raw, no chat template). */
+export function promptFor(op: TickOp): string {
+	const word = MODELS[kindOf(op)].prompts[op];
+	if (!word) throw new Error(`no prompt for ${op}`);
+	return `${word}<|vision_start|><|image_pad|><|vision_end|>=`;
+}
+
+/**
+ * Every file transformers.js fetches for a program, relative to the program's folder (the same for every program).
+ * processor_config.json and chat_template.jinja sit in the folders too but are never fetched: the processor reads
+ * preprocessor_config.json and the tokenizer its own config, so they are left out of sizes, caching and certificates.
+ */
+export function modelFiles(): string[] {
+	const onnx = Object.entries(DTYPE).flatMap(([name, d]) => [
 		`onnx/${name}_${d}.onnx`,
 		`onnx/${name}_${d}.onnx_data`
 	]);
@@ -42,23 +82,39 @@ export function modelFiles(m: SketchModel): string[] {
 		'config.json',
 		'generation_config.json',
 		'preprocessor_config.json',
-		'processor_config.json',
 		'tokenizer.json',
 		'tokenizer_config.json',
-		'chat_template.jinja',
 		...onnx
 	];
 }
 
-/**
- * The files a certificate depends on: the weights, the configs and the tokenizer. (processor_config.json and
- * chat_template.jinja are never fetched: the processor reads preprocessor_config.json, the tokenizer its own config.)
- */
-export const certFiles = (m: SketchModel) =>
-	modelFiles(m).filter((f) => f !== 'processor_config.json' && f !== 'chat_template.jinja');
+/** Where a file is really served from, below the models folder: the program's own folder or the base. */
+export const servedPath = (m: SketchModel, file: string) =>
+	`${m.own.includes(file) ? m.id : BASE_ID}/${file}`;
 
 /**
- * The format the certificate certifies. Any change to prompts, tables, scoring or strip assembly must change this
- * string, so a cached certificate never outlives the format it checked.
+ * The URL to fetch (and the cache key) for a URL transformers.js asks for. It asks for `<root><program id>/<file>`;
+ * base files are routed to `<root><BASE_ID>/<file>`. Null for anything outside the models folder.
+ */
+export function route(url: string, root: string): string | null {
+	if (!url.startsWith(root)) return null;
+	const rest = url.slice(root.length).split(/[?#]/)[0];
+	const cut = rest.indexOf('/');
+	if (cut < 0) return null;
+	const id = rest.slice(0, cut);
+	if (id === BASE_ID) return root + rest;
+	const m = Object.values(MODELS).find((x) => x.id === id);
+	return m ? root + servedPath(m, rest.slice(cut + 1)) : null;
+}
+
+/** The files a certificate depends on: all of them (weights, configs, tokenizer). */
+export const certFiles = () => modelFiles();
+
+/**
+ * The format the certificate certifies. Any change to tables, scoring or strip assembly must change this string, so a
+ * cached certificate never outlives the format it checked. (The prompts are part of the cache key on their own.)
  */
 export const CERT_FORMAT = 'sketchpad-cert-v1;add=fast-242;mul=3tok-1553;strip=sprites-rowk-32x96';
+
+/** The browser cache that holds model files, keyed by the URL they are served from. */
+export const FILE_CACHE = 'sketchpad-models-v1';

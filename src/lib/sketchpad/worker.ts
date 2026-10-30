@@ -3,13 +3,28 @@
  * The worker that holds the sketchpad model. The page owns the sheet (the model's only memory); the worker owns the
  * model's eyes and hands: it assembles each strip from the training sprites, runs one forward (or three greedy tokens),
  * and posts the answer back. It also checks the whole table for the certificate and answers chat questions. One GPU
- * job runs at a time; certificate rows, ticks and chat take turns.
+ * job runs at a time; loads, certificate rows, ticks and chat take turns.
+ *
+ * Files: every program asks for `<root><program>/<file>`; base files are routed to one shared folder and kept in the
+ * browser's Cache API under the URL they came from, so the base downloads once and a switch fetches only the program's
+ * own graph. Each cached copy carries the fingerprint of the bytes that were downloaded, for the certificate cache.
  */
-import { ADD_DOMAIN, ADD_PROMPT, addCode, addRule } from './adder.ts';
+import { ADD_DOMAIN, addCode, addRule } from './adder.ts';
 import { StreamHash, hashBytes } from './hash.ts';
-import { MODELS, type Kind } from './models.ts';
-import { MUL_DOMAIN, mulPrompt, outChars, type Op } from './multiplier.ts';
-import type { FromWorker, ToWorker } from './protocol.ts';
+import {
+	DTYPE,
+	FILE_CACHE,
+	MODELS,
+	kindOf,
+	modelFiles,
+	promptFor,
+	route,
+	servedPath,
+	type Kind,
+	type SketchModel
+} from './models.ts';
+import { MUL_DOMAIN, outChars, type Op } from './multiplier.ts';
+import type { FromWorker, LoadedInfo, ToWorker } from './protocol.ts';
 import { B, CELL, assembleStrip, type SpriteSheet } from './sprites.ts';
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -55,13 +70,22 @@ let tjs: Tjs | null = null;
 let processor: Processor | null = null;
 let model: Model | null = null;
 let tok: Tok | null = null;
-let kind: Kind | null = null;
+/** the program loaded now, and a counter that moves whenever the loaded model changes */
+let loadedId: string | null = null;
+let generation = 0;
+/** the newest load the page asked for; an older one still queued is skipped */
+let wanted = 0;
 let sprites: SpriteSheet | null = null;
 let spritesPrint = '';
 let gpu = '';
-/** fingerprints of the files fetched, by path below the models folder */
+/** fingerprints of model files, by served path below the models folder */
 const prints = new Map<string, string>();
 const cancelled = new Set<number>();
+/** bytes of the current load: from the network (by served path) and from the cache */
+let network: Record<string, number> = {};
+let cachedBytes = 0;
+let onBytes: () => void = () => {};
+const PRINT_HEADER = 'x-sketchpad-print';
 
 /** one GPU job at a time */
 let chain: Promise<unknown> = Promise.resolve();
@@ -71,19 +95,29 @@ function exclusive<T>(fn: () => Promise<T>): Promise<T> {
 	return run;
 }
 
-/** fetch that fingerprints every whole-file download as it streams past */
-function hashingFetch(base: string) {
+const urlOf = (input: RequestInfo | URL) =>
+	typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+
+/**
+ * fetch for transformers.js: routes base files to the shared folder, and fingerprints and counts every whole-file
+ * download as it streams past
+ */
+function routedFetch(root: string) {
 	return async (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
-		const res = await fetch(input, init);
-		const url = typeof input === 'string' ? input : input instanceof URL ? input.href : input.url;
+		const url = route(urlOf(input), root);
+		if (!url) return fetch(input, init);
+		const res = await fetch(url, init);
 		const ranged = new Headers(init?.headers).has('Range');
-		if (res.status !== 200 || ranged || !res.body || !url.startsWith(base)) return res;
-		const name = url.slice(base.length).split('?')[0];
+		if (res.status !== 200 || ranged || !res.body) return res;
+		const name = url.slice(root.length);
 		const h = new StreamHash();
+		network[name] = 0;
 		const body = res.body.pipeThrough(
 			new TransformStream<Uint8Array, Uint8Array>({
 				transform(chunk, ctl) {
 					h.update(chunk);
+					network[name] += chunk.length;
+					onBytes();
 					ctl.enqueue(chunk);
 				},
 				flush() {
@@ -97,6 +131,58 @@ function hashingFetch(base: string) {
 			headers: res.headers
 		});
 	};
+}
+
+/**
+ * transformers.js's custom cache: the Cache API under the served URL, so every program shares the base's copy. A hit
+ * restores the fingerprint stored with it.
+ */
+function fileCache(root: string) {
+	const open = () => caches.open(FILE_CACHE);
+	return {
+		async match(key: RequestInfo | URL) {
+			const url = route(urlOf(key), root);
+			if (!url) return undefined;
+			const hit = await (await open()).match(url);
+			if (!hit) return undefined;
+			const print = hit.headers.get(PRINT_HEADER);
+			if (print) prints.set(url.slice(root.length), print);
+			cachedBytes += Number(hit.headers.get('content-length') ?? 0);
+			onBytes();
+			return hit;
+		},
+		async put(key: RequestInfo | URL, response: Response) {
+			const url = route(urlOf(key), root);
+			if (!url) return;
+			const headers = new Headers(response.headers);
+			const print = prints.get(url.slice(root.length));
+			if (print) headers.set(PRINT_HEADER, print);
+			await (await open()).put(url, new Response(response.body, { status: 200, headers }));
+		}
+	};
+}
+
+/**
+ * Drop cached files the server has since replaced (a new export under the same name): compare length, Last-Modified
+ * and ETag with a HEAD. Offline, the cached copies stand.
+ */
+async function dropStale(m: SketchModel, root: string) {
+	const cache = await caches.open(FILE_CACHE);
+	await Promise.all(
+		modelFiles().map(async (f) => {
+			const url = root + servedPath(m, f);
+			const hit = await cache.match(url);
+			if (!hit) return;
+			const head = await fetch(url, { method: 'HEAD', cache: 'no-store' }).catch(() => null);
+			if (!head?.ok) return;
+			const same = (k: string) => {
+				const a = head.headers.get(k);
+				return !a || a === hit.headers.get(k);
+			};
+			if (!same('content-length') || !same('last-modified') || !same('etag'))
+				await cache.delete(url);
+		})
+	);
 }
 
 async function loadSprites(url: string) {
@@ -191,7 +277,7 @@ const tokenOf = (c: string) => tok!.encode(c, { add_special_tokens: false })[0];
 // ---- the adder: one forward over "ADD<image>=", the last position's logits give the one answer token -------------
 async function addForward(cells: string[]) {
 	const { strip, image } = stripImage(cells);
-	const out = await model!(await processor!(ADD_PROMPT, [image]));
+	const out = await model!(await processor!(promptFor('ADD-FAST'), [image]));
 	const S = out.logits.dims[1];
 	return { row: logitsAt(out.logits, S - 1), strip };
 }
@@ -221,7 +307,7 @@ async function mulScore(op: Op, v: string[]) {
 	const ans = outChars(op, v);
 	const ids = ans.map(tokenOf);
 	const { image } = stripImage(v);
-	const inp = await processor!(mulPrompt(op), [image]);
+	const inp = await processor!(promptFor(op), [image]);
 	const L = (inp.input_ids as TTensor).dims[1];
 	for (const k of Object.keys(inp)) {
 		const t = inp[k] as TTensor | undefined;
@@ -242,7 +328,7 @@ async function mulScore(op: Op, v: string[]) {
 
 async function mulTick(op: Op, cells: string[]) {
 	const { strip, image } = stripImage(cells);
-	const inputs = await processor!(mulPrompt(op), [image]);
+	const inputs = await processor!(promptFor(op), [image]);
 	const L = (inputs.input_ids as TTensor).dims[1];
 	const out = await model!.generate({ ...inputs, do_sample: false, max_new_tokens: 3 });
 	const ids = Array.from(out.data)
@@ -253,91 +339,156 @@ async function mulTick(op: Op, cells: string[]) {
 }
 
 // ---- jobs -----------------------------------------------------------------------------------------------------
+async function setup(m: Extract<ToWorker, { type: 'load' }>) {
+	tjs ??= await import('transformers-420');
+	const { env } = tjs;
+	// a built page serves ONNX Runtime's WASM itself; the dev server keeps the CDN its pre-bundling needs
+	if (import.meta.env?.PROD && env.backends.onnx.wasm) env.backends.onnx.wasm.wasmPaths = undefined;
+	env.allowLocalModels = false;
+	env.allowRemoteModels = true;
+	env.useBrowserCache = false;
+	env.remoteHost = m.root;
+	env.remotePathTemplate = '{model}/';
+	env.fetch = routedFetch(m.root);
+	// private windows may have no Cache API: then every load downloads, nothing else changes
+	const canCache =
+		typeof caches !== 'undefined' &&
+		(await caches.open(FILE_CACHE).then(
+			() => true,
+			() => false
+		));
+	env.useCustomCache = canCache;
+	env.customCache = canCache ? fileCache(m.root) : null;
+	if (!sprites) await loadSprites(m.sprites);
+	gpu ||= await gpuName().catch(() => 'this browser’s GPU');
+	return canCache;
+}
+
 async function load(m: Extract<ToWorker, { type: 'load' }>) {
-	if (kind === m.kind && model) return post({ type: 'loaded', info: info(m.kind, 0) });
+	wanted = m.lid;
 	await exclusive(async () => {
+		if (m.lid !== wanted) return post({ type: 'load-skipped', lid: m.lid });
+		const spec = MODELS[m.kind];
 		const t0 = performance.now();
 		try {
+			if (model && loadedId === spec.id)
+				return post({ type: 'loaded', lid: m.lid, info: info(spec, m.root, 0, true) });
 			if (model) {
-				await model.dispose().catch(() => {});
+				// the old program goes first: its sessions free their GPU memory before the new ones are made
+				const old = model;
 				model = null;
 				processor = null;
-				kind = null;
+				loadedId = null;
+				generation++;
+				await old.dispose().catch(() => {});
 			}
-			tjs ??= await import('transformers-420');
-			const { env } = tjs;
-			// a built page serves ONNX Runtime's WASM itself; the dev server keeps the CDN its pre-bundling needs
-			if (import.meta.env?.PROD && env.backends.onnx.wasm)
-				env.backends.onnx.wasm.wasmPaths = undefined;
-			env.allowLocalModels = false;
-			env.allowRemoteModels = true;
-			env.useBrowserCache = false;
-			env.remoteHost = m.base;
-			env.remotePathTemplate = '{model}/';
-			env.fetch = hashingFetch(m.base);
-			if (!sprites) await loadSprites(m.sprites);
-			gpu ||= await gpuName().catch(() => 'this browser’s GPU');
-
-			const spec = MODELS[m.kind];
-			const files: Record<string, { loaded: number; total: number }> = {};
-			let last = 0;
-			const report = (force = false) => {
+			const canCache = await setup(m);
+			if (canCache) await dropStale(spec, m.root);
+			const expect = await uncachedBytes(spec, m.root, canCache);
+			network = {};
+			cachedBytes = 0;
+			performance.clearResourceTimings();
+			performance.setResourceTimingBufferSize(2000);
+			let last = -Infinity;
+			onBytes = () => {
 				const now = performance.now();
-				if (!force && now - last < 120) return;
+				if (now - last < 120) return;
 				last = now;
-				post({ type: 'progress', kind: m.kind, files: { ...files }, stage: 'download' });
+				post({
+					type: 'progress',
+					lid: m.lid,
+					kind: m.kind,
+					network: sum(network),
+					expect,
+					cached: cachedBytes,
+					stage: 'fetch'
+				});
 			};
-			const progress_callback = (p: {
-				status: string;
-				file?: string;
-				loaded?: number;
-				total?: number;
-			}) => {
-				if (!p.file) return;
-				if (p.status === 'progress') files[p.file] = { loaded: p.loaded ?? 0, total: p.total ?? 0 };
-				else if (p.status === 'done' && files[p.file]) files[p.file].loaded = files[p.file].total;
-				else return;
-				report(p.status === 'done');
-			};
+			onBytes();
 			const [proc, mdl] = await Promise.all([
-				tjs.AutoProcessor.from_pretrained(spec.id, { progress_callback }),
-				tjs.Qwen3_5ForConditionalGeneration.from_pretrained(spec.id, {
-					dtype: spec.dtype,
-					device: 'webgpu',
-					progress_callback
+				tjs!.AutoProcessor.from_pretrained(spec.id),
+				tjs!.Qwen3_5ForConditionalGeneration.from_pretrained(spec.id, {
+					dtype: DTYPE,
+					device: 'webgpu'
 				})
 			]);
+			onBytes = () => {};
 			processor = proc as unknown as Processor;
 			model = mdl as unknown as Model;
 			tok = processor.tokenizer;
-			post({ type: 'progress', kind: m.kind, files: { ...files }, stage: 'compile' });
+			post({
+				type: 'progress',
+				lid: m.lid,
+				kind: m.kind,
+				network: sum(network),
+				expect,
+				cached: cachedBytes,
+				stage: 'compile'
+			});
 			// one forward compiles the GPU kernels before the certificate starts its clock
 			await addForward([B, B, B]);
-			kind = m.kind;
-			post({ type: 'loaded', info: info(m.kind, (performance.now() - t0) / 1000) });
+			loadedId = spec.id;
+			generation++;
+			post({
+				type: 'loaded',
+				lid: m.lid,
+				info: info(spec, m.root, (performance.now() - t0) / 1000, false)
+			});
 		} catch (e) {
-			post({ type: 'load-error', kind: m.kind, error: message(e) });
+			onBytes = () => {};
+			post({ type: 'load-error', lid: m.lid, kind: m.kind, error: message(e) });
 		}
 	});
 }
 
-function info(k: Kind, seconds: number) {
-	const id = MODELS[k].id + '/';
-	const mine = Object.fromEntries(
-		[...prints].filter(([p]) => p.startsWith(id)).map(([p, h]) => [p.slice(id.length), h])
+const sum = (r: Record<string, number>) => Object.values(r).reduce((a, b) => a + b, 0);
+
+/** what this load will take from the network: the sizes of the files not in this browser's cache */
+async function uncachedBytes(m: SketchModel, root: string, canCache: boolean) {
+	const cache = canCache ? await caches.open(FILE_CACHE) : null;
+	const sizes = await Promise.all(
+		modelFiles().map(async (f) => {
+			const url = root + servedPath(m, f);
+			if (cache && (await cache.match(url))) return 0;
+			const head = await fetch(url, { method: 'HEAD', cache: 'no-store' }).catch(() => null);
+			return Number(head?.headers.get('content-length') ?? 0);
+		})
 	);
+	return sizes.reduce((a, b) => a + b, 0);
+}
+
+function info(spec: SketchModel, root: string, seconds: number, reused: boolean): LoadedInfo {
+	const files = modelFiles();
+	const transferSize = (performance.getEntriesByType('resource') as PerformanceResourceTiming[])
+		.filter((e) => e.name.startsWith(root))
+		.reduce((a, e) => a + e.transferSize, 0);
 	return {
-		kind: k,
+		id: spec.id,
+		kind: spec.kind,
 		seconds,
-		prints: mine,
+		prints: Object.fromEntries(
+			files.flatMap((f) => {
+				const p = prints.get(servedPath(spec, f));
+				return p ? [[f, p]] : [];
+			})
+		),
 		sprites: spritesPrint,
 		gpu,
-		transformers: tjs?.env.version ?? ''
+		transformers: tjs?.env.version ?? '',
+		network: reused ? 0 : sum(network),
+		networkFiles: reused ? {} : { ...network },
+		transferSize: reused ? 0 : transferSize,
+		cached: reused ? 0 : cachedBytes,
+		reused
 	};
 }
 
+/** the loaded program serves this kind */
+const serves = (k: Kind) => !!model && loadedId === MODELS[k].id;
+
 async function certify(rid: number, k: Kind) {
-	if (k !== kind) throw new Error(`${MODELS[k].name} is not loaded`);
+	if (!serves(k)) throw new Error(`${MODELS[k].name} is not loaded`);
+	const born = generation;
 	let compute = 0;
 	let start = 0;
 	let margins: number[] = [];
@@ -354,6 +505,8 @@ async function certify(rid: number, k: Kind) {
 	for (let i = 0; i < n; i++) {
 		if (cancelled.has(rid)) throw new Cancelled();
 		const r = await exclusive(async () => {
+			// a load got in between: these rows would no longer be about this model
+			if (generation !== born || !serves(k)) throw new Cancelled();
 			const t = performance.now();
 			const res = k === 'add' ? await addScore(ADD_DOMAIN[i]) : await mulScore(...MUL_DOMAIN[i]);
 			compute += performance.now() - t;
@@ -368,16 +521,15 @@ async function certify(rid: number, k: Kind) {
 
 async function tick(m: Extract<ToWorker, { type: 'tick' }>) {
 	const r = await exclusive(async () => {
+		if (!serves(kindOf(m.op))) throw new Error(`${MODELS[kindOf(m.op)].name} is not loaded`);
 		const t = performance.now();
 		if (m.op === 'ADD-FAST') {
-			if (kind !== 'add') throw new Error('the adder is not loaded');
 			const { row, strip } = await addForward(m.cells);
 			const a = argmax(row);
 			const { m: mg } = margin(row, a);
 			const text = tok!.decode([a]);
 			return { out: [text], margin: mg, strip, ms: performance.now() - t };
 		}
-		if (kind !== 'mul') throw new Error('the multiplier is not loaded');
 		const { out, strip } = await mulTick(m.op, m.cells);
 		return { out, margin: null, strip, ms: performance.now() - t };
 	});

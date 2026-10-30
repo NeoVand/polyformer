@@ -6,7 +6,6 @@
  */
 import { B, GLYPHS } from './sprites.ts';
 
-export const ADD_PROMPT = 'ADD<|vision_start|><|image_pad|><|vision_end|>=';
 const CODES = 'abcdefghij';
 
 export type AddView = [carry: string, top: string, bottom: string];

@@ -2,21 +2,32 @@
 import type { Kind } from './models.ts';
 import type { Op } from './multiplier.ts';
 
-/** `ADD` is the adder's prompt; the multiplier's five ops have their own. */
+/** `ADD-FAST` is the adder's one-token step; the multiplier's five ops have their own prompts. */
 export type TickOp = 'ADD-FAST' | Op;
 
 export interface LoadedInfo {
+	/** the program now loaded (both kinds may share one) */
+	id: string;
 	kind: Kind;
 	seconds: number;
-	/** fingerprint of every model file the worker fetched, by path */
+	/** fingerprint of every file the program uses, by file name (from the download, or kept with the cached copy) */
 	prints: Record<string, string>;
 	sprites: string;
 	gpu: string;
 	transformers: string;
+	/** bytes this load took from the network, counted as they streamed, and per served path */
+	network: number;
+	networkFiles: Record<string, number>;
+	/** the browser's own count of the same requests (Resource Timing transferSize; headers included) */
+	transferSize: number;
+	/** bytes read from this browser's model cache instead */
+	cached: number;
+	/** the program was already loaded: nothing was read or compiled */
+	reused: boolean;
 }
 
 export type ToWorker =
-	| { type: 'load'; kind: Kind; base: string; sprites: string }
+	| { type: 'load'; lid: number; kind: Kind; root: string; sprites: string }
 	| { type: 'certify'; rid: number; kind: Kind }
 	| { type: 'tick'; rid: number; op: TickOp; cells: string[] }
 	| { type: 'chat'; rid: number; question: string; maxNew: number }
@@ -25,12 +36,18 @@ export type ToWorker =
 export type FromWorker =
 	| {
 			type: 'progress';
+			lid: number;
 			kind: Kind;
-			files: Record<string, { loaded: number; total: number }>;
-			stage: 'download' | 'compile';
+			/** bytes from the network so far, of `expect` (what was not cached when the load began) */
+			network: number;
+			expect: number;
+			cached: number;
+			stage: 'fetch' | 'compile';
 	  }
-	| { type: 'loaded'; info: LoadedInfo }
-	| { type: 'load-error'; kind: Kind; error: string }
+	| { type: 'loaded'; lid: number; info: LoadedInfo }
+	/** a newer load was asked for before this one started */
+	| { type: 'load-skipped'; lid: number }
+	| { type: 'load-error'; lid: number; kind: Kind; error: string }
 	/** a run of certificate rows from `start`; `got` is the model's own answer where a row failed */
 	| { type: 'cert-rows'; rid: number; start: number; margins: number[]; got: (string | null)[] }
 	| { type: 'cert-done'; rid: number; seconds: number }

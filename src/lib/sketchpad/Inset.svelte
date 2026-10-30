@@ -3,6 +3,7 @@
 	import { explain, type TickView } from './pad.svelte.ts';
 	import type { TickOp } from './protocol.ts';
 	import { B, CELL, GLYPHS } from './sprites.ts';
+	import { theme } from './theme.svelte.ts';
 
 	interface Props {
 		/** the last tick, or null before the first */
@@ -67,6 +68,9 @@
 			<p class="means idle">Its answer appears here at each tick.</p>
 		{/if}
 	</div>
+	{#if theme.current === 'dark'}
+		<p class="truth">True input pixels: the model reads black on white.</p>
+	{/if}
 </div>
 
 <style>
@@ -113,6 +117,13 @@
 	}
 	.means.idle {
 		color: var(--color-ink-3);
+	}
+	.truth {
+		grid-column: 1 / -1;
+		margin-top: 10px;
+		font-size: var(--text-2xs);
+		color: var(--color-ink-3);
+		white-space: nowrap;
 	}
 	.meta {
 		margin-top: 4px;

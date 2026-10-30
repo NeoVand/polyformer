@@ -27,7 +27,7 @@
 		--period: 7s;
 	}
 	.face {
-		fill: #f2f2f2;
+		fill: var(--logo-ink, #f2f2f2);
 	}
 	.face.a {
 		fill-opacity: 0.3;
@@ -37,7 +37,7 @@
 	}
 	.edge {
 		fill: none;
-		stroke: #f2f2f2;
+		stroke: var(--logo-ink, #f2f2f2);
 		stroke-width: 1.5;
 		stroke-linejoin: round;
 		stroke-linecap: round;
@@ -47,7 +47,7 @@
 		stroke-opacity: 0.4;
 	}
 	.node {
-		fill: #f2f2f2;
+		fill: var(--logo-ink, #f2f2f2);
 		stroke: var(--color-void);
 		stroke-width: 1.4;
 	}
@@ -127,7 +127,7 @@
 		0%,
 		38%,
 		100% {
-			fill: #f2f2f2;
+			fill: var(--logo-ink, #f2f2f2);
 			r: 2.6px;
 		}
 		50%,
@@ -145,7 +145,7 @@
 		}
 		50%,
 		88% {
-			fill: #f2f2f2;
+			fill: var(--logo-ink, #f2f2f2);
 			r: 2.6px;
 		}
 	}

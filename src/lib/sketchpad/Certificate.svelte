@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fmtMargin, rowLabel, type Cert } from './pad.svelte.ts';
+	import { GRID, theme } from './theme.svelte.ts';
 
 	interface Props {
 		cert: Cert;
@@ -78,17 +79,18 @@
 		ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 		ctx.clearRect(0, 0, g.w, g.h);
 		const s = g.size;
+		const tone = GRID[theme.current];
 		for (let i = 0; i < cert.rows; i++) {
 			const m = cert.margins[i];
 			if (Number.isNaN(m)) {
-				ctx.fillStyle = '#1c1c1c';
+				ctx.fillStyle = tone.idle;
 				ctx.fillRect(g.x[i], g.y[i], s, s);
 			} else if (m > 0) {
-				ctx.fillStyle = i === h ? '#ffffff' : '#c8c8c8';
+				ctx.fillStyle = i === h ? tone.hot : tone.pass;
 				ctx.fillRect(g.x[i], g.y[i], s, s);
 			} else {
 				// a failing row is a hole: hollow, and ringed when pointed at
-				ctx.strokeStyle = '#f5f5f5';
+				ctx.strokeStyle = tone.fail;
 				ctx.lineWidth = 1;
 				ctx.clearRect(g.x[i] - 0.5, g.y[i] - 0.5, s + 1, s + 1);
 				ctx.strokeRect(g.x[i] + 0.5, g.y[i] + 0.5, s - 1, s - 1);
@@ -96,7 +98,8 @@
 			}
 		}
 		if (h !== null && Number.isNaN(cert.margins[h])) {
-			ctx.fillStyle = '#4a4a4a';
+			ctx.fillStyle = tone.pass;
+			ctx.globalAlpha = 0.5;
 			ctx.fillRect(g.x[h], g.y[h], s, s);
 		}
 	}

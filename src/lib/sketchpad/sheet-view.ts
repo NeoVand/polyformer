@@ -6,6 +6,7 @@
  */
 import type { SheetSource } from './sources.ts';
 import { CELL, GLYPHS } from './sprites.ts';
+import { SHEET, type SheetPalette } from './theme.svelte.ts';
 
 const FOCUS_MS = 850;
 const HOVER_MS = 250;
@@ -35,7 +36,7 @@ export interface Metrics {
 export class SheetView {
 	private canvas: HTMLCanvasElement;
 	private ctx: CanvasRenderingContext2D;
-	private sprites: CanvasImageSource | null = null;
+	private sprites: HTMLImageElement | null = null;
 	private src: SheetSource | null = null;
 	private dpr = 1;
 	private cssW = 0;
@@ -71,9 +72,47 @@ export class SheetView {
 		this.ctx = canvas.getContext('2d')!;
 	}
 
-	setSprites(img: CanvasImageSource) {
+	private palette: SheetPalette = SHEET.dark;
+	/** the sprites as ink: each pixel the palette's ink at alpha (255 - grey), so any paper shows through */
+	private ink: HTMLCanvasElement | null = null;
+
+	setSprites(img: HTMLImageElement) {
 		this.sprites = img;
+		this.ink = null;
 		this.kick();
+	}
+
+	setPalette(p: SheetPalette) {
+		this.palette = p;
+		this.ink = null;
+		this.kick();
+	}
+
+	/**
+	 * Recolour the sprite sheet. The sprites are pure grey (black ink on white), so alpha = 255 - grey is exact: black
+	 * ink over white paper gives back the training pixels, and light ink over a dark sheet gives their negative.
+	 */
+	private inkSheet(): HTMLCanvasElement | null {
+		if (this.ink || !this.sprites) return this.ink;
+		const img = this.sprites;
+		const c = document.createElement('canvas');
+		c.width = img.naturalWidth;
+		c.height = img.naturalHeight;
+		const x = c.getContext('2d', { willReadFrequently: true })!;
+		x.drawImage(img, 0, 0);
+		const d = x.getImageData(0, 0, c.width, c.height);
+		const n = parseInt(this.palette.ink.slice(1), 16);
+		const [r, g, b] = [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+		for (let i = 0; i < d.data.length; i += 4) {
+			const a = 255 - d.data[i];
+			d.data[i] = r;
+			d.data[i + 1] = g;
+			d.data[i + 2] = b;
+			d.data[i + 3] = a;
+		}
+		x.putImageData(d, 0, 0);
+		this.ink = c;
+		return c;
 	}
 
 	/** lay out for a CSS width; the cell size follows the width and the screen's pixel ratio */
@@ -343,9 +382,9 @@ export class SheetView {
 		ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
 		ctx.imageSmoothingEnabled = false;
 		ctx.globalAlpha = 1;
-		ctx.fillStyle = '#ffffff';
+		ctx.fillStyle = this.palette.paper;
 		ctx.fillRect(0, 0, W, m.height);
-		if (!src || !this.sprites) return;
+		if (!src || !this.inkSheet()) return;
 		const cs = this.cs;
 		const x0 = this.padX - this.cam;
 		const c0 = clamp(Math.floor((this.cam - this.padX) / cs), 0, src.cols);
@@ -358,7 +397,7 @@ export class SheetView {
 			const a = inn ? easeInOut(t) : 1 - easeInOut(t);
 			if (a <= 0) return;
 			ctx.globalAlpha = a;
-			ctx.fillStyle = '#ececec';
+			ctx.fillStyle = this.palette.tint;
 			roundRect(ctx, x0 + h.c * cs + 1, m.rowY[h.r] + 1, cs - 2, cs - 2, 3);
 			ctx.fill();
 			ctx.globalAlpha = 1;
@@ -388,7 +427,7 @@ export class SheetView {
 		ctx.globalAlpha = 1;
 
 		// a pencil mark under each digit a visitor changed
-		ctx.fillStyle = '#9a9a9a';
+		ctx.fillStyle = this.palette.mark;
 		for (const key of this.edited) {
 			const [r, c] = key.split(',').map(Number);
 			if (c < c0 || c >= c1) continue;
@@ -396,7 +435,7 @@ export class SheetView {
 		}
 
 		// ruled lines
-		ctx.fillStyle = '#c9c9c9';
+		ctx.fillStyle = this.palette.rule;
 		src.rows.forEach((row, r) => {
 			if (!row.ruleBefore || r === 0) return;
 			const y = Math.round((m.rowY[r] - this.ruleGap / 2) * this.dpr) / this.dpr;
@@ -406,7 +445,7 @@ export class SheetView {
 		});
 
 		// the fovea
-		ctx.strokeStyle = '#111111';
+		ctx.strokeStyle = this.palette.fovea;
 		ctx.lineWidth = 1.5;
 		for (const f of this.frames) {
 			if (!f) continue;
@@ -424,8 +463,8 @@ export class SheetView {
 			const fade = (from: number, to: number, show: boolean) => {
 				if (!show) return;
 				const g = ctx.createLinearGradient(from, 0, to, 0);
-				g.addColorStop(0, 'rgba(255,255,255,1)');
-				g.addColorStop(1, 'rgba(255,255,255,0)');
+				g.addColorStop(0, this.palette.paper);
+				g.addColorStop(1, this.palette.paper + '00');
 				ctx.fillStyle = g;
 				ctx.fillRect(Math.min(from, to), 0, Math.abs(to - from), m.height);
 			};
@@ -438,7 +477,7 @@ export class SheetView {
 	private glyph(g: string, sy: number, x: number, y: number) {
 		const gi = GLYPHS.indexOf(g);
 		if (gi < 0) return;
-		this.ctx.drawImage(this.sprites!, gi * CELL, sy, CELL, CELL, x, y, this.cs, this.cs);
+		this.ctx.drawImage(this.ink!, gi * CELL, sy, CELL, CELL, x, y, this.cs, this.cs);
 	}
 }
 

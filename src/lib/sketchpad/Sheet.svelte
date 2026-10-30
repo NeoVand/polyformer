@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { SheetView, type Metrics } from './sheet-view.ts';
 	import type { SheetSource } from './sources.ts';
+	import { SHEET, theme } from './theme.svelte.ts';
 
 	interface Props {
 		source: SheetSource | null;
@@ -51,6 +52,10 @@
 			canvas.removeEventListener('wheel', wheel);
 			v.destroy();
 		};
+	});
+
+	$effect(() => {
+		view?.setPalette(SHEET[theme.current]);
 	});
 
 	$effect(() => {
@@ -164,7 +169,7 @@
 		position: relative;
 		height: 2px;
 		margin-top: 10px;
-		background: #1a1a1a;
+		background: var(--track);
 		opacity: 0;
 		transition: opacity 250ms ease;
 	}
@@ -175,6 +180,6 @@
 		position: absolute;
 		top: 0;
 		bottom: 0;
-		background: #5a5a5a;
+		background: var(--track-on);
 	}
 </style>
