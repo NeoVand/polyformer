@@ -194,11 +194,11 @@ describe('table rows a run reads', () => {
 
 describe('one base, one graph per program', () => {
 	it('routes base files to the shared folder and the graph to the program', async () => {
-		const { BASE_ID, MODELS, modelFiles, route, servedPath } = await import('./models.ts');
+		const { BASE_ID, DTYPE, MODELS, modelFiles, route, servedPath } = await import('./models.ts');
 		const root = 'http://h/sketchpad/models/';
 		for (const m of Object.values(MODELS)) {
 			const own = modelFiles().filter((f) => servedPath(m, f).startsWith(m.id + '/'));
-			expect(own).toEqual(['onnx/decoder_model_merged_q4.onnx']);
+			expect(own).toEqual([`onnx/decoder_model_merged_${DTYPE.decoder_model_merged}.onnx`]);
 			for (const f of modelFiles())
 				expect(route(`${root}${m.id}/${f}`, root)).toBe(
 					root + (own.includes(f) ? m.id : BASE_ID) + '/' + f
@@ -217,7 +217,7 @@ describe('one base, one graph per program', () => {
 
 	it('builds every prompt from its operation', async () => {
 		const { kindOf, promptFor } = await import('./models.ts');
-		expect(promptFor('ADD-FAST')).toBe('ADD<|vision_start|><|image_pad|><|vision_end|>=');
+		expect(promptFor('ADD-FAST')).toBe('SUM<|vision_start|><|image_pad|><|vision_end|>=');
 		expect(promptFor('NXT')).toBe('NXT<|vision_start|><|image_pad|><|vision_end|>=');
 		expect(kindOf('ADD-FAST')).toBe('add');
 		expect(kindOf('ADD')).toBe('mul');

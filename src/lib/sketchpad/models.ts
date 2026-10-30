@@ -1,7 +1,7 @@
 /**
  * What the sketchpad loads. Both operations run on one base, Qwen3.5-0.8B exported to ONNX (embedding q4, vision tower
- * fp16, decoder q4). An operation is a *program* on that base: a small adapter whose weights are initializers inside its
- * own decoder graph (`onnx/decoder_model_merged_q4.onnx`, about 42 MB). Everything else (the decoder's external data,
+ * fp16, decoder fp16). An operation is a *program* on that base: a small adapter whose weights are initializers inside its
+ * own decoder graph (`onnx/decoder_model_merged_fp16.onnx`, about 21 MB). Everything else (the decoder's external data,
  * the embedding, the vision tower, the configs and the tokenizer) is the base and is served from one folder, so the
  * browser downloads it once and a switch between operations costs one graph.
  *
@@ -19,7 +19,9 @@ export const BASE_ID = 'qwen35-0.8b-base';
 export const DTYPE = {
 	embed_tokens: 'q4',
 	vision_encoder: 'fp16',
-	decoder_model_merged: 'q4'
+	// fp16, not q4: the q4 decoder flips a cluster of the union adapter's ADD rows (device min margin -8.9 against +9.4 on
+	// the server); fp16 reproduces the server certificate (1,553/1,553, min margin 4.66 on an M4)
+	decoder_model_merged: 'fp16'
 } as const;
 
 export interface SketchModel {
@@ -36,22 +38,27 @@ export interface SketchModel {
 	prompts: Partial<Record<TickOp, string>>;
 }
 
-const GRAPH = 'onnx/decoder_model_merged_q4.onnx';
+const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
+
+/**
+ * One adapter for both operations (E5, recipe v2, seed 1; Modal, 29 Oct): 1,795/1,795 table rows on the server, min
+ * margin 4.66, perplexity x0.989. Addition is its SUM opcode; multiplication its five ops. A switch reloads nothing.
+ */
+const UNION = 'qwen35-union-s1-fp16';
 
 export const MODELS: Record<Kind, SketchModel> = {
 	add: {
 		kind: 'add',
-		id: 'qwen35-canvas-fast',
-		name: 'the adder',
+		id: UNION,
+		name: 'the model',
 		rows: 242,
 		own: [GRAPH],
-		prompts: { 'ADD-FAST': 'ADD' }
+		prompts: { 'ADD-FAST': 'SUM' }
 	},
 	mul: {
 		kind: 'mul',
-		// seed 3, hinge 4 (Modal, 29 Oct): 1,553/1,553 on the server (min margin 2.86) and on an M4 with this q4 decoder (0.37)
-		id: 'qwen35-mul-s3h4-q4',
-		name: 'the multiplier',
+		id: UNION,
+		name: 'the model',
 		rows: 1553,
 		own: [GRAPH],
 		prompts: { MUL: 'MUL', ADD: 'ADD', ADZ: 'ADZ', FLS: 'FLS', NXT: 'NXT' }

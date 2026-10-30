@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { MODELS, kindOf } from './models.ts';
 	import { explain, type TickView } from './pad.svelte.ts';
 	import type { TickOp } from './protocol.ts';
 	import { B, CELL, GLYPHS } from './sprites.ts';
@@ -23,7 +24,8 @@
 		i.src = sprites;
 	});
 
-	const showOp = (op: TickOp) => (op === 'ADD-FAST' ? 'ADD' : op);
+	// the word the model actually reads before the image, from the loaded program's prompts
+	const showOp = (op: TickOp) => MODELS[kindOf(op)].prompts[op] ?? op;
 
 	/** the strip: the pixels the worker fed the model, or the next view assembled from the same sprites */
 	function paint(canvas: HTMLCanvasElement) {
