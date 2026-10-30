@@ -1,5 +1,5 @@
 import { TraceCalc, type Calc, type CalcCall } from './calc';
-import { Arithmetic, CheckFailed, type Rational } from './arithmetic';
+import { Arithmetic, CheckFailed, type Rational, type CheckMode } from './arithmetic';
 import { expand, factor, solve, system, type AlgebraResult } from './algebra';
 import { parse, type Statement, type WorkOrder } from './parse';
 export interface StatementResult {
@@ -17,10 +17,17 @@ export interface RunResult {
 	trace: CalcCall[];
 }
 /** Fixed scheduler. Parsing errors throw with token locations; arithmetic failures become display lines. */
-export async function run(source: string | WorkOrder, calc: Calc): Promise<RunResult> {
+export interface RunOptions {
+	checkMode?: CheckMode;
+}
+export async function run(
+	source: string | WorkOrder,
+	calc: Calc,
+	options: RunOptions = {}
+): Promise<RunResult> {
 	const work = typeof source === 'string' ? parse(source) : source;
 	const traced = new TraceCalc(calc),
-		a = new Arithmetic(traced),
+		a = new Arithmetic(traced, options.checkMode),
 		env = new Map<string, Rational>();
 	const results: StatementResult[] = [];
 	for (const statement of work.statements) {
@@ -39,6 +46,7 @@ export async function run(source: string | WorkOrder, calc: Calc): Promise<RunRe
 						statement.equations.length === 1
 							? await solve(a, statement.equations[0], env)
 							: await system(a, statement.equations, env);
+				algebra.checkMode = a.checkMode;
 				text = algebra.text;
 			}
 			results.push({

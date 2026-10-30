@@ -3,9 +3,11 @@ import { Arithmetic, integer } from './arithmetic';
 import { checkRoot } from './algebra';
 import { LyingCalc, RefCalc } from './calc';
 import { parse } from './parse';
-import { run } from './run';
+import { run as runWork } from './run';
 
-describe('algebra integration', () => {
+describe.each(['light', 'strong'] as const)('algebra integration (%s)', (mode) => {
+	const run = (source: string, calc: RefCalc | LyingCalc) =>
+		runWork(source, calc, { checkMode: mode });
 	it.each([
 		['solve 3(x-2)+5=2x+14', 'x = 15'],
 		['solve 7x+13=2026-4x', 'x = 183'],
@@ -67,8 +69,8 @@ describe('algebra integration', () => {
 		const s = parse('solve 2x+1=5').statements[0];
 		if (s.kind !== 'solve') throw new Error();
 		await expect(
-			checkRoot(new Arithmetic(new RefCalc()), s.equations[0], integer(3n))
-		).rejects.toThrow('typed equation');
+			checkRoot(new Arithmetic(new RefCalc(), mode), s.equations[0], integer(3n))
+		).rejects.toThrow(mode === 'strong' ? 'typed equation' : 'recovered coefficients');
 		const r = await run('solve 2x+1=5', new LyingCalc(new RefCalc(), 0));
 		expect(r.lines).toEqual(['= check failed']);
 		expect(r.results[0].status).toBe('refused');

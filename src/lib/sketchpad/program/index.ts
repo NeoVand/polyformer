@@ -7,7 +7,7 @@ export {
 	type Statement,
 	type WorkOrder
 } from './parse';
-export { run, type RunResult, type StatementResult } from './run';
+export { run, type RunResult, type StatementResult, type RunOptions } from './run';
 export { RefCalc, LyingCalc, TraceCalc, type Calc, type CalcCall, type SheetCost } from './calc';
-export { Arithmetic, CheckFailed, type Rational } from './arithmetic';
+export { Arithmetic, CheckFailed, type Rational, type CheckMode } from './arithmetic';
 export { checkRoot, type AlgebraResult, type CoefficientGrid, type RootCheck } from './algebra';
