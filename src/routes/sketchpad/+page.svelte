@@ -153,7 +153,7 @@
 	<section class="stage">
 		<header class="bar">
 			<h1>Sketchpad</h1>
-			<p class="lede">
+			<p class="sp-lede">
 				Qwen3.5-0.8B does exact arithmetic on a sheet it reads with its own eyes, three cells at a
 				time. <em>Grown, not built.</em>
 			</p>
@@ -225,8 +225,8 @@
 					<button class="primary" onclick={() => pad.stop()}>Stop</button>
 				{:else}
 					<button class="primary" disabled={!pad.canRun} onclick={() => pad.run(a, b)}>Run</button>
-					{#if certBusy}<span class="hint">after the certificate</span>
-					{:else if certFailed}<span class="hint"
+					{#if certBusy}<span class="sp-hint">after the certificate</span>
+					{:else if certFailed}<span class="sp-hint"
 							>off: {fmt(cert.rows - cert.pass)} views fail on this device</span
 						>{/if}
 				{/if}
@@ -440,12 +440,12 @@
 		font-weight: 500;
 		letter-spacing: -0.01em;
 	}
-	.lede {
+	.sp-lede {
 		max-width: none;
 		font-size: var(--text-sm);
 		color: var(--color-ink-3);
 	}
-	.lede em {
+	.sp-lede em {
 		font-style: normal;
 		color: var(--color-ink-2);
 	}
@@ -545,7 +545,7 @@
 		color: var(--color-ink-3);
 		cursor: default;
 	}
-	.hint,
+	.sp-hint,
 	.note {
 		font-size: var(--text-xs);
 		color: var(--color-ink-3);

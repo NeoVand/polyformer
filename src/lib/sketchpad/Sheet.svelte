@@ -128,7 +128,7 @@
 			{/each}
 		{/if}
 	</div>
-	<div class="paper" bind:this={paper}>
+	<div class="sheet-paper" bind:this={paper}>
 		{#if metrics && source && inline}
 			<div class="labels in" aria-hidden="true" style:left="{metrics.left - 12}px">
 				{#each source.rows as row, r (row.key)}
@@ -183,7 +183,7 @@
 		white-space: nowrap;
 		transition: top 850ms cubic-bezier(0.65, 0, 0.35, 1);
 	}
-	.paper {
+	.sheet-paper {
 		position: relative;
 		min-width: 0;
 	}

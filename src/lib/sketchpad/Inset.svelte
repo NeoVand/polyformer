@@ -4,7 +4,7 @@
 	import { explain, type TickView } from './pad.svelte.ts';
 	import type { TickOp } from './protocol.ts';
 	import { B, CELL, GLYPHS } from './sprites.ts';
-	import { theme } from './theme.svelte.ts';
+	import { SHEET, theme } from './theme.svelte.ts';
 
 	interface Props {
 		/** the last tick, or null before the first */
@@ -27,9 +27,18 @@
 	// the word the model actually reads before the image, from the loaded program's prompts
 	const showOp = (op: TickOp) => MODELS[kindOf(op)].prompts[op] ?? op;
 
-	/** the strip: the pixels the worker fed the model, or the next view assembled from the same sprites */
+	const rgb = (hex: string) => {
+		const n = parseInt(hex.slice(1), 16);
+		return [(n >> 16) & 255, (n >> 8) & 255, n & 255];
+	};
+
+	/**
+	 * The strip: the pixels the worker fed the model, or the next view assembled from the same sprites. Those pixels are
+	 * black ink on white; on a dark page they are shown in the sheet's own colours (each pixel's ink, 255 - grey, laid
+	 * on the sheet's paper), the same transform the sheet uses, so the strip reads as a piece of the sheet.
+	 */
 	function paint(canvas: HTMLCanvasElement) {
-		const ctx = canvas.getContext('2d');
+		const ctx = canvas.getContext('2d', { willReadFrequently: true });
 		if (!ctx) return;
 		ctx.fillStyle = '#fff';
 		ctx.fillRect(0, 0, CELL, 3 * CELL);
@@ -42,6 +51,18 @@
 				if (gi >= 0) ctx.drawImage(sheet, gi * CELL, k * CELL, CELL, CELL, 0, k * CELL, CELL, CELL);
 			});
 		}
+		if (theme.current !== 'dark') return;
+		const pal = SHEET.dark;
+		const [pr, pg, pb] = rgb(pal.paper);
+		const [ir, ig, ib] = rgb(pal.ink);
+		const d = ctx.getImageData(0, 0, CELL, 3 * CELL);
+		for (let i = 0; i < d.data.length; i += 4) {
+			const a = (255 - d.data[i]) / 255;
+			d.data[i] = pr + (ir - pr) * a;
+			d.data[i + 1] = pg + (ig - pg) * a;
+			d.data[i + 2] = pb + (ib - pb) * a;
+		}
+		ctx.putImageData(d, 0, 0);
 	}
 
 	const tokens = $derived(last ? last.out.map((t) => (t === B ? '_' : t)) : []);
@@ -71,7 +92,7 @@
 		{/if}
 	</div>
 	{#if theme.current === 'dark'}
-		<p class="truth">True input pixels: the model reads black on white.</p>
+		<p class="truth">Drawn inverted here; the model reads black on white.</p>
 	{/if}
 </div>
 
@@ -93,7 +114,9 @@
 		width: 48px;
 		height: 144px;
 		image-rendering: pixelated;
-		border-radius: 2px;
+		border-radius: 3px;
+		/* a hairline frame, like the sheet's edge */
+		box-shadow: 0 0 0 1px var(--color-rule);
 	}
 	.prompt {
 		display: block;
@@ -126,10 +149,10 @@
 	}
 	.truth {
 		grid-column: 1 / -1;
-		margin-top: 10px;
+		margin-top: 6px;
 		font-size: var(--text-2xs);
+		line-height: 1.35;
 		color: var(--color-ink-3);
-		white-space: nowrap;
 	}
 	.meta {
 		margin-top: 4px;
