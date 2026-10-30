@@ -51,6 +51,7 @@ ap.add_argument("--repair", type=int, default=400, help="extra rows-only steps a
 ap.add_argument("--kl_full", action="store_true", help="instruction KL on every position, prompt included")
 ap.add_argument("--text", default="primer", choices=["primer", "wikitext"])
 ap.add_argument("--bt", type=int, default=4, help="wikitext chunks per step")
+ap.add_argument("--mc_kl", type=int, default=0, help="ARC multiple-choice prompts added to the KL pool (prompt only)")
 args = ap.parse_args()
 
 torch.manual_seed(args.seed)
@@ -106,6 +107,17 @@ for line in open(D / "kl.jsonl"):
     s = (p + k["reply_ids"])[: args.maxlen]
     if len(s) > len(p):
         kl.append((s, len(p)))
+if args.mc_kl:  # stock's letter distribution on multiple-choice prompts (ARC train, worded unlike the MMLU evaluation)
+    from datasets import load_dataset
+
+    arc = [r for c in ("ARC-Easy", "ARC-Challenge") for r in load_dataset("allenai/ai2_arc", c, split="train")]
+    random.Random(2).shuffle(arc)
+    one = tok("A", add_special_tokens=False)["input_ids"]  # any token: the KL is on the distribution before it
+    for r in arc[: args.mc_kl]:
+        opts = "".join(f"{lab}) {t}\n" for lab, t in zip(r["choices"]["label"], r["choices"]["text"]))
+        p = chat_prefix(tok, [{"role": "user", "content": f"{r['question']}\n\nOptions:\n{opts}\n"
+                                                          "Reply with the letter of the correct option."}])
+        kl.append((p + one, len(p)))
 WIKI = []
 if args.text == "wikitext":
     from datasets import load_dataset

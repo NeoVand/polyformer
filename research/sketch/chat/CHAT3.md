@@ -151,6 +151,46 @@ E7 is ready (CALC3.md: 2,446/2,446 rows, min margin 3.96, perplexity ×1.0048,
 Predictions for P2: precision 0.98, recall 0.99, word 0.93, equations 0.97, prose 0.98, IFEval −2.5 (still a narrow
 fail of the 2-point bar; no kill), MMLU 0.44, every row certified, PRIMER perplexity ×1.00–1.02.
 
+### P2 result (from E7, d2, 1,000 steps; 1,674 s training + 900 s evaluation, ~$3)
+
+| measure | stock | P2 (gate 1) | bar | prediction |
+|---|---|---|---|---|
+| open precision | 0.971 (few-shot) | **1.000** (0 of 240 distractors) | ≥ 0.95 ✓ | 0.98 |
+| open recall | 0.809 (few-shot) | **0.998** (539/540) | ≥ 0.95 ✓ | 0.99 |
+| word → correct line | 0.789 (few-shot) | 0.894 (161/180) | ≥ 0.90 ✗ by one item | 0.93 |
+| equations → correct line | 0.583 (few-shot) | **0.975** | ≥ 0.95 ✓ | 0.97 |
+| prose → correct line | 0.667 (few-shot) | **1.000** | ≥ 0.95 ✓ | 0.98 |
+| calc → correct line | 0.417 (few-shot) | 0.983 | — | — |
+| IFEval strict prompt | 0.536 | **0.530 (−0.55)** | ≥ −2 ✓ | −2.5 |
+| MMLU (500) | 0.476 | 0.422 (−5.4) | report | 0.44 |
+| GSM8K (250, stand-in sheet) | 0.516 | **0.204** (sheet opened on 212) | report | — |
+| table rows (E7) | — | 2,446/2,446, min margin 5.15 (EST) | all ✓ | ✓ |
+| PRIMER perplexity (untrained now) | 18.46 | ×1.004 | ≤ ×1.03 ✓ | ×1.00–1.02 |
+
+Stronger self-distillation fixed IFEval (−4.8 → −0.55) and the new train phrasings removed every false open. Two
+failures remain. (1) Word problems miss the bar by one item: 14 of 19 misses are the held-out truck template ("how many
+kg under the limit"), still written load − limit even after a train scenario of the same shape. (2) **GSM8K collapsed,
+0.516 → 0.204**: the model learned "a word problem is one expression, written at once" and now skips the step-by-step
+reasoning that stock does in words, writing a wrong one-liner and quoting it confidently (`52 − 8 ÷ 3.5` for a
+three-runner problem; `2 × 30 ÷ 12` for sheets per month). Our synthetic word problems are all one-step translations,
+so nothing taught it to reason before or between sheet calls. A model whose language half breaks on multi-step
+problems is not "chats like stock", so P2 does not ship.
+
+### Run P3 = final candidate (from E7, d3): changes and predictions, registered before launch
+
+- **Multi-step data.** 1,200 GSM8K **training** problems (`gsm8k_dialogues.py`; the test split is never read) turned
+  into replies that call the sheet once per step: GSM8K's own calculator annotations (`<<48/2=24>>`, Cobbe et al. 2021)
+  become ```sheet blocks, each followed by the solution's sentence with the sheet's value; kept only when every
+  annotation parses and the sheet prints exactly the annotated value (1,200 of the first 1,252). 3.2 blocks per reply.
+  This is the ToRA / PAL pattern (reasoning in words, every calculation by the tool). d3 = d2's 3,150 + these 1,200.
+- **MMLU guard.** 1,000 ARC (allenai/ai2_arc train) multiple-choice prompts, worded unlike my MMLU prompt, join the
+  KL pool (prompt positions plus the letter distribution; no answers, no MMLU data).
+- 1,200 steps, otherwise P2. GSM8K evaluation now allows 10 sheet blocks per reply (was 4).
+
+Predictions for P3: precision 0.99, recall 0.99, word 0.91, equations 0.97, prose 0.99, IFEval −1.5, MMLU 0.45,
+GSM8K 0.45–0.55 with the sheet (I expect it near stock, not above: the 0.8B's errors are in choosing operations, which
+the sheet does not fix), every row certified, PRIMER perplexity ×1.00–1.02.
+
 ### Data (`dialogues.py`, seed 0)
 
 3,000 training dialogues: calc 504, prose 420, word 714, equation 462, distractors 900 (30%: no_robots train prompts

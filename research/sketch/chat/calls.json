@@ -235,5 +235,44 @@
    ]
   ],
   "spawned": "2026-10-30 14:49:02 CDT"
+ },
+ "train_p3": {
+  "call_id": "fc-01M678FESDWGMC7SCNA3Q15J78",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_train.py",
+    "/vol/data/d3",
+    "/sk/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont",
+    "p3",
+    "--tables",
+    "e7",
+    "--steps",
+    "1200",
+    "--every",
+    "200",
+    "--bk",
+    "8",
+    "--w_kl",
+    "2",
+    "--kl_full",
+    "--text",
+    "wikitext",
+    "--bt",
+    "4",
+    "--mc_kl",
+    "1000"
+   ],
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/data/d3",
+    "p3",
+    "p3",
+    "--tables",
+    "e7"
+   ]
+  ],
+  "spawned": "2026-10-30 15:37:02 CDT"
  }
 }

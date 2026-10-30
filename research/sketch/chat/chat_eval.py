@@ -216,7 +216,7 @@ if "gsm8k" in parts:
     ds = ds[: args.n_gsm]
     suffix = "\n\nSolve the problem. End with the final answer on its own line as 'Answer: <number>'."
     outs = converse(model, tok, [chat_prefix(tok, [{"role": "user", "content": d["question"] + suffix}]) for d in ds],
-                    sheet_ref.run, max_new=640, rounds=4, batch=48)
+                    sheet_ref.run, max_new=640, rounds=10, batch=48)
     right = opened = 0
     for d, o in zip(ds, outs):
         want = float(d["answer"].split("####")[-1].strip().replace(",", ""))
