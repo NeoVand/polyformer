@@ -122,6 +122,24 @@
       ],
       "port": 4183,
       "url": "http://127.0.0.1:4183"
+    },
+    {
+      "name": "sketchpad-repo",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--dir",
+        "/Users/neo/repos/sketchpad",
+        "exec",
+        "vite",
+        "dev",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "5190",
+        "--strictPort"
+      ],
+      "port": 5190,
+      "url": "http://127.0.0.1:5190"
     }
   ]
 }

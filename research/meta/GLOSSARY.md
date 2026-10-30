@@ -348,3 +348,50 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   commas"); scores whether a chat model follows instructions, which perplexity does not measure.
 - **Compile (here).** Turning a typed problem into the sheet's work order: the language half of the system, uncertified,
   shown on the page. Baseline on the untouched 0.8B: 25% for expressions (precedence errors), 73% for word problems.
+- **Sutherland's Sketchpad (1963).** Ivan Sutherland's MIT thesis program, the first interactive drawing system (a light
+  pen on a screen) and an ancestor of every graphical interface. Why it matters to us: "Sketchpad" is a crowded,
+  famous name; as our product name it reads as an homage but is hard to search, so it stays a working title until the
+  paper's title is fixed.
+- **Finite differences and the Newton basis [zoo].** Subtract neighbouring values in a table of a polynomial's values,
+  then subtract those differences, and so on; the last nonzero column gives the degree and the leading coefficient, and
+  the columns convert to ordinary coefficients (Newton's 17th-century interpolation). Why it matters: the PROGRAM
+  stream (30 Oct 2026) recovers a typed equation's coefficients this way from values the sheet computed, with only
+  subtraction and exact division.
+- **Bracket [zoo].** Two numbers where a continuous function has opposite signs, so a root lies between them (the
+  intermediate value theorem). Why it matters: for an irrational root shown to 6 places, the sheet proves the two
+  6-place bounds bracket it, a certified statement about a number it cannot write out exactly.
+- **lora_gate (the gate, built 30 Oct 2026).** One input of the page's decoder graph, a float16 number that multiplies
+  every adapter branch: 0 gives stock Qwen3.5-0.8B exactly (ONNX Runtime: bit-identical on 100 prompts), 1 gives the
+  arithmetic program (all 1,795 certificate margins unchanged on the M4). Why it matters: the page's chat now runs at
+  0, and it is the "progressive" switch of the one-model plan.
+- **GSM8K (Cobbe et al., OpenAI, 2021).** 8,500 grade-school word problems that take two to eight steps of arithmetic,
+  with worked solutions whose calculations are marked `<<48/2=24>>`. Why it matters to us: it tests whether the chat
+  model still reasons in words between sheet calls; its training split's marked calculations become multi-step
+  dialogues that call the sheet once per step.
+- **MMLU (Hendrycks et al., 2021).** Multiple-choice questions over 57 school and professional subjects; the standard
+  check of a model's general knowledge. Why it matters: our adapters cost it points (stock 0.476, E6 0.400), so it is a
+  retention measure next to instruction-following.
+- **PAL (Gao et al., 2023).** Program-aided language models: the model writes the reasoning as code and a computer runs
+  the code. With ToRA (tool-integrated reasoning, 2023) it is the pattern the chat fine-tune copies: reasoning in words,
+  every calculation done by the sheet.
+- **ARC, the AI2 Reasoning Challenge (Clark et al., 2018).** Grade-school science multiple-choice questions. Not the
+  ARC-AGI puzzle benchmark of the NetHack/ARC discussion. Why it matters: its training prompts guard general knowledge
+  during the chat fine-tune (self-distillation toward stock's answers), without touching MMLU data.
+- **KL divergence.** How far one probability distribution is from another; zero when they are equal. Why it matters: it
+  is the loss term that pulls the adapted model's next-token distribution toward stock Qwen's during the chat fine-tune.
+- **Precision and recall (of opening the sheet).** Precision: of the replies that opened the sheet, the share that
+  needed it. Recall: of the problems that needed it, the share where it was opened. Why it matters: they are the bars
+  for "the model decides by itself"; stock with a sheet prompt reaches 0.97 / 0.81, the adapters 1.00 / 0.99.
+- **Held-out templates.** Question phrasings and word-problem scenarios never seen in training, so a score on them
+  measures transfer of the format rather than memory. Why it matters: every chat bar is scored on them.
+- **Stand-in (host sheet).** `sheet_ref.py`, exact fractions on the CPU in place of the certified sheet, used only to
+  write training data and to score. Why it matters: chat scores say "stand-in", never "the sheet".
+- **Rejection sampling (of training data).** Generate many candidates and keep only those that pass a check. In P4,
+  stock's own GSM8K-train solutions were kept only when the final answer was right and every calculation reprinted
+  exactly: 547 of 2,000.
+- **Paired flip noise.** When two models answer the same prompts, only the prompts where they disagree carry
+  information; with D disagreements the net count wobbles by about ±√D when the models are equally good. Why it matters:
+  P4 and stock disagree on 116 IFEval prompts, so ±11 prompts (±2 points) is noise and the −2 bar is one deviation wide.
+- **Routing (continual learning).** A small head reads the model's hidden state and decides which adapter, if any, is
+  on for each token (X-LoRA 2024 is one; mixture-of-experts gates are another). Why it matters: it is the standard
+  alternative to training one adapter that both chats and computes, and the option the chat seesaw points to.
