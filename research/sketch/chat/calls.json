@@ -1,0 +1,343 @@
+{
+ "gate_1349_0": {
+  "call_id": "fc-01M672A73Z1MTYPBD3B0TJRVHM",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "0",
+    "100"
+   ]
+  ],
+  "spawned": "2026-10-30 13:49:19 CDT"
+ },
+ "gate_1351_0": {
+  "call_id": "fc-01M672E48668V9B14QD5J0TYC7",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "0",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:27 CDT"
+ },
+ "gate_1351_1": {
+  "call_id": "fc-01M672E4DQ211W032DW7JF9NEW",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "1",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:27 CDT"
+ },
+ "gate_1351_2": {
+  "call_id": "fc-01M672E4KNHRZCHCMXTMH5RQS8",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "2",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:27 CDT"
+ },
+ "gate_1351_3": {
+  "call_id": "fc-01M672E4S4256FE11808X8CRHE",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "3",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:27 CDT"
+ },
+ "gate_1351_4": {
+  "call_id": "fc-01M672E4YNWX45C2WYFTTM0HA0",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "4",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:28 CDT"
+ },
+ "gate_1351_5": {
+  "call_id": "fc-01M672E53MSXMKCS8YXX5PZGEA",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "5",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:28 CDT"
+ },
+ "gate_1351_6": {
+  "call_id": "fc-01M672E58X6Q4YFZTF63AP2KDK",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "6",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:28 CDT"
+ },
+ "gate_1351_7": {
+  "call_id": "fc-01M672E5EAPNZGBVPS6JW9DFM3",
+  "cmds": [
+   [
+    "python",
+    "chat/gate_identity.py",
+    "/vol/onnx",
+    "7",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 13:51:28 CDT"
+ },
+ "stock_1401": {
+  "call_id": "fc-01M6730BK6SPRN203KAZTWYPAZ",
+  "cmds": [
+   [
+    "python",
+    "chat/stock_replies.py",
+    "/vol/data/d1"
+   ]
+  ],
+  "spawned": "2026-10-30 14:01:24 CDT"
+ },
+ "eval_stock": {
+  "call_id": "fc-01M6735GQBHR84F8QHXKP64Z0N",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/data/d1",
+    "none",
+    "stock",
+    "--parts",
+    "core,ifeval,mmlu,gsm8k"
+   ]
+  ],
+  "spawned": "2026-10-30 14:04:13 CDT"
+ },
+ "eval_e6": {
+  "call_id": "fc-01M6735HG82WYBCQGNWT76EQHZ",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/data/d1",
+    "/sk/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont",
+    "e6",
+    "--parts",
+    "core,ifeval,mmlu"
+   ]
+  ],
+  "spawned": "2026-10-30 14:04:14 CDT"
+ },
+ "eval_stock_fewshot": {
+  "call_id": "fc-01M673TGS5PAENY2HY5VJ2D3NQ",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/runs/stock_1401/files",
+    "none",
+    "stock_fewshot",
+    "--fewshot",
+    "--parts",
+    "heldout"
+   ]
+  ],
+  "spawned": "2026-10-30 14:15:42 CDT"
+ },
+ "train_p1": {
+  "call_id": "fc-01M673THE419448K1AJM855P48",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_train.py",
+    "/vol/runs/stock_1401/files",
+    "/sk/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont",
+    "p1",
+    "--steps",
+    "600",
+    "--every",
+    "200"
+   ],
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/runs/stock_1401/files",
+    "p1",
+    "p1",
+    "--parts",
+    "core,heldout,ifeval,mmlu"
+   ]
+  ],
+  "spawned": "2026-10-30 14:15:42 CDT"
+ },
+ "train_p2": {
+  "call_id": "fc-01M675QJ3SE82GWF55RMX2FQJ4",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_train.py",
+    "/vol/data/d2",
+    "/sk/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont",
+    "p2",
+    "--tables",
+    "e7",
+    "--steps",
+    "1000",
+    "--every",
+    "200",
+    "--bk",
+    "8",
+    "--w_kl",
+    "2",
+    "--kl_full",
+    "--text",
+    "wikitext",
+    "--bt",
+    "4"
+   ],
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/data/d2",
+    "p2",
+    "p2",
+    "--tables",
+    "e7"
+   ]
+  ],
+  "spawned": "2026-10-30 14:49:02 CDT"
+ },
+ "train_p3": {
+  "call_id": "fc-01M678FESDWGMC7SCNA3Q15J78",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_train.py",
+    "/vol/data/d3",
+    "/sk/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont",
+    "p3",
+    "--tables",
+    "e7",
+    "--steps",
+    "1200",
+    "--every",
+    "200",
+    "--bk",
+    "8",
+    "--w_kl",
+    "2",
+    "--kl_full",
+    "--text",
+    "wikitext",
+    "--bt",
+    "4",
+    "--mc_kl",
+    "1000"
+   ],
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/data/d3",
+    "p3",
+    "p3",
+    "--tables",
+    "e7"
+   ]
+  ],
+  "spawned": "2026-10-30 15:37:02 CDT"
+ },
+ "gsm8k_stock_1627": {
+  "call_id": "fc-01M67BB540SEBJSEV8Q1HXZZ8N",
+  "cmds": [
+   [
+    "python",
+    "chat/gsm8k_stock.py",
+    ".",
+    "1600"
+   ]
+  ],
+  "spawned": "2026-10-30 16:27:07 CDT"
+ },
+ "gsm8k_stock_1635": {
+  "call_id": "fc-01M67BT1NWSE1EHY9EYHAXEJ14",
+  "cmds": [
+   [
+    "python",
+    "chat/gsm8k_stock.py",
+    ".",
+    "2000"
+   ]
+  ],
+  "spawned": "2026-10-30 16:35:15 CDT"
+ },
+ "train_p4": {
+  "call_id": "fc-01M67CEWSYYVJS2V456ENBJFPD",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_train.py",
+    "/vol/data/d4",
+    "/sk/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont",
+    "p4",
+    "--tables",
+    "e7",
+    "--steps",
+    "1200",
+    "--every",
+    "200",
+    "--bk",
+    "8",
+    "--w_kl",
+    "2",
+    "--kl_full",
+    "--text",
+    "wikitext",
+    "--bt",
+    "4",
+    "--mc_kl",
+    "1000",
+    "--bm",
+    "2"
+   ],
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/data/d4",
+    "p4",
+    "p4",
+    "--tables",
+    "e7"
+   ]
+  ],
+  "spawned": "2026-10-30 16:46:38 CDT"
+ }
+}

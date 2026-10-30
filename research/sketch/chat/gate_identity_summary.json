@@ -1,0 +1,71 @@
+{
+ "pairs": {
+  "chat/stock_vs_gate0": {
+   "calls": 2500,
+   "logits_bit": 2500,
+   "hidden_bit": 2500,
+   "present_bit": 2500,
+   "argmax_same": 2500,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "chat/today_vs_gate1": {
+   "calls": 2500,
+   "logits_bit": 2500,
+   "hidden_bit": 2500,
+   "present_bit": 2500,
+   "argmax_same": 2500,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "rows/stock_vs_gate0": {
+   "calls": 1795,
+   "logits_bit": 1795,
+   "hidden_bit": 1795,
+   "present_bit": 1795,
+   "argmax_same": 1795,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "rows/today_vs_gate1": {
+   "calls": 1795,
+   "logits_bit": 1795,
+   "hidden_bit": 1795,
+   "present_bit": 1795,
+   "argmax_same": 1795,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_right": {
+  "rows": 1795,
+  "right": {
+   "stock_vs_gate0": 12,
+   "today_vs_gate1": 1795
+  }
+ },
+ "greedy_same": {
+  "stock_vs_gate0": [
+   100,
+   100
+  ],
+  "today_vs_gate1": [
+   100,
+   100
+  ]
+ },
+ "seconds": [
+  307,
+  365,
+  295,
+  266,
+  286,
+  222,
+  350,
+  272
+ ]
+}
