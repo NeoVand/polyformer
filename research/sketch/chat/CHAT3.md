@@ -353,6 +353,58 @@ GSM8K against stock: P4 loses 45 and wins 29. It is right on 100 of the 221 prob
 13 of the 29 where it did not. The replies now reason before each call, as stock does: a plan sentence, the block, the
 value. The remaining errors are in choosing the operation.
 
+### Option 2, the gate switched inside a reply: registered before launch (30 Oct, approved by the orchestrator)
+
+This is an evaluation, not a training run: P2 and P4 stay as trained, and "P4 was the last run" stands.
+
+**Setup** (`gate_switch.py`). Stock Qwen at gate 0 writes the reply under the sheet system prompt and the four example
+exchanges, the same messages as the stock few-shot baseline. As soon as its text ends with ```` ```sheet ````, the
+adapter (gate 1) writes the block, up to and including the closing ```` ``` ````. The runtime's `= …` lines and
+everything after them are gate 0 again.
+
+A forward runs at the gate of the token it predicts. So the adapter reads the keys, values and delta-net states that
+stock wrote: the cache is shared across the switch, as it would be on the page.
+
+The mechanism, in one Hugging Face `generate` per batch:
+- Every LoRA layer's scale becomes a per-row tensor (0 or alpha/r = 2).
+- A logits processor picks each row's greedy token, or the runtime's forced token, and sets the next forward's gate.
+
+Both writers are scored, P4 and P2. Self-test before anything else:
+- logits with every row at gate 0 must equal the disabled adapter bit for bit;
+- mixed-gate rows must equal their single-gate rows;
+- 16 IFEval replies at gate 0 must equal plain stock generation token for token.
+
+**Cache-mismatch test.** For each held-out item where a block opened, I take the context up to the opener and let the
+writer write the block again, this time from a context prefilled entirely at gate 1. I compare the identical-block rate
+and the line accuracy from the gate-0 cache against the gate-1 cache. I do the same, by identity only, for the first
+GSM8K block.
+
+**Bars:** T4's, unchanged. Precision and recall ≥ 0.95; word ≥ 0.90; equations ≥ 0.95; prose ≥ 0.95; IFEval strict
+within 2 points of stock zero-shot (0.536). Kill lines: rows and perplexity cannot move, because the adapters are
+unchanged and gate 0 is stock (T5); IFEval more than 5 points down.
+
+**Predictions** (P4 writer; P2 in brackets):
+
+| measure | prediction | why |
+|---|---|---|
+| precision / recall | 0.97 / 0.81, recall fails | opening the sheet is stock few-shot's own decision (437/540 and 13/240 in that baseline) |
+| word | 0.78 [0.80], fails | stock opened 176/180; the writer is right on about 0.8 of those after stock's prose |
+| equations | 0.83 [0.85], fails | stock opened 111/120, so 0.925 is the ceiling |
+| prose | 0.65 [0.65], fails | stock opened 80/120, so 0.667 is the ceiling |
+| IFEval strict | 0.52 (−1.6), passes | — |
+
+- **IFEval is not stock zero-shot's by construction.** The system prompt changes stock. What is stock's by construction
+  is stock few-shot: the gate-switch replies should equal it on every prompt where no block opens. I predict a block
+  opens on at most 3 of the 541 prompts.
+- **IFEval paired flips against stock zero-shot:** 40 prompts only stock passes, 31 only the gate switch passes.
+- **GSM8K** (Python stand-in): 0.47. **MMLU** (gate 0 with the sheet prompt): 0.47.
+- **Cache:** identical first blocks on 80% of the opened held-out items, and line accuracy from the gate-0 cache within
+  3 points below the gate-1 cache.
+- **Spend:** about $2: an H100 for about 30 minutes, one full pass with P4 and the opened items again with P2.
+
+So I predict the gate switch, as specified, fails four bars, because stock decides when to open the sheet. What it buys
+is IFEval near stock's, and the first measurement of the cache risk.
+
 ### Data (`dialogues.py`, seed 0)
 
 3,000 training dialogues: calc 504, prose 420, word 714, equation 462, distractors 900 (30%: no_robots train prompts

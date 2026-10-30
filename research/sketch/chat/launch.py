@@ -4,6 +4,7 @@
   uvx --with modal python launch.py stock <data>        # stock replies for <data> (a dir under /vol/data)
   uvx --with modal python launch.py eval <data> <adapter|none> <tag> [chat_eval.py flags]
   uvx --with modal python launch.py train <data> <init adapter> <out> [chat_train.py flags] [--then-eval[=parts]]
+  uvx --with modal python launch.py switch <data> <tag> <name=adapter>... # T4 option 2 (gate_switch.py)
   uvx --with modal python launch.py status              # poll recorded calls
 <data> is a directory on the polyformer-chat volume holding train_full.jsonl, kl.jsonl and heldout_full.jsonl.
 """
@@ -43,6 +44,8 @@ def main(argv):
     elif argv[0] == "eval":
         data, adapter, tag = argv[1:4]
         spawn("run_h100", f"eval_{tag}", [["python", "chat/chat_eval.py", data, adapter, tag] + argv[4:]])
+    elif argv[0] == "switch":  # switch <data> <tag> <name=adapter>... [--parts ...]: the gate switched inside a reply
+        spawn("run_h100", f"switch_{argv[2]}", [["python", "chat/gate_switch.py"] + argv[1:]])
     elif argv[0] == "train":
         data, init, out = argv[1:4]
         rest = [a for a in argv[4:] if not a.startswith("--then-eval")]
