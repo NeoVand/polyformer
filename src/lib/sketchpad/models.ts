@@ -38,7 +38,8 @@ export interface SketchModel {
 	prompts: Partial<Record<TickOp, string>>;
 	/**
 	 * Placeholder slots (`?`) after the multiplier's prompt: with 2, a step's three answers are read at `=` and the two
-	 * slots of one forward pass (research/sketch/e6_slots.py); without, they are generated one token at a time.
+	 * slots of one forward pass (research/sketch/e6_slots.py); without, they are generated one token at a time. A
+	 * slotted prompt is padded with more `?`s to the longest step word's length, so a wave step is one batch.
 	 */
 	slots?: number;
 }
@@ -46,12 +47,15 @@ export interface SketchModel {
 const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
 
 /**
- * One adapter for both operations (E5, recipe v2, seed 1; Modal, 29 Oct): 1,795/1,795 table rows on the server, min
- * margin 4.66, perplexity x0.989. Addition is its SUM opcode; multiplication its five ops. A switch reloads nothing.
+ * One adapter for both operations (E6, seed 3; Modal, 30 Oct): 1,795/1,795 table rows on the server, min margin 3.35,
+ * perplexity x1.007. Addition is its SUM opcode; multiplication its five ops. A switch reloads nothing. It is the E5
+ * union adapter (recipe v2) trained on to answer a multiplier step in one forward pass: the prompt ends `=??` and the
+ * three answers are read at `=` and the two slots (research/sketch/e6_slots.py).
  * Its graph has a window into itself (research/sketch/patch_onnx_inside.py): an extra `hidden_states` output and a
  * `steer` input that is zero unless a visitor pushes; the folder also holds the lens and map data (inside.ts).
+ * Built by research/sketch/build_program.sh.
  */
-const UNION = 'qwen35-union-s1-inside';
+const UNION = 'qwen35-union-e6-s3-inside';
 
 export const MODELS: Record<Kind, SketchModel> = {
 	add: {
@@ -68,7 +72,8 @@ export const MODELS: Record<Kind, SketchModel> = {
 		name: 'the model',
 		rows: 1553,
 		own: [GRAPH],
-		prompts: { MUL: 'MUL', ADD: 'ADD', ADZ: 'ADZ', FLS: 'FLS', NXT: 'NXT' }
+		prompts: { MUL: 'MUL', ADD: 'ADD', ADZ: 'ADZ', FLS: 'FLS', NXT: 'NXT' },
+		slots: 2
 	}
 };
 
@@ -129,7 +134,7 @@ export const certFiles = () => modelFiles();
  * cached certificate never outlives the format it checked. (The prompts are part of the cache key on their own.)
  */
 export const CERT_FORMAT = `sketchpad-cert-v1;add=fast-242;mul=${
-	MODELS.mul.slots ? `slots${MODELS.mul.slots}` : '3tok'
+	MODELS.mul.slots ? `slots${MODELS.mul.slots}-padded-kept` : '3tok'
 }-1553;strip=sprites-rowk-32x96`;
 
 /** The browser cache that holds model files, keyed by the URL they are served from. */

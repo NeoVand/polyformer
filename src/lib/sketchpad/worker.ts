@@ -79,6 +79,8 @@ let capturing = false;
 /** per decoder call, per batch row, the states at its last `captureLast` positions */
 let captured: Float32Array[][][] = [];
 let captureLast = 1;
+/** logits the next decoder calls compute, counted from the end (0: every place); see slottedForward */
+let keepLogits = 0;
 /** a push for the next decoder call that reads a whole prompt (the tick's first call) */
 let steerNext: Float32Array | null = null;
 /** the program loaded now, and a counter that moves whenever the loaded model changes */
@@ -309,12 +311,36 @@ function statesAt(t: OrtTensor, b: number, pos: number): Float32Array {
 	return out;
 }
 
-/** the states that wrote each answer token of batch row b: one per call, or the last positions of one call (slots) */
-const tokenStates = (b: number) =>
-	captureLast > 1 && captured.length ? captured[0][b] : captured.map((c) => c[b][0]);
+/** per batch row of a slotted call, the `?`s after its slots (padFor) */
+let rowPads: number[] = [];
+
+/**
+ * The states that wrote each answer token of batch row b: one per call (generated), or for a slotted call the places
+ * of `=` and the slots, which sit before the row's padding at the end.
+ */
+function tokenStates(b: number) {
+	if (captureLast === 1 || !captured.length) return captured.map((c) => c[b][0]);
+	const last = captured[0][b];
+	const pad = rowPads[b] ?? 0;
+	return last.slice(last.length - 1 - slots() - pad, last.length - pad);
+}
 
 /** the program's placeholder slots after the multiplier's prompt (0: answers generated token by token) */
 const slots = () => MODELS.mul.slots ?? 0;
+
+const MUL_OPS: Op[] = ['MUL', 'ADD', 'ADZ', 'FLS', 'NXT'];
+const promptLength = new Map<Op, number>();
+/**
+ * `?`s after a step's slots, so that every multiplier step's prompt has the length of the longest (the step words are
+ * one or two tokens): a wave step is then one batch. A token after the answer places cannot change them (every layer
+ * is causal), and the certificate checks each view in exactly this padded form.
+ */
+function padFor(op: Op) {
+	if (!promptLength.size)
+		for (const o of MUL_OPS)
+			promptLength.set(o, tok!.encode(promptFor(o), { add_special_tokens: false }).length);
+	return Math.max(...promptLength.values()) - promptLength.get(op)!;
+}
 
 /**
  * Hook the decoder session: hide `steer` from transformers.js (which feeds only the inputs it knows) and feed it here,
@@ -334,9 +360,12 @@ function wrapDecoder(m: Model) {
 			data.set(steerNext, (dims[1] - 1) * dims[2]);
 			steerNext = null;
 		}
-		const steer = (new tjs!.Tensor('float32', data, dims) as unknown as { ort_tensor: OrtTensor })
-			.ort_tensor;
-		const out = await run({ ...feeds, steer }, opts);
+		const ort = (t: unknown) => (t as { ort_tensor: OrtTensor }).ort_tensor;
+		const steer = ort(new tjs!.Tensor('float32', data, dims));
+		const keep: Record<string, OrtTensor> = keepLogits
+			? { num_logits_to_keep: ort(new tjs!.Tensor('int64', [BigInt(keepLogits)], [])) }
+			: {};
+		const out = await run({ ...feeds, steer, ...keep }, opts);
 		const hs = out.hidden_states;
 		if (capturing && hs) {
 			const S = hs.dims[2];
@@ -395,7 +424,9 @@ async function withInside<T>(
 ) {
 	captured = [];
 	capturing = !!inside;
-	captureLast = op !== 'ADD-FAST' && slots() ? 1 + slots() : 1;
+	const slotted = op !== 'ADD-FAST' && slots();
+	captureLast = slotted ? 1 + slots() + padFor(op as Op) : 1;
+	rowPads = slotted ? [padFor(op as Op)] : [];
 	steerNext = null;
 	let pushed: string | null = null;
 	if (inside && push && op === 'ADD-FAST') {
@@ -453,12 +484,33 @@ function appendTokens(inp: Inputs, ids: number[]) {
 	return L;
 }
 
-/** a multiplier prompt with its placeholder slots, for the one forward pass that reads all three answers */
+/**
+ * A multiplier prompt with its placeholder slots and padding (padFor), for the one forward pass that reads all three
+ * answers; L is the prompt's own length, so the answers sit at L - 1, L and L + 1.
+ */
 async function slotted(op: Op, image: unknown) {
 	const inp = await processor!(promptFor(op), [image]);
-	const L = appendTokens(inp, Array(slots()).fill(tokenOf('?')));
+	const L = appendTokens(inp, Array(slots() + padFor(op)).fill(tokenOf('?')));
 	return { inp, L };
 }
+
+/**
+ * One forward of slotted prompts that computes logits only at the last places (`=`, the slots, the longest padding):
+ * the output head is a third of the model's work per token. transformers.js's image-text forward drops
+ * num_logits_to_keep, so the decoder session's wrapper sets it.
+ */
+async function slottedForward(inp: Inputs) {
+	keepLogits = 1 + slots() + Math.max(...MUL_OPS.map(padFor));
+	try {
+		return await model!(inp);
+	} finally {
+		keepLogits = 0;
+	}
+}
+
+/** where an op's j-th answer sits in a slotted row's logits, counted from the row's end (kept or not) */
+const answerAt = (logits: TTensor, op: Op, j: number) =>
+	logits.dims[1] - 1 - slots() - padFor(op) + j;
 
 /**
  * Check one table row: every answer token must be the argmax at its place. Generated programs are scored teacher-
@@ -477,11 +529,12 @@ async function mulScore(op: Op, v: string[]) {
 		inp = await processor!(promptFor(op), [image]);
 		L = appendTokens(inp, ids);
 	}
-	const out = await model!(inp);
+	const out = slots() ? await slottedForward(inp) : await model!(inp);
 	let worst = Infinity;
 	let got = '';
 	ids.forEach((t, j) => {
-		const { m, arg } = margin(logitsAt(out.logits, L - 1 + j), t);
+		const at = slots() ? answerAt(out.logits, op, j) : L - 1 + j;
+		const { m, arg } = margin(logitsAt(out.logits, at), t);
 		worst = Math.min(worst, m);
 		got += m > 0 ? ans[j] : tok!.decode([arg]);
 	});
@@ -489,16 +542,18 @@ async function mulScore(op: Op, v: string[]) {
 }
 
 /** three answers from one forward of a slotted prompt, for batch row `row` */
-function readSlots(logits: TTensor, row: number, L: number) {
-	const S = logits.dims[1];
-	return [0, 1, 2].map((j) => tok!.decode([argmax(logitsAt(logits, row * S + L - 1 + j))]));
+function readSlots(logits: TTensor, row: number, op: Op) {
+	const K = logits.dims[1];
+	return [0, 1, 2].map((j) =>
+		tok!.decode([argmax(logitsAt(logits, row * K + answerAt(logits, op, j)))])
+	);
 }
 
 async function mulTick(op: Op, cells: string[]) {
 	const { strip, image } = stripImage(cells);
 	if (slots()) {
-		const { inp, L } = await slotted(op, image);
-		const ch = readSlots((await model!(inp)).logits, 0, L);
+		const { inp } = await slotted(op, image);
+		const ch = readSlots((await slottedForward(inp)).logits, 0, op);
 		return { out: [ch[0] === '_' ? B : ch[0], ch[1], ch[2]], strip };
 	}
 	const inputs = await processor!(promptFor(op), [image]);
@@ -512,9 +567,10 @@ async function mulTick(op: Op, cells: string[]) {
 }
 
 /**
- * Several multiplier ticks in one batched generation: one strip and prompt per row (every op word is one token, so
- * the prompts have one length), three greedy tokens each. The rows are independent views; batching only shares the
- * GPU calls.
+ * Several multiplier ticks in one batch, one strip and prompt per row. A slotted program reads each row's three answers
+ * from one forward pass (padFor gives every step's prompt one length); a generated one takes three greedy tokens, and
+ * its rows must share a step word length (the wave batches by it). The rows are independent views; batching only
+ * shares the GPU calls.
  */
 async function mulBatch(items: { op: Op; cells: string[] }[]) {
 	const strips = items.map((it) => stripImage(it.cells));
@@ -530,7 +586,7 @@ async function mulBatch(items: { op: Op; cells: string[] }[]) {
 	const inputs: Inputs = {};
 	for (const k of Object.keys(parts[0])) {
 		const ts = parts.map((x) => x[k] as TTensor);
-		if (!ts[0]?.dims) continue;
+		if (!ts[0]?.dims?.length) continue;
 		inputs[k] = tjs!.cat(ts as never, 0) as unknown as TTensor;
 	}
 	const L = (inputs.input_ids as TTensor).dims[1];
@@ -538,9 +594,9 @@ async function mulBatch(items: { op: Op; cells: string[] }[]) {
 		throw new Error('batched prompts differ in length');
 	if (slots()) {
 		// one forward: row b's answers sit at `=` and its slots
-		const logits = (await model!(inputs)).logits;
+		const logits = (await slottedForward(inputs)).logits;
 		return items.map((_, b) => {
-			const ch = readSlots(logits, b, L - slots());
+			const ch = readSlots(logits, b, items[b].op);
 			return { out: [ch[0] === '_' ? B : ch[0], ch[1], ch[2]], strip: strips[b].strip };
 		});
 	}
@@ -559,7 +615,9 @@ async function tickBatch(m: Extract<ToWorker, { type: 'tick-batch' }>) {
 		const t = performance.now();
 		captured = [];
 		capturing = !!inside;
-		captureLast = slots() ? 1 + slots() : 1;
+		const items = m.items as { op: Op; cells: string[] }[];
+		rowPads = slots() ? items.map((it) => padFor(it.op)) : [];
+		captureLast = slots() ? 1 + slots() + Math.max(...rowPads) : 1;
 		try {
 			const rows = await mulBatch(m.items as { op: Op; cells: string[] }[]);
 			const seen = rows.map((_, b) =>

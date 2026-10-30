@@ -107,6 +107,19 @@
 		return `Loaded in ${l.seconds.toFixed(1)} s: ${parts.join(', ')}.`;
 	});
 
+	/** a run asked for while the table is being checked starts when the check passes */
+	let queued = $state.raw<{ a: string; b: string } | null>(null);
+	async function go(x: string, y: string) {
+		if (pad.canRun) return void pad.run(x, y);
+		if (!certBusy) return;
+		const ask = (queued = { a: x, b: y });
+		await pad.certSettled();
+		// typed over, switched operation or asked again meanwhile
+		if (queued !== ask) return;
+		queued = null;
+		if (pad.canRun) void pad.run(x, y);
+	}
+
 	function digits(v: string) {
 		return v.replace(/\D/g, '').slice(0, LIMIT[pad.op]);
 	}
@@ -116,6 +129,7 @@
 		const v = digits(el.value);
 		if (which === 'a') a = v;
 		else b = v;
+		queued = null;
 		// drop anything that is not a digit from the field itself too
 		if (el.value !== v) el.value = v;
 		pad.stage(a, b);
@@ -123,6 +137,7 @@
 
 	/** switch the operation (a run in progress stops first); returns whether this switch took effect */
 	async function setOp(k: Kind) {
+		queued = null;
 		await pad.setOp(k);
 		if (pad.op !== k) return false;
 		if (k === 'mul' && (a.length > LIMIT.mul || b.length > LIMIT.mul)) {
@@ -139,7 +154,7 @@
 		a = rnd(p.n);
 		b = rnd(p.m);
 		pad.stage(a, b);
-		if (pad.canRun) void pad.run(a, b);
+		go(a, b);
 	}
 
 	function edit(r: number, c: number, by: number) {
@@ -237,8 +252,11 @@
 				{:else if pad.running}
 					<button class="primary" onclick={() => pad.stop()}>Stop</button>
 				{:else}
-					<button class="primary" disabled={!pad.canRun} onclick={() => pad.run(a, b)}>Run</button>
-					{#if certBusy}<span class="sp-hint">after the certificate</span>
+					<button class="primary" disabled={!pad.canRun && !certBusy} onclick={() => go(a, b)}
+						>Run</button
+					>
+					{#if queued}<span class="sp-hint">starts when the check ends</span>
+					{:else if certBusy}<span class="sp-hint">after the certificate</span>
 					{:else if certFailed}<span class="sp-hint"
 							>off: {fmt(cert.rows - cert.pass)} views fail on this device</span
 						>{/if}
@@ -391,13 +409,15 @@
 				<p>
 					Each tick the runtime crops three cells of the sheet, a 32 × 96 pixel image, and the model
 					answers in tokens: for addition the column's sum code, for multiplication two glyphs and
-					the name of its next step. The runtime stamps the glyphs and moves the window; nothing
-					else carries over between ticks.
+					the name of its next step, all three from one forward pass (the prompt ends in two
+					placeholder slots). The runtime stamps the glyphs and moves the window; nothing else
+					carries over between ticks. The passes of a multiplication overlap, two columns apart, and
+					their ticks run as one batch.
 				</p>
 				<p>
-					The model can only ever see 242 strips in addition and 1,553 in multiplication. The page
-					checks every one on your device before a run, so a run of any length is a chain of checked
-					steps.
+					The model can only ever see 242 strips in addition and 1,553 in multiplication. Every one
+					was checked on a reference device; your device checks the weakest tenth again before a run
+					(or all of them, on request), so a run of any length is a chain of checked steps.
 				</p>
 				<p>
 					Inside, the program's graph also returns the state at every layer. The lens reads each

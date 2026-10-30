@@ -363,6 +363,7 @@ class Pad {
 	/** what each loaded program reported (fingerprints), by program id */
 	private infos: Record<string, LoadedInfo> = {};
 	private pending = new Map<number, Pending>();
+	private certRun: Promise<void> | null = null;
 	private certRid: number | null = null;
 	/** certificates shipped with programs, by program id */
 	private shipped = new Map<string, Promise<ShippedCert | null>>();
@@ -797,6 +798,8 @@ class Pad {
 		const rid = ++this.rid;
 		this.certRid = rid;
 		this.certKind = k;
+		let settle = () => {};
+		this.certRun = new Promise((r) => (settle = r));
 		cert.start();
 		cert.key = key;
 		try {
@@ -828,7 +831,13 @@ class Pad {
 				this.certRid = null;
 				this.certKind = null;
 			}
+			settle();
 		}
+	}
+
+	/** resolves when the table check under way (if any) ends, passed or not */
+	certSettled(): Promise<void> {
+		return this.certRun ?? Promise.resolve();
 	}
 
 	/** Stamp a problem on the sheet without running it (what the visitor typed). */
@@ -924,9 +933,9 @@ class Pad {
 	}
 
 	/**
-	 * The multiplier as a wave: every pass under way takes its step together. A step's views are batched by prompt
-	 * length (ADD is one token, the other step words two: a batch must not pad, or its inputs would differ from the
-	 * certified ones), every view is read before any answer is applied, and the inside panels follow the leading pass.
+	 * The multiplier as a wave: every pass under way takes its step together, in one batch (a slotted program; otherwise
+	 * one per step word length, ADD being one token and the other words two, since a generated batch must not pad),
+	 * every view is read before any answer is applied, and the inside panels follow the leading pass.
 	 */
 	private async runWave(w: MulWave, cert: Cert, read: Record<number, boolean>, t0: number) {
 		const limit = 6 * w.m + 2 * w.n + 64;
@@ -944,8 +953,12 @@ class Pad {
 			const strips: Uint8ClampedArray[] = new Array(act.length);
 			const seen: (InsideTick | null)[] = new Array(act.length);
 			let ms = 0;
-			for (const short of [true, false]) {
-				const idx = act.map((q, i) => i).filter((i) => (act[i].op === 'ADD') === short);
+			// a slotted program pads every step's prompt to one length: one batch; otherwise one per step word length
+			const groups = MODELS.mul.slots ? [null] : [true, false];
+			for (const short of groups) {
+				const idx = act
+					.map((q, i) => i)
+					.filter((i) => short === null || (act[i].op === 'ADD') === short);
 				if (!idx.length) continue;
 				const r = await this.tickBatch(idx.map((i) => views[i]));
 				idx.forEach((i, k) => {
