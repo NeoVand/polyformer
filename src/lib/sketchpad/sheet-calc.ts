@@ -70,8 +70,12 @@ export class SheetCalc implements Calc {
 		return this.mux.seconds;
 	}
 
-	wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]> {
-		return Promise.all(jobs.map((j) => j()));
+	/** every job runs to its end (a failing one never leaves others running into the next line); then the first failure */
+	async wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]> {
+		const settled = await Promise.allSettled(jobs.map((j) => j()));
+		const failed = settled.find((r) => r.status === 'rejected');
+		if (failed) throw failed.reason;
+		return settled.map((r) => (r as PromiseFulfilledResult<T>).value);
 	}
 
 	async add(a: bigint, b: bigint): Promise<bigint> {

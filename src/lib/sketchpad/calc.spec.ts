@@ -261,6 +261,22 @@ describe('waves: independent operations sharing decoder calls', () => {
 		);
 	});
 
+	it('lets every job of a wave end before it reports a failure', async () => {
+		const c = new SheetCalc(referencePolicy);
+		let finished = false;
+		await expect(
+			c.wave<unknown>([
+				() => c.divmod(5n, 0n),
+				async () => {
+					const v = await c.mul(123456n, 789n);
+					finished = true;
+					return v;
+				}
+			])
+		).rejects.toThrow(/b > 0/);
+		expect(finished).toBe(true);
+	});
+
 	it('keeps a failing job from holding the others', async () => {
 		const c = new SheetCalc(referencePolicy);
 		const [x, y] = await Promise.allSettled([c.divmod(5n, 0n), c.mul(12n, 34n)]);

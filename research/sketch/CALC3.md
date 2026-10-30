@@ -1,7 +1,44 @@
 # CALC3: the calculator on the sheet (SKETCHPAD3 T1–T3)
 
-Log of the CALC stream (brief: `research/meta/sketchpad3/CALC.md`, contract `CONTRACT.md`). Newest results at the top
-once they exist; the registration below was written before any spend.
+Log of the CALC stream (brief: `research/meta/sketchpad3/CALC.md`, contract `CONTRACT.md`). Registrations were written
+before the runs they register.
+
+## Report (30 Oct 2026)
+
+**Passed.**
+- **T1:** subtraction (signed sums and differences), Knuth long division and the digit-by-digit square root run on the
+  sheet as model steps, each on a three-cell view of a certified table. `SheetCalc` implements seam 2, plus waves
+  (`Calc.wave`: steps of different operations share forward passes). Exact on 1,000 random cases per procedure with the
+  reference tables; no view outside the tables, ever. Calculate mode is on the dev page.
+- **T2:** E7 (E6 seed 3 + SUB 242, EST 400, DEC 9 rows) passed both kill lines. 2,446/2,446 rows certified on the
+  server, minimum margin 3.96; perplexity ×1.0048 of stock; stopped at step 1,600. Every row was first certified at step
+  1,200 (predicted). Compile baseline: plan 0/60, equation 0/60, word 2/60 (E6 0, 0, 1; stock 15, 0, 44), so E7 hurts
+  chat no more than E6. Program folder built into `static/sketchpad/models/arithmetic-e7/`.
+- **T3, exactness and certificate:** on the M4 page, the full certificate in the browser, **2,446/2,446**, every margin
+  positive (minimum 3.02 SUM, 4.61 calculator, 6.52 multiplier). **200/200 problems exact** (50 each of division to 10
+  places, √ to 6 places, gcd, signed ± up to 20 digits). Every run certified, no unchecked view. All 200 answers were
+  checked again in Python.
+
+**Failed.**
+- **T3, the 12 s bar: 184/200 met it.** Medians: division 7.0 s, √ 9.8 s, gcd 7.0 s, ± 2.0 s. Over 12 s: √ 11/50
+  (max 16.5 s), gcd 4/50 (max 13.4 s), division 1/50 (13.3 s), ± 0/50. Measured wall times track the cost model
+  (median ratio 1.02). The over-bar cases are roots of 3-digit numbers with several lowered guesses, and gcds with many
+  division steps.
+- **The browser dropped the WebGPU device 3 times** in about 45 minutes, with the Browser pane hidden
+  (`mapAsync … A valid external Instance reference no longer exists`). The tab was also reloaded once. Each time the
+  driver reloaded the model (certificate recalled from this device's cache) and redid the interrupted problem.
+  No wrong digit came of it; the page itself does not yet recover from a lost device.
+
+**Spend:** about $2.5 of $15 (37 min of H100 in four Modal jobs, table below). **Commits** on `sketchpad`: listed at the
+end. Optional item (slicing `hidden_states`) not done: T3 missed the 12 s bar, and the calculator already leaves the
+states on the GPU unless the run is slowed down.
+
+**For the orchestrator.**
+- `main` merged in (the `lora_gate` wiring kept).
+- E7 is built without the gate.
+- `HAS_CALC` turns Calculate on for the dev page only.
+- PROGRAM can use `sqrtFloor` and `divFloor` for "to k places".
+- Hand-over note: `calc3-handover.md` in the shared notes folder.
 
 ## T2 registration (30 Oct 2026, before launch)
 
@@ -198,12 +235,64 @@ Bar (from the brief): every answer exact, each under 12 s; then the full certifi
 every margin positive). Prediction from the cost model above: all exact; the medians 8, 10, 8 and 2 s; the 12 s bar
 fails for a few divisions, roots and gcds in the tail (the model's maxima are 13–15 s for these sizes).
 
+## T3: result (30 Oct, M4)
+
+Dev page with E7 (`arithmetic-e7`), Calculate mode, Fast, Apple M4 (WebGPU "Apple metal-3", fp16 decoder), the
+registered sets in order, one problem after another through `sketchpad.runCalc`, 19:45–20:12 UTC. Per-problem record:
+`calc3_t3.json` (line, exact, wall seconds, calls, views, cost-model seconds, certified, unchecked views, answer).
+
+**Certificate in the browser first:** 2,446/2,446, every margin positive (SUM 242/242 min 3.02 in 22 s; calculator
+651/651 min 4.61 in 62 s; multiplier 1,553/1,553 min 6.52 in 151 s). The T3 runs reused it (same files, device and
+runtime: the page's certificate cache).
+
+| Set (50 each) | Exact | Median s | Max s | Over 12 s | Median calls / views | Cost model median s |
+|---|---|---|---|---|---|---|
+| a ÷ b to 10 places (a ≤ 999, b ≤ 99) | **50** | 7.0 | 13.3 | 1 | 65 / 90 | 7.6 |
+| √a to 6 places (a ≤ 999) | **50** | 9.8 | 16.5 | 11 | 86 / 137 | 10.7 |
+| gcd(a, b) (a, b ≤ 999) | **50** | 7.0 | 13.4 | 4 | 61 / 84 | 7.1 |
+| signed ± up to 20 digits | **50** | 2.0 | 4.7 | 0 | 19 / 19 | 1.9 |
+
+- Every answer equals the page's own BigInt answer, and Python's (checked again from the record).
+- Every run's views were all certified rows (0 unchecked).
+- Wall time over the cost model's estimate: median 1.02, range 0.76–1.38. The 1.38 is √356, the first problem after a
+  device loss, on a freshly loaded model.
+
+**Against the registration.** Predicted: all exact (right); medians 8, 10, 8, 2 s (measured 7.0, 9.8, 7.0, 2.0); the
+12 s bar failing for a few divisions, roots and gcds in the tail (right: 1, 11 and 4).
+
+**Over the bar:**
+- division 803 ÷ 48 (13.3 s);
+- √573, √693, √88, √860, √489, √656, √214, √322, √356, √377, √120 (12.0–16.5 s);
+- gcd(362, 983), gcd(232, 257), gcd(261, 734), gcd(232, 909) (12.1–13.4 s).
+
+The roots cost because each digit's multiply-subtract runs over the whole trial divisor, which grows a digit per root
+digit, and a guess that is one too high costs a whole extra pass. These roots have 7–8 digits.
+
+**What would bring the tail under 12 s** (not done, for the orchestrator):
+- Knuth's refined guess (step D3: a second divisor digit, so the guess is rarely too high), which needs one more small
+  table;
+- or showing √ to 5 places on stage;
+- gcd could stop dividing by 3 for the remainder (scale by 25 instead of 3, a second multiply pass).
+
+**Interruptions.** The first attempt lost its page after five divisions (the tab reloaded while the Browser pane was
+hidden). The run was restarted with every result kept in `localStorage`. During it the WebGPU device was lost three
+times:
+- during √89 (the 46 problems after it failed at once);
+- at 20:01:49 during √356;
+- at 20:09:12 during gcd(34, 659).
+
+Each time the driver started a new worker and loaded the model again; the certificate came from this device's cache. It
+then redid the problem from the start. The table counts only completed runs; no run finished with a wrong digit.
+
 ## Spend and Modal calls
 
 | Job | Call id | What | Cost |
 |---|---|---|---|
 | `e7smoke_20_1401` | `fc-01M672ZV9KK296RQJ3EEVTX0N6` | 20 steps from E6 s3 and one certificate: the wiring (2,446 rows; 1,877 certified at step 20) | 4.1 min H100, about $0.27 |
-| `e7_s3_4000_h4.0_stop3.0_fast` | `fc-01M673S1J9D0G42QCNBHE8RFS9` | E7 training and evaluation | (running) |
+| `e7_s3_4000_h4.0_stop3.0_fast` | `fc-01M673S1J9D0G42QCNBHE8RFS9` | E7: 1,600 steps (stop rule), certificate, end-to-end runs | 19.8 min H100, about $1.30 |
+| `compile_baseline_1435` | `fc-01M674Y4EY2AXDY80AMHJJS18G` | compile baseline, stock then E7 | 11.5 min H100, about $0.76 |
+| `e7pad_1437` | `fc-01M67526PSNKA5JHY1F68BN9WF` | SUM rows padded vs unpadded | 1.2 min H100, about $0.08 |
+| **total** | | | **about 37 min of H100, about $2.4** (wall times × $3.95/h; container start-up adds a little) |
 
 ## Glossary candidates
 
@@ -221,3 +310,9 @@ fails for a few divisions, roots and gcds in the tail (the model's maxima are 13
 - **Speculative vs dependent steps**: a view may share a decoder call with another only when it does not read a cell
   the other writes; the calculator rides a guess along with the last step of the trial divisor, never with a step
   whose outcome could make the guess's view meaningless. Why: calls are a third to a half of the cost on the M4.
+- **Wave (on the sheet)**: several independent procedures run at once, each step of all of them read by the model in one
+  batched forward pass; a step waits until every procedure under way has asked for its next one. Why: PROGRAM's algebra
+  is many small independent calls, and on the M4 a call's fixed cost is about two views' worth.
+- **WebGPU device loss**: the browser can withdraw the GPU from a page (driver reset, background tab, memory); every
+  later call fails until the page asks for a new device and loads the model again. Why: it stopped T3 three times with
+  the Browser pane hidden, and the page should recover from it by itself.
