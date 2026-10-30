@@ -375,5 +375,80 @@
    ]
   ],
   "spawned": "2026-10-30 04:11:16 CDT"
+ },
+ "compile_baseline_1154": {
+  "call_id": "fc-01M66VQRG5PGAZS4YSQVWKX9SC",
+  "cmds": [
+   [
+    "python",
+    "compile_baseline.py"
+   ],
+   [
+    "python",
+    "compile_baseline.py",
+    "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"
+   ]
+  ],
+  "spawned": "2026-10-30 11:54:23 CDT"
+ },
+ "compile_baseline_1156": {
+  "call_id": "fc-01M66VW87A434Q52F2AGHP8JZQ",
+  "cmds": [
+   [
+    "python",
+    "compile_baseline.py"
+   ],
+   [
+    "python",
+    "compile_baseline.py",
+    "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"
+   ]
+  ],
+  "spawned": "2026-10-30 11:56:50 CDT"
+ },
+ "compile_baseline_1157": {
+  "call_id": "fc-01M66VX58ENSE0CRV2GYT56TG1",
+  "cmds": [
+   [
+    "python",
+    "compile_baseline.py"
+   ],
+   [
+    "python",
+    "compile_baseline.py",
+    "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"
+   ]
+  ],
+  "spawned": "2026-10-30 11:57:19 CDT"
+ },
+ "compile_baseline_1158": {
+  "call_id": "fc-01M66VYEBCZZV4ZK067NHVGCDP",
+  "cmds": [
+   [
+    "python",
+    "compile_baseline.py"
+   ],
+   [
+    "python",
+    "compile_baseline.py",
+    "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"
+   ]
+  ],
+  "spawned": "2026-10-30 11:58:02 CDT"
+ },
+ "compile_baseline_1214": {
+  "call_id": "fc-01M66WVWTDXA7294JXSYP85YQA",
+  "cmds": [
+   [
+    "python",
+    "compile_baseline.py"
+   ],
+   [
+    "python",
+    "compile_baseline.py",
+    "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"
+   ]
+  ],
+  "spawned": "2026-10-30 12:14:07 CDT"
  }
 }

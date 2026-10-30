@@ -76,6 +76,12 @@ def main(argv):
         cmds = [["python", "e6_slots.py", "train", steps, seed, hinge, stop, init]]
         call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
         record(job, call, cmds)
+    elif argv[0] == "compile":  # compile [adapter dir on the volume]: the compile_baseline.py rates, base then adapter
+        job = "compile_baseline" + time.strftime("_%H%M")
+        init = argv[1] if len(argv) > 1 else "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"
+        cmds = [["python", "compile_baseline.py"], ["python", "compile_baseline.py", init]]
+        call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
+        record(job, call, cmds)
     elif argv[0] == "status":
         calls = json.loads(CALLS.read_text())
         for job, c in calls.items():

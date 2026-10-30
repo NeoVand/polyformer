@@ -86,3 +86,10 @@ from the E5 union adapter with recipe v2 (H100, `e6 <seed> <init>` in modal/laun
 - Built with build_program.sh (LoRA into the fp16 graph, the inside window, atlas, map and lens data, push check).
   The program folder `qwen35-union-e6-s3-inside` ships `certificate.json`; page commits 5c936d8f and ed439435 on
   branch `sketchpad` (local).
+
+## The language half, measured (30 Oct; Modal, about $1)
+`compile_baseline.py`: Qwen3.5-0.8B few-shot in the chat format, scored by running its output. Untouched: expression →
+one-operation work order 15/60 (precedence errors), equation → both sides at x = 0, 1 0/60 (answers in LaTeX, often
+substitutes into the example), word problem → expression 44/60. **With the E6 adapter: 0/60, 0/60, 1/60**: it rambles,
+copies the examples, invents a typo. Text perplexity (×1.007) did not see this; the page's chat runs on these weights.
+Plan and fix (self-distillation on the base's chat answers, gate 0 for chat until then): `research/meta/SKETCHPAD3.md`.

@@ -224,3 +224,127 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **Class-mean push on the multiplier (ours, 30 Oct).** The push of the adder (Turner et al. 2023's activation steering
   with class means) applied to the multiply step: mean layer-20 state of the target product digit minus that of the
   true one, added at the `=` place of one row of the wave's batch; lands 40/40 on the M4, other rows untouched 20/20.
+- **Progression metric (BALROG NetHack).** Per game, the larger of two table values: one for the deepest dungeon level
+  reached, one for the highest experience level; averaged over 5 fixed games. The table is the chance a human at that
+  level went on to win, so dungeon level 2 = 1.5%, 5 = 2.7%, 8 = 7.0%, 10 = 12.6%. The board is a depth ladder.
+- **Dive (NetHack slang).** Descend as fast as possible instead of exploring and levelling; the strategy the ladder
+  rewards. Speedrunners dive.
+- **Elbereth.** A word you can engrave in the dust under you (`engrave`, `-`, type it); most monsters will not attack you
+  in melee while you stand on it. The best cheap survival rule in the game.
+- **Travel command.** NetHack's `_` key: pick a spot on the map (`>` jumps the cursor to the downstairs) and the game
+  walks you there by its own shortest path. Turns "go to the stairs" into three keypresses once the stairs are seen.
+- **Frontier / BFS / grassfire.** Frontier: a walkable cell next to an unexplored one; the next thing to explore.
+  BFS (breadth-first search): shortest paths on a grid by expanding one ring at a time. Grassfire (Lee's algorithm,
+  1961): the same thing as a wave that spreads one cell per tick by a local rule, which is why it fits a cellular
+  canvas. [zoo]
+- **Macro-action.** One high-level choice ("explore", "descend", "pray") executed by a program as several primitive
+  keypresses. Lets a small model decide while a program moves.
+- **vLLM.** A server that runs open models fast with batching; BALROG talks to it through the OpenAI-compatible API.
+- **No-progress timeout (BALROG).** The game ends after 150 steps without progress; what counts as progress is a
+  day-1 check (screen unchanged vs score unchanged), because exploring without fighting could trip it.
+- **Dev/eval seed split.** Build and tune on games nobody scores (seeds 1000+), run the five scored games (seeds 42–46)
+  once after freezing the code. The only honest way to use a benchmark whose test games are fixed.
+- **Control (C0–C3).** The comparison runs that give a number its meaning: same model without the module (C0), module
+  without the model (C1), module with random choices (C2), and the seed split (C3).
+
+## Round 6 (30 Oct, SKETCHPAD3)
+
+- **Knuth's Algorithm D.** The textbook long-division recipe: guess each quotient digit from the first two digits of the
+  remainder and the first digit of the divisor, after scaling the divisor so its first digit is ≥ 5; the guess is off by
+  at most 2. Turns the non-local "guess" into a 900-row lookup.
+- **Trial subtraction.** Guess nothing: subtract the divisor until it would go negative, count the subtractions. Slower,
+  but needs no new table.
+- **Digit-by-digit square root.** The pen-and-paper root: bring down two digits at a time and find the largest x with
+  (20P + x)·x ≤ remainder, P being the root so far. Each trial is one small multiply and one subtract.
+- **Euclid's / Stein's gcd.** Euclid: replace the pair (a, b) by (b, a mod b) until b = 0. Stein (binary gcd): use only
+  halving and subtraction; good when you have no divider.
+- **Complement trick.** To subtract a bigger number from a smaller one, subtract anyway; if a borrow falls off the end,
+  the true answer is minus the "ten-complement" of what you got. Lets one table handle negatives.
+- **Coefficient grid.** A polynomial written as one column per power of x, the coefficient as a vertical number. Adding
+  is column-wise addition; multiplying is long multiplication with the carry between columns switched off ("polynomials
+  as numbers without carries", Kronecker substitution undone). [zoo]
+- **Fraction-free elimination (Bareiss).** Gaussian elimination that keeps every intermediate number an integer, with one
+  division per unknown at the end. Right for a page that has only integer tables.
+- **Rational root theorem.** Any integer root of a polynomial with integer coefficients divides the constant term, so the
+  candidates are a finite list to try.
+- **Horner's rule.** Evaluate a polynomial by repeated "multiply by x, add the next coefficient": one multiply and one add
+  per degree; here, a certified check of a guessed root.
+- **Guess-then-prove.** The model proposes, a certified program checks; the proposal can only waste time, never change
+  the answer. The one safe place for the LM's judgement.
+- **Toolformer (2023).** Teach a model to call tools by inserting candidate calls into text and keeping those that lower
+  the loss on what follows; the standard recipe for "decide when to use it" data. Here the tool is the model's own page.
+- **Hard gate.** A 0/1 input that multiplies the adapter's contribution: at 0 the model is bit-for-bit the stock model,
+  at 1 the certified machine. A soft (fractional) gate inside a certified step would break the finite certificate.
+- **Carry-lookahead (Kogge–Stone).** Resolve all carries of an addition in log n parallel rounds instead of a chain. Not
+  useful here: the decoder is compute bound, so fewer calls with the same number of rows saves nothing.
+- **Base-100 cells.** Two digits per cell halves every step count at the price of a 20,000-row table (certified
+  server-side once, spot-checked on device). A later lever.
+- **Algebra by evaluation (interpolation).** Instead of moving symbols, compute the value of each typed side at a few
+  numbers and solve for the coefficients those values force: a line from its values at 0 and 1, a quadratic from three
+  points, one extra point to confirm the degree. Standard in computer algebra as "black-box" polynomials (Kaltofen and
+  Trager, 1990). Here it means the sheet only ever does certified arithmetic, and the language half only copies the
+  expression with x replaced by a number. [zoo]
+- **Kronecker substitution (Kronecker, 1882).** Multiply polynomials by multiplying numbers: put x = 10^k with k large
+  enough that coefficients cannot overlap, multiply the integers, and read the coefficients off in groups of k digits.
+  (x + 2)^5 becomes 1002^5 = 1 010 040 080 080 032, i.e. 1, 10, 40, 80, 80, 32. On our sheet it reuses the certified
+  multiplier with no new table. [zoo]
+- **Cramer's rule.** Solve a small linear system with determinants: for 2×2, x = (e·d − b·f)/(a·d − b·c). Six products,
+  three subtractions and two divisions on the sheet.
+- **Work order.** Our name for the short list of one-operation lines (`t1 = 1234 - 567`) the model writes in its reply
+  before the sheet runs them; the transcription the certificate does not cover, shown to the reader.
+- **State copy cost.** The inside view needs every layer's state for the step it shows; copying all 25 layers for every
+  batch row off the GPU cost a third to half of each step on the M4 (30 Oct). Leaving them on the GPU unless a panel reads
+  them makes a step 0.065 s + 0.037 s per row instead of 0.15 s + 0.05 s.
+
+## Added 30 Oct (SKETCHPAD3 prior-art gate, `research/audit/sketchpad3_gate/out.md`)
+
+- **Prior-art gate verdicts.** OPEN: nothing close was found (which is not proof that nothing exists). NARROW: close work
+  exists, and only a stated conjunction is still new. KILLED: already done. Each gate opens every cited arXiv abstract
+  page on the day it runs.
+- **Verification set** (Cai, Shin & Song 2017). Learned recursive programs are run on a finite set of inputs covering
+  every base case and every reduction step. If all of them pass, the program is proved correct at every length. This is
+  the direct ancestor of our per-view certificate; their pad was symbolic, and they called perceptual inputs infeasible. [zoo]
+- **CAEF** (Lai et al. 2024). LLaMA-3.1-8B fine-tuned to step through +, −, ×, ÷ and comparisons as a text Turing-machine
+  tape, with one LoRA per operator. Near 100% up to 100 digits, but neither exact nor certified. The closest
+  pretrained-LM rival to the sheet.
+- **Built-in calculator modules** (OccamLLM 2024; IGC 2025; Neural Comprehension 2023). A symbolic or hand-compiled
+  arithmetic unit placed inside an LLM, which the hidden state triggers in the middle of generation: exact, with no tool
+  call. These are prior art for "no external tool", but the module is not the model's own learned procedure.
+- **Compiled transformer computers** (Loom 2026; Percepta transformer-vm 2026). Weights set by hand, not trained, so a
+  transformer runs C or WebAssembly programs at one instruction per forward pass. They show execution in weights; they
+  are not learned and not conversational.
+- **Tool-integrated reasoning** (Toolformer 2023, ToRA 2023, ReTool 2025, ToolRL 2025). A model learns when to call an
+  external interpreter in the middle of its reasoning and continues with the result. This is the standard form of our
+  "decides to use the sheet", except that the tool is external.
+- **Chain of Code / LMulator** (Li et al. 2023). The LM writes code, a real interpreter runs the lines it can, and the
+  LM *emulates* the rest. It is the closest "model executes its own program" idea, and it is uncertified.
+- **Visual chain of thought** (Visual Sketchpad 2024, Whiteboard-of-Thought 2024, MVoT 2025, Chain-of-Sketch 2024,
+  MathCanvas 2025, Self-Imagine 2024). Models that draw or render intermediate images and reason over them. MathCanvas
+  learns when to draw. None computes exactly or carries a certificate.
+- **Extended Neural GPU** (Price, Zaremba & Sutskever 2016). A Neural GPU trained with a curriculum that learned decimal
+  arithmetic generalising to long inputs, yet failed on symmetric inputs such as 0…02 × 0…02. It shows that "generalises"
+  is not "certified".
+- **DFST, differentiable finite-state transducer** (Papazov et al. 2025). A trainable finite-state machine that learns
+  exact addition and multiplication from expert step traces and generalises to thousands of times the training length.
+  It is trained from scratch, with no language and no image.
+- **Seq2seq symbolic mathematics** (Lample & Charton 2019). A transformer trained to map an expression straight to its
+  integral or ODE solution, beating Mathematica on their test sets. This is learned algebra with no exactness by
+  construction, so it kills the broad form of "algebra without a CAS".
+- **Minerva** (Lewkowycz et al. 2022). An LLM pretrained on general text, then further trained on technical text; it does algebra in
+  chain-of-thought with no tool. It is the plain-LLM baseline for tool-free algebra, and it is not exact.
+- **Gröbner basis.** A canonical generating set for a system of polynomial equations; computing one solves the system.
+  Kera et al. (2023, 2025) train transformers for it. In the border-basis variant, the classical algorithm guarantees
+  correctness and the network only speeds it up: the reverse of our split.
+- **NTK, neural tangent kernel.** The limit in which a very wide network trains like a fixed kernel method. It makes
+  training analysable: Back de Luca et al. (2025) use it to prove exact binary arithmetic with high probability. That is
+  a proof about idealised training, not an audit of trained weights.
+- **Recursive language models** (Zhang, Kraska & Khattab 2025). An LLM that calls itself on parts of a long prompt
+  through a Python REPL. Prior art for a model invoking itself; the REPL is external and nothing is certified.
+- **Learning without Forgetting (Li and Hoiem, 2016) / self-distillation.** While fine-tuning on a new skill, also train
+  the model to match the old model's own outputs on old-style inputs, so the old behaviour is kept. Our E6 kept a KL term
+  on plain text only, and plain-text perplexity stayed within 0.7% while chat instruction-following collapsed (30 Oct
+  baseline); the fix is the same term on the base's chat answers. [zoo]
+- **IFEval (2023).** A benchmark of instructions with checkable constraints ("answer in three bullet points", "no
+  commas"); scores whether a chat model follows instructions, which perplexity does not measure.
+- **Compile (here).** Turning a typed problem into the sheet's work order: the language half of the system, uncertified,
+  shown on the page. Baseline on the untouched 0.8B: 25% for expressions (precedence errors), 73% for word problems.

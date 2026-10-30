@@ -14,6 +14,7 @@ volume `polyformer-sketch` under /runs/<job id>/.
 import os
 import pathlib
 import shutil
+import tempfile
 import subprocess
 import time
 
@@ -55,7 +56,9 @@ PATCHES = [
 
 
 def _run(job_id: str, cmds: list):
-    work = pathlib.Path("/tmp/work")
+    # a fresh scratch copy per job, under its own name: Modal reuses warm containers, and a second job in the same
+    # container found the first one's /tmp/work (FileExistsError, 30 Oct)
+    work = pathlib.Path(tempfile.mkdtemp(prefix="work-")) / "sketch"
     shutil.copytree("/src/sketch", work)
     patched = []
     for fname, old, new in PATCHES:
