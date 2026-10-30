@@ -12,6 +12,8 @@ export interface SheetRow {
 	sprite: 0 | 1 | 2;
 	/** a ruled line above this row */
 	ruleBefore: boolean;
+	/** scratch (a carry row): drawn in a lighter ink than the numbers */
+	dim?: boolean;
 }
 
 export interface SheetSource {
@@ -26,7 +28,7 @@ export interface SheetSource {
 }
 
 const ADD_ROWS: SheetRow[] = [
-	{ key: 'carry', label: 'carry', sprite: 0, ruleBefore: false },
+	{ key: 'carry', label: 'carry', sprite: 0, ruleBefore: false, dim: true },
 	{ key: 'top', label: 'a', sprite: 1, ruleBefore: false },
 	{ key: 'bottom', label: 'b', sprite: 2, ruleBefore: false },
 	{ key: 'sum', label: 'a + b', sprite: 1, ruleBefore: true }
@@ -48,8 +50,8 @@ const MUL_ORDER: Row[] = ['a', 'b', 'cM', 'cA', 'p', 'R'];
 const MUL_ROWS: SheetRow[] = [
 	{ key: 'a', label: 'a', sprite: 0, ruleBefore: false },
 	{ key: 'b', label: '× b', sprite: 1, ruleBefore: false },
-	{ key: 'cM', label: 'carry ×', sprite: 2, ruleBefore: true },
-	{ key: 'cA', label: 'carry +', sprite: 0, ruleBefore: false },
+	{ key: 'cM', label: 'carry ×', sprite: 2, ruleBefore: true, dim: true },
+	{ key: 'cA', label: 'carry +', sprite: 0, ruleBefore: false, dim: true },
 	{ key: 'p', label: 'product', sprite: 1, ruleBefore: false },
 	{ key: 'R', label: 'a × b', sprite: 2, ruleBefore: true }
 ];

@@ -34,13 +34,17 @@
 	});
 
 	/** the multiplier's steps; the model names the next one with its third token */
+	/**
+	 * The multiplier's steps: the inner loop (MUL, ADD) on the left, the end of a pass (ADZ, FLS, NXT) along the bottom,
+	 * halt above NXT, and the return to MUL as an arc underneath, so no arrow crosses another or a letter.
+	 */
 	const NODES: Record<string, { x: number; y: number; word: string }> = {
-		MUL: { x: 34, y: 66, word: 'MUL' },
-		ADD: { x: 118, y: 20, word: 'ADD' },
-		ADZ: { x: 118, y: 112, word: 'ADZ' },
-		FLS: { x: 202, y: 112, word: 'FLS' },
-		NXT: { x: 202, y: 20, word: 'NXT' },
-		H: { x: 262, y: 66, word: 'halt' }
+		MUL: { x: 40, y: 92, word: 'MUL' },
+		ADD: { x: 40, y: 24, word: 'ADD' },
+		ADZ: { x: 115, y: 92, word: 'ADZ' },
+		FLS: { x: 190, y: 92, word: 'FLS' },
+		NXT: { x: 265, y: 92, word: 'NXT' },
+		H: { x: 265, y: 24, word: 'halt' }
 	};
 	const LETTER: Record<string, string> = {
 		M: 'MUL',
@@ -51,12 +55,12 @@
 		H: 'H'
 	};
 	const EDGES = [
-		{ from: 'MUL', to: 'ADD', letter: 'A', bend: -12 },
-		{ from: 'ADD', to: 'MUL', letter: 'M', bend: -12 },
+		{ from: 'MUL', to: 'ADD', letter: 'A', bend: 14 },
+		{ from: 'ADD', to: 'MUL', letter: 'M', bend: 14 },
 		{ from: 'MUL', to: 'ADZ', letter: 'Z', bend: 0 },
 		{ from: 'ADZ', to: 'FLS', letter: 'F', bend: 0 },
 		{ from: 'FLS', to: 'NXT', letter: 'N', bend: 0 },
-		{ from: 'NXT', to: 'MUL', letter: 'M', bend: -30 },
+		{ from: 'NXT', to: 'MUL', letter: 'M', bend: -64 },
 		{ from: 'NXT', to: 'H', letter: 'H', bend: 0 }
 	];
 	const mul = $derived.by(() => {
@@ -68,6 +72,7 @@
 		return `${mul.from}, then it wrote ${mul.letter}: ${mul.to === 'H' ? 'halt' : `next step ${mul.to}`}.`;
 	});
 
+	/** an arrow between two states, bent by `bend`, and where its letter goes: off the curve's middle, outside the bend */
 	function arc(x1: number, y1: number, x2: number, y2: number, bend: number, r = 16) {
 		const dx = x2 - x1;
 		const dy = y2 - y1;
@@ -80,7 +85,15 @@
 		const ey = y2 - uy * (r + 2);
 		const mx = (sx + ex) / 2 - uy * bend;
 		const my = (sy + ey) / 2 + ux * bend;
-		return { d: `M${sx},${sy} Q${mx},${my} ${ex},${ey}`, lx: mx - uy * 9, ly: my + ux * 9 };
+		// straight arrows carry their letter on their left (above a rightward arrow, clear of the arc below)
+		const side = bend > 0 ? 1 : -1;
+		const cx = (sx + 2 * mx + ex) / 4;
+		const cy = (sy + 2 * my + ey) / 4;
+		return {
+			d: `M${sx},${sy} Q${mx},${my} ${ex},${ey}`,
+			lx: cx - uy * 9 * side,
+			ly: cy + ux * 9 * side
+		};
 	}
 </script>
 
@@ -91,7 +104,7 @@
 	</figcaption>
 	<div class="sp-body">
 		{#if kind === 'add'}
-			<svg viewBox="-4 -4 276 142" role="img" aria-label="The adder as a two-state machine">
+			<svg viewBox="0 0 270 150" role="img" aria-label="The adder as a two-state machine">
 				<defs>
 					<marker
 						id="ma"
@@ -116,51 +129,55 @@
 						<path d="M0,0 L8,4 L0,8 z" class="head on" />
 					</marker>
 				</defs>
-				{#each [{ s: 0, x: 60 }, { s: 1, x: 200 }] as n (n.s)}
+				{#each [{ s: 0, x: 65, loop: 'M51.2,58.3 C27,4 103,4 78.8,58.3' }, { s: 1, x: 205, loop: 'M191.2,58.3 C167,4 243,4 218.8,58.3' }] as n (n.s)}
 					{@const self = on(n.s, n.s)}
 					<path
 						class="edge"
 						class:on={self}
-						d="M{n.x - 11},{48} C{n.x - 34},{2} {n.x + 34},{2} {n.x + 11},{48}"
+						d={n.loop}
 						marker-end={self ? 'url(#ma-on)' : 'url(#ma)'}
 					/>
-					<text class="elab" class:on={self} x={n.x} y="8" text-anchor="middle"
+					<text class="elab" class:on={self} x={n.x} y="12" text-anchor="middle"
 						>{n.s === 0 ? 'sum < 10' : 'sum ≥ 10'}</text
 					>
 				{/each}
 				<path
 					class="edge"
 					class:on={on(0, 1)}
-					d="M80,58 Q130,40 180,58"
+					d="M86.2,66.7 Q135,42 182.0,65.8"
 					marker-end={on(0, 1) ? 'url(#ma-on)' : 'url(#ma)'}
 				/>
-				<text class="elab" class:on={on(0, 1)} x="130" y="40" text-anchor="middle">sum ≥ 10</text>
+				<text class="elab" class:on={on(0, 1)} x="135" y="50" text-anchor="middle">sum ≥ 10</text>
 				<path
 					class="edge"
 					class:on={on(1, 0)}
-					d="M180,80 Q130,98 80,80"
+					d="M183.8,89.3 Q135,114 88.0,90.2"
 					marker-end={on(1, 0) ? 'url(#ma-on)' : 'url(#ma)'}
 				/>
-				<text class="elab" class:on={on(1, 0)} x="130" y="106" text-anchor="middle"
+				<text class="elab" class:on={on(1, 0)} x="135" y="113" text-anchor="middle"
 					>sum &lt; 10</text
 				>
 				<path
 					class="edge"
 					class:on={on(0, 'halt')}
-					d="M60,89 L60,114"
+					d="M65,102 L65,124"
 					marker-end={on(0, 'halt') ? 'url(#ma-on)' : 'url(#ma)'}
 				/>
-				<text class="node-t" class:on={on(0, 'halt')} x="60" y="130" text-anchor="middle">halt</text
+				<text class="node-t" class:on={on(0, 'halt')} x="65" y="138" text-anchor="middle">halt</text
 				>
-				{#each [{ s: 0, x: 60 }, { s: 1, x: 200 }] as n (n.s)}
-					<circle class="node" class:on={add?.from === n.s} cx={n.x} cy="69" r="19" />
-					<text class="node-t" class:on={add?.from === n.s} x={n.x} y="73" text-anchor="middle"
-						>carry {n.s}</text
+				{#each [{ s: 0, x: 65 }, { s: 1, x: 205 }] as n (n.s)}
+					<circle class="node" class:on={add?.from === n.s} cx={n.x} cy="78" r="24" />
+					<!-- the state: the carry the sheet holds -->
+					<text class="state-k" class:on={add?.from === n.s} x={n.x} y="70" text-anchor="middle"
+						>carry</text
+					>
+					<text class="state-v" class:on={add?.from === n.s} x={n.x} y="92" text-anchor="middle"
+						>{n.s}</text
 					>
 				{/each}
 			</svg>
 		{:else}
-			<svg viewBox="0 -4 290 140" role="img" aria-label="The multiplier's steps as a machine">
+			<svg viewBox="0 0 300 150" role="img" aria-label="The multiplier's steps as a machine">
 				<defs>
 					<marker
 						id="mm"
@@ -263,6 +280,19 @@
 		font-family: var(--font-mono);
 	}
 	.node-t.on {
+		fill: var(--color-ink);
+	}
+	.state-k {
+		font-size: 8.5px;
+		fill: var(--color-ink-3);
+	}
+	.state-v {
+		font-family: var(--font-mono);
+		font-size: 16px;
+		fill: var(--color-ink-3);
+	}
+	.state-k.on,
+	.state-v.on {
 		fill: var(--color-ink);
 	}
 </style>

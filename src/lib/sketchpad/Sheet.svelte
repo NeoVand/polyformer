@@ -26,17 +26,15 @@
 	let metrics = $state.raw<Metrics | null>(null);
 	let win = $state.raw({ from: 0, to: 1 });
 	let cursor = $state('default');
-	/**
-	 * labels beside the problem: a compact sheet whose problem fits with room for the labels on its left (LABEL_ROOM);
-	 * otherwise they keep the margin column
-	 */
-	const LABEL_ROOM = 72;
-	const inline = $derived(compact && !!metrics?.fits && metrics.left >= LABEL_ROOM);
+	/** a compact sheet keeps its row labels inside the paper, beside the problem (LABEL_ROOM is kept for them) */
+	const LABEL_ROOM = 64;
+	const inline = $derived(compact && !!metrics);
 	let drag: { x: number; id: number } | null = null;
 
 	onMount(() => {
 		const v = new SheetView(canvas);
 		v.compact = compact;
+		v.reserve = compact ? LABEL_ROOM : 0;
 		v.onMetrics = (m) => (metrics = m);
 		v.onWindow = (from, to) => {
 			if (Math.abs(from - win.from) > 1e-4 || Math.abs(to - win.to) > 1e-4) win = { from, to };
@@ -121,7 +119,7 @@
 	}
 </script>
 
-<!-- a compact sheet that fits writes its row labels beside the problem; one that pans keeps them in the margin -->
+<!-- a compact sheet writes its row labels inside the paper, beside the problem; a full sheet keeps them in the margin -->
 <div class="sheet" class:inline>
 	<div class="labels" aria-hidden="true">
 		{#if metrics && source && !inline}

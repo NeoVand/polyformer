@@ -10,6 +10,8 @@ import { SHEET, type SheetPalette } from './theme.svelte.ts';
 
 const FOCUS_MS = 850;
 const HOVER_MS = 250;
+/** the ink of a scratch row (carries), relative to the numbers */
+const DIM_INK = 0.45;
 const easeInOut = (t: number) => (t < 0.5 ? 4 * t * t * t : 1 - (-2 * t + 2) ** 3 / 2);
 const clamp = (v: number, a: number, b: number) => Math.max(a, Math.min(b, v));
 
@@ -119,27 +121,51 @@ export class SheetView {
 		return c;
 	}
 
-	/** a smaller sheet (24 px cells), so the inside of the model fits on the same screen */
+	/** a smaller sheet (24 px cells, down to 18 to fit a problem whole), so the inside of the model fits beside it */
 	compact = false;
+	/** room kept inside the paper, left of the problem, for the row labels (compact sheets) */
+	reserve = 0;
+	/** the largest cell size for this screen; compact sheets go smaller only to fit a problem whole */
+	private csMax = 32;
 
 	/** lay out for a CSS width; the cell size follows the width and the screen's pixel ratio */
 	resize(cssW: number) {
 		this.dpr = Math.max(1, Math.round((globalThis.devicePixelRatio || 1) * 4) / 4);
 		const narrow = cssW < 520 || this.compact;
 		// whole device pixels per sprite pixel where possible, so the glyphs stay crisp
-		this.cs = narrow ? (this.dpr >= 2.5 ? 64 / this.dpr : 24) : 32;
+		this.csMax = narrow ? (this.dpr >= 2.5 ? 64 / this.dpr : 24) : 32;
 		this.padX = narrow ? 12 : 20;
 		this.padY = narrow ? (this.compact ? 8 : 12) : 18;
 		this.ruleGap = narrow ? (this.compact ? 6 : 10) : 14;
 		this.cssW = Math.max(120, Math.floor(cssW));
+		this.pickCs();
 		this.layout();
 		this.cam = this.camTarget = this.targetCam();
 		this.tween = null;
 		this.kick();
 	}
 
+	/**
+	 * The cell size: the largest of csMax, 22, 20, 18 at which a compact sheet shows its whole problem (so it never
+	 * scrolls when it could fit); csMax when none does, and the sheet pans.
+	 */
+	private pickCs() {
+		this.cs = this.csMax;
+		if (!this.compact || !this.src) return;
+		const room = this.cssW - 2 * this.padX - this.reserve;
+		for (const cs of [this.csMax, 22, 20, 18])
+			if (cs <= this.csMax && this.src.cols * cs <= room) {
+				this.cs = cs;
+				return;
+			}
+	}
+
+	/** where the problem's area starts: after the padding and the labels' room */
+	private get offX() {
+		return this.padX + this.reserve;
+	}
 	private get viewW() {
-		return this.cssW - 2 * this.padX;
+		return this.cssW - this.offX - this.padX;
 	}
 	private get contentW() {
 		return (this.src?.cols ?? 0) * this.cs;
@@ -159,7 +185,7 @@ export class SheetView {
 			cs: this.cs,
 			padX: this.padX,
 			fits: room >= 0,
-			left: this.padX + Math.max(0, this.compact ? room / 2 : room),
+			left: this.offX + Math.max(0, this.compact ? room / 2 : room),
 			padY: this.padY,
 			ruleGap: this.ruleGap,
 			rowY,
@@ -205,6 +231,7 @@ export class SheetView {
 			this.prev.push(prow);
 			this.changedAt.push(t);
 		}
+		this.pickCs();
 		this.layout();
 		this.cam = this.camTarget = this.targetCam();
 		this.tween = null;
@@ -348,7 +375,7 @@ export class SheetView {
 	cellAt(px: number, py: number): { r: number; c: number } | null {
 		if (!this.src) return null;
 		const m = this.metrics();
-		const c = Math.floor((px - this.padX + this.cam) / this.cs);
+		const c = Math.floor((px - this.offX + this.cam) / this.cs);
 		if (c < 0 || c >= this.src.cols) return null;
 		const r = m.rowY.findIndex((y) => py >= y && py < y + this.cs);
 		return r < 0 ? null : { r, c };
@@ -398,14 +425,15 @@ export class SheetView {
 		const W = this.cssW;
 		const m = this.metrics();
 		ctx.setTransform(this.dpr, 0, 0, this.dpr, 0, 0);
-		ctx.imageSmoothingEnabled = false;
+		// whole device pixels per sprite pixel stay sharp; other scales are smoothed
+		ctx.imageSmoothingEnabled = (this.cs * this.dpr) % CELL !== 0;
 		ctx.globalAlpha = 1;
 		ctx.fillStyle = this.palette.paper;
 		ctx.fillRect(0, 0, W, m.height);
 		if (!src || !this.inkSheet()) return;
 		const cs = this.cs;
-		const x0 = this.padX - this.cam;
-		const c0 = clamp(Math.floor((this.cam - this.padX) / cs), 0, src.cols);
+		const x0 = this.offX - this.cam;
+		const c0 = clamp(Math.floor((this.cam - this.offX) / cs), 0, src.cols);
 		const c1 = clamp(Math.ceil((this.cam + W) / cs), 0, src.cols);
 
 		// hover tint on a cell that can be changed
@@ -427,17 +455,19 @@ export class SheetView {
 		for (let r = 0; r < src.rows.length; r++) {
 			const sy = src.rows[r].sprite * CELL;
 			const y = m.rowY[r];
+			// carries are scratch: drawn at half ink, so they never read as the numbers
+			const ink = src.rows[r].dim ? DIM_INK : 1;
 			for (let c = c0; c < c1; c++) {
 				const x = x0 + c * cs;
 				const g = this.shown[r][c];
 				const p = this.prev[r][c];
 				const t = clamp((now - this.changedAt[r][c]) / this.fadeMs, 0, 1);
 				if (t < 1 && p !== ' ') {
-					ctx.globalAlpha = 1 - easeInOut(t);
+					ctx.globalAlpha = ink * (1 - easeInOut(t));
 					this.glyph(p, sy, x, y);
 				}
 				if (g !== ' ') {
-					ctx.globalAlpha = t < 1 ? easeInOut(t) : 1;
+					ctx.globalAlpha = ink * (t < 1 ? easeInOut(t) : 1);
 					this.glyph(g, sy, x, y);
 				}
 			}
@@ -457,7 +487,7 @@ export class SheetView {
 		src.rows.forEach((row, r) => {
 			if (!row.ruleBefore || r === 0) return;
 			const y = Math.round((m.rowY[r] - this.ruleGap / 2) * this.dpr) / this.dpr;
-			const a = Math.max(x0, this.padX - 8);
+			const a = Math.max(x0, this.offX - 8);
 			const b = Math.min(x0 + src.cols * cs, W - this.padX + 8);
 			if (b > a) ctx.fillRect(a, y, b - a, 1);
 		});
@@ -486,7 +516,12 @@ export class SheetView {
 				ctx.fillStyle = g;
 				ctx.fillRect(Math.min(from, to), 0, Math.abs(to - from), m.height);
 			};
-			fade(0, this.padX + 28, this.cam > 1);
+			// a panned compact sheet keeps its labels' room as plain paper
+			if (this.reserve && this.cam > 1) {
+				ctx.fillStyle = this.palette.paper;
+				ctx.fillRect(0, 0, this.offX - 4, m.height);
+				fade(this.offX - 4, this.offX + 24, true);
+			} else fade(0, this.padX + 28, this.cam > 1);
 			fade(W, W - this.padX - 28, this.cam < over - 1);
 			this.onWindow?.(this.cam / this.contentW, (this.cam + this.viewW) / this.contentW);
 		} else this.onWindow?.(0, 1);
