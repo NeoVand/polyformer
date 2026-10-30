@@ -150,6 +150,11 @@ export async function recover(
 	return { coefficients, grid };
 }
 async function clearDenominators(a: Arithmetic, cs: Rational[]): Promise<bigint[]> {
+	if (cs.every((c) => c.d === 1n)) {
+		const integers = cs.map((c) => c.n);
+		while (integers.length > 1 && integers.at(-1) === 0n) integers.pop();
+		return integers;
+	}
 	let common = 1n;
 	for (const c of cs) {
 		common = await a.calc.mul(await a.exact(common, await a.gcd(common, c.d)), c.d);

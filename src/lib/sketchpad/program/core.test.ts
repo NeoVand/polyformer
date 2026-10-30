@@ -75,6 +75,9 @@ describe('contract and reference cost port', () => {
 	])('names an offending token: %s', (source) => {
 		expect(() => parse(source)).toThrow(/token/);
 	});
+	it('identifies the invalid exponent token', () => {
+		expect(() => parse('2^13')).toThrow('token "13"');
+	});
 	it('preserves precedence, literal decimals, exact fractions and truncation', async () => {
 		const a = new Arithmetic(new RefCalc());
 		for (const [source, expected] of [
@@ -84,6 +87,9 @@ describe('contract and reference cost port', () => {
 			['2^-2', '0.25'],
 			['2/3 to 2 places', '0.66…'],
 			['sqrt(2) to 6 places', '1.414213…'],
+			['sqrt(2.25)*2 to 0 places', '2…'],
+			['sqrt(0.000000000000000000000000000001)*1000000000000000', '0…'],
+			['(2/3)*3 to 2 places', '1.98…'],
 			['gcd(-18,12)', '6']
 		]) {
 			const s = parse(source).statements[0];

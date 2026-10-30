@@ -153,11 +153,17 @@ class Parser {
 		if (this.take('+')) return { kind: 'unary', op: '+', value: this.unary() };
 		let left = this.atom();
 		if (this.take('^')) {
+			const token = this.t;
 			const right = this.unary();
 			try {
 				exponent(right);
 			} catch {
-				this.error('Exponent must be a literal integer from -12 to 12');
+				throw new ParseError(
+					'Exponent must be a literal integer from -12 to 12',
+					token.text,
+					token.column,
+					this.line
+				);
 			}
 			left = { kind: 'binary', op: '^', left, right };
 		}
@@ -205,7 +211,6 @@ class Parser {
 				for (const eq of equations)
 					for (const side of [eq.left, eq.right]) {
 						const d = degree(side, vars);
-						if (d > 12) this.error('Polynomial degree exceeds 12');
 						if (equations.length > 1 && d > 1) this.error('System must be syntactically linear');
 						for (const name of names(side))
 							if (['x', 'y', 'z'].includes(name) && !vars.includes(name))
@@ -221,7 +226,7 @@ class Parser {
 			this.i++;
 			const value = this.expression();
 			try {
-				if (degree(value) > 12) this.error('Polynomial degree exceeds 12');
+				degree(value);
 			} catch (e) {
 				if (e instanceof ParseError) throw e;
 				this.error((e as Error).message);

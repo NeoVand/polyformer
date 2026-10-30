@@ -75,6 +75,7 @@ export class Arithmetic {
 		return e < 0 ? this.div(integer(1n), out) : out;
 	}
 	async quantize(a: Rational, places: number): Promise<Rational> {
+		if (a.d === 1n) return a;
 		const scale = ten(places);
 		const { q, r } = await this.calc.divmod(await this.calc.mul(magnitude(a.n), scale), a.d);
 		return this.fraction(a.n < 0n ? flip(q) : q, scale, !!a.approximate || r !== 0n);
@@ -85,7 +86,9 @@ export class Arithmetic {
 			dr = a.d === 1n ? { root: 1n, rem: 0n } : await this.calc.isqrt(a.d);
 		if (nr.rem === 0n && dr.rem === 0n) {
 			const root = await this.fraction(nr.root, dr.root, !!a.approximate);
-			return places !== undefined && !exact ? this.quantize(root, places) : root;
+			if (exact) return root;
+			const cut = await this.quantize(root, places ?? 12);
+			return places !== undefined || cut.approximate ? cut : root;
 		}
 		if (exact) throw new Error('Irrational value is not allowed in exact evaluation');
 		const k = places ?? 12,
@@ -142,6 +145,13 @@ export class Arithmetic {
 		return (await this.calc.mul(a.n, b.d)) === (await this.calc.mul(b.n, a.d));
 	}
 	async decimal(a: Rational, places = 12, fixed = false): Promise<string> {
+		// An integer is already a sheet-produced digit row. Padding its decimal point is layout.
+		if (a.d === 1n)
+			return (
+				a.n.toString() +
+				(fixed && places ? '.' + '0'.repeat(places) : '') +
+				(a.approximate ? '…' : '')
+			);
 		const { q, r } = await this.calc.divmod(await this.calc.mul(magnitude(a.n), ten(places)), a.d);
 		const digits = q.toString().padStart(places + 1, '0');
 		let result = places ? digits.slice(0, -places) + '.' + digits.slice(-places) : digits;

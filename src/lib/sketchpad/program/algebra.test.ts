@@ -31,6 +31,29 @@ describe('algebra integration', () => {
 		expect(r.lines[0]).toContain(expected);
 		expect(r.results[0].algebra?.checks.every((c) => c.passed)).toBe(true);
 	});
+	it('allows products above total degree twelve and refuses unresolved six-place brackets', async () => {
+		const expanded = await run('expand (x+1)^12*(x-1)', new RefCalc());
+		expect(expanded.results[0].status).toBe('ok');
+		expect(expanded.results[0].algebra!.coefficients!.map((c) => c.n)).toEqual([
+			-1n,
+			-11n,
+			-54n,
+			-154n,
+			-275n,
+			-297n,
+			-132n,
+			132n,
+			297n,
+			275n,
+			154n,
+			54n,
+			11n,
+			1n
+		]);
+		const close = await run('solve (1000000000x-123)^2=2', new RefCalc());
+		expect(close.results[0].status).toBe('refused');
+		expect(close.results[0].error).toContain('six decimal places');
+	});
 	it('proves distinct irrational brackets on the typed sides', async () => {
 		for (const source of ['solve x^2=2', 'solve -x^2+2=0', 'solve 1000000x^2-1=1']) {
 			const r = await run(source, new RefCalc()),
