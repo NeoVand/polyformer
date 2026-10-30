@@ -151,6 +151,8 @@
 				})
 			: null
 	);
+	const stamp = (iso: string) =>
+		new Date(iso).toLocaleString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
 	const readout = $derived.by(() => {
 		if (hover === null) return null;
 		const m = cert.margins[hover];
@@ -166,17 +168,26 @@
 		<span class="k">Certificate</span>
 		{#if cert.status === 'running'}
 			<span class="state num">checking {fmt(cert.checked)} of {fmt(cert.rows)}</span>
+		{:else if cert.status === 'shipped' && cert.spot?.running}
+			<span class="state num">spot check {fmt(cert.spot.checked)} of {fmt(cert.spot.rows)}</span>
 		{:else if cert.status === 'none'}
 			<span class="state">not checked yet</span>
 		{/if}
 	</div>
 
 	<div class="headline">
-		<span class="big num" class:dim={cert.status !== 'done' && cert.status !== 'cached'}>
+		<span
+			class="big num"
+			class:dim={cert.status !== 'done' && cert.status !== 'cached' && cert.status !== 'shipped'}
+		>
 			{cert.checked ? fmtMargin(cert.minMargin) : '–'}
 		</span>
 		<span class="cap"
-			>{cert.status === 'running' ? 'lowest margin so far' : 'lowest margin on this device'}</span
+			>{cert.status === 'running'
+				? 'lowest margin so far'
+				: cert.status === 'shipped'
+					? 'lowest margin'
+					: 'lowest margin on this device'}</span
 		>
 	</div>
 
@@ -205,8 +216,25 @@
 
 	{#if cert.status === 'cached'}
 		<p class="note">
-			Checked on this device{when ? `, ${when}` : ''}, for these exact files.
+			Every view checked on this device{when ? `, ${when}` : ''}, for these exact files.
 			{#if oncheck}<button class="link" disabled={!canCheck} onclick={oncheck}>Check again</button
+				>{/if}
+		</p>
+	{:else if cert.status === 'shipped' && cert.shippedFrom}
+		{@const sp = cert.spot}
+		<p class="note">
+			Shipped with the model: every view checked on {cert.shippedFrom.device}, {stamp(
+				cert.shippedFrom.when
+			)}.
+			{#if sp && sp.checked}
+				Here, its {fmt(sp.rows)} weakest views {sp.running
+					? `are being checked (${fmt(sp.pass)} of ${fmt(sp.checked)} pass)`
+					: sp.pass === sp.checked
+						? `pass too (lowest ${fmtMargin(sp.min)})`
+						: `: ${fmt(sp.checked - sp.pass)} fail on this device`}.
+			{/if}
+			{#if oncheck}<button class="link" disabled={!canCheck} onclick={oncheck}
+					>Check every view on this device</button
 				>{/if}
 		</p>
 	{/if}

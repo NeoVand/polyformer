@@ -619,23 +619,27 @@ function info(spec: SketchModel, root: string, seconds: number, reused: boolean)
 /** the loaded program serves this kind */
 const serves = (k: Kind) => !!model && loadedId === MODELS[k].id;
 
-async function certify(rid: number, k: Kind) {
+async function certify(rid: number, k: Kind, only?: number[]) {
 	if (!serves(k)) throw new Error(`${MODELS[k].name} is not loaded`);
 	const born = generation;
 	let compute = 0;
 	let start = 0;
 	let margins: number[] = [];
 	let got: (string | null)[] = [];
+	let indices: number[] = [];
 	let sent = performance.now();
 	const flush = () => {
-		post({ type: 'cert-rows', rid, start, margins, got });
+		post({ type: 'cert-rows', rid, start, margins, got, ...(only ? { indices } : {}) });
 		start += margins.length;
 		margins = [];
 		got = [];
+		indices = [];
 		sent = performance.now();
 	};
 	const n = k === 'add' ? ADD_DOMAIN.length : MUL_DOMAIN.length;
-	for (let i = 0; i < n; i++) {
+	const order = only ?? Array.from({ length: n }, (_, i) => i);
+	for (let j = 0; j < order.length; j++) {
+		const i = order[j];
 		if (cancelled.has(rid)) throw new Cancelled();
 		const r = await exclusive(async () => {
 			// a load got in between: these rows would no longer be about this model
@@ -647,7 +651,8 @@ async function certify(rid: number, k: Kind) {
 		});
 		margins.push(r.m);
 		got.push(r.got);
-		if (performance.now() - sent > 60 || i === n - 1) flush();
+		indices.push(i);
+		if (performance.now() - sent > 60 || j === order.length - 1) flush();
 	}
 	post({ type: 'cert-done', rid, seconds: compute / 1000 });
 }
@@ -716,7 +721,7 @@ self.onmessage = async (ev: MessageEvent<ToWorker>) => {
 	if (m.type === 'load') return load(m);
 	if (m.type === 'cancel') return void cancelled.add(m.rid);
 	try {
-		if (m.type === 'certify') await certify(m.rid, m.kind);
+		if (m.type === 'certify') await certify(m.rid, m.kind, m.rows);
 		else if (m.type === 'tick') await tick(m);
 		else if (m.type === 'chat') await chat(m);
 	} catch (e) {

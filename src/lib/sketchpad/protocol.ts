@@ -48,7 +48,8 @@ export interface InsideMeta {
 
 export type ToWorker =
 	| { type: 'load'; lid: number; kind: Kind; root: string; sprites: string }
-	| { type: 'certify'; rid: number; kind: Kind }
+	/** `rows`: check only these table rows (a spot check); all of them when absent */
+	| { type: 'certify'; rid: number; kind: Kind; rows?: number[] }
 	/** `push`: an adder answer code to push the stream entering the steer layer toward, on this tick only */
 	| { type: 'tick'; rid: number; op: TickOp; cells: string[]; push: string | null }
 	| { type: 'chat'; rid: number; question: string; maxNew: number }
@@ -69,8 +70,18 @@ export type FromWorker =
 	/** a newer load was asked for before this one started */
 	| { type: 'load-skipped'; lid: number }
 	| { type: 'load-error'; lid: number; kind: Kind; error: string }
-	/** a run of certificate rows from `start`; `got` is the model's own answer where a row failed */
-	| { type: 'cert-rows'; rid: number; start: number; margins: number[]; got: (string | null)[] }
+	/**
+	 * certificate rows: a run from `start`, or the rows in `indices` when given; `got` is the model's own answer where a
+	 * row failed
+	 */
+	| {
+			type: 'cert-rows';
+			rid: number;
+			start: number;
+			indices?: number[];
+			margins: number[];
+			got: (string | null)[];
+	  }
 	| { type: 'cert-done'; rid: number; seconds: number }
 	| {
 			type: 'tick';

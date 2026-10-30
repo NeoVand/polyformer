@@ -80,6 +80,8 @@
 	const cost = $derived(pad.costs[pad.op]);
 	const missing = $derived(pad.available[pad.op] === false);
 	const certBusy = $derived(cert.status === 'running');
+	/** the shipped table's weakest rows are being checked on this device (runs may start meanwhile) */
+	const spotBusy = $derived(!!cert.spot?.running);
 	const certFailed = $derived(
 		(cert.status === 'done' || cert.status === 'cached') && cert.pass < cert.rows
 	);
@@ -279,7 +281,8 @@
 				{#if r.edits}<span>{r.edits} {r.edits === 1 ? 'digit' : 'digits'} changed mid-run</span
 					>{/if}
 				<span
-					>{#if r.certified}certified: every view passed on this device{:else if r.unchecked === 0}every
+					>{#if r.certified && r.certSource === 'shipped'}certified: the shipped table, its weakest
+						views checked here{:else if r.certified}certified: every view checked on this device{:else if r.unchecked === 0}every
 						view it read passed{:else}{r.unchecked} unchecked {r.unchecked === 1
 							? 'view'
 							: 'views'}{/if}</span
@@ -322,7 +325,7 @@
 				<Certificate
 					{cert}
 					device={pad.ready ? (pad.lastLoad?.gpu ?? null) : null}
-					canCheck={pad.ready && !pad.running && !certBusy}
+					canCheck={pad.ready && !pad.running && !certBusy && !spotBusy}
 					oncheck={() => pad.certify()}
 					walk={pad.walk}
 				/>

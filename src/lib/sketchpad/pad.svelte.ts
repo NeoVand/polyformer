@@ -62,7 +62,22 @@ export interface Failure {
 export class Cert {
 	readonly kind: Kind;
 	readonly rows: number;
-	status = $state<'none' | 'running' | 'done' | 'cached'>('none');
+	/**
+	 * none, running a full check, done (every row checked on this device now), cached (every row checked on this device
+	 * earlier), shipped (the table measured on the reference device and shipped with the model; see `spot`)
+	 */
+	status = $state<'none' | 'running' | 'done' | 'cached' | 'shipped'>('none');
+	/** where a shipped certificate was measured */
+	shippedFrom = $state<{ device: string; when: string } | null>(null);
+	/** the shipped table's weakest rows, checked again on this device */
+	spot = $state<{
+		rows: number;
+		checked: number;
+		pass: number;
+		min: number;
+		running: boolean;
+		when: string | null;
+	} | null>(null);
 	checked = $state(0);
 	pass = $state(0);
 	minMargin = $state(Infinity);
@@ -94,6 +109,8 @@ export class Cert {
 		this.when = null;
 		this.key = null;
 		this.status = 'none';
+		this.shippedFrom = null;
+		this.spot = null;
 		this.version++;
 	}
 
@@ -124,11 +141,57 @@ export class Cert {
 		this.version++;
 	}
 
-	/** every row checked and every row passed */
+	/** device margins for some rows of a shipped table (the spot check) */
+	addSpot(indices: number[], margins: number[]) {
+		const sp = this.spot;
+		if (!sp) return;
+		let pass = 0;
+		let min = sp.min;
+		margins.forEach((raw, k) => {
+			const m = Number.isNaN(raw) ? -Infinity : raw;
+			this.margins[indices[k]] = m;
+			if (m > 0) pass++;
+			else
+				this.failures = [
+					...this.failures,
+					{ index: indices[k], label: rowLabel(this.kind, indices[k]), got: null, margin: m }
+				];
+			min = Math.min(min, m);
+		});
+		this.spot = { ...sp, checked: sp.checked + margins.length, pass: sp.pass + pass, min };
+		this.pass = this.margins.reduce((n, m) => n + (m > 0 ? 1 : 0), 0);
+		this.minMargin = Math.min(...this.margins);
+		this.version++;
+	}
+
+	/** every row checked on this device and passed; or the shipped table, with no failure in its spot check here */
 	get certified() {
+		if (this.status === 'shipped')
+			return this.pass === this.rows && !!this.spot && this.spot.pass === this.spot.checked;
 		return (this.status === 'done' || this.status === 'cached') && this.pass === this.rows;
 	}
 }
+
+/**
+ * A certificate shipped with a program: every table row measured on a reference device (research/sketch, made with
+ * `sketchpad.exportCertificate()` on the dev page), valid wherever the files, prompts, runtime and strips are the same.
+ * Margins move a little between GPUs, so a new device checks the shipped table's weakest rows again (`SPOT`).
+ */
+export interface ShippedCert {
+	format: string;
+	program: string;
+	dtype: Record<string, string>;
+	transformers: string;
+	sprites: string;
+	files: Record<string, string>;
+	device: string;
+	when: string;
+	kinds: Partial<
+		Record<Kind, { prompts: Record<string, string>; rows: number; pass: number; margins: number[] }>
+	>;
+}
+/** the share of a shipped table's rows, weakest first, that a new device checks again */
+const SPOT = 0.1;
 
 interface Stored {
 	key: string;
@@ -142,6 +205,28 @@ interface Stored {
 }
 
 const storeKey = (k: Kind) => `sketchpad.cert.${k}`;
+const spotKey = (k: Kind) => `sketchpad.spot.${k}`;
+interface StoredSpot {
+	key: string;
+	when: string;
+	indices: number[];
+	margins: number[];
+}
+function readSpot(k: Kind): StoredSpot | null {
+	try {
+		const s = localStorage.getItem(spotKey(k));
+		return s ? (JSON.parse(s) as StoredSpot) : null;
+	} catch {
+		return null;
+	}
+}
+function writeSpot(k: Kind, s: StoredSpot) {
+	try {
+		localStorage.setItem(spotKey(k), JSON.stringify(s));
+	} catch {
+		/* not remembered: the next visit checks again */
+	}
+}
 function readStore(k: Kind): Stored | null {
 	try {
 		const s = localStorage.getItem(storeKey(k));
@@ -188,6 +273,8 @@ export interface RunResult {
 	uncheckedLabels: string[];
 	/** ticks on which the visitor pushed the model's state */
 	pushes: number;
+	/** the certificate behind `certified`: every row checked here, or the shipped table spot-checked here */
+	certSource: 'device' | 'shipped';
 }
 
 export interface ChatTurn {
@@ -273,6 +360,8 @@ class Pad {
 	private infos: Record<string, LoadedInfo> = {};
 	private pending = new Map<number, Pending>();
 	private certRid: number | null = null;
+	/** certificates shipped with programs, by program id */
+	private shipped = new Map<string, Promise<ShippedCert | null>>();
 	private certKind: Kind | null = null;
 	private stopRun = false;
 	private runDone: Promise<void> = Promise.resolve();
@@ -442,14 +531,14 @@ class Pad {
 		this.result = null;
 		this.runError = null;
 		this.last = null;
-		if (this.ready) this.ensureCert(k);
+		if (this.ready) void this.ensureCert(k);
 	}
 
 	load(root: string, sprites: string) {
 		const k = this.op;
 		const id = MODELS[k].id;
 		if (this.running) return;
-		if (this.loadedId === id && !this.loading) return this.ensureCert(k);
+		if (this.loadedId === id && !this.loading) return void this.ensureCert(k);
 		if (this.loading && this.latest?.id === id) return;
 		// a certificate of the program being replaced would be cancelled by the worker anyway; say so now
 		if (this.certRid !== null && this.certKind && MODELS[this.certKind].id !== id)
@@ -476,8 +565,8 @@ class Pad {
 		this.insideMeta = info.inside;
 		if (!info.reused) this.lastLoad = info;
 		void this.refreshCosts();
-		this.ensureCert(this.latest.kind);
-		if (this.op !== this.latest.kind) this.ensureCert(this.op);
+		void this.ensureCert(this.latest.kind);
+		if (this.op !== this.latest.kind) void this.ensureCert(this.op);
 	}
 
 	/**
@@ -507,13 +596,159 @@ class Pad {
 		);
 	}
 
-	/** make sure the operation's certificate is there: kept from this session, cached, or checked now */
-	private ensureCert(k: Kind) {
+	/** the certificate shipped with a program, fetched once (null when it has none) */
+	private shippedFor(id: string) {
+		let p = this.shipped.get(id);
+		if (!p) {
+			p = fetch(`${this.root}${id}/certificate.json`, { cache: 'no-cache' })
+				.then((r) => (r.ok ? (r.json() as Promise<ShippedCert>) : null))
+				.catch(() => null);
+			this.shipped.set(id, p);
+		}
+		return p;
+	}
+
+	/** the shipped table for this operation, if it was measured on exactly the files, prompts and runtime loaded now */
+	private shippedTable(k: Kind, sc: ShippedCert) {
+		const m = MODELS[k];
+		const info = this.infos[m.id];
+		const t = sc.kinds[k];
+		if (!info || !t || t.rows !== this.certs[k].rows || t.margins.length !== t.rows) return null;
+		const same =
+			sc.format === CERT_FORMAT &&
+			sc.program === m.id &&
+			sc.transformers === info.transformers &&
+			sc.sprites === info.sprites &&
+			JSON.stringify(sc.dtype) === JSON.stringify(DTYPE) &&
+			JSON.stringify(t.prompts) === JSON.stringify(m.prompts) &&
+			certFiles().every((f) => !!info.prints[f] && sc.files[f] === info.prints[f]);
+		return same ? t : null;
+	}
+
+	/** take the shipped table, then check its weakest rows on this device (or recall that check) */
+	private useShipped(
+		k: Kind,
+		sc: ShippedCert,
+		t: NonNullable<ShippedCert['kinds'][Kind]>,
+		key: string | null
+	) {
+		const cert = this.certs[k];
+		cert.reset();
+		t.margins.forEach((x, i) => (cert.margins[i] = x));
+		cert.checked = cert.rows;
+		cert.pass = t.margins.filter((x) => x > 0).length;
+		cert.minMargin = Math.min(...t.margins);
+		cert.failures = t.margins.flatMap((x, i) =>
+			x > 0 ? [] : [{ index: i, label: rowLabel(k, i), got: null, margin: x }]
+		);
+		cert.shippedFrom = { device: sc.device, when: sc.when };
+		cert.key = key;
+		cert.status = 'shipped';
+		const order = t.margins.map((x, i) => [x, i]).sort((a, b) => a[0] - b[0]);
+		const indices = order.slice(0, Math.ceil(cert.rows * SPOT)).map(([, i]) => i);
+		cert.spot = {
+			rows: indices.length,
+			checked: 0,
+			pass: 0,
+			min: Infinity,
+			running: false,
+			when: null
+		};
+		const kept = key && !key.startsWith('session:') ? readSpot(k) : null;
+		if (kept && kept.key === key && kept.indices.length === indices.length) {
+			cert.addSpot(kept.indices, kept.margins);
+			cert.spot = { ...cert.spot, when: kept.when };
+			return;
+		}
+		cert.version++;
+		void this.spotCheck(k, indices, key);
+	}
+
+	private async spotCheck(k: Kind, indices: number[], key: string | null) {
+		const cert = this.certs[k];
+		if (this.certRid !== null) {
+			if (this.certKind === k) return;
+			this.send({ type: 'cancel', rid: this.certRid });
+		}
+		const rid = ++this.rid;
+		this.certRid = rid;
+		this.certKind = k;
+		if (cert.spot) cert.spot = { ...cert.spot, running: true };
+		try {
+			await this.request<{ seconds: number }>(
+				{ type: 'certify', rid, kind: k, rows: indices },
+				(msg) => {
+					if (msg.type === 'cert-rows' && msg.indices) cert.addSpot(msg.indices, msg.margins);
+				}
+			);
+			const when = new Date().toISOString();
+			if (cert.spot) cert.spot = { ...cert.spot, running: false, when };
+			if (key && !key.startsWith('session:'))
+				writeSpot(k, {
+					key,
+					when,
+					indices,
+					margins: indices.map((i) => Math.round(cert.margins[i] * 1000) / 1000)
+				});
+		} catch (e) {
+			// a spot check that stopped part way proves nothing: the next look at this operation starts it again
+			cert.reset();
+			if (!(e instanceof Cancelled)) this.loadError = (e as Error).message;
+		} finally {
+			if (this.certRid === rid) {
+				this.certRid = null;
+				this.certKind = null;
+			}
+		}
+	}
+
+	/**
+	 * The certificate to ship with the loaded program: every operation whose table passed in full on this device for
+	 * the files loaded now (dev page: `sketchpad.exportCertificate()`, saved as `<program>/certificate.json`).
+	 */
+	exportCertificate(): ShippedCert | null {
+		const id = this.loadedId;
+		const info = id ? this.infos[id] : null;
+		if (!id || !info) return null;
+		const kinds: ShippedCert['kinds'] = {};
+		const whens: string[] = [];
+		for (const k of ['add', 'mul'] as Kind[]) {
+			const c = this.certs[k];
+			if (MODELS[k].id !== id || c.key !== this.keyFor(k)) continue;
+			if (!(c.status === 'done' || c.status === 'cached') || c.pass !== c.rows) continue;
+			whens.push(c.when ?? new Date().toISOString());
+			kinds[k] = {
+				prompts: { ...MODELS[k].prompts } as Record<string, string>,
+				rows: c.rows,
+				pass: c.pass,
+				margins: Array.from(c.margins, (x) => Math.round(x * 1000) / 1000)
+			};
+		}
+		return {
+			format: CERT_FORMAT,
+			program: id,
+			dtype: { ...DTYPE },
+			transformers: info.transformers,
+			sprites: info.sprites,
+			files: Object.fromEntries(certFiles().map((f) => [f, info.prints[f]])),
+			device: info.gpu,
+			// the oldest of the checks it ships
+			when: whens.sort()[0] ?? new Date().toISOString(),
+			kinds
+		};
+	}
+
+	/**
+	 * make sure the operation's certificate is there: kept from this session, checked on this device earlier, shipped
+	 * with the model (spot-checked here), or checked in full now
+	 */
+	private async ensureCert(k: Kind) {
 		const m = MODELS[k];
 		if (this.loadedId !== m.id) return;
 		const key = this.keyFor(k);
 		const cert = this.certs[k];
-		if (key && cert.key === key && (cert.status === 'done' || cert.status === 'cached')) return;
+		const settled = ['done', 'cached', 'shipped'].includes(cert.status);
+		if (key && cert.key === key && settled) return;
 		if (this.certRid !== null && this.certKind === k) return;
 		const stored = key && !key.startsWith('session:') ? readStore(k) : null;
 		if (stored && stored.key === key && stored.rows === cert.rows) {
@@ -530,6 +765,12 @@ class Pad {
 			cert.version++;
 			return;
 		}
+		const sc = await this.shippedFor(m.id);
+		// the program changed, or another call settled this certificate, while the shipped one was fetched
+		if (this.loadedId !== m.id || (cert.key === key && cert.status !== 'none')) return;
+		if (this.certRid !== null && this.certKind === k) return;
+		const t = sc && this.shippedTable(k, sc);
+		if (sc && t) return this.useShipped(k, sc, t, key);
 		void this.certify(k);
 	}
 
@@ -723,7 +964,8 @@ class Pad {
 					.map(([row]) =>
 						Number(row) >= 0 ? rowLabel(kind, Number(row)) : 'a view outside the table'
 					),
-				pushes: this.pushes
+				pushes: this.pushes,
+				certSource: cert.status === 'shipped' ? 'shipped' : 'device'
 			};
 		} catch (e) {
 			this.runError = e instanceof Cancelled ? 'stopped' : (e as Error).message;
