@@ -87,6 +87,11 @@ let keepLogits = 0;
  * place `back` from the end, the place that writes the first answer
  */
 let steerNext: { row: number; back: number; vec: Float32Array } | null = null;
+/**
+ * the program's gate, for a graph that has one (`lora_gate`, research/sketch/patch_onnx_lora.py): 1 runs the adapter,
+ * 0 runs stock Qwen bit for bit; chat runs at 0
+ */
+let gate = 1;
 /** the program loaded now, and a counter that moves whenever the loaded model changes */
 let loadedId: string | null = null;
 let generation = 0;
@@ -347,14 +352,16 @@ function padFor(op: Op) {
 }
 
 /**
- * Hook the decoder session: hide `steer` from transformers.js (which feeds only the inputs it knows) and feed it here,
- * zeros except for an armed push (steerNext); keep `hidden_states` while a tick is capturing.
+ * Hook the decoder session: hide `steer` and `lora_gate` from transformers.js (which feeds only the inputs it knows)
+ * and feed them here: `steer` zeros except for an armed push (steerNext), `lora_gate` the current gate; keep
+ * `hidden_states` while a tick is capturing.
  */
 function wrapDecoder(m: Model) {
 	const sessions = (m as unknown as { sessions: Record<string, OrtSession> }).sessions;
 	const s = sessions?.decoder_model_merged;
 	if (!s || !s.inputNames.includes('steer')) return false;
-	const names = s.inputNames.filter((n) => n !== 'steer');
+	const gated = s.inputNames.includes('lora_gate');
+	const names = s.inputNames.filter((n) => n !== 'steer' && n !== 'lora_gate');
 	Object.defineProperty(s, 'inputNames', { value: names, configurable: true });
 	const run = s.run.bind(s);
 	s.run = async (feeds, opts) => {
@@ -370,6 +377,9 @@ function wrapDecoder(m: Model) {
 		const keep: Record<string, OrtTensor> = keepLogits
 			? { num_logits_to_keep: ort(new tjs!.Tensor('int64', [BigInt(keepLogits)], [])) }
 			: {};
+		// float16 bits: 0x3c00 is 1, 0 is 0
+		if (gated)
+			keep.lora_gate = ort(new tjs!.Tensor('float16', new Uint16Array([gate ? 0x3c00 : 0]), [1]));
 		const out = await run({ ...feeds, steer, ...keep }, opts);
 		const hs = out.hidden_states;
 		if (capturing && hs) {
@@ -908,14 +918,20 @@ async function chat(m: Extract<ToWorker, { type: 'chat' }>) {
 			callback_function: (s: string) => post({ type: 'chat-delta', rid: m.rid, text: s })
 		});
 		// greedy, with repeated 5-grams blocked: plain greedy restates its answer word for word, and a repetition
-		// penalty (1.1) pushes this small model into inventing facts
-		await model.generate({
-			...inputs,
-			do_sample: false,
-			max_new_tokens: m.maxNew,
-			no_repeat_ngram_size: 5,
-			streamer
-		});
+		// penalty (1.1) pushes this small model into inventing facts. Gate 0: the chat is stock Qwen (the adapter hurts
+		// instruction-following until the chat fine-tune, SKETCHPAD3 T4).
+		gate = 0;
+		try {
+			await model.generate({
+				...inputs,
+				do_sample: false,
+				max_new_tokens: m.maxNew,
+				no_repeat_ngram_size: 5,
+				streamer
+			});
+		} finally {
+			gate = 1;
+		}
 		post({ type: 'done', rid: m.rid, ms: performance.now() - t });
 	});
 }

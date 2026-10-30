@@ -18,7 +18,7 @@ export const BASE_ID = 'base';
 
 /** The published copy, pinned by commit (the browser caches files by URL, so a new revision never mixes with an old). */
 export const HF_REPO = 'mohsenvand/sketchpad-0.8b-preview';
-export const HF_REVISION = '75cfe5a334727ea13ec350c103c542bbb6d3953d';
+export const HF_REVISION = 'ca527a6dfde80c6f209b50e811a656118e9cb5ed';
 export const HF_ROOT = `https://huggingface.co/${HF_REPO}/resolve/${HF_REVISION}/`;
 export const HF_CARD = `https://huggingface.co/${HF_REPO}`;
 

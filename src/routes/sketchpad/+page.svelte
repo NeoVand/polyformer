@@ -409,9 +409,9 @@
 					onask={(q) => pad.ask(q)}
 				/>
 				<p class="small">
-					This chat runs on the arithmetic weights (thinking off, up to 120 new tokens). Training
-					them for the sheet damaged the model's instruction-following; a switch back to stock Qwen
-					for chat is next.
+					A gate in the graph switches the adapter off for this chat, so it is stock Qwen3.5-0.8B
+					(thinking off, up to 120 new tokens). With the adapter on, its instruction-following
+					breaks; one model that chats and opens its sheet by itself is next.
 				</p>
 			</div>
 		</div>
