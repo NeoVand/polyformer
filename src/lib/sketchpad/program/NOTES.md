@@ -1,8 +1,149 @@
-Round 2 in progress. No new timing or refusal claims yet.
+Round 2 passes **97 tests**, including **2,200 generated correctness cases per mode**. TypeScript, ESLint, formatting and the 150 reference-cost comparisons pass.
 
-The orchestrator now permits waves: independent jobs share model passes, while their row costs add. The implementation will keep the supplied arithmetic costs fixed, use a light check by default, and retain strong checks. A wave saves waiting between independent calculations; it does not make their digit work free. The glossary candidate for this term is recorded below. No spending or model calls are planned.
+Both modes refuse **200/200 wrong roots (100%)** and **173/200 evaluation faults (86.5%)**. The 27 missed faults leave the answers unchanged; this does not establish protection against arbitrary corruption.
 
-## Round 1 archive
+**Six of eleven demo orders are below 12 modeled seconds in both modes.** Light is the default; strong remains available.
+
+| Work order          | Light s | Strong s |
+| ------------------- | ------: | -------: |
+| 6×6 product         |    6.54 |     6.54 |
+| 3(x−2)+5=2x+14      |    4.53 |     6.45 |
+| 7x+13=2026−4x       |   11.82 |    11.69 |
+| 2×2 system          |    9.84 |     9.40 |
+| Expand (x+2)^5      |   33.07 |    41.97 |
+| Expand (2x−3)^4     |   36.01 |    45.01 |
+| Expand (x+1)^10     |  142.21 |   164.74 |
+| Bracketed quadratic |    9.80 |    11.66 |
+| x²−x−6=0            |   11.13 |    11.13 |
+| 3×3 system          |   26.54 |    25.43 |
+| Factor x³−6x²+11x−6 |   31.52 |    33.48 |
+
+The three expansions, the 3×3 system and factoring still miss the target. Their row costs alone exceed 12 seconds, so more batching cannot fix them: they need fewer arithmetic rows or faster certified operations. Spend: **$0**. All changes stay under `src/lib/sketchpad/program/`, committed only on `program`; nothing pushed.
+
+## Round 2 complete cost table
+
+The source work orders below are exactly the nine Round 1 comparisons plus the two requested additions. Columns show rows, model calls **after waves**, and `0.037 × rows + 0.065 × calls` seconds. The gate is strictly below 12 seconds; these are predictions, not device measurements. Model calls are forward passes in the sheet procedures, not the number of high-level Calc invocations.
+
+| Work order                            | Light rows | Light calls | Light s | Strong rows | Strong calls | Strong s | Both <12 s |
+| ------------------------------------- | ---------: | ----------: | ------: | ----------: | -----------: | -------: | ---------- |
+| `123456 * 654321`                     |         96 |          46 |   6.542 |          96 |           46 |    6.542 | Yes        |
+| `solve 3(x-2)+5=2x+14`                |         75 |          27 |   4.530 |          97 |           44 |    6.449 | Yes        |
+| `solve 7x+13=2026-4x`                 |        165 |          88 |  11.825 |         170 |           83 |   11.685 | Yes        |
+| `solve 2x+3y=7,x-y=1`                 |        194 |          41 |   9.843 |         182 |           41 |    9.399 | Yes        |
+| `expand (x+2)^5`                      |        458 |         248 |  33.066 |         697 |          249 |   41.974 | No         |
+| `expand (2x-3)^4`                     |        492 |         274 |  36.014 |         735 |          274 |   45.005 | No         |
+| `expand (x+1)^10`                     |       2359 |         845 | 142.208 |        2938 |          862 |  164.736 | No         |
+| `solve (2x-3)(x+5)=x^2+1-16`          |        177 |          50 |   9.799 |         215 |           57 |   11.660 | Yes        |
+| `solve x^2-x-6=0`                     |        162 |          79 |  11.129 |         162 |           79 |   11.129 | Yes        |
+| `solve 2x+3y-z=1, x-y+2z=3, 3x+y+z=8` |        538 |         102 |  26.536 |         508 |          102 |   25.426 | No         |
+| `factor x^3-6x^2+11x-6`               |        483 |         210 |  31.521 |         529 |          214 |   33.483 | No         |
+
+For direct comparison with Round 1, the linear demonstration fell from 22.393 to 4.530 seconds in light mode; `(x+2)^5` fell from 149.326 to 33.066 seconds. The latter is a substantial reduction but still fails the live-demo requirement. Strong is sometimes cheaper than light: the typed equation can contain fewer products than the recovered coefficient check. The names describe what is checked, not a guaranteed timing order.
+
+## What the remaining orders need
+
+A row-only lower bound is the time left if all model-call overhead vanished. Every remaining light-mode order already exceeds the target on that lower bound. With this model, at most 324 rows could fit below 12 seconds even with zero calls; any actual calls require a smaller row budget. This is a necessary bound, not a promise that reducing to that row count would suffice.
+
+| Remaining order     | Light row-only s | Strong row-only s | Light rows to remove even with zero calls |
+| ------------------- | ---------------: | ----------------: | ----------------------------------------: |
+| Expand (x+2)^5      |           16.946 |            25.789 |                                       134 |
+| Expand (2x−3)^4     |           18.204 |            27.195 |                                       168 |
+| Expand (x+1)^10     |           87.283 |           108.706 |                                      2035 |
+| 3×3 system          |           19.906 |            18.796 |                                       214 |
+| Factor x³−6x²+11x−6 |           17.871 |            19.573 |                                       159 |
+
+- **Expansions:** the bound, packed power and verification still produce too many rows. More economical coefficient arithmetic, such as a binomial coefficient recurrence for a single linear power or coefficient convolution for products, is the standard alternative to packing. It can still use Calc for every changed number, preserving condition 2, but changes the brief's chosen expansion procedure and needs its own measured cost study. No speed claim for that alternative has been tested here.
+- **3×3 systems:** recovery by evaluating each equation at several points, elimination and final checks dominate the rows. Further reuse of evaluated terms across points, a cheaper certified linear-system procedure, or explicit permission for additional zero/unit-row copying would be needed. Waves already share the independent equations, points, products and elimination cells.
+- **Factoring:** coefficient recovery, synthetic divisions and original-coefficient root checks remain substantial. More economical coefficient recovery and reuse of already completed factor proofs are the next procedure-level candidates. The unproved quotient must remain visible, and any new scheme still needs the exact checks.
+- **A different mechanism:** genuinely faster certified digit procedures or newly measured lower per-row model cost could change these bounds. Computing answers with native BigInt would be fast but breaks condition 2 (the model computes); it was not used outside the reference/test machinery. Relabeling these five cases as fast would conflict with condition 11 (the live demonstration).
+
+The current implementation therefore satisfies the requested correctness and comparison work, but does **not** make all demonstration beats fit the target.
+
+## Runtime changes and decisions
+
+The arithmetic boundary now includes exactly the new contract method:
+
+```ts
+wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]>;
+```
+
+`RefCalc` measures each job in its own frame, sums its rows, and takes the maximum job call count. Nested waves compose recursively; sequential work outside a wave adds normally. The reference executes job factories serially for deterministic, browser-portable accounting; the sheet provider can run those factories concurrently. Reference serialization is not charged as model serialization. The nested-wave tests independently compare the composed cost with isolated job costs.
+
+Factories must represent independent jobs; they must not start promises before entering the wave. `TraceCalc` forwards waves to the provider and drains started jobs after a failure, even if that provider rejects early, so work cannot spill into the next statement's trace. `LyingCalc` selects the chosen invocation before awaiting its result, keeping a deterministic fault target when completions are reordered.
+
+At each evaluation point, both typed sides are represented as a dependency graph: a map of calculations and the results each needs. Identical expressions and intermediate powers share one computed result. Only ready, independent nodes enter a wave. A cached result is completed before its consumers run; a pending shared promise is never incorrectly charged as free work in another job. Positive-power aliases no longer insert unnecessary scheduling barriers. Every point has its own graph; values from different substitution points are not conflated.
+
+Recovery evaluates points in the requested order: 0, 1, −1, 2, and onward. Linear and quadratic coefficients use their direct finite-difference formulas; higher degrees reorder the sampled values for the existing general difference procedure. Every recovery still has a separate confirming point. Both sides, the independent expression nodes, all points, system equations, Cramer determinants, products and independent Bareiss cells share waves. Independent factor-root checks are collected into a wave after the successive factor divisions. Irrational-root bounds and their endpoint checks also share independent work.
+
+Expansion now reads base-10 groups from the packed digit string. No division by the base occurs. Only a signed-group correction and its carry to the next group use Calc, and only when needed. Leading sign changes remain sign layout. The coefficient bound and overflow check remain active. Light expansion checks one additional point, x = 1; strong checks the previous points −1, 0, 1 and 2, in a wave.
+
+Fraction reduction first performs the division that was needed anyway. A zero remainder returns the integer quotient immediately; otherwise Euclid continues from that remainder instead of repeating the initial division. Reduction by a unit denominator copies the already computed number. A leading coefficient of +1 or −1 in Horner's rule likewise copies the existing input digit row, changing only its sign if needed; it creates no digits by host arithmetic.
+
+A quadratic with a sheet-produced zero constant has a zero-root candidate and a remaining linear root. This avoids an unnecessary discriminant and square root. Both candidates still pass the selected check, and duplicate zero roots are not printed twice. This is a procedure over recovered numeric coefficients, not rewriting the typed equation.
+
+Grid-only powers are now display expressions, rather than extra numerical calculations. `GridRow.cells` is an array of `Rational | { expression: string }`. Coefficients, typed-side values and checked roots remain actual computed values; a label such as `(2/1)^3` must not be presented as a computed digit row. This removes arithmetic whose only purpose was formatting the grid.
+
+### Check modes and API
+
+```ts
+await run(source, calc); // light by default
+await run(source, calc, { checkMode: 'strong' });
+```
+
+`AlgebraResult.checkMode` and each root check's `mode` identify the chosen mode. This must remain visible to the consuming page: a light check is not a claim of strong typed-side substitution.
+
+- **Light:** the degree-confirming point plus integer-only Horner evaluation on the recovered coefficient row. At p/q it computes the numerator after multiplication by q to the polynomial's degree; there is no fraction normalization inside that check. Systems check their recovered integer equations with denominators cleared. Irrational brackets check signs using the recovered integer polynomial.
+- **Strong:** exact fractions substituted into both original typed sides, followed by exact equality or opposite-sign checks. Equality needs no extra subtraction once both sides are available. This is the Round 1 check strength, with the faster shared evaluator and scheduling.
+
+Assumptions made here: a strict `<12`-second gate for reporting; x = 1 as expansion's single light checking point; symbolic labels for grid-only powers; deterministic serial reference execution with wave cost composition. These do not claim actual simultaneous JavaScript execution in RefCalc or measured device throughput. The contract itself authorizes the new default light mode; retaining strong by default would preserve the older checking premise but is not uniformly more expensive on these examples.
+
+## Validation and limitations
+
+The same seeded 1,000 expression cases and 200 cases each for linear equations, quadratics, 2×2 systems, 3×3 systems, expansion and factoring run in **each** mode. Both modes use the original independent BigInt-rational, determinant, coefficient-convolution and known-factor oracles. The integration suite also runs in both modes. Tests cover nested and empty waves, multi-operation jobs, rejection cleanup, wrappers, shared-expression dependencies, signed group carry chains, integer-only rational-root checks, mode visibility, concurrent providers and the six successful timing gates.
+
+The fault suites use identical offered roots and identical source/call-index pairs in both modes; an explicit cross-mode assertion verifies that identity. Each mode refuses all 200 incorrect roots and 173 of the 200 injected evaluation faults. All 27 missed faults produce exactly the same result line as their uncorrupted run, with no observed wrong answer. Each miss is retained in the corresponding report JSON.
+
+These faults target the first evaluation point, now x = 0, using the current schedule. Round 1 used x = −1 and different call positions. The mode comparison is controlled; comparing the Round 2 percentage with Round 1's percentage is **not** evidence that the check became stronger. The common degree confirmation catches most effective perturbations before the modes diverge.
+
+A separate directed test changes a coefficient row after confirmation: light accepts a root that satisfies that changed row, while strong rejects it against the typed equation. This intentionally demonstrates the weaker premise of light checking. Matching refusal percentages on the specified population do not establish equivalent protection against other faults or a malicious provider.
+
+The completed suite was rerun, the report populations/counts were checked, and every demo's cost was recomputed from its recorded rows and calls. `verify_costs.py` separately rechecks all 150 frozen arithmetic values, rows and calls against the supplied Python reference. The individual arithmetic cost formulas remain unchanged.
+
+Current commands, from this worktree root:
+
+```sh
+PROGRAM_REPORT=1 nice -n 19 pnpm vitest run src/lib/sketchpad/program
+nice -n 19 python3 src/lib/sketchpad/program/verify_costs.py
+nice -n 19 pnpm exec eslint src/lib/sketchpad/program
+nice -n 19 pnpm exec prettier --check src/lib/sketchpad/program
+nice -n 19 pnpm exec tsc --ignoreConfig --noEmit --target es2022 --module esnext --moduleResolution bundler --types node --strict --skipLibCheck src/lib/sketchpad/program/*.ts
+```
+
+`round2-light.json` and `round2-strong.json` contain the full population statistics, eleven demo row/call totals, threshold flags and missed-fault cases. `metrics.json` remains the Round 1 archive. Reporting writes only inside this folder. No server, watch process, model run, network service or paid service was used.
+
+## Round 2 commit record
+
+- `2afb1b9e`: nested wave accounting and shared expression dependencies.
+- `1fca3774`: failed-wave cleanup before the next statement.
+- `2363f5dc`: light/strong checks, digit-group unpacking and parallel algebra scheduling.
+- `1bf120c2`: matched correctness and fault populations in both modes.
+- `d705943a`: zero-constant quadratic shortcut, power scheduling barriers and timing regressions.
+
+The final notes/metrics commit records the verified result. All Round 2 edits are confined to this stream's folder and branch; no push occurred.
+
+## Glossary candidates — Round 2 additions
+
+- **Wave [zoo]:** independent sheet jobs sharing model forward passes. Authorized by the orchestrator in PROGRAM2 (30 Oct 2026); rows add and the longest job determines calls. It reduces waiting between independent calculations without making their digit work free.
+- **Dependency graph [zoo]:** a map of calculations and which earlier results each needs. A standard compiler/scheduling technique, used in this implementation on 30 Oct 2026; it allows shared expressions without undercounting their dependent work.
+- **Shared expression / common subexpression elimination [zoo]:** reuse of an identical already computed expression rather than computing it again. A standard compiler technique, applied here per evaluation point on 30 Oct 2026; it reduces rows and preserves the point's exact inputs.
+- **Light check:** the recovered coefficient row is checked with integer arithmetic after a degree confirmation. Authorized in PROGRAM2 (30 Oct 2026); it reduces some checking work while relying on that row remaining correct.
+- **Strong check:** substituting a proposed root into both original typed sides with exact fractions. Required by Round 1 and retained as an option by PROGRAM2 (30 Oct 2026); it can catch coefficient-row mistakes that the light check cannot.
+- **Row-only lower bound:** the modeled time from rows with all call overhead set to zero. Derived here from PROGRAM2's cost model (30 Oct 2026); it proves when additional waves alone cannot meet the target.
+- **Coefficient convolution / binomial recurrence [zoo]:** respectively forming product coefficients from sums of coefficient products, or obtaining successive coefficients of a power from the previous coefficient. Standard polynomial arithmetic alternatives, proposed for later measurement here (30 Oct 2026); they might reduce packing work but have not been benchmarked by this stream.
+
+## Round 1 archive — historical behavior and costs
+
+The following report and API description record Round 1. The Round 2 behavior, commands and display contract above supersede them.
 
 Passed: 49 tests covering 1,000 expressions, 200 each of six algebra families, and 150 reference-cost comparisons. TypeScript, ESLint and formatting checks pass.
 
