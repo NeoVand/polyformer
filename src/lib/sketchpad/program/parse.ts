@@ -12,7 +12,8 @@ export type Statement =
 	| { kind: 'expression'; value: Expr; places?: number }
 	| { kind: 'assign'; name: string; value: Expr; places?: number }
 	| { kind: 'solve'; equations: Equation[] }
-	| { kind: 'expand' | 'factor'; value: Expr };
+	| { kind: 'expand'; value: Expr }
+	| { kind: 'factor'; value: Expr };
 export interface WorkOrder {
 	statements: Statement[];
 }

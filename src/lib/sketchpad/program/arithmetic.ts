@@ -83,7 +83,10 @@ export class Arithmetic {
 		if (a.n < 0n) throw new Error('Square root has no real value');
 		const nr = await this.calc.isqrt(a.n),
 			dr = a.d === 1n ? { root: 1n, rem: 0n } : await this.calc.isqrt(a.d);
-		if (nr.rem === 0n && dr.rem === 0n) return this.fraction(nr.root, dr.root, !!a.approximate);
+		if (nr.rem === 0n && dr.rem === 0n) {
+			const root = await this.fraction(nr.root, dr.root, !!a.approximate);
+			return places !== undefined && !exact ? this.quantize(root, places) : root;
+		}
 		if (exact) throw new Error('Irrational value is not allowed in exact evaluation');
 		const k = places ?? 12,
 			scale = ten(k);
