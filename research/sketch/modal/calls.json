@@ -479,5 +479,31 @@
    ]
   ],
   "spawned": "2026-10-30 14:14:53 CDT"
+ },
+ "compile_baseline_1435": {
+  "call_id": "fc-01M674Y4EY2AXDY80AMHJJS18G",
+  "cmds": [
+   [
+    "python",
+    "compile_baseline.py"
+   ],
+   [
+    "python",
+    "compile_baseline.py",
+    "/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont"
+   ]
+  ],
+  "spawned": "2026-10-30 14:35:09 CDT"
+ },
+ "e7pad_1437": {
+  "call_id": "fc-01M67526PSNKA5JHY1F68BN9WF",
+  "cmds": [
+   [
+    "python",
+    "e7_padcheck.py",
+    "/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont"
+   ]
+  ],
+  "spawned": "2026-10-30 14:37:22 CDT"
  }
 }

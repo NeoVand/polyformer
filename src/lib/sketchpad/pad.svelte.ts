@@ -4,7 +4,7 @@
  * only memory; the worker only reads the strips it is sent and answers.
  */
 import { ADD_DOMAIN, AddSheet, addCode, addDecode, addRule } from './adder.ts';
-import { Grid, Run, type CalcSheet, type Policy } from './calc-sheet.ts';
+import { Grid, type CalcSheet, type Policy } from './calc-sheet.ts';
 import {
 	describe as describeTask,
 	expected,
@@ -1259,17 +1259,18 @@ class Pad {
 			this.wallMs = performance.now() - t0;
 			return outs;
 		};
-		const run = new Run(policy);
-		run.onShow = (sheet: CalcSheet) => {
-			this.sheet = sheet;
-			this.version++;
-		};
-		run.onStep = async () => {
-			if (this.pace > 0) await this.rest(this.pace);
-			if (this.stopRun) throw new Cancelled();
-		};
+		const calc = new SheetCalc(policy, {
+			onShow: (sheet: CalcSheet) => {
+				this.sheet = sheet;
+				this.version++;
+			},
+			onStep: async () => {
+				if (this.pace > 0) await this.rest(this.pace);
+				if (this.stopRun) throw new Cancelled();
+			}
+		});
 		try {
-			const got = await solve(new SheetCalc(run), task);
+			const got = await solve(calc, task);
 			const want = expected(task);
 			const rs = Object.values(read);
 			const bad = rs.filter((r) => !r.ok);
@@ -1278,10 +1279,10 @@ class Pad {
 				ok: got === want,
 				got,
 				want,
-				steps: run.steps,
-				ticks: run.ticks,
+				steps: calc.calls,
+				ticks: calc.views,
 				seconds: (performance.now() - t0) / 1000,
-				model: run.seconds,
+				model: calc.seconds,
 				certified: this.certified,
 				views: rs.length,
 				unchecked: bad.length,

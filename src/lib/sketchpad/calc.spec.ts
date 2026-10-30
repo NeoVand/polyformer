@@ -6,6 +6,7 @@ import {
 	divScale,
 	divide,
 	referenceAnswer,
+	referencePolicy,
 	sqrtScale,
 	squareRoot,
 	subOnce,
@@ -25,15 +26,14 @@ const TABLE = new Set([
 function harness() {
 	const off = new Set<string>();
 	const ops: Record<string, number> = {};
-	const run = new Run((views: View[]) =>
+	const policy = (views: View[]) =>
 		views.map((v) => {
 			const k = v.op + v.cells.join('');
 			if (!TABLE.has(k)) off.add(k);
 			ops[v.op] = (ops[v.op] ?? 0) + 1;
 			return referenceAnswer(v.op, v.cells);
-		})
-	);
-	return { run, calc: new SheetCalc(run), off, ops };
+		});
+	return { run: new Run(policy), calc: new SheetCalc(policy), off, ops };
 }
 
 let seed = 1;
@@ -225,6 +225,47 @@ describe('the calculator with the reference tables', () => {
 			while (b) [a, b] = [b, (await h.calc.divmod(a, b)).r];
 			expect(a).toBe(want);
 		}
+	});
+});
+
+describe('waves: independent operations sharing decoder calls', () => {
+	it('answers exactly as one at a time, in fewer calls, with the ops of different tables in one batch', async () => {
+		const jobsOf = (c: SheetCalc): (() => Promise<unknown>)[] =>
+			[
+				[123456n, 789n],
+				[98765n, 4321n],
+				[5n, 7n],
+				[10n ** 15n, 999n]
+			].flatMap(([a, b]) => [
+				() => c.divmod(a, b),
+				() => c.mul(a, b),
+				() => c.isqrt(a),
+				() => c.add(a, -b),
+				() => c.add(a, b)
+			]);
+		const solo = new SheetCalc(referencePolicy);
+		const one: unknown[] = [];
+		for (const j of jobsOf(solo)) one.push(await j());
+		const mixed: string[] = [];
+		const together = new SheetCalc((views: View[]) => {
+			const kinds = new Set(views.map((v) => (v.op === 'ADD-FAST' ? 'SUM' : v.op)));
+			if (kinds.size > 1) mixed.push([...kinds].sort().join('+'));
+			return referencePolicy(views);
+		});
+		const all = await together.wave(jobsOf(together));
+		expect(all).toEqual(one);
+		expect(together.views).toBe(solo.views);
+		expect(together.calls).toBeLessThan(solo.calls / 3);
+		expect(mixed.some((m) => m.includes('SUM') && m.includes('SUB') && m.includes('MUL'))).toBe(
+			true
+		);
+	});
+
+	it('keeps a failing job from holding the others', async () => {
+		const c = new SheetCalc(referencePolicy);
+		const [x, y] = await Promise.allSettled([c.divmod(5n, 0n), c.mul(12n, 34n)]);
+		expect(x.status).toBe('rejected');
+		expect(y).toEqual({ status: 'fulfilled', value: 408n });
 	});
 });
 

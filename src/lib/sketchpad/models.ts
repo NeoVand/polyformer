@@ -53,6 +53,12 @@ export interface SketchModel {
 	 * slotted prompt is padded with more `?`s to the longest step word's length, so a wave step is one batch.
 	 */
 	slots?: number;
+	/**
+	 * The adder's prompt in the slotted form too (`SUM<image>=` then `?`s to the slotted prompts' length; its one answer
+	 * still read at `=`), so any mix of steps is one batch (calculator waves, CALC3.md). Every layer is causal, so the
+	 * padding cannot change the answer; the certificate checks the rows in exactly this form.
+	 */
+	padded?: boolean;
 }
 
 const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
@@ -80,7 +86,8 @@ export const MODELS: Record<Kind, SketchModel> = {
 		name: 'the model',
 		rows: 242,
 		own: [GRAPH],
-		prompts: { 'ADD-FAST': 'SUM' }
+		prompts: { 'ADD-FAST': 'SUM' },
+		padded: HAS_CALC
 	},
 	mul: {
 		kind: 'mul',
@@ -159,7 +166,7 @@ export const certFiles = () => modelFiles();
  * The format the certificate certifies. Any change to tables, scoring or strip assembly must change this string, so a
  * cached certificate never outlives the format it checked. (The prompts are part of the cache key on their own.)
  */
-export const CERT_FORMAT = `sketchpad-cert-v1;add=fast-242;mul=${
+export const CERT_FORMAT = `sketchpad-cert-v1;add=${MODELS.add.padded ? 'padded-' : ''}fast-242;mul=${
 	MODELS.mul.slots ? `slots${MODELS.mul.slots}-padded-kept` : '3tok'
 }-1553;calc=slots2-padded-kept-651;strip=sprites-rowk-32x96`;
 

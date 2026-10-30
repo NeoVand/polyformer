@@ -92,6 +92,11 @@ def main(argv):
         cmds = [["python", "e7_calc.py", "train", steps, seed, hinge, stop, E6_S3]]
         call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
         record(job, call, cmds)
+    elif argv[0] == "e7pad":  # e7pad: the adder's rows of E7 in the common padded prompt form vs unpadded
+        job = "e7pad" + time.strftime("_%H%M")
+        cmds = [["python", "e7_padcheck.py", "/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont"]]
+        call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
+        record(job, call, cmds)
     elif argv[0] == "compile":  # compile [adapter dir on the volume]: the compile_baseline.py rates, base then adapter
         job = "compile_baseline" + time.strftime("_%H%M")
         init = argv[1] if len(argv) > 1 else "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"

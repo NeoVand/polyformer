@@ -126,8 +126,6 @@ export class Run {
 
 	async step(views: View[], fovea: ([string, number] | null)[][] = []): Promise<string[][]> {
 		if (this.sheet instanceof Grid) this.sheet.fovea = fovea;
-		if (views.some((v) => v.op === 'ADD-FAST') && views.length > 1)
-			throw new Error('an adder step runs on its own');
 		const outs = await this.policy(views);
 		if (outs.length !== views.length)
 			throw new SheetError('the model answered the wrong number of views');
@@ -146,6 +144,74 @@ export class Run {
 	/** the M4's cost model (CALC3.md): 0.065 s per call and 0.037 s per view, inside view off */
 	get seconds() {
 		return 0.065 * this.steps + 0.037 * this.ticks;
+	}
+}
+
+/**
+ * Several procedures at once, one decoder call per step of all of them: each procedure's step waits until every
+ * procedure under way has asked for its next step (or ended), then all their views go to the model in one batch, which
+ * needs every view in the one prompt form (models.ts: the adder's prompt padded like the slotted ones). Procedures that
+ * run one after another simply take turns; batching changes how many calls there are, never an answer.
+ */
+export class Mux {
+	readonly policy: Policy;
+	/** decoder calls and views answered */
+	calls = 0;
+	views = 0;
+	private active = 0;
+	private waiting: {
+		views: View[];
+		resolve: (o: string[][]) => void;
+		reject: (e: unknown) => void;
+	}[] = [];
+	private checking = false;
+
+	constructor(policy: Policy) {
+		this.policy = policy;
+	}
+
+	enter() {
+		this.active++;
+	}
+
+	leave() {
+		this.active--;
+		void this.check();
+	}
+
+	request(views: View[]): Promise<string[][]> {
+		return new Promise((resolve, reject) => {
+			this.waiting.push({ views, resolve, reject });
+			void this.check();
+		});
+	}
+
+	private async check() {
+		if (this.checking) return;
+		this.checking = true;
+		// a few turns of the microtask queue, so a procedure that has just answered or ended can ask again first
+		for (let i = 0; i < 16; i++) await null;
+		this.checking = false;
+		if (!this.waiting.length || this.waiting.length < this.active) return;
+		const batch = this.waiting.splice(0);
+		const views = batch.flatMap((b) => b.views);
+		this.calls++;
+		this.views += views.length;
+		try {
+			const outs = await this.policy(views);
+			let k = 0;
+			for (const b of batch) {
+				b.resolve(outs.slice(k, k + b.views.length));
+				k += b.views.length;
+			}
+		} catch (e) {
+			for (const b of batch) b.reject(e);
+		}
+	}
+
+	/** the M4's cost model for the calls made so far */
+	get seconds() {
+		return 0.065 * this.calls + 0.037 * this.views;
 	}
 }
 

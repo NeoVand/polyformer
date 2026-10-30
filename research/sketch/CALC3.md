@@ -54,6 +54,29 @@ Against the registration: every row certified by step 1,200 (predicted by 1,200:
 by 2,000: right); minimum margin at the stop 3.96 (predicted 3.0–3.6: higher than predicted), the weakest row in SUM,
 not EST or MUL as predicted; perplexity ×1.0048 (predicted 1.000–1.012: right).
 
+## Waves across operations (orchestrator, 30 Oct, after E7 trained)
+
+PROGRAM's algebra is many small, independent `Calc` calls; `Calc` gains `wave(jobs)`, and the sheet must put the
+steps of different operations in one batch.
+
+**Decision: one prompt form for every table.** The slotted ops (MUL ADD ADZ FLS NXT SUB EST DEC) already share one: the
+word, the image, `=`, two `?` slots, and `?`s up to the longest word's length (two tokens), answers at `=` and the
+slots. The adder's SUM rows were the exception (`SUM<image>=`, one token at `=`). Now, for the E7 program
+(`MODELS.add.padded`), the adder's prompt is padded the same way (`SUM<image>=???`), its one answer still read at `=`.
+Any mix of steps is then one batch. The certificate checks the SUM rows in exactly this form (`CERT_FORMAT`
+`add=padded-fast-242`); E6 on the live page keeps its unpadded form and shipped certificate.
+
+**Training form.** E7 had already trained (SUM rows unpadded) when this arrived. Every layer of Qwen3.5 is causal
+(attention and Gated DeltaNet, including its causal convolution), so tokens after `=` cannot change the logits at `=`:
+the padded form equals the trained one up to float rounding. Measured rather than assumed: `e7_padcheck.py` on the
+server compares all 242 SUM rows in both forms (result below), and the device certificate is taken in the padded form.
+
+**Runtime.** `SheetCalc` sends every procedure's steps through a multiplexer (`Mux` in `calc-sheet.ts`): a step waits
+until every procedure under way has asked for its next step (or ended), then all their views go in one call. `wave(jobs)`
+is `Promise.all` over the jobs; any `Calc` calls that run at the same time share calls this way. Tests: 20 mixed jobs
+(divmod, mul, isqrt, signed sums of four pairs) give the same answers as one at a time, the same views, under a third of
+the calls, with SUM, SUB and MUL rows in one batch; a failing job does not hold the others.
+
 ## T1: the runtime (30 Oct, $0)
 
 **Files.** `src/lib/sketchpad/calc-tables.ts` (the 651 rows, cross-checked row by row against `calc_tables.json` from
