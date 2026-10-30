@@ -353,7 +353,7 @@
 		{#if pad.loadError}<p class="note err">{pad.loadError}</p>{/if}
 
 		<!-- the top row: the sheet (the model's only memory), one tick, and the machine; panels on one grid -->
-		<div class="band">
+		<div class="band" class:tall={pad.op === 'calc'}>
 			<figure class="sp-panel sheet-panel">
 				<figcaption class="sp-cap">
 					<span class="sp-title">The sheet</span>
@@ -766,6 +766,10 @@
 		gap: 10px 40px;
 		margin-top: 4px;
 	}
+	/* the calculator's sheets have up to ten rows: a taller (still fixed) sheet row */
+	.band.tall {
+		grid-template-rows: auto 272px 40px;
+	}
 	.sheet-body {
 		align-content: start;
 	}
@@ -833,6 +837,9 @@
 			grid-template-columns: minmax(0, 1fr) 250px;
 			grid-template-rows: auto 188px 40px auto 188px 40px;
 		}
+		.band.tall {
+			grid-template-rows: auto 272px 40px auto 188px 40px;
+		}
 		.band :global(.machine) {
 			grid-column: 1 / -1;
 		}
@@ -859,6 +866,9 @@
 		.band {
 			grid-template-columns: minmax(0, 1fr);
 			grid-template-rows: repeat(3, auto 188px auto);
+		}
+		.band.tall {
+			grid-template-rows: auto 272px auto repeat(2, auto 188px auto);
 		}
 		.instruments {
 			grid-template-columns: minmax(0, 1fr);

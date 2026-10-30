@@ -54,6 +54,20 @@ Against the registration: every row certified by step 1,200 (predicted by 1,200:
 by 2,000: right); minimum margin at the stop 3.96 (predicted 3.0–3.6: higher than predicted), the weakest row in SUM,
 not EST or MUL as predicted; perplexity ×1.0048 (predicted 1.000–1.012: right).
 
+Server end-to-end runs with the model (`eval.json`): products 4 × 4 20/20, 6 × 6 10/10, 10 × 10 5/5; sums of 10 digits
+20/20, 100 digits 5/5, 1,000 digits 2/2.
+
+**SUM rows in the padded form** (`e7_padcheck.py`, server, fp32): 242/242, minimum margin 3.9600 padded vs 3.9598
+unpadded, largest change of any row's margin 0.0018 (mean 0.0004): float rounding, as causality says.
+
+**Program folder.** `build_program.sh` → `static/sketchpad/models/arithmetic-e7/` (not committed, not uploaded; no
+gate input, as the brief asks): LoRA into the fp16 decoder (21 MB graph), the inside window, atlas and map data; the
+layer-20 push still lands (SUM 79/80, MUL 80/80, as for E6). `models.ts` points the dev page at it.
+
+**On the M4, the full certificate in the browser** (WebGPU, fp16 decoder, the padded form for SUM): **2,446 / 2,446**,
+every margin positive: SUM 242/242 (minimum 3.02, 22 s), the calculator's 651/651 (minimum 4.61, 62 s), the
+multiplier's 1,553/1,553 (minimum 6.52, 151 s).
+
 ## Waves across operations (orchestrator, 30 Oct, after E7 trained)
 
 PROGRAM's algebra is many small, independent `Calc` calls; `Calc` gains `wave(jobs)`, and the sheet must put the
