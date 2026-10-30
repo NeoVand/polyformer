@@ -1,4 +1,5 @@
 /** Messages between the page and the worker that holds the sketchpad model (worker.ts, pad.svelte.ts). */
+import type { Family, InsideTick, Point } from './inside.ts';
 import type { Kind } from './models.ts';
 import type { Op } from './multiplier.ts';
 
@@ -24,12 +25,32 @@ export interface LoadedInfo {
 	cached: number;
 	/** the program was already loaded: nothing was read or compiled */
 	reused: boolean;
+	/** what the page needs to draw the inside of this program (null when its graph has no window into itself) */
+	inside: InsideMeta | null;
+}
+
+/** The maps' backgrounds and the push's alphabet (inside.json without the arrays the worker keeps). */
+export interface InsideMeta {
+	steerLayer: number;
+	steerCodes: string;
+	families: Record<
+		Family,
+		{
+			cloud: Point[];
+			cloudLabels: string[];
+			cloudViews: string[];
+			labels: Record<string, Point>;
+			radius: number[];
+			separation: number;
+		}
+	>;
 }
 
 export type ToWorker =
 	| { type: 'load'; lid: number; kind: Kind; root: string; sprites: string }
 	| { type: 'certify'; rid: number; kind: Kind }
-	| { type: 'tick'; rid: number; op: TickOp; cells: string[] }
+	/** `push`: an adder answer code to push the stream entering the steer layer toward, on this tick only */
+	| { type: 'tick'; rid: number; op: TickOp; cells: string[]; push: string | null }
 	| { type: 'chat'; rid: number; question: string; maxNew: number }
 	| { type: 'cancel'; rid: number };
 
@@ -61,6 +82,8 @@ export type FromWorker =
 			ms: number;
 			/** the 32 x 96 RGBA strip the model read */
 			strip: Uint8ClampedArray;
+			/** the lens and the path of this tick's states (null when the program has no inside data) */
+			inside: InsideTick | null;
 	  }
 	| { type: 'chat-delta'; rid: number; text: string }
 	| { type: 'done'; rid: number; ms: number }

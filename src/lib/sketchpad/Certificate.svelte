@@ -9,9 +9,11 @@
 		oncheck?: () => void;
 		/** can the table be checked now (the model is loaded and idle) */
 		canCheck: boolean;
+		/** the rows a run has read and the one it read last: the run's walk on the table */
+		walk?: { current: number; visited: Set<number> } | null;
 	}
 
-	let { cert, device, oncheck, canCheck }: Props = $props();
+	let { cert, device, oncheck, canCheck, walk = null }: Props = $props();
 
 	let canvas: HTMLCanvasElement | null = null;
 	let width = $state(240);
@@ -68,6 +70,7 @@
 	function paint(el: HTMLCanvasElement) {
 		canvas = el;
 		void cert.version;
+		void walk;
 		const g = grid;
 		const h = hover;
 		const dpr = Math.max(1, globalThis.devicePixelRatio || 1);
@@ -80,13 +83,16 @@
 		ctx.clearRect(0, 0, g.w, g.h);
 		const s = g.size;
 		const tone = GRID[theme.current];
+		// during a run, the rows it has not read step back and the ones it has read stand out
+		const w = walk && walk.visited.size ? walk : null;
 		for (let i = 0; i < cert.rows; i++) {
 			const m = cert.margins[i];
+			ctx.globalAlpha = w && !w.visited.has(i) ? 0.3 : 1;
 			if (Number.isNaN(m)) {
 				ctx.fillStyle = tone.idle;
 				ctx.fillRect(g.x[i], g.y[i], s, s);
 			} else if (m > 0) {
-				ctx.fillStyle = i === h ? tone.hot : tone.pass;
+				ctx.fillStyle = i === h || (w && w.visited.has(i)) ? tone.hot : tone.pass;
 				ctx.fillRect(g.x[i], g.y[i], s, s);
 			} else {
 				// a failing row is a hole: hollow, and ringed when pointed at
@@ -96,6 +102,13 @@
 				ctx.strokeRect(g.x[i] + 0.5, g.y[i] + 0.5, s - 1, s - 1);
 				if (i === h) ctx.strokeRect(g.x[i] - 1.5, g.y[i] - 1.5, s + 3, s + 3);
 			}
+		}
+		ctx.globalAlpha = 1;
+		if (w && w.current >= 0 && w.current < cert.rows) {
+			const i = w.current;
+			ctx.strokeStyle = tone.hot;
+			ctx.lineWidth = 1;
+			ctx.strokeRect(g.x[i] - 1.5, g.y[i] - 1.5, s + 3, s + 3);
 		}
 		if (h !== null && Number.isNaN(cert.margins[h])) {
 			ctx.fillStyle = tone.pass;
@@ -179,6 +192,8 @@
 	<p class="line num">
 		{#if readout}
 			<span class="mono">{readout.label}</span><br /><span class="dim">{readout.margin}</span>
+		{:else if walk && walk.visited.size}
+			This run has read {fmt(walk.visited.size)} of the {fmt(cert.rows)} views, each one checked.
 		{:else if cert.status === 'none'}
 			{fmt(cert.rows)} views: every strip the model can meet.
 		{:else}

@@ -23,8 +23,9 @@ import {
 	type Kind,
 	type SketchModel
 } from './models.ts';
+import { analyse, parseAssets, steerVector, type InsideAssets } from './inside.ts';
 import { MUL_DOMAIN, outChars, type Op } from './multiplier.ts';
-import type { FromWorker, LoadedInfo, ToWorker } from './protocol.ts';
+import type { FromWorker, InsideMeta, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
 import { B, CELL, assembleStrip, type SpriteSheet } from './sprites.ts';
 
 declare const self: DedicatedWorkerGlobalScope;
@@ -70,6 +71,14 @@ let tjs: Tjs | null = null;
 let processor: Processor | null = null;
 let model: Model | null = null;
 let tok: Tok | null = null;
+/** the loaded program's inside data (null for a program whose graph has no hidden_states output) */
+let inside: InsideAssets | null = null;
+let insideMeta: InsideMeta | null = null;
+/** while on, every decoder call's states at its last position are kept, one entry per call */
+let capturing = false;
+let captured: Float32Array[] = [];
+/** a push for the next decoder call that reads a whole prompt (the tick's first call) */
+let steerNext: Float32Array | null = null;
 /** the program loaded now, and a counter that moves whenever the loaded model changes */
 let loadedId: string | null = null;
 let generation = 0;
@@ -274,6 +283,121 @@ function argmax(row: Float32Array) {
 
 const tokenOf = (c: string) => tok!.encode(c, { add_special_tokens: false })[0];
 
+// ---- the inside: the decoder session's extra output and input ---------------------------------------------------
+interface OrtTensor {
+	type: string;
+	dims: readonly number[];
+	data: unknown;
+}
+interface OrtSession {
+	inputNames: readonly string[];
+	run(feeds: Record<string, OrtTensor>, opts?: unknown): Promise<Record<string, OrtTensor>>;
+}
+
+/** The states at the last position of a `hidden_states` output [DEPTH, batch 1, seq, DIM], as float32 DEPTH x DIM. */
+function lastStates(t: OrtTensor): Float32Array {
+	const [L, , S, D] = t.dims;
+	const data = t.data as ArrayLike<number>;
+	const bits = data instanceof Uint16Array;
+	const out = new Float32Array(L * D);
+	for (let l = 0; l < L; l++) {
+		const off = (l * S + S - 1) * D;
+		for (let i = 0; i < D; i++) out[l * D + i] = bits ? F16[data[off + i]] : data[off + i];
+	}
+	return out;
+}
+
+/**
+ * Hook the decoder session: hide `steer` from transformers.js (which feeds only the inputs it knows) and feed it here,
+ * zeros except for an armed push at the last prompt position; keep `hidden_states` while a tick is capturing.
+ */
+function wrapDecoder(m: Model) {
+	const sessions = (m as unknown as { sessions: Record<string, OrtSession> }).sessions;
+	const s = sessions?.decoder_model_merged;
+	if (!s || !s.inputNames.includes('steer')) return false;
+	const names = s.inputNames.filter((n) => n !== 'steer');
+	Object.defineProperty(s, 'inputNames', { value: names, configurable: true });
+	const run = s.run.bind(s);
+	s.run = async (feeds, opts) => {
+		const dims = feeds.inputs_embeds.dims as number[];
+		const data = new Float32Array(dims[0] * dims[1] * dims[2]);
+		if (steerNext && dims[1] > 1) {
+			data.set(steerNext, (dims[1] - 1) * dims[2]);
+			steerNext = null;
+		}
+		const steer = (new tjs!.Tensor('float32', data, dims) as unknown as { ort_tensor: OrtTensor })
+			.ort_tensor;
+		const out = await run({ ...feeds, steer }, opts);
+		if (capturing && out.hidden_states) captured.push(lastStates(out.hidden_states));
+		return out;
+	};
+	return true;
+}
+
+/** The program's inside data, beside its graph; null when the program has none. */
+async function loadInside(spec: SketchModel, root: string) {
+	const base = `${root}${spec.id}/`;
+	const get = async (f: string) => {
+		const r = await fetch(base + f);
+		if (!r.ok) throw new Error(`${f}: ${r.status}`);
+		return r;
+	};
+	const [lj, lb, ij, ib] = await Promise.all([
+		get('onnx/lens.json').then((r) => r.json()),
+		get('onnx/lens.bin').then((r) => r.arrayBuffer()),
+		get('inside.json').then((r) => r.json()),
+		get('inside.bin').then((r) => r.arrayBuffer())
+	]);
+	inside = parseAssets(lj, lb, ij, ib);
+	insideMeta = {
+		steerLayer: ij.steerLayer,
+		steerCodes: ij.steerCodes,
+		families: Object.fromEntries(
+			Object.entries(ij.families as Record<string, InsideMeta['families']['SUM']>).map(([k, f]) => [
+				k,
+				{
+					cloud: f.cloud,
+					cloudLabels: f.cloudLabels,
+					cloudViews: f.cloudViews,
+					labels: f.labels,
+					radius: f.radius,
+					separation: f.separation
+				}
+			])
+		) as InsideMeta['families']
+	};
+}
+
+/** run `fn` with every decoder call's states kept, and read them */
+async function withInside<T>(
+	op: TickOp,
+	cells: string[],
+	push: string | null,
+	fn: () => Promise<T>
+) {
+	captured = [];
+	capturing = !!inside;
+	steerNext = null;
+	let pushed: string | null = null;
+	if (inside && push && op === 'ADD-FAST') {
+		// moves the stream entering the steer layer from the class mean of the true answer to the asked one
+		const v = steerVector(inside, addCode(addRule(cells)), push);
+		if (v) {
+			steerNext = v;
+			pushed = push;
+		}
+	}
+	try {
+		const r = await fn();
+		const read = inside && captured.length ? analyse(inside, op, captured, pushed) : null;
+		return { r, inside: read };
+	} finally {
+		capturing = false;
+		captured = [];
+		steerNext = null;
+	}
+}
+
 // ---- the adder: one forward over "ADD<image>=", the last position's logits give the one answer token -------------
 async function addForward(cells: string[]) {
 	const { strip, image } = stripImage(cells);
@@ -416,6 +540,14 @@ async function load(m: Extract<ToWorker, { type: 'load' }>) {
 			processor = proc as unknown as Processor;
 			model = mdl as unknown as Model;
 			tok = processor.tokenizer;
+			inside = null;
+			insideMeta = null;
+			if (wrapDecoder(model))
+				await loadInside(spec, m.root).catch((e) => {
+					inside = null;
+					insideMeta = null;
+					console.warn('sketchpad: no inside data', e);
+				});
 			post({
 				type: 'progress',
 				lid: m.lid,
@@ -479,7 +611,8 @@ function info(spec: SketchModel, root: string, seconds: number, reused: boolean)
 		networkFiles: reused ? {} : { ...network },
 		transferSize: reused ? 0 : transferSize,
 		cached: reused ? 0 : cachedBytes,
-		reused
+		reused,
+		inside: insideMeta
 	};
 }
 
@@ -524,18 +657,31 @@ async function tick(m: Extract<ToWorker, { type: 'tick' }>) {
 		if (!serves(kindOf(m.op))) throw new Error(`${MODELS[kindOf(m.op)].name} is not loaded`);
 		const t = performance.now();
 		if (m.op === 'ADD-FAST') {
-			const { row, strip } = await addForward(m.cells);
-			const a = argmax(row);
-			const { m: mg } = margin(row, a);
+			const { r: f, inside: seen } = await withInside(m.op, m.cells, m.push, () =>
+				addForward(m.cells)
+			);
+			const a = argmax(f.row);
+			const { m: mg } = margin(f.row, a);
 			const text = tok!.decode([a]);
-			return { out: [text], margin: mg, strip, ms: performance.now() - t };
+			return { out: [text], margin: mg, strip: f.strip, ms: performance.now() - t, inside: seen };
 		}
-		const { out, strip } = await mulTick(m.op, m.cells);
-		return { out, margin: null, strip, ms: performance.now() - t };
+		const { r: f, inside: seen } = await withInside(m.op, m.cells, null, () =>
+			mulTick(m.op as Op, m.cells)
+		);
+		return { out: f.out, margin: null, strip: f.strip, ms: performance.now() - t, inside: seen };
 	});
-	post({ type: 'tick', rid: m.rid, out: r.out, margin: r.margin, ms: r.ms, strip: r.strip }, [
-		r.strip.buffer
-	]);
+	post(
+		{
+			type: 'tick',
+			rid: m.rid,
+			out: r.out,
+			margin: r.margin,
+			ms: r.ms,
+			strip: r.strip,
+			inside: r.inside
+		},
+		[r.strip.buffer]
+	);
 }
 
 async function chat(m: Extract<ToWorker, { type: 'chat' }>) {

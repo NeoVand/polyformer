@@ -43,8 +43,10 @@ const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
 /**
  * One adapter for both operations (E5, recipe v2, seed 1; Modal, 29 Oct): 1,795/1,795 table rows on the server, min
  * margin 4.66, perplexity x0.989. Addition is its SUM opcode; multiplication its five ops. A switch reloads nothing.
+ * Its graph has a window into itself (research/sketch/patch_onnx_inside.py): an extra `hidden_states` output and a
+ * `steer` input that is zero unless a visitor pushes; the folder also holds the lens and map data (inside.ts).
  */
-const UNION = 'qwen35-union-s1-fp16';
+const UNION = 'qwen35-union-s1-inside';
 
 export const MODELS: Record<Kind, SketchModel> = {
 	add: {

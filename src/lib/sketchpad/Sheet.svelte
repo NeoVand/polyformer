@@ -14,9 +14,11 @@
 		sprites: string;
 		/** change an unread digit; return whether it changed */
 		onedit?: (r: number, c: number, by: number) => boolean;
+		/** smaller cells, for a page that shows the inside of the model beside the sheet */
+		compact?: boolean;
 	}
 
-	let { source, version, tickMs, sprites, onedit }: Props = $props();
+	let { source, version, tickMs, sprites, onedit, compact = false }: Props = $props();
 
 	let canvas: HTMLCanvasElement;
 	let paper: HTMLDivElement;
@@ -28,6 +30,7 @@
 
 	onMount(() => {
 		const v = new SheetView(canvas);
+		v.compact = compact;
 		v.onMetrics = (m) => (metrics = m);
 		v.onWindow = (from, to) => {
 			if (Math.abs(from - win.from) > 1e-4 || Math.abs(to - win.to) > 1e-4) win = { from, to };

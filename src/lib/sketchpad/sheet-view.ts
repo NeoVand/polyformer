@@ -115,15 +115,18 @@ export class SheetView {
 		return c;
 	}
 
+	/** a smaller sheet (24 px cells), so the inside of the model fits on the same screen */
+	compact = false;
+
 	/** lay out for a CSS width; the cell size follows the width and the screen's pixel ratio */
 	resize(cssW: number) {
 		this.dpr = Math.max(1, Math.round((globalThis.devicePixelRatio || 1) * 4) / 4);
-		const narrow = cssW < 520;
+		const narrow = cssW < 520 || this.compact;
 		// whole device pixels per sprite pixel where possible, so the glyphs stay crisp
 		this.cs = narrow ? (this.dpr >= 2.5 ? 64 / this.dpr : 24) : 32;
 		this.padX = narrow ? 12 : 20;
-		this.padY = narrow ? 12 : 18;
-		this.ruleGap = narrow ? 10 : 14;
+		this.padY = narrow ? (this.compact ? 8 : 12) : 18;
+		this.ruleGap = narrow ? (this.compact ? 6 : 10) : 14;
 		this.cssW = Math.max(120, Math.floor(cssW));
 		this.layout();
 		this.cam = this.camTarget = this.targetCam();

@@ -16,7 +16,8 @@ import {
 	type Kind
 } from './models.ts';
 import { MUL_DOMAIN, MulSheet, outChars, type MulOut, type Op } from './multiplier.ts';
-import type { FromWorker, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
+import type { InsideTick } from './inside.ts';
+import type { FromWorker, InsideMeta, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
 import { B, GLYPHS } from './sprites.ts';
 
 export type Sheet = AddSheet | MulSheet;
@@ -164,6 +165,8 @@ export interface TickView {
 	margin: number | null;
 	strip: Uint8ClampedArray;
 	ms: number;
+	/** the model's states on this tick: the lens and the path (null when the program has no inside data) */
+	inside: InsideTick | null;
 }
 
 export interface RunResult {
@@ -183,6 +186,8 @@ export interface RunResult {
 	unchecked: number;
 	/** the table rows behind `unchecked`, as the certificate lists them */
 	uncheckedLabels: string[];
+	/** ticks on which the visitor pushed the model's state */
+	pushes: number;
 }
 
 export interface ChatTurn {
@@ -248,6 +253,16 @@ class Pad {
 	runError = $state<string | null>(null);
 
 	chat = $state<ChatTurn[]>([]);
+
+	/** the loaded program's inside data, for the maps (null without one) */
+	insideMeta = $state.raw<InsideMeta | null>(null);
+	/** an adder answer code to push the next tick toward; one tick only */
+	push = $state<string | null>(null);
+	/** pause between ticks in ms, so the inside can be watched (0: as fast as the GPU goes) */
+	pace = $state(0);
+	pushes = $state(0);
+	/** the table rows this run has read, and the one it read last (-1 before the first tick) */
+	walk = $state.raw<{ current: number; visited: Set<number> }>({ current: -1, visited: new Set() });
 
 	private worker: Worker | null = null;
 	private rid = 0;
@@ -458,6 +473,7 @@ class Pad {
 		if (lid !== this.latest?.lid) return;
 		this.loadedId = info.id;
 		this.loading = null;
+		this.insideMeta = info.inside;
 		if (!info.reused) this.lastLoad = info;
 		void this.refreshCosts();
 		this.ensureCert(this.latest.kind);
@@ -578,14 +594,29 @@ class Pad {
 		this.runError = null;
 		this.last = null;
 		this.ticks = 0;
+		this.pushes = 0;
+		this.walk = { current: -1, visited: new Set() };
 		this.computeMs = 0;
 		this.wallMs = 0;
 		this.version++;
 	}
 
-	private tick(op: TickOp, cells: string[]) {
+	private tick(op: TickOp, cells: string[], push: string | null) {
 		const rid = ++this.rid;
-		return this.request<Extract<FromWorker, { type: 'tick' }>>({ type: 'tick', rid, op, cells });
+		return this.request<Extract<FromWorker, { type: 'tick' }>>({
+			type: 'tick',
+			rid,
+			op,
+			cells,
+			push
+		});
+	}
+
+	/** wait between ticks; a stop cuts it short */
+	private async rest(ms: number) {
+		const end = performance.now() + ms;
+		while (!this.stopRun && performance.now() < end)
+			await new Promise((r) => setTimeout(r, Math.min(50, end - performance.now())));
 	}
 
 	/** Change an unread digit; the next ticks read the new one. */
@@ -627,8 +658,22 @@ class Pad {
 				const cells = sheet.view();
 				const row = rowIndex(op, cells);
 				read[row] = row >= 0 && cert.margins[row] > 0;
-				const r = await this.tick(op, cells);
-				this.last = { op, cells, out: r.out, margin: r.margin, strip: r.strip, ms: r.ms };
+				// the walk is replaced whole on every tick ($state.raw), never changed in place
+				// eslint-disable-next-line svelte/prefer-svelte-reactivity
+				if (row >= 0) this.walk = { current: row, visited: new Set(this.walk.visited).add(row) };
+				const push = op === 'ADD-FAST' ? this.push : null;
+				this.push = null;
+				const r = await this.tick(op, cells, push);
+				if (r.inside?.pushed) this.pushes++;
+				this.last = {
+					op,
+					cells,
+					out: r.out,
+					margin: r.margin,
+					strip: r.strip,
+					ms: r.ms,
+					inside: r.inside
+				};
 				this.ticks++;
 				this.computeMs += r.ms;
 				this.wallMs = performance.now() - t0;
@@ -656,6 +701,7 @@ class Pad {
 				}
 				this.version++;
 				if (!more) break;
+				if (this.pace > 0) await this.rest(this.pace);
 			}
 			const got = sheet.result();
 			const want = sheet.expected();
@@ -676,7 +722,8 @@ class Pad {
 					.filter(([, ok]) => !ok)
 					.map(([row]) =>
 						Number(row) >= 0 ? rowLabel(kind, Number(row)) : 'a view outside the table'
-					)
+					),
+				pushes: this.pushes
 			};
 		} catch (e) {
 			this.runError = e instanceof Cancelled ? 'stopped' : (e as Error).message;
