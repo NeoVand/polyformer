@@ -14,6 +14,7 @@ import modal
 
 APP = "polyformer-sketch"
 CALLS = pathlib.Path(__file__).parent / "calls.json"
+E6_S3 = "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"  # the shipped adapter
 
 
 def record(job, call, cmds):
@@ -74,6 +75,21 @@ def main(argv):
         stop = argv[5] if len(argv) > 5 else "3.0"
         job = f"e6_s{seed}_{steps}_h{hinge}_stop{stop}_fast"
         cmds = [["python", "e6_slots.py", "train", steps, seed, hinge, stop, init]]
+        call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
+        record(job, call, cmds)
+    elif argv[0] == "e7smoke":  # e7smoke [steps=20]: the E7 wiring on a few steps from E6 seed 3 (CALC3.md)
+        steps = argv[1] if len(argv) > 1 else "20"
+        job = f"e7smoke_{steps}" + time.strftime("_%H%M")
+        cmds = [["python", "e7_calc.py", "smoke", E6_S3, steps]]
+        call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
+        record(job, call, cmds)
+    elif argv[0] == "e7":  # e7 <seed> [steps=4000] [hinge=4.0] [stop=3.0]: the calculator's tables, from E6 seed 3
+        seed = argv[1]
+        steps = argv[2] if len(argv) > 2 else "4000"
+        hinge = argv[3] if len(argv) > 3 else "4.0"
+        stop = argv[4] if len(argv) > 4 else "3.0"
+        job = f"e7_s{seed}_{steps}_h{hinge}_stop{stop}_fast"
+        cmds = [["python", "e7_calc.py", "train", steps, seed, hinge, stop, E6_S3]]
         call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
         record(job, call, cmds)
     elif argv[0] == "compile":  # compile [adapter dir on the volume]: the compile_baseline.py rates, base then adapter
