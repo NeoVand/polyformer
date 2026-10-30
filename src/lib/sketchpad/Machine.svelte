@@ -212,10 +212,10 @@
 
 <style>
 	svg {
-		display: block;
+		position: absolute;
+		inset: 0;
 		width: 100%;
 		height: 100%;
-		max-height: 230px;
 		overflow: visible;
 	}
 	.mono {

@@ -1,6 +1,7 @@
 /*
- * The instruments under the sheet share one grid (the page's .instruments): every panel spans its three rows through
- * subgrid, so captions sit on one line, figures share one height and footnotes start on one line.
+ * The instruments share one grid (the page's .instruments): every panel spans its three rows through subgrid, so
+ * captions, figures and notes sit on common lines. Geometry comes from the grid only: a figure fills its box
+ * (`.sp-body`, one minmax(0, 1fr) cell) and never sizes it, so nothing a tick draws can move or push its neighbours.
  */
 .sp-panel {
 	grid-row: span 3;
@@ -8,16 +9,21 @@
 	grid-template-rows: subgrid;
 	row-gap: 10px;
 	min-width: 0;
+	min-height: 0;
 	margin: 0;
 }
 .sp-cap {
 	display: grid;
 	gap: 2px;
 	align-content: start;
+	min-width: 0;
 }
 .sp-title {
 	font-size: var(--text-xs);
 	color: var(--color-ink);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
 }
 .sp-sub {
 	font-size: var(--text-2xs);
@@ -25,12 +31,15 @@
 }
 .sp-body {
 	position: relative;
+	display: grid;
+	grid-template-columns: minmax(0, 1fr);
+	grid-template-rows: minmax(0, 1fr);
 	min-width: 0;
 	min-height: 0;
-	display: grid;
-	place-items: center;
+	overflow: hidden;
 }
 .sp-foot {
+	min-width: 0;
 	font-size: var(--text-xs);
 	line-height: 1.45;
 	color: var(--color-ink-2);
@@ -39,6 +48,8 @@
 	color: var(--color-ink-3);
 }
 .sp-empty {
+	align-self: center;
+	justify-self: center;
 	font-size: var(--text-xs);
 	color: var(--color-ink-3);
 }

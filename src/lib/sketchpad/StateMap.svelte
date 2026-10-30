@@ -236,16 +236,18 @@
 	}
 
 	onMount(() => {
-		const ro = new ResizeObserver(
-			() => (size = Math.max(160, Math.min(box.clientWidth, box.clientHeight)))
-		);
+		// the canvas is the largest square the box allows; it is positioned inside the box, so it never sizes it
+		const ro = new ResizeObserver(() => {
+			const side = Math.floor(Math.min(box.clientWidth, box.clientHeight));
+			if (side > 0) size = side;
+		});
 		ro.observe(box);
 		let raf = 0;
 		let prev = performance.now();
 		const frame = (now: number) => {
 			const dt = Math.min(0.1, (now - prev) / 1000);
 			prev = now;
-			if (!drag && now - lastTouch > 2500) yaw += dt * 0.14;
+			if (!drag && now - lastTouch > 2500) yaw += dt * 0.09;
 			draw(now);
 			raf = requestAnimationFrame(frame);
 		};
@@ -327,11 +329,11 @@
 
 <style>
 	.box {
+		position: relative;
 		width: 100%;
 		height: 100%;
+		min-width: 0;
 		min-height: 0;
-		display: grid;
-		place-items: center;
 		--cloud: #4d4d4d;
 		--hot: #a8a8a8;
 		--trail: #d0d0d0;
@@ -346,6 +348,10 @@
 		--trail: #2a2a2a;
 	}
 	canvas {
+		position: absolute;
+		left: 50%;
+		top: 50%;
+		transform: translate(-50%, -50%);
 		display: block;
 		touch-action: none;
 	}

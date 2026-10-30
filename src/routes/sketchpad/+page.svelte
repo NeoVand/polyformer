@@ -248,69 +248,74 @@
 		</div>
 		{#if pad.loadError}<p class="note err">{pad.loadError}</p>{/if}
 
-		<!-- the sheet, the model's only memory, and what the model reads and writes -->
+		<!-- the sheet (the model's only memory), what the model reads and writes, and the machine it runs -->
 		<div class="band">
 			<div class="sheet-col">
 				<Sheet {source} version={pad.version} {tickMs} sprites={SPRITES} onedit={edit} compact />
+				<!-- two fixed lines: what happened, then the facts behind it -->
 				<div class="status num" aria-live="polite">
 					{#if pad.running}
-						<span>tick {fmt(pad.ticks)}</span>
-						<span>{(pad.computeMs / Math.max(1, pad.ticks)).toFixed(0)} ms per tick</span>
-						<span>{progress}</span>
-						{#if pad.sheet && pad.sheet.edits}<span
-								>{pad.sheet.edits} {pad.sheet.edits === 1 ? 'edit' : 'edits'}</span
-							>{/if}
+						<p>
+							<span>tick {fmt(pad.ticks)}</span><span
+								>{(pad.computeMs / Math.max(1, pad.ticks)).toFixed(0)} ms per tick</span
+							><span>{progress}</span>
+						</p>
+						<p>
+							{#if pad.sheet && pad.sheet.edits}<span
+									>{pad.sheet.edits} {pad.sheet.edits === 1 ? 'digit' : 'digits'} changed</span
+								>{/if}{#if pad.pushes}<span
+									>{pad.pushes} {pad.pushes === 1 ? 'tick' : 'ticks'} pushed</span
+								>{/if}
+						</p>
 					{:else if pad.result}
 						{@const r = pad.result}
-						<span class="verdict"
-							><strong>{r.ok ? 'Exact.' : 'Wrong.'}</strong>
+						<p class="verdict">
+							<strong>{r.ok ? 'Exact.' : 'Wrong.'}</strong>
 							{#if r.ok}
-								{#if r.got.length <= 44}
+								{#if r.operands[0].length + r.operands[1].length + r.got.length <= 48}
 									{r.operands[0]} {pad.op === 'add' ? '+' : '×'} {r.operands[1]} = {r.got}
 								{:else}
-									all {fmt(r.got.length)} digits match
+									All {fmt(r.got.length)} digits of the {pad.op === 'add' ? 'sum' : 'product'} match.
 								{/if}
 							{:else}
-								the sheet says {r.got.length > 40 ? `${r.got.slice(0, 40)}…` : r.got}
-							{/if}</span
-						>
-						<span
-							>{fmt(r.ticks)} ticks · {r.msPerTick.toFixed(0)} ms per tick · {duration(
-								r.seconds
-							)}</span
-						>
-						{#if r.pushes}<span>you pushed {r.pushes} {r.pushes === 1 ? 'tick' : 'ticks'}</span
-							>{/if}
-						{#if r.edits}<span>{r.edits} {r.edits === 1 ? 'digit' : 'digits'} changed mid-run</span
-							>{/if}
-						<span
-							>{#if r.certified && r.certSource === 'shipped'}certified: the shipped table, its
-								weakest views checked here{:else if r.certified}certified: every view checked on
-								this device{:else if r.unchecked === 0}every view it read passed{:else}{r.unchecked} unchecked
-								{r.unchecked === 1 ? 'view' : 'views'}{/if}</span
-						>
+								The sheet says {r.got.length > 30 ? `${r.got.slice(0, 30)}…` : r.got}.
+							{/if}
+						</p>
+						<p>
+							<span>{fmt(r.ticks)} ticks, {r.msPerTick.toFixed(0)} ms each</span><span
+								>{#if r.certified && r.certSource === 'shipped'}certified (shipped, rechecked here){:else if r.certified}certified
+									on this device{:else if r.unchecked === 0}every view it read passed{:else}{r.unchecked}
+									unchecked {r.unchecked === 1 ? 'view' : 'views'}{/if}</span
+							>{#if r.pushes}<span>{r.pushes} pushed</span>{/if}{#if r.edits}<span
+									>{r.edits} changed</span
+								>{/if}
+						</p>
 					{:else if pad.runError}
-						<span>{pad.runError === 'stopped' ? 'Stopped.' : pad.runError}</span>
+						<p>{pad.runError === 'stopped' ? 'Stopped.' : pad.runError}</p>
 					{:else if pad.ready && !certBusy}
-						{#if loadNote}<span>{loadNote}</span>{/if}
-						<span
-							>Press Run. Click a digit the model has not reached to change it mid-run{pad.op ===
-							'add'
-								? ', or a number in the state space to push its next step'
-								: ''}.</span
-						>
+						<p title={loadNote}>
+							{pad.op === 'add'
+								? 'Run, then click an unread digit to change it,'
+								: 'Run, then click a later digit of b to change it.'}
+						</p>
+						{#if pad.op === 'add'}<p>or a number in the state space to push a tick.</p>{/if}
 					{/if}
 				</div>
 			</div>
 			<div class="eye">
 				<Inset last={pad.last} {next} sprites={SPRITES} />
 			</div>
+			<Machine last={pad.last} kind={pad.op} />
 		</div>
 
 		<!-- the inside of the model -->
 		<div class="instruments">
-			<Machine last={pad.last} kind={pad.op} />
-			<Lens seen={pad.last?.inside ?? null} ready={!!pad.insideMeta} slow={pad.pace > 0} />
+			<Lens
+				seen={pad.last?.inside ?? null}
+				kind={pad.op}
+				ready={!!pad.insideMeta}
+				slow={pad.pace > 0}
+			/>
 			<StateSpace
 				seen={pad.last?.inside ?? null}
 				wrote={pad.last ? pad.last.out[0] : null}
@@ -590,52 +595,63 @@
 		color: var(--color-ink);
 	}
 
+	/*
+	 * The band: sheet, eye and machine in fixed columns and a fixed height, so nothing a tick writes (a longer answer,
+	 * a status line, a wider sheet) moves its neighbours.
+	 */
 	.band {
-		display: flex;
-		align-items: flex-start;
-		gap: 48px;
+		display: grid;
+		grid-template-columns: minmax(0, 1fr) 250px 290px;
+		grid-template-rows: 236px;
+		column-gap: 40px;
 		margin-top: 4px;
 	}
 	.sheet-col {
-		flex: 0 1 auto;
 		min-width: 0;
+		min-height: 0;
 		display: grid;
+		grid-template-rows: auto auto;
+		align-content: start;
 		gap: 8px;
+		overflow: hidden;
 	}
 	.eye {
-		flex: none;
-		width: 300px;
-		padding-top: 6px;
+		min-width: 0;
+		min-height: 0;
+		overflow: hidden;
+		padding-top: 4px;
 	}
+	.band :global(.sp-panel) {
+		grid-row: auto;
+		grid-template-rows: auto minmax(0, 1fr) auto;
+		height: 236px;
+	}
+	/* two fixed lines under the sheet; a line that is too long ends in an ellipsis instead of pushing anything */
 	.status {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 2px 18px;
-		min-height: 18px;
-		padding-left: calc(var(--margin-w) + var(--gutter));
-		font-size: var(--text-xs);
-		color: var(--color-ink-3);
+		display: grid;
+		grid-template-rows: 18px 18px;
+		height: 36px;
+		padding-left: 12px;
 	}
-	.verdict {
-		color: var(--color-ink-2);
-		overflow-wrap: anywhere;
+	.status p {
+		min-width: 0;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
 	}
-	.verdict strong {
-		font-weight: 500;
-		color: var(--color-ink);
+	.status span + span::before {
+		content: ' · ';
 	}
 
-	/* the inside of the model: four panels on one grid (panel.css: captions, figures and notes share rows) */
+	/* the inside of the model: three panels on one grid (panel.css: captions, figures and notes share rows) */
 	.instruments {
 		display: grid;
-		grid-template-columns:
-			minmax(0, 0.85fr) minmax(0, 1.3fr) minmax(0, 1.9fr)
-			minmax(0, 0.85fr);
+		grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 0.9fr);
 		/* the figures take what the window leaves, so the whole stage fits from 800 px tall screens up */
-		grid-template-rows: auto clamp(220px, calc(100dvh - 555px), 340px) auto;
-		column-gap: 36px;
-		margin-top: 8px;
-		padding-top: 18px;
+		grid-template-rows: auto clamp(220px, calc(100dvh - 595px), 360px) 4.4em;
+		column-gap: 40px;
+		margin-top: 6px;
+		padding-top: 16px;
 		border-top: 1px solid var(--color-edge);
 	}
 
@@ -670,34 +686,44 @@
 	}
 
 	@media (max-width: 1279px) {
+		.band {
+			grid-template-columns: minmax(0, 1fr) 250px;
+			grid-template-rows: 236px 236px;
+			row-gap: 16px;
+		}
+		.band :global(.machine) {
+			grid-column: 1 / -1;
+		}
 		.instruments {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
-			grid-template-rows: auto 320px auto auto 320px auto;
-			row-gap: 24px;
-		}
-		.band {
-			flex-wrap: wrap;
-			gap: 20px;
+			grid-template-rows: auto 320px 4.4em auto 320px 4.4em;
+			row-gap: 10px;
 		}
 	}
 	@media (max-width: 719px) {
 		.page {
 			padding: 16px 16px 72px;
-			--margin-w: 34px;
-			--gutter: 8px;
+			--margin-w: 52px;
+			--gutter: 6px;
+		}
+		/* a phone has the height to spare: the status may wrap */
+		.status {
+			height: auto;
+			grid-template-rows: auto;
+		}
+		.status p {
+			white-space: normal;
+		}
+		.band {
+			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: auto 236px 236px;
 		}
 		.instruments {
 			grid-template-columns: minmax(0, 1fr);
-			grid-template-rows: repeat(4, auto 260px auto);
-		}
-		.eye {
-			width: 100%;
+			grid-template-rows: repeat(3, auto 300px auto);
 		}
 		.pace {
 			margin-left: 0;
-		}
-		.status {
-			padding-left: 0;
 		}
 		.block {
 			grid-template-columns: minmax(0, 1fr);

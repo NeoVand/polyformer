@@ -26,6 +26,12 @@
 	let metrics = $state.raw<Metrics | null>(null);
 	let win = $state.raw({ from: 0, to: 1 });
 	let cursor = $state('default');
+	/**
+	 * labels beside the problem: a compact sheet whose problem fits with room for the labels on its left (LABEL_ROOM);
+	 * otherwise they keep the margin column
+	 */
+	const LABEL_ROOM = 72;
+	const inline = $derived(compact && !!metrics?.fits && metrics.left >= LABEL_ROOM);
 	let drag: { x: number; id: number } | null = null;
 
 	onMount(() => {
@@ -115,20 +121,23 @@
 	}
 </script>
 
-<div
-	class="sheet"
-	style:width={compact && metrics && source
-		? `calc(var(--margin-w) + var(--gutter) + ${source.cols * metrics.cs + 2 * metrics.padX}px)`
-		: null}
->
+<!-- a compact sheet that fits writes its row labels beside the problem; one that pans keeps them in the margin -->
+<div class="sheet" class:inline>
 	<div class="labels" aria-hidden="true">
-		{#if metrics && source}
+		{#if metrics && source && !inline}
 			{#each source.rows as row, r (row.key)}
 				<span style:top="{metrics.rowY[r] + metrics.cs / 2}px">{row.label}</span>
 			{/each}
 		{/if}
 	</div>
 	<div class="paper" bind:this={paper}>
+		{#if metrics && source && inline}
+			<div class="labels in" aria-hidden="true" style:left="{metrics.left - 12}px">
+				{#each source.rows as row, r (row.key)}
+					<span style:top="{metrics.rowY[r] + metrics.cs / 2}px">{row.label}</span>
+				{/each}
+			</div>
+		{/if}
 		<canvas
 			bind:this={canvas}
 			style:cursor
@@ -153,6 +162,17 @@
 		grid-template-columns: var(--margin-w) minmax(0, 1fr);
 		column-gap: var(--gutter);
 	}
+	.sheet.inline {
+		grid-template-columns: 0 minmax(0, 1fr);
+		column-gap: 0;
+	}
+	.labels.in {
+		position: absolute;
+		top: 0;
+		width: 0;
+		z-index: 1;
+		pointer-events: none;
+	}
 	.labels {
 		position: relative;
 	}
@@ -166,6 +186,7 @@
 		transition: top 850ms cubic-bezier(0.65, 0, 0.35, 1);
 	}
 	.paper {
+		position: relative;
 		min-width: 0;
 	}
 	canvas {

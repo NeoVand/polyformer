@@ -104,6 +104,7 @@
 		white-space: nowrap;
 	}
 	.tokens {
+		height: 27px;
 		display: flex;
 		gap: 10px;
 		font-family: var(--font-mono);
@@ -113,7 +114,10 @@
 	}
 	.means {
 		margin-top: 6px;
+		height: 2.9em;
+		overflow: hidden;
 		font-size: var(--text-sm);
+		line-height: 1.45;
 		color: var(--color-ink-2);
 		transition: color 250ms ease;
 	}

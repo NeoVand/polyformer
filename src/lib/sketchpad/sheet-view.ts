@@ -28,6 +28,9 @@ interface Frame {
 export interface Metrics {
 	cs: number;
 	padX: number;
+	/** the whole problem fits the paper (no panning); `left` is then where its first column starts, in CSS px */
+	fits: boolean;
+	left: number;
 	padY: number;
 	ruleGap: number;
 	rowY: number[];
@@ -151,9 +154,12 @@ export class SheetView {
 			rowY.push(y);
 			y += this.cs;
 		});
+		const room = this.viewW - this.contentW;
 		return {
 			cs: this.cs,
 			padX: this.padX,
+			fits: room >= 0,
+			left: this.padX + Math.max(0, this.compact ? room / 2 : room),
 			padY: this.padY,
 			ruleGap: this.ruleGap,
 			rowY,
@@ -301,7 +307,8 @@ export class SheetView {
 	/** where the camera wants to be: the eye about 60% across, so more of what comes next shows */
 	private targetCam() {
 		const over = this.contentW - this.viewW;
-		if (over <= 0) return over; // right-aligned, like a written sum
+		// a problem that fits sits right-aligned like a written sum, or centred on a compact sheet
+		if (over <= 0) return this.compact ? over / 2 : over;
 		const cells = (this.src?.fovea() ?? []).filter((c): c is { r: number; c: number } => !!c);
 		// no eye (the run is over): finish the move already under way
 		if (!cells.length) return clamp(this.camTarget, 0, over);

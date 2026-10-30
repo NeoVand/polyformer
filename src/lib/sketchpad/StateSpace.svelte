@@ -82,10 +82,10 @@
 
 <style>
 	.maps {
+		position: absolute;
+		inset: 0;
 		display: grid;
-		gap: 12px;
-		width: 100%;
-		height: 100%;
+		gap: 16px;
 	}
 	.map {
 		display: grid;
@@ -95,6 +95,7 @@
 	}
 	.map.named {
 		grid-template-rows: auto minmax(0, 1fr);
+		row-gap: 4px;
 	}
 	.name {
 		font-size: var(--text-2xs);

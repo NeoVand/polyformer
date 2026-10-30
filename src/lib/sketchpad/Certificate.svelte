@@ -16,7 +16,9 @@
 	let { cert, device, oncheck, canCheck, walk = null }: Props = $props();
 
 	let canvas: HTMLCanvasElement | null = null;
+	/** the room the grid has: its box in the panel, which the canvas never sizes */
 	let width = $state(240);
+	let height = $state(200);
 	let hover = $state<number | null>(null);
 
 	/** The grid: the adder's 242 rows as two 11 x 11 blocks (carry blank, carry 1; top digit down, bottom across);
@@ -26,8 +28,9 @@
 		const x = new Float32Array(n);
 		const y = new Float32Array(n);
 		if (cert.kind === 'add') {
-			const size = 8;
-			const pitch = 10;
+			// the largest pitch at which both 11 x 11 blocks fit the box
+			const pitch = Math.max(5, Math.min(12, Math.floor(Math.min((width - 8) / 22, height / 11))));
+			const size = pitch - 2;
 			const block = 11 * pitch + 8;
 			for (let i = 0; i < n; i++) {
 				const c = Math.floor(i / 121);
@@ -36,8 +39,16 @@
 			}
 			return { x, y, size, w: 2 * block - 8 - (pitch - size), h: 11 * pitch - (pitch - size) };
 		}
-		const size = 4;
-		const pitch = 5;
+		// the largest pitch at which every row fits the box, in op groups one line apart
+		const lines = (cols: number) =>
+			Math.ceil(1100 / cols) + 2 * Math.ceil(220 / cols) + Math.ceil(14 / cols);
+		let pitch = 6;
+		while (pitch > 3) {
+			const cols = Math.floor((width + 1) / pitch);
+			if (lines(cols) * pitch + 12 <= height) break;
+			pitch--;
+		}
+		const size = pitch - 1;
 		const cols = Math.max(20, Math.floor((width + 1) / pitch));
 		const groups: [number, number][] = [
 			[0, 1100],
@@ -59,9 +70,12 @@
 		return { x, y, size, w: cols * pitch - 1, h: top - 4 - 1 };
 	});
 
-	/** the grid's width follows its column */
+	/** the grid follows its box */
 	function measure(box: HTMLDivElement) {
-		const ro = new ResizeObserver(() => (width = box.clientWidth));
+		const ro = new ResizeObserver(() => {
+			width = box.clientWidth;
+			height = box.clientHeight;
+		});
 		ro.observe(box);
 		return () => ro.disconnect();
 	}
@@ -123,7 +137,7 @@
 		const px = e.clientX - r.left;
 		const py = e.clientY - r.top;
 		const g = grid;
-		const pad = (g.size === 4 ? 1 : 2) / 2;
+		const pad = (g.size <= 5 ? 1 : 2) / 2;
 		let found: number | null = null;
 		for (let i = 0; i < cert.rows; i++)
 			if (
@@ -178,44 +192,48 @@
 		<span class="sp-sub">every view the model can meet, each one checked</span>
 	</div>
 
-	<div class="sp-body body">
-		<div class="headline">
-			<span
-				class="big num"
-				class:dim={cert.status !== 'done' && cert.status !== 'cached' && cert.status !== 'shipped'}
-			>
-				{cert.checked ? fmtMargin(cert.minMargin) : '–'}
-			</span>
-			<span class="cap"
-				>{cert.status === 'running'
-					? 'lowest margin so far'
-					: cert.status === 'shipped'
-						? 'lowest margin'
-						: 'lowest margin on this device'}</span
-			>
-		</div>
+	<div class="sp-body">
+		<div class="stack">
+			<div class="headline">
+				<span
+					class="big num"
+					class:dim={cert.status !== 'done' &&
+						cert.status !== 'cached' &&
+						cert.status !== 'shipped'}
+				>
+					{cert.checked ? fmtMargin(cert.minMargin) : '–'}
+				</span>
+				<span class="cap"
+					>{cert.status === 'running'
+						? 'lowest margin so far'
+						: cert.status === 'shipped'
+							? 'lowest margin'
+							: 'lowest margin on this device'}</span
+				>
+			</div>
 
-		<div class="grid" {@attach measure}>
-			<canvas
-				{@attach paint}
-				{onpointermove}
-				onpointerleave={() => (hover = null)}
-				aria-label="One cell per table row; filled when it passes, hollow when it fails"
-			></canvas>
-		</div>
+			<div class="grid" {@attach measure}>
+				<canvas
+					{@attach paint}
+					{onpointermove}
+					onpointerleave={() => (hover = null)}
+					aria-label="One cell per table row; filled when it passes, hollow when it fails"
+				></canvas>
+			</div>
 
-		<p class="line num">
-			{#if readout}
-				<span class="mono">{readout.label}</span><br /><span class="dim">{readout.margin}</span>
-			{:else if walk && walk.visited.size}
-				This run has read {fmt(walk.visited.size)} of the {fmt(cert.rows)} views.
-			{:else if cert.status === 'none'}
-				{fmt(cert.rows)} views: every strip the model can meet.
-			{:else}
-				{fmt(cert.pass)} of {fmt(cert.status === 'running' ? cert.checked : cert.rows)} pass{#if cert.status !== 'shipped'}
-					· {cert.seconds.toFixed(0)} s{/if}
-			{/if}
-		</p>
+			<p class="line num">
+				{#if readout}
+					<span class="mono">{readout.label}</span><br /><span class="dim">{readout.margin}</span>
+				{:else if walk && walk.visited.size}
+					This run has read {fmt(walk.visited.size)} of the {fmt(cert.rows)} views.
+				{:else if cert.status === 'none'}
+					{fmt(cert.rows)} views: every strip the model can meet.
+				{:else}
+					{fmt(cert.pass)} of {fmt(cert.status === 'running' ? cert.checked : cert.rows)} pass{#if cert.status !== 'shipped'}
+						· {cert.seconds.toFixed(0)} s{/if}
+				{/if}
+			</p>
+		</div>
 	</div>
 
 	<div class="sp-foot">
@@ -272,13 +290,14 @@
 		margin-left: 8px;
 		color: var(--color-ink-3);
 	}
-	.body {
-		place-items: start;
-		align-content: start;
-		justify-content: stretch;
-		width: 100%;
+	.stack {
+		position: absolute;
+		inset: 0;
+		display: flex;
+		flex-direction: column;
 	}
 	.headline {
+		flex: none;
 		display: flex;
 		align-items: baseline;
 		gap: 10px;
@@ -300,13 +319,18 @@
 		color: var(--color-ink-3);
 	}
 	.grid {
+		flex: 1 1 0;
+		min-height: 0;
 		width: 100%;
+		overflow: hidden;
 	}
 	canvas {
 		display: block;
 	}
 	.line {
-		margin-top: 10px;
+		flex: none;
+		margin-top: 8px;
+		min-height: 2.9em;
 		font-size: var(--text-xs);
 		color: var(--color-ink-2);
 	}
