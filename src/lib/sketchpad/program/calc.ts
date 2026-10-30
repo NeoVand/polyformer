@@ -183,8 +183,21 @@ export class RefCalc implements Calc {
 export class TraceCalc implements Calc {
 	readonly calls: CalcCall[] = [];
 	constructor(readonly inner: Calc) {}
-	wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]> {
-		return this.inner.wave(jobs);
+	async wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]> {
+		const started: Promise<T>[] = [];
+		try {
+			return await this.inner.wave(
+				jobs.map((job) => () => {
+					const pending = Promise.resolve().then(job);
+					started.push(pending);
+					return pending;
+				})
+			);
+		} catch (error) {
+			// Even a provider using fail-fast Promise.all must not leak unfinished work into the next line.
+			await Promise.allSettled(started);
+			throw error;
+		}
 	}
 	protected async record<T extends Result>(
 		op: ScalarOp,

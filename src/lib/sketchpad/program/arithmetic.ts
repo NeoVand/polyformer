@@ -87,24 +87,10 @@ export class Arithmetic {
 		]);
 		return this.fraction(n, d, !!(a.approximate || b.approximate));
 	}
-	async pow(
-		a: Rational,
-		e: number,
-		memo = new Map<string, Promise<Rational>>()
-	): Promise<Rational> {
-		const power = (n: number): Promise<Rational> => {
-			if (n === 0) return Promise.resolve(integer(1n));
-			if (n === 1) return Promise.resolve(a);
-			const key = `power:${a.n}/${a.d}:${!!a.approximate}:${n}`;
-			let value = memo.get(key);
-			if (!value) {
-				// Repeated multiplication with shared intermediate powers; all digits remain on Calc.
-				value = (async () => this.mul(await power(n - 1), a))();
-				memo.set(key, value);
-			}
-			return value;
-		};
-		const out = await power(Math.abs(e));
+	async pow(a: Rational, e: number): Promise<Rational> {
+		if (e === 0) return integer(1n);
+		let out = a;
+		for (let i = 1; i < Math.abs(e); i++) out = await this.mul(out, a);
 		return e < 0 ? this.div(integer(1n), out) : out;
 	}
 	async quantize(a: Rational, places: number): Promise<Rational> {
