@@ -136,12 +136,13 @@ export class MulSheet {
 			if (g1 !== B) r.R[x] = g1;
 			this.op = 'NXT';
 		} else {
+			// the scratch rows are cleared at every pass boundary, the last one included, so no stale carry stays drawn
+			for (const k of ['cM', 'p', 'cA'] as const) r[k].fill(B);
 			if (nxt === 'H') {
 				this.done = true;
 				return false;
 			}
 			this.j++;
-			for (const k of ['cM', 'p', 'cA'] as const) r[k].fill(B);
 			this.op = 'MUL';
 			this.x = this.j;
 		}
