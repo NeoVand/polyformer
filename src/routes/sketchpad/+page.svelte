@@ -74,8 +74,6 @@
 				? `${fmt(Math.round(n / 1e6))} MB`
 				: `${fmt(Math.max(1, Math.round(n / 1e3)))} KB`;
 	const mb = (n: number) => fmt(Math.round(n / 1e6));
-	const duration = (s: number) =>
-		s < 90 ? `${s.toFixed(s < 10 ? 1 : 0)} s` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
 
 	/** what loading this operation's program costs now: one graph once the shared base is cached */
 	const cost = $derived(pad.costs[pad.op]);
