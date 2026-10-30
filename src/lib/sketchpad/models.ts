@@ -36,6 +36,11 @@ export interface SketchModel {
 	own: string[];
 	/** the word before the image for each runtime op (the prompt is `<word><image>=`) */
 	prompts: Partial<Record<TickOp, string>>;
+	/**
+	 * Placeholder slots (`?`) after the multiplier's prompt: with 2, a step's three answers are read at `=` and the two
+	 * slots of one forward pass (research/sketch/e6_slots.py); without, they are generated one token at a time.
+	 */
+	slots?: number;
 }
 
 const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
@@ -123,7 +128,9 @@ export const certFiles = () => modelFiles();
  * The format the certificate certifies. Any change to tables, scoring or strip assembly must change this string, so a
  * cached certificate never outlives the format it checked. (The prompts are part of the cache key on their own.)
  */
-export const CERT_FORMAT = 'sketchpad-cert-v1;add=fast-242;mul=3tok-1553;strip=sprites-rowk-32x96';
+export const CERT_FORMAT = `sketchpad-cert-v1;add=fast-242;mul=${
+	MODELS.mul.slots ? `slots${MODELS.mul.slots}` : '3tok'
+}-1553;strip=sprites-rowk-32x96`;
 
 /** The browser cache that holds model files, keyed by the URL they are served from. */
 export const FILE_CACHE = 'sketchpad-models-v1';

@@ -76,8 +76,9 @@ let inside: InsideAssets | null = null;
 let insideMeta: InsideMeta | null = null;
 /** while on, every decoder call's states at its last position are kept, one entry per call */
 let capturing = false;
-/** per decoder call, the states of each batch row */
-let captured: Float32Array[][] = [];
+/** per decoder call, per batch row, the states at its last `captureLast` positions */
+let captured: Float32Array[][][] = [];
+let captureLast = 1;
 /** a push for the next decoder call that reads a whole prompt (the tick's first call) */
 let steerNext: Float32Array | null = null;
 /** the program loaded now, and a counter that moves whenever the loaded model changes */
@@ -295,18 +296,25 @@ interface OrtSession {
 	run(feeds: Record<string, OrtTensor>, opts?: unknown): Promise<Record<string, OrtTensor>>;
 }
 
-/** Row `b`'s states at the last position of a `hidden_states` output [DEPTH, batch, seq, DIM], as DEPTH x DIM. */
-function lastStates(t: OrtTensor, b = 0): Float32Array {
+/** Row `b`'s states at position `pos` of a `hidden_states` output [DEPTH, batch, seq, DIM], as DEPTH x DIM. */
+function statesAt(t: OrtTensor, b: number, pos: number): Float32Array {
 	const [L, Bn, S, D] = t.dims;
 	const data = t.data as ArrayLike<number>;
 	const bits = data instanceof Uint16Array;
 	const out = new Float32Array(L * D);
 	for (let l = 0; l < L; l++) {
-		const off = ((l * Bn + b) * S + S - 1) * D;
+		const off = ((l * Bn + b) * S + pos) * D;
 		for (let i = 0; i < D; i++) out[l * D + i] = bits ? F16[data[off + i]] : data[off + i];
 	}
 	return out;
 }
+
+/** the states that wrote each answer token of batch row b: one per call, or the last positions of one call (slots) */
+const tokenStates = (b: number) =>
+	captureLast > 1 && captured.length ? captured[0][b] : captured.map((c) => c[b][0]);
+
+/** the program's placeholder slots after the multiplier's prompt (0: answers generated token by token) */
+const slots = () => MODELS.mul.slots ?? 0;
 
 /**
  * Hook the decoder session: hide `steer` from transformers.js (which feeds only the inputs it knows) and feed it here,
@@ -330,8 +338,15 @@ function wrapDecoder(m: Model) {
 			.ort_tensor;
 		const out = await run({ ...feeds, steer }, opts);
 		const hs = out.hidden_states;
-		if (capturing && hs)
-			captured.push(Array.from({ length: hs.dims[1] }, (_, b) => lastStates(hs, b)));
+		if (capturing && hs) {
+			const S = hs.dims[2];
+			const k = Math.min(captureLast, S);
+			captured.push(
+				Array.from({ length: hs.dims[1] }, (_, b) =>
+					Array.from({ length: k }, (_, i) => statesAt(hs, b, S - k + i))
+				)
+			);
+		}
 		return out;
 	};
 	return true;
@@ -380,6 +395,7 @@ async function withInside<T>(
 ) {
 	captured = [];
 	capturing = !!inside;
+	captureLast = op !== 'ADD-FAST' && slots() ? 1 + slots() : 1;
 	steerNext = null;
 	let pushed: string | null = null;
 	if (inside && push && op === 'ADD-FAST') {
@@ -392,15 +408,7 @@ async function withInside<T>(
 	}
 	try {
 		const r = await fn();
-		const read =
-			inside && captured.length
-				? analyse(
-						inside,
-						op,
-						captured.map((c) => c[0]),
-						pushed
-					)
-				: null;
+		const read = inside && captured.length ? analyse(inside, op, tokenStates(0), pushed) : null;
 		return { r, inside: read };
 	} finally {
 		capturing = false;
@@ -434,35 +442,65 @@ function extend(t: TTensor, vals: number[]): TTensor {
 	return new Tensor(t.type as 'int64', data, [1, t.dims[1] + vals.length]) as unknown as TTensor;
 }
 
-/**
- * Teacher-forced check of one table row: the answer is appended one token id per character, as in training
- * (tokenising "_-N" jointly would merge pieces), and every answer token must be the argmax.
- */
-async function mulScore(op: Op, v: string[]) {
-	const ans = outChars(op, v);
-	const ids = ans.map(tokenOf);
-	const { image } = stripImage(v);
-	const inp = await processor!(promptFor(op), [image]);
+/** append token ids to a one-row prompt's per-token tensors (attention 1, modality 0 for the new places) */
+function appendTokens(inp: Inputs, ids: number[]) {
 	const L = (inp.input_ids as TTensor).dims[1];
 	for (const k of Object.keys(inp)) {
 		const t = inp[k] as TTensor | undefined;
 		if (t?.dims?.length === 2 && t.dims[0] === 1 && t.dims[1] === L)
 			inp[k] = extend(t, k === 'input_ids' ? ids : ids.map(() => (k === 'attention_mask' ? 1 : 0)));
 	}
+	return L;
+}
+
+/** a multiplier prompt with its placeholder slots, for the one forward pass that reads all three answers */
+async function slotted(op: Op, image: unknown) {
+	const inp = await processor!(promptFor(op), [image]);
+	const L = appendTokens(inp, Array(slots()).fill(tokenOf('?')));
+	return { inp, L };
+}
+
+/**
+ * Check one table row: every answer token must be the argmax at its place. Generated programs are scored teacher-
+ * forced (the answer appended one token id per character, as in training: tokenising "_-N" jointly would merge
+ * pieces); slotted programs read their three answers
+ * at `=` and the slots, exactly as a tick does.
+ */
+async function mulScore(op: Op, v: string[]) {
+	const ans = outChars(op, v);
+	const ids = ans.map(tokenOf);
+	const { image } = stripImage(v);
+	let inp: Inputs;
+	let L: number;
+	if (slots()) ({ inp, L } = await slotted(op, image));
+	else {
+		inp = await processor!(promptFor(op), [image]);
+		L = appendTokens(inp, ids);
+	}
 	const out = await model!(inp);
-	const S = out.logits.dims[1];
 	let worst = Infinity;
 	let got = '';
 	ids.forEach((t, j) => {
-		const { m, arg } = margin(logitsAt(out.logits, S - ids.length - 1 + j), t);
+		const { m, arg } = margin(logitsAt(out.logits, L - 1 + j), t);
 		worst = Math.min(worst, m);
 		got += m > 0 ? ans[j] : tok!.decode([arg]);
 	});
 	return { m: worst, got: worst > 0 ? null : got };
 }
 
+/** three answers from one forward of a slotted prompt, for batch row `row` */
+function readSlots(logits: TTensor, row: number, L: number) {
+	const S = logits.dims[1];
+	return [0, 1, 2].map((j) => tok!.decode([argmax(logitsAt(logits, row * S + L - 1 + j))]));
+}
+
 async function mulTick(op: Op, cells: string[]) {
 	const { strip, image } = stripImage(cells);
+	if (slots()) {
+		const { inp, L } = await slotted(op, image);
+		const ch = readSlots((await model!(inp)).logits, 0, L);
+		return { out: [ch[0] === '_' ? B : ch[0], ch[1], ch[2]], strip };
+	}
 	const inputs = await processor!(promptFor(op), [image]);
 	const L = (inputs.input_ids as TTensor).dims[1];
 	const out = await model!.generate({ ...inputs, do_sample: false, max_new_tokens: 3 });
@@ -483,7 +521,11 @@ async function mulBatch(items: { op: Op; cells: string[] }[]) {
 	// transformers.js's Qwen image processor reads a list of images as the frames of one video, so each row is
 	// prepared on its own and the rows are stacked: token rows (equal lengths), patches, and one grid row per image
 	const parts = await Promise.all(
-		items.map((it, b) => processor!(promptFor(it.op), [strips[b].image]))
+		items.map(async (it, b) =>
+			slots()
+				? (await slotted(it.op, strips[b].image)).inp
+				: processor!(promptFor(it.op), [strips[b].image])
+		)
 	);
 	const inputs: Inputs = {};
 	for (const k of Object.keys(parts[0])) {
@@ -494,6 +536,14 @@ async function mulBatch(items: { op: Op; cells: string[] }[]) {
 	const L = (inputs.input_ids as TTensor).dims[1];
 	if (parts.some((x) => (x.input_ids as TTensor).dims[1] !== L))
 		throw new Error('batched prompts differ in length');
+	if (slots()) {
+		// one forward: row b's answers sit at `=` and its slots
+		const logits = (await model!(inputs)).logits;
+		return items.map((_, b) => {
+			const ch = readSlots(logits, b, L - slots());
+			return { out: [ch[0] === '_' ? B : ch[0], ch[1], ch[2]], strip: strips[b].strip };
+		});
+	}
 	const out = await model!.generate({ ...inputs, do_sample: false, max_new_tokens: 3 });
 	const W = out.dims[1];
 	const data = Array.from(out.data, (x) => Number(x));
@@ -509,17 +559,11 @@ async function tickBatch(m: Extract<ToWorker, { type: 'tick-batch' }>) {
 		const t = performance.now();
 		captured = [];
 		capturing = !!inside;
+		captureLast = slots() ? 1 + slots() : 1;
 		try {
 			const rows = await mulBatch(m.items as { op: Op; cells: string[] }[]);
 			const seen = rows.map((_, b) =>
-				inside && captured.length
-					? analyse(
-							inside,
-							m.items[b].op,
-							captured.map((c) => c[b]),
-							null
-						)
-					: null
+				inside && captured.length ? analyse(inside, m.items[b].op, tokenStates(b), null) : null
 			);
 			return { rows, seen, ms: performance.now() - t };
 		} finally {
