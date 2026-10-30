@@ -299,7 +299,12 @@ interface OrtTensor {
 }
 interface OrtSession {
 	inputNames: readonly string[];
-	run(feeds: Record<string, OrtTensor>, opts?: unknown): Promise<Record<string, OrtTensor>>;
+	outputNames: readonly string[];
+	run(
+		feeds: Record<string, OrtTensor>,
+		fetches?: unknown,
+		opts?: unknown
+	): Promise<Record<string, OrtTensor>>;
 }
 
 /** Row `b`'s states at position `pos` of a `hidden_states` output [DEPTH, batch, seq, DIM], as DEPTH x DIM. */
@@ -355,6 +360,7 @@ function wrapDecoder(m: Model) {
 	const s = sessions?.decoder_model_merged;
 	if (!s || !s.inputNames.includes('steer')) return false;
 	const names = s.inputNames.filter((n) => n !== 'steer');
+	const others = s.outputNames.filter((n) => n !== 'hidden_states');
 	Object.defineProperty(s, 'inputNames', { value: names, configurable: true });
 	const run = s.run.bind(s);
 	s.run = async (feeds, opts) => {
@@ -370,7 +376,10 @@ function wrapDecoder(m: Model) {
 		const keep: Record<string, OrtTensor> = keepLogits
 			? { num_logits_to_keep: ort(new tjs!.Tensor('int64', [BigInt(keepLogits)], [])) }
 			: {};
-		const out = await run({ ...feeds, steer, ...keep }, opts);
+		// the states of every layer leave the GPU only for a tick that reads them
+		const out = capturing
+			? await run({ ...feeds, steer, ...keep }, opts)
+			: await run({ ...feeds, steer, ...keep }, others, opts);
 		const hs = out.hidden_states;
 		if (capturing && hs) {
 			const S = hs.dims[2];
