@@ -274,5 +274,70 @@
    ]
   ],
   "spawned": "2026-10-30 15:37:02 CDT"
+ },
+ "gsm8k_stock_1627": {
+  "call_id": "fc-01M67BB540SEBJSEV8Q1HXZZ8N",
+  "cmds": [
+   [
+    "python",
+    "chat/gsm8k_stock.py",
+    ".",
+    "1600"
+   ]
+  ],
+  "spawned": "2026-10-30 16:27:07 CDT"
+ },
+ "gsm8k_stock_1635": {
+  "call_id": "fc-01M67BT1NWSE1EHY9EYHAXEJ14",
+  "cmds": [
+   [
+    "python",
+    "chat/gsm8k_stock.py",
+    ".",
+    "2000"
+   ]
+  ],
+  "spawned": "2026-10-30 16:35:15 CDT"
+ },
+ "train_p4": {
+  "call_id": "fc-01M67CDSNHNV8SRCS3DNBBWFG8",
+  "cmds": [
+   [
+    "python",
+    "chat/chat_train.py",
+    "/vol/data/d4",
+    "/sk/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont",
+    "p4",
+    "--tables",
+    "e7",
+    "--steps",
+    "1200",
+    "--every",
+    "200",
+    "--bk",
+    "8",
+    "--w_kl",
+    "2",
+    "--kl_full",
+    "--text",
+    "wikitext",
+    "--bt",
+    "4",
+    "--mc_kl",
+    "1000",
+    "--bm",
+    "2"
+   ],
+   [
+    "python",
+    "chat/chat_eval.py",
+    "/vol/data/d4",
+    "p4",
+    "p4",
+    "--tables",
+    "e7"
+   ]
+  ],
+  "spawned": "2026-10-30 16:46:02 CDT"
  }
 }

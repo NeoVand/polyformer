@@ -37,6 +37,9 @@ def main(argv):
             spawn("run_cpu", f"gate_{stamp}_{k}", [["python", "chat/gate_identity.py", "/vol/onnx", str(k), str(n)]])
     elif argv[0] == "stock":
         spawn("run_h100", f"stock_{time.strftime('%H%M')}", [["python", "chat/stock_replies.py", f"/vol/data/{argv[1]}"]])
+    elif argv[0] == "gsm8k_stock":  # gsm8k_stock [n=1600]: stock's own step-by-step solutions with sheet calls
+        spawn("run_h100", f"gsm8k_stock_{time.strftime('%H%M')}",
+              [["python", "chat/gsm8k_stock.py", ".", argv[1] if len(argv) > 1 else "1600"]])
     elif argv[0] == "eval":
         data, adapter, tag = argv[1:4]
         spawn("run_h100", f"eval_{tag}", [["python", "chat/chat_eval.py", data, adapter, tag] + argv[4:]])

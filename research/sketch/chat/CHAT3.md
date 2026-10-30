@@ -191,6 +191,51 @@ Predictions for P3: precision 0.99, recall 0.99, word 0.91, equations 0.97, pros
 GSM8K 0.45–0.55 with the sheet (I expect it near stock, not above: the 0.8B's errors are in choosing operations, which
 the sheet does not fix), every row certified, PRIMER perplexity ×1.00–1.02.
 
+### P3 result (from E7, d3, 1,200 steps; 1,942 s training + 831 s evaluation, ~$3.3)
+
+| measure | stock | P2 | P3 | bar | P3 prediction |
+|---|---|---|---|---|---|
+| open precision / recall | 0.971 / 0.809 (few-shot) | 1.000 / 0.998 | **1.000 / 0.994** | ≥ 0.95 ✓ | 0.99 / 0.99 |
+| word → correct line | 0.789 (few-shot) | 0.894 | 0.856 | ≥ 0.90 ✗ | 0.91 |
+| equations / prose | 0.583 / 0.667 | 0.975 / 1.000 | **0.975 / 0.992** | ≥ 0.95 ✓ | 0.97 / 0.99 |
+| IFEval strict prompt | 0.536 | −0.55 | −2.8 (0.508) | ≥ −2 ✗ (kill −5 not hit) | −1.5 |
+| MMLU (500) | 0.476 | 0.422 | 0.452 | report | 0.45 |
+| GSM8K (250, stand-in sheet) | 0.516 | 0.204 | 0.376 (sheet on 250/250, 3.5 blocks each) | report | 0.45–0.55 |
+| table rows (E7) | — | 2,446 ✓ | 2,446 ✓, min margin 5.78 | all | ✓ |
+| PRIMER perplexity | 18.46 | ×1.004 | ×1.012 | ≤ ×1.03 ✓ | ✓ |
+
+The ARC KL lifted MMLU (0.422 → 0.452) and the GSM8K-train replies lifted GSM8K (0.204 → 0.376), but IFEval slid
+back (−0.55 → −2.8) and the word score fell. All word misses are single blocks (the score is not grading an
+intermediate step): 14 truck ("under the limit": load − limit) and 11 worker-pay items (`152.25 + 26 × 152.25 − 227.75`
+for pay minus fees), two of the twelve held-out templates; at about fifteen items each, one template the 0.8B misreads
+costs eight points. GSM8K misses compute first and reason after (the human solutions' order: block, then the sentence),
+e.g. adding the 52-mile total into the sum, or `20 ÷ 3 ÷ 4` for 20 ÷ (1 − 3/4). Two causes I can name for the IFEval
+slide: 1,200 replies in GSM8K's terse human style (not stock's), and the ARC prompts taking 40% of the instruction KL's
+slots (the KL pool was shared).
+
+### Run P4 = last run within the cap (from E7, d4): changes and predictions, registered before launch
+
+- **Multi-step data in stock's own words** (`gsm8k_stock.py`): stock solves GSM8K **training** problems step by step
+  under a system prompt asking for each calculation on its own line (`8 × 3.5 = 28`); a solution is kept only if its
+  answer is right and every calculation, run on the stand-in, prints exactly what stock wrote; each calculation line
+  becomes a sheet block, so the reply reasons first (stock's words), then computes on the sheet, then goes on. The
+  training dialogue has no system prompt. This replaces P3's human-written GSM8K replies (Toolformer's recipe: insert
+  the tool into the model's own text, keep what checks out). At most 800 of them join d2's 3,150.
+- **ARC in its own KL batch** (2 per step), so all 8 instruction-KL slots stay on instruction prompts.
+- Everything else as P3 (1,200 steps, KL weight 2 on full sequences, wikitext text KL).
+
+First try of `gsm8k_stock.py` (1,600 problems, 7 min, ~$0.5): only 9 kept (790 wrong answers, 764 with no
+calculation on its own line: stock ignores that instruction and computes inline). Second try (2,000 problems): the
+system prompt gains one worked example, and the converter also takes calculations written inside a sentence (`so she
+serves 8 × 7 = 56 customers` → the words before it, the block, the sheet's value and the rest of the sentence); raw
+replies are saved. Second try (10 min, ~$0.7): 547 kept of 2,000 (1,157 wrong answers, 173 with no calculation, 76
+where stock's number format differs from the sheet's, 29 stock arithmetic slips, 18 unparsable steps), 2.6 sheet calls
+per reply, in stock's own words: a plan sentence, the block, the value, the next step. d4 = d2's 3,150 + these 547.
+
+Predictions for P4: precision 0.99, recall 0.99, word 0.89 (a narrow fail: I changed nothing aimed at the two
+templates, on purpose), equations 0.97, prose 0.99, IFEval −1.0, MMLU 0.45, GSM8K 0.50, every row certified, PRIMER
+perplexity ×1.00–1.02. Whatever P4 gives, it is the last run: the cap leaves room for no more.
+
 ### Data (`dialogues.py`, seed 0)
 
 3,000 training dialogues: calc 504, prose 420, word 714, equation 462, distractors 900 (30%: no_robots train prompts

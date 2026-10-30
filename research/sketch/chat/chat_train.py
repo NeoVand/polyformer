@@ -51,7 +51,8 @@ ap.add_argument("--repair", type=int, default=400, help="extra rows-only steps a
 ap.add_argument("--kl_full", action="store_true", help="instruction KL on every position, prompt included")
 ap.add_argument("--text", default="primer", choices=["primer", "wikitext"])
 ap.add_argument("--bt", type=int, default=4, help="wikitext chunks per step")
-ap.add_argument("--mc_kl", type=int, default=0, help="ARC multiple-choice prompts added to the KL pool (prompt only)")
+ap.add_argument("--mc_kl", type=int, default=0, help="ARC multiple-choice prompts for their own KL batch (prompt only)")
+ap.add_argument("--bm", type=int, default=0, help="ARC prompts per step in their own KL batch (0: they join the KL pool)")
 args = ap.parse_args()
 
 torch.manual_seed(args.seed)
@@ -107,6 +108,7 @@ for line in open(D / "kl.jsonl"):
     s = (p + k["reply_ids"])[: args.maxlen]
     if len(s) > len(p):
         kl.append((s, len(p)))
+MC = []
 if args.mc_kl:  # stock's letter distribution on multiple-choice prompts (ARC train, worded unlike the MMLU evaluation)
     from datasets import load_dataset
 
@@ -117,7 +119,7 @@ if args.mc_kl:  # stock's letter distribution on multiple-choice prompts (ARC tr
         opts = "".join(f"{lab}) {t}\n" for lab, t in zip(r["choices"]["label"], r["choices"]["text"]))
         p = chat_prefix(tok, [{"role": "user", "content": f"{r['question']}\n\nOptions:\n{opts}\n"
                                                           "Reply with the letter of the correct option."}])
-        kl.append((p + one, len(p)))
+        (MC if args.bm else kl).append((p + one, len(p)))
 WIKI = []
 if args.text == "wikitext":
     from datasets import load_dataset
@@ -223,6 +225,10 @@ while step < total:
             (args.w_kl * lk * m / args.bk).backward()
             lk_sum += float(lk) * m / args.bk
         parts["kl"] = lk_sum
+        if MC:
+            lm = kl_loss(model, [MC[rng.randrange(len(MC))] for _ in range(args.bm)])
+            (args.w_kl * lm).backward()
+            parts["mc_kl"] = float(lm)
     if args.w_text:
         lt = kl_loss(model, [(WIKI[rng.randrange(len(WIKI))], 1) for _ in range(args.bt)]) if WIKI else e2.text_kl(model)
         (args.w_text * lt).backward()
