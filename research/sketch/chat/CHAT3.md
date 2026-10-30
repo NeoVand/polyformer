@@ -5,7 +5,94 @@ Modal app `polyformer-chat`, cap $25. Neo approved the work and its spend on 30 
 
 ## Report
 
-(written at the end)
+**Commits on `chat`:** ae54f59a (T5), 6699624c, 981eb016, 6095c0bf, and the final commit with this report.
+
+**T5 passed.** `patch_onnx_lora.py` now builds the decoder with one more input, `lora_gate` (float16, shape `[1]`). It
+was tested on ONNX Runtime 1.31.1 CPU with 100 chat prompts × 25 calls and all 1,795 E6 rows. Gate 0 is bit-identical
+to stock Qwen3.5-0.8B and gate 1 is bit-identical to today's page graph, in logits, hidden states and every cached
+state. The page's WebGPU provider was not tested.
+
+**T4 failed its registration.** I trained four adapters (P1 to P4), and none passes every bar. All four keep every
+table row and stay well inside the perplexity kill line, and none hits a kill line. So I declare no shipping E8: the
+page should keep chat at gate 0, as it has since 441e3283. The two candidates are on the `polyformer-chat` volume:
+- **P4**, `runs/train_p4/files/p4`. This was the last run. It is my pick if Neo wants gate-1 chat anyway, because its
+  GSM8K and MMLU are nearest stock. It fails the word bar (0.817) and the IFEval bar (−4.4 points).
+- **P2**, `runs/train_p2/files/p2`. It comes nearest the registration: only the word bar fails, by one item (0.894), and
+  IFEval is −0.55. But it breaks multi-step word problems: GSM8K falls from 0.516 to 0.204, because it writes one
+  confident wrong expression.
+
+| measure (held-out templates; gate 1 zero-shot vs stock few-shot) | bar | stock | P2 | P4 (last run) |
+|---|---|---|---|---|
+| opening the sheet: precision / recall | ≥ 0.95 | 0.971 / 0.809 | **1.000 / 0.998** ✓ | **1.000 / 0.994** ✓ |
+| word problems → correct sheet line | ≥ 0.90 | 0.789 | 0.894 ✗ (161/180) | 0.817 ✗ (147/180) |
+| equations → correct `solve` line | ≥ 0.95 | 0.583 | **0.975** ✓ | **0.958** ✓ |
+| expressions from mixed text (prose) | ≥ 0.95 | 0.667 | **1.000** ✓ | **0.992** ✓ |
+| IFEval strict prompt-level, minus stock (0.536) | ≥ −2 | — | **−0.55** ✓ | −4.44 ✗ |
+| kill: table rows (E7, 2,446) | all | — | 2,446 ✓ | 2,446 ✓ (min margin 5.37) |
+| kill: PRIMER perplexity / stock | ≤ ×1.03 | 18.46 | ×1.004 ✓ | ×1.013 ✓ |
+| kill: IFEval more than 5 points down | not hit | — | not hit | not hit (−4.44) |
+| MMLU 500 (report) | — | 0.476 | 0.422 | 0.442 |
+| GSM8K 250, Python stand-in for the sheet (report) | — | 0.516 | 0.204 | 0.452 |
+
+**What failed, and why.**
+- **The word bar.** It fails on two of the twelve held-out templates, which the model misreads every time. In
+  "how many kg under the limit", it computes load − limit instead of limit − load (14/14 wrong in P2, P3 and P4).
+  In "earns $h an hour, works n hours, pays fees", it drops or misplaces the hours (P4 15/15 wrong, P2 1/15). On the
+  other ten templates, P2 and P4 are both 147/151 (0.974). This is a reading error by the 0.8B, not a format error. I
+  did not train on these two structures, on purpose: that would have taught to the held-out set.
+- **IFEval against GSM8K: a seesaw.** Every change that brought multi-step reasoning back cost instruction-following:
+  - P2: −0.55 IFEval, 0.204 GSM8K.
+  - P3 (human GSM8K solutions): −2.8 IFEval, 0.376 GSM8K.
+  - P4 (stock's own solutions, ARC in its own batch): −4.4 IFEval, 0.452 GSM8K.
+
+  The IFEval bar is also near the noise.
+  - P4 against stock disagrees on 116 of the 541 prompts (stock passes 70 that P4 fails; P4 passes 46 that stock
+    fails). Under a no-difference null, the net count would then vary by about ±11 prompts, which is ±2 points.
+  - So the −2 bar is one standard deviation wide. P4's −4.4 is about 2.2 SD below stock, and P2's lead over P4 is
+    also about 2.2 SD.
+- **The sheet did not help on GSM8K.** P4 opens it on 221 of 250 problems, at 3.0 calls each. It is right on 100 of
+  those 221 and on 13 of the 29 it does not open. That is below stock's 129/250 without a sheet. Its errors are in
+  choosing operations, which the sheet does not check.
+
+**Predictions against results for P4 (the last run).**
+
+| measure | predicted | result |
+|---|---|---|
+| precision | 0.99 | 1.000 |
+| recall | 0.99 | 0.994 |
+| word | 0.89 | 0.817 |
+| equations | 0.97 | 0.958 |
+| prose | 0.99 | 0.992 |
+| IFEval | −1.0 | −4.4 |
+| MMLU | 0.45 | 0.442 |
+| GSM8K | 0.50 | 0.452 |
+| rows | all | all |
+| perplexity | ×1.00–1.02 | ×1.013 |
+
+I was wrong on IFEval, which I predicted would improve and which got worse, and on word.
+
+**Spend:** $19.72 on Modal billing for app `polyformer-chat` on 30 Oct (22:54 UTC), against a $25 cap. I am not
+launching another run: P4 was registered as the last.
+
+**Options for Neo.** The problem belongs to continual learning (adding a skill without losing old ones). Its standard
+fixes are replay, distillation (used here), parameter isolation (the gate is one) and routing. Options:
+1. **Keep chat at gate 0.** This is the status quo: stock chat, and the sheet only on the page's own arithmetic path.
+   It breaks nothing. It buys no model-initiated sheet.
+2. **Switch the gate inside a reply.** Stock (gate 0) writes all prose. The page switches to gate 1 only between
+   ```` ```sheet ```` and the closing ```` ``` ````, so P4 writes the work order. Prose is stock's by construction.
+   - It breaks the zero-shot condition: stock needs the sheet system prompt to open the sheet at all. Measured
+     few-shot, stock opens with recall 0.81 (bar 0.95) and precision 0.97.
+   - A risk: at gate 1 the adapter would read a cache written at gate 0, which it never saw in training.
+   - It costs one evaluation, about $1, and no training.
+3. **One more run (P5), about $3.5, inside the cap.** It would use P2's recipe plus stock's own GSM8K solutions,
+   without the ARC batch. It breaks the "P4 was the last run" registration. I would expect P4-like IFEval at best,
+   given the seesaw above.
+
+**Assumptions Neo did not ask for:**
+- I scored sheet lines and GSM8K with a Python stand-in, not the certified sheet.
+- I assume visitors to a calculator chat ask multi-step word problems at least as often as format-constrained prompts.
+  That assumption is why I pick P4 over P2.
+- The held-out templates test new phrasings, not new mathematics.
 
 ## T5: the gate
 
@@ -236,6 +323,36 @@ Predictions for P4: precision 0.99, recall 0.99, word 0.89 (a narrow fail: I cha
 templates, on purpose), equations 0.97, prose 0.99, IFEval −1.0, MMLU 0.45, GSM8K 0.50, every row certified, PRIMER
 perplexity ×1.00–1.02. Whatever P4 gives, it is the last run: the cap leaves room for no more.
 
+### P4 result (from E7, d4, 1,200 steps; 2,709 s training + about 1,300 s evaluation, about $4.4)
+
+| measure | stock | P2 | P3 | P4 | bar | P4 prediction |
+|---|---|---|---|---|---|---|
+| open precision / recall | 0.971 / 0.809 (few-shot) | 1.000 / 0.998 | 1.000 / 0.994 | **1.000 / 0.994** (537/540, 0 of 240 distractors) | ≥ 0.95 ✓ | 0.99 / 0.99 |
+| word → correct line | 0.789 (few-shot) | 0.894 | 0.856 | 0.817 (147/180) | ≥ 0.90 ✗ | 0.89 |
+| equations / prose | 0.583 / 0.667 | 0.975 / 1.000 | 0.975 / 0.992 | **0.958 / 0.992** | ≥ 0.95 ✓ | 0.97 / 0.99 |
+| calc (not registered) | 0.417 | 0.983 | 0.967 | 0.950 (5 `÷ … to k places` slips) | — | — |
+| IFEval strict prompt | 0.536 (290/541) | 0.530 (287) | 0.508 (275) | 0.492 (266), −4.44 | ≥ −2 ✗ (kill −5 not hit) | −1.0 |
+| IFEval loose / instruction | 0.577 / 0.640 | 0.560 / 0.633 | 0.547 / 0.607 | 0.521 / 0.596 | — | — |
+| MMLU (500) | 0.476 | 0.422 | 0.452 | 0.442 | report | 0.45 |
+| GSM8K (250, stand-in sheet) | 0.516 (129) | 0.204 | 0.376 (94) | 0.452 (113; sheet on 221, 3.0 blocks each) | report | 0.50 |
+| table rows (E7) | — | 2,446 ✓ | 2,446 ✓ | 2,446 ✓, min margin 5.37 (EST), SUB 5.41 | all | ✓ |
+| PRIMER perplexity | 18.46 | ×1.004 | ×1.012 | ×1.013 | ≤ ×1.03 ✓ | ×1.00–1.02 |
+
+The word misses are 33. Two held-out templates account for 29: truck "under the limit", 14/14, written load − limit;
+and worker pay minus fees, 15/15, with the hours dropped or misplaced, e.g. `152.25 − 227.75`. The other four are two
+crate problems left unopened, one snow item and one field item. On the other ten templates P4 scores 147/151, the same
+as P2.
+
+IFEval against stock: P4 loses 70 prompts and wins 46. Reply lengths match stock (median 1,053 characters against
+1,056), and the sheet opened on 1 of 541 prompts. So this is spread-out drift, not one broken behaviour, as with P1.
+P2 against P4: P2 alone passes 56 prompts and P4 alone passes 35. That is about 2.2 standard deviations of paired
+noise, so the cost of the stock-style GSM8K data and the ARC batch is probably real. Of the three changes from P2
+(the 547 stock-solution dialogues, the ARC batch and 200 more steps), I cannot tell which one cost it.
+
+GSM8K against stock: P4 loses 45 and wins 29. It is right on 100 of the 221 problems where it opened the sheet and on
+13 of the 29 where it did not. The replies now reason before each call, as stock does: a plan sentence, the block, the
+value. The remaining errors are in choosing the operation.
+
 ### Data (`dialogues.py`, seed 0)
 
 3,000 training dialogues: calc 504, prose 420, word 714, equation 462, distractors 900 (30%: no_robots train prompts
@@ -258,6 +375,13 @@ that closes a block opened by ```` ```sheet ````; run the block; append the toke
 | stock_1401 | stock replies (900 distractor turns, 209 earlier turns, 1,500 KL prompts), H100 13.5 min | ≈ $0.9 |
 | eval_stock, eval_e6 | baselines, H100 ~16 min each | ≈ $2.2 |
 | running total (Modal billing, app polyformer-chat, 30 Oct 14:22) | | $4.83 |
+| eval_stock_fewshot | stock few-shot on the held-out set, H100 5.7 min | ≈ $0.4 |
+| train_p1 | pilot P1 (train + eval) | ≈ $1.9 |
+| train_p2 | P2 (train + full eval) | ≈ $3.0 |
+| train_p3 (+ gsm8k annotations) | P3 (train + full eval) | ≈ $3.3 |
+| gsm8k_stock ×2 | stock's own GSM8K-train solutions (1,600, then 2,000 problems) | ≈ $1.2 |
+| train_p4 | P4 (train + full eval), plus one launch that failed at once (stale volume) | ≈ $4.4 |
+| **total (Modal billing, app polyformer-chat, 30 Oct 22:54 UTC)** | image builds and idle containers included | **$19.72** of $25 |
 
 ## Glossary candidates
 
@@ -280,3 +404,18 @@ that closes a block opened by ```` ```sheet ````; run the block; append the toke
   transfer of the format, not memory of the templates.
 - Stand-in (host sheet): `sheet_ref.py`, exact fractions on the CPU in place of the certified sheet, used only to write
   training data and to score; never presented as the sheet.
+- Toolformer recipe [zoo] (Schick et al. 2023, Meta): let a model write its own text, insert tool calls where they would
+  produce what it wrote, and keep only the examples that check out; here stock's GSM8K-train solutions with every
+  calculation turned into a sheet call (P4), so the training replies are in stock's own words.
+- PAL / ToRA (Gao et al. 2022; Gou et al. 2023): solving maths word problems by interleaving reasoning in words with
+  program or tool calls for every calculation; the pattern of the multi-step data in P3 and P4.
+- Rejection sampling (of training data): generate many candidates and keep only those that pass a check (here: right
+  final answer, and every calculation reprinted exactly by the stand-in); 547 of 2,000 survived.
+- Paired flip noise: when two models answer the same prompts, only the prompts where they disagree carry information;
+  with D disagreements the net difference varies by about ±√D under no real difference (P4 vs stock: D = 116, ±11
+  prompts, ±2 IFEval points), so a 2-point bar is one standard deviation.
+- Continual learning / catastrophic forgetting: the field of adding a skill to a trained model without losing old ones;
+  its standard tools are replay, distillation, parameter isolation (the gate) and routing; T4's IFEval/GSM8K seesaw is
+  this problem.
+- Gate switching inside a reply (option, untested): stock at gate 0 writes the prose and the adapter at gate 1 writes
+  only the sheet block, so chat is stock by construction; costs zero-shot opening (needs a system prompt).

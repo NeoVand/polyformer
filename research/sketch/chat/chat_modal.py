@@ -48,6 +48,7 @@ VOLS = {"/vol": vol, "/sk": sk}
 
 
 def _run(job_id: str, cmds: list, dev: str):
+    vol.reload()  # a warm container keeps the volume as it was when it started: see files uploaded since
     work = pathlib.Path(tempfile.mkdtemp(prefix="work-")) / "sketch"
     shutil.copytree("/src/sketch", work)
     for f in pathlib.Path("/src/calc").glob("*.py") if pathlib.Path("/src/calc").exists() else []:
