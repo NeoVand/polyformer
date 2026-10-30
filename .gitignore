@@ -24,3 +24,13 @@ vite.config.ts.timestamp-*
 # Playwright
 test-results
 results/loops_budget.lock
+
+# Model weights live on Hugging Face (mohsenvand/sketchpad-0.8b-preview, mohsenvand/sketchpad-0.8b-runs), never in git
+*.safetensors
+*.onnx
+*.onnx_data
+*.pt
+research/sketch/e3_browser/models/
+static/sketchpad/models/
+# third-party papers, kept locally for reading
+research/prior_art/pdfs/

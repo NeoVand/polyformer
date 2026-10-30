@@ -18,6 +18,92 @@
         "preview"
       ],
       "port": 4173
+    },
+    {
+      "name": "loom-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--dir",
+        "/Users/neo/repos/polyformer-wt/site-reason",
+        "exec",
+        "vite",
+        "preview",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173,
+      "url": "http://127.0.0.1:4173"
+    },
+    {
+      "name": "r5-preview",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": [
+        "--dir",
+        "/Users/neo/repos/polyformer-wt/r5-harness",
+        "exec",
+        "vite",
+        "preview",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4173",
+        "--strictPort"
+      ],
+      "port": 4173,
+      "url": "http://127.0.0.1:4173"
+    },
+    {
+      "name": "sketch-e0",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8765",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "/Users/neo/repos/polyformer/research/sketch/e0"
+      ],
+      "port": 8765,
+      "url": "http://127.0.0.1:8765"
+    },
+    {
+      "name": "sketch-e3",
+      "runtimeExecutable": "python3",
+      "runtimeArgs": [
+        "-m",
+        "http.server",
+        "8766",
+        "--bind",
+        "127.0.0.1",
+        "--directory",
+        "/Users/neo/repos/polyformer/research/sketch/e3_browser"
+      ],
+      "port": 8766,
+      "url": "http://127.0.0.1:8766"
+    },
+    {
+      "name": "sketchpad-preview",
+      "runtimeExecutable": "env",
+      "runtimeArgs": [
+        "BASE_PATH=/polyformer",
+        "pnpm",
+        "--dir",
+        "/Users/neo/repos/polyformer-wt/sketchpad",
+        "exec",
+        "vite",
+        "preview",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "4182",
+        "--strictPort"
+      ],
+      "port": 4182,
+      "url": "http://127.0.0.1:4182"
     }
   ]
 }

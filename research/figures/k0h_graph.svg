@@ -1,0 +1,151 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 400" width="800" height="400" font-family="KaTeX_Main, 'Times New Roman', serif">
+  <style>
+    .edge { fill: none; stroke: #9a9a9a; stroke-width: 1; }
+    .tip { fill: #9a9a9a; }
+    .soft { stroke: #555; stroke-dasharray: 2 3; }
+    .tipsoft { fill: #555; }
+    .input { fill: #080808; stroke: #f5f5f5; stroke-width: 1; }
+    .proj { fill: #161616; stroke: #8a8a8a; stroke-width: 1; }
+    .mid { fill: #222; stroke: #9a9a9a; stroke-width: 1; }
+    .output { fill: #080808; stroke: #f5f5f5; stroke-width: 1.4; }
+    .op { fill: #080808; stroke: #9a9a9a; stroke-width: 1; }
+    .join { fill: #080808; stroke: #9a9a9a; stroke-width: 1; }
+    .merge { fill: #cfcfcf; }
+    .sigma { font-size: 12px; fill: #e6e6e6; text-anchor: middle; dominant-baseline: central; }
+    .nl { font-size: 12.5px; fill: #f5f5f5; text-anchor: middle; dominant-baseline: central; font-style: italic; }
+    .ol { font-size: 10.5px; fill: #a6a6a6; text-anchor: middle; dominant-baseline: central; }
+    .el { font-size: 10.5px; fill: #a6a6a6; text-anchor: middle; dominant-baseline: central; font-style: italic; }
+    .note { font-size: 10.5px; fill: #8a8a8a; dominant-baseline: central; }
+    .note.i { font-style: italic; }
+    .c { text-anchor: middle; }
+    .r { text-anchor: end; }
+    .sub { font-size: 8px; }
+    .sup { font-size: 8px; }
+  </style>
+  <rect width="800" height="400" fill="#080808"/>
+  <g transform="translate(0,14)">
+
+  <!-- row 1: the loop (inference path) -->
+  <!-- X -> h0 -->
+  <path class="edge" d="M55,90 L135,90"/><path class="tip" d="M100,90 L91,93 L91,87 Z"/>
+  <text class="el" x="94" y="79">E</text>
+  <!-- h0 -> inj -->
+  <path class="edge" d="M165,90 L202,90"/>
+  <!-- inj -> block -->
+  <path class="edge" d="M208,90 L243,90"/><path class="tip" d="M230,90 L221,93 L221,87 Z"/>
+  <!-- block -> h -->
+  <path class="edge" d="M313,90 L347,90"/><path class="tip" d="M334,90 L325,93 L325,87 Z"/>
+  <!-- recurrence h -> inj, dashed, shallow dip -->
+  <path class="edge soft" d="M350,100 C318,128 240,128 209,98"/><path class="tipsoft" d="M274,121 L283,118 L283,124 Z"/>
+  <text class="note i c" x="280" y="138">i → i+1</text>
+  <!-- h -> halt -->
+  <path class="edge" d="M377,90 L439,90"/><path class="tip" d="M412,90 L403,93 L403,87 Z"/>
+  <!-- halt -> Y -->
+  <path class="edge" d="M501,90 L635,90"/><path class="tip" d="M572,90 L563,93 L563,87 Z"/>
+  <text class="el" x="572" y="78">W<tspan class="sub" dy="3">o</tspan></text>
+  <!-- h0 -> head_k (up, then right) -->
+  <path class="edge" d="M150,75 C150,40 230,28 269,28"/><path class="tip" d="M214,31 L205,35 L204,29 Z"/>
+  <!-- head_k -> khat -->
+  <path class="edge" d="M331,28 L365,28"/><path class="tip" d="M352,28 L343,31 L343,25 Z"/>
+  <!-- khat -> halt (level, then drop) -->
+  <path class="edge" d="M395,28 C430,28 470,40 470,78"/><path class="tip" d="M463,62 L467,55 L471,56 Z"/>
+  <!-- h -> L (drop) -->
+  <path class="edge" d="M362,105 L362,155"/><path class="tip" d="M362,134 L359,125 L365,125 Z"/>
+  <text class="el" x="375" y="131">W<tspan class="sub" dy="3">o</tspan></text>
+  <!-- L -> Σ -->
+  <path class="edge" d="M377,170 L530,170"/><path class="tip" d="M458,170 L449,173 L449,167 Z"/>
+  <!-- Σ -> ⊙ -->
+  <path class="edge" d="M550,170 L593,170"/>
+  <!-- ⊙ -> ℒ -->
+  <path class="edge" d="M607,170 L665,170"/><path class="tip" d="M640,170 L631,173 L631,167 Z"/>
+
+  <!-- row 2: hindsight (training only) -->
+  <!-- Xs -> scan -->
+  <path class="edge" d="M55,262 L117,262"/><path class="tip" d="M90,262 L81,265 L81,259 Z"/>
+  <!-- scan -> b -->
+  <path class="edge" d="M183,262 L217,262"/><path class="tip" d="M204,262 L195,265 L195,259 Z"/>
+  <!-- b -> head_b -->
+  <path class="edge" d="M247,262 L286,262"/><path class="tip" d="M270,262 L261,265 L261,259 Z"/>
+  <!-- h -> head_b (s_t, the final iterate), leaves down-left, clears L -->
+  <path class="edge" d="M350,101 C330,130 333,215 333,250"/><path class="tip" d="M334,190 L331,181 L337,181 Z"/>
+  <text class="el" x="318" y="190">s<tspan class="sub" dy="3">t</tspan></text>
+  <!-- head_b -> C_b -->
+  <path class="edge" d="M350,262 L385,262"/><path class="tip" d="M372,262 L363,265 L363,259 Z"/>
+  <!-- C_b -> gap -->
+  <path class="edge" d="M415,262 L447,262"/><path class="tip" d="M435,262 L426,265 L426,259 Z"/>
+  <!-- L -> gap (C_f, leaves shallow, drops into the box top) -->
+  <path class="edge" d="M375,178 C415,185 470,205 470,250"/><path class="tip" d="M463,228 L467,220 L471,222 Z"/>
+  <text class="el" x="420" y="197">C<tspan class="sub" dy="3">f</tspan></text>
+  <!-- gap -> g -->
+  <path class="edge" d="M493,262 L525,262"/><path class="tip" d="M513,262 L504,265 L504,259 Z"/>
+  <!-- g -> weight -->
+  <path class="edge" d="M555,262 L580,262"/>
+  <!-- weight -> w -->
+  <path class="edge" d="M640,262 L665,262"/><path class="tip" d="M656,262 L647,265 L647,259 Z"/>
+  <!-- w -> ⊙ (up, arriving from below) -->
+  <path class="edge" d="M680,247 C680,205 640,186 606,180"/><path class="tip" d="M655,191 L664,190 L662,196 Z"/>
+  <!-- g -> head_k target (dashed, long, leaves up at a shallow angle) -->
+
+  <!-- row 3: far bag -->
+  <path class="edge" d="M40,277 C40,310 90,330 123,330"/><path class="tip" d="M78,321 L70,324 L70,318 Z"/>
+  <path class="edge" d="M177,330 L204,330"/>
+  <path class="edge" d="M240,330 L270,330"/><path class="tip" d="M258,330 L249,333 L249,327 Z"/>
+  <path class="edge" d="M300,330 L372,330"/><path class="tip" d="M340,330 L331,333 L331,327 Z"/>
+  <!-- s_t into NCE: branch from the s_t drop -->
+  <circle class="merge" cx="333" cy="225" r="2.5"/>
+  <path class="edge" d="M333,225 C333,260 360,318 372,324"/>
+  <text class="el" x="352" y="296">P s<tspan class="sub" dy="3">t</tspan></text>
+  <!-- NCE -> N -> Σ -->
+  <path class="edge" d="M428,330 L465,330"/><path class="tip" d="M450,330 L441,333 L441,327 Z"/>
+  <path class="edge" d="M495,330 C520,330 540,300 540,182"/><path class="tip" d="M540,250 L537,259 L543,259 Z"/>
+  <text class="el" x="552" y="300">λ</text>
+
+  <!-- joins -->
+  <circle class="merge" cx="205" cy="90" r="2.5"/>
+  <circle class="join" cx="540" cy="170" r="10"/><text class="sigma" x="540" y="170.5">Σ</text>
+  <circle class="join" cx="600" cy="170" r="6.5"/><circle class="merge" cx="600" cy="170" r="1.8"/>
+
+  <!-- nodes, row 1 -->
+  <circle class="input" cx="40" cy="90" r="15"/><text class="nl" x="40" y="90">X</text>
+  <circle class="mid" cx="150" cy="90" r="15"/><text class="nl" x="150" y="90">h<tspan class="sup" dy="-5">0</tspan></text>
+  <rect class="op" x="243" y="78" width="70" height="24" rx="4"/><text class="ol" x="278" y="90">block</text>
+  <circle class="mid" cx="362" cy="90" r="15"/><text class="nl" x="362" y="90">h<tspan class="sup" dy="-5">i+1</tspan></text>
+  <rect class="op" x="439" y="78" width="62" height="24" rx="4"/><text class="ol" x="470" y="90">halt</text>
+  <circle class="output" cx="650" cy="90" r="15"/><text class="nl" x="650" y="90">Y</text>
+  <rect class="op" x="269" y="16" width="62" height="24" rx="4"/><text class="ol" x="300" y="28">head</text>
+  <circle class="mid" cx="380" cy="28" r="15"/><text class="nl" x="380" y="28">k̂<tspan class="sub" dy="4">t</tspan></text>
+  <circle class="mid" cx="362" cy="170" r="15"/><text class="nl" x="362" y="170">L<tspan class="sup" dy="-5">(i)</tspan></text>
+  <circle class="output" cx="680" cy="170" r="15"/><text class="nl" x="680" y="170">ℒ</text>
+
+  <!-- nodes, row 2 -->
+  <circle class="input" cx="40" cy="262" r="15"/><text class="nl" x="40" y="262">X<tspan class="sub" dy="4">&gt;t</tspan></text>
+  <rect class="op" x="117" y="250" width="66" height="24" rx="4"/><text class="ol" x="150" y="262">←scan</text>
+  <circle class="proj" cx="232" cy="262" r="15"/><text class="nl" x="232" y="262">b<tspan class="sub" dy="4">t+1</tspan></text>
+  <rect class="op" x="286" y="250" width="64" height="24" rx="4"/><text class="ol" x="318" y="262">head<tspan class="sub" dy="3">b</tspan></text>
+  <circle class="mid" cx="400" cy="262" r="15"/><text class="nl" x="400" y="262">C<tspan class="sub" dy="4">b</tspan></text>
+  <rect class="op" x="447" y="250" width="46" height="24" rx="4"/><text class="ol" x="470" y="262">gap</text>
+  <circle class="mid" cx="540" cy="262" r="15"/><text class="nl" x="540" y="262">g<tspan class="sub" dy="4">t</tspan></text>
+  <rect class="op" x="580" y="250" width="60" height="24" rx="4"/><text class="ol" x="610" y="262">1+αg/ḡ</text>
+  <circle class="mid" cx="680" cy="262" r="15"/><text class="nl" x="680" y="262">w<tspan class="sub" dy="4">t</tspan></text>
+
+  <!-- nodes, row 3 -->
+  <rect class="op" x="123" y="318" width="54" height="24" rx="4"/><text class="ol" x="150" y="330">bag</text>
+  <rect class="op" x="204" y="318" width="36" height="24" rx="4"/><text class="ol" x="222" y="330">R</text>
+  <circle class="proj" cx="285" cy="330" r="15"/><text class="nl" x="285" y="330">z<tspan class="sub" dy="4">t</tspan></text>
+  <rect class="op" x="372" y="318" width="56" height="24" rx="4"/><text class="ol" x="400" y="330">NCE</text>
+  <circle class="mid" cx="480" cy="330" r="15"/><text class="nl" x="480" y="330">N<tspan class="sub" dy="4">t</tspan></text>
+
+  <!-- notes -->
+  <text class="note i r" x="790" y="2">halting head target (training): k<tspan class="sub" dy="4">t</tspan><tspan dy="-4"> = ⌈K g</tspan><tspan class="sub" dy="4">t</tspan><tspan dy="-4"> / max g⌉</tspan></text>
+  <text class="note i c" x="278" y="58">h<tspan class="sup" dy="-4">i+1</tspan><tspan dy="4"> = h</tspan><tspan class="sup" dy="-4">i</tspan><tspan dy="4"> + block(h</tspan><tspan class="sup" dy="-4">i</tspan><tspan dy="4">, h</tspan><tspan class="sup" dy="-4">0</tspan><tspan dy="4">),  i &lt; K,  weights tied</tspan></text>
+  <text class="note i c" x="578" y="54">stop when ‖h<tspan class="sup" dy="-4">i+1</tspan><tspan dy="4">−h</tspan><tspan class="sup" dy="-4">i</tspan><tspan dy="4">‖ ≤ ε  or  i = k̂</tspan><tspan class="sub" dy="4">t</tspan></text>
+  <text class="note i" x="300" y="2" dy="4">k̂<tspan class="sub" dy="3">t</tspan><tspan dy="-3"> from h</tspan><tspan class="sup" dy="-4">0</tspan><tspan dy="4"> (causal)</tspan></text>
+  <text class="note i" x="388" y="148">L<tspan class="sup" dy="-4">(i)</tspan><tspan class="sub" dy="8">t</tspan><tspan dy="-4"> = −log p(x</tspan><tspan class="sub" dy="4">t+1</tspan><tspan dy="-4"> | h</tspan><tspan class="sup" dy="-4">(i)</tspan><tspan class="sub" dy="8">t</tspan><tspan dy="-4">)</tspan></text>
+  <text class="note i r" x="760" y="140">ℒ = Σ<tspan class="sub" dy="4">t</tspan><tspan dy="-4"> w</tspan><tspan class="sub" dy="4">t</tspan><tspan dy="-4"> ( Σ</tspan><tspan class="sub" dy="4">i</tspan><tspan dy="-4"> L</tspan><tspan class="sup" dy="-4">(i)</tspan><tspan class="sub" dy="8">t</tspan><tspan dy="-4"> + λ N</tspan><tspan class="sub" dy="4">t</tspan><tspan dy="-4"> )</tspan></text>
+  <text class="note" x="40" y="232">training only; dropped at inference</text>
+  <text class="note i" x="80" y="292">B: two layers, trained on C<tspan class="sub" dy="4">b</tspan><tspan dy="-4"> only</tspan></text>
+  <text class="note i" x="392" y="292">C<tspan class="sub" dy="4">b</tspan><tspan dy="-4"> = −log p</tspan><tspan class="sub" dy="4">b</tspan><tspan dy="-4">(x</tspan><tspan class="sub" dy="4">t+1</tspan><tspan dy="-4"> | s</tspan><tspan class="sub" dy="4">t</tspan><tspan dy="-4">, b</tspan><tspan class="sub" dy="4">t+1</tspan><tspan dy="-4">)</tspan></text>
+  <text class="note i r" x="790" y="330">g<tspan class="sub" dy="4">t</tspan><tspan dy="-4"> = max(0, C</tspan><tspan class="sub" dy="4">f</tspan><tspan dy="-4"> − C</tspan><tspan class="sub" dy="4">b</tspan><tspan dy="-4">) · [x</tspan><tspan class="sub" dy="4">t+1</tspan><tspan dy="-4"> ∉ x</tspan><tspan class="sub" dy="4">t+2..t+W</tspan><tspan dy="-4">],  no gradient</tspan></text>
+  <text class="note i" x="372" y="366">z<tspan class="sub" dy="4">t</tspan><tspan dy="-4"> = R · bag(x</tspan><tspan class="sub" dy="4">t+9..t+136</tspan><tspan dy="-4">), R frozen;  N</tspan><tspan class="sub" dy="4">t</tspan><tspan dy="-4"> = −log softmax</tspan><tspan class="sub" dy="4">batch</tspan><tspan dy="-4">⟨P s</tspan><tspan class="sub" dy="4">t</tspan><tspan dy="-4">, z</tspan><tspan class="sub" dy="4">t</tspan><tspan dy="-4">⟩/τ</tspan></text>
+  </g>
+</svg>

@@ -408,7 +408,11 @@
 					busy={pad.chatBusy}
 					onask={(q) => pad.ask(q)}
 				/>
-				<p class="small">The same weights still chat (thinking off, up to 120 new tokens).</p>
+				<p class="small">
+					This chat runs on the arithmetic weights (thinking off, up to 120 new tokens). Training
+					them for the sheet damaged the model's instruction-following; a switch back to stock Qwen
+					for chat is next.
+				</p>
 			</div>
 		</div>
 		<div class="block">

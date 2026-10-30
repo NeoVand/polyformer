@@ -1,0 +1,26 @@
+job compile_baseline_1154; start 2026-10-30 16:54:25; cmds [['python', 'compile_baseline.py'], ['python', 'compile_baseline.py', '/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python compile_baseline.py
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<01:29,  5.29it/s]Loading weights:  67%|██████▋   | 317/473 [00:00<00:00, 1356.83it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 1312.75it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `causal_conv1d_update` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+<string>:1: SyntaxWarning: 'int' object is not callable; perhaps you missed a comma?
+Traceback (most recent call last):
+  File "/tmp/work/compile_baseline.py", line 181, in <module>
+    main()
+  File "/tmp/work/compile_baseline.py", line 161, in main
+    form, want = rnd_eq()
+                 ^^^^^^^^
+  File "/tmp/work/compile_baseline.py", line 110, in rnd_eq
+    return form, [ev(L, 0), ev(R, 0), ev(L, 1), ev(R, 1)]
+                  ^^^^^^^^
+  File "/tmp/work/compile_baseline.py", line 40, in ev
+    return eval(e, {'__builtins__': {}})
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "<string>", line 1, in <module>
+TypeError: 'int' object is not callable
+
+returncode 1; wall so far 99.4s

@@ -1,0 +1,14 @@
+job e5_s2_2000_h4.0_fast; start 2026-10-29 23:43:11; cmds [['python', 'e5_union.py', 'train', '2000', '2', '4.0']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e5_union.py train 2000 2 4.0
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<06:01,  1.31it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 607.39it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+/tmp/work/e5_union.py:151: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  log.append({"step": step, "loss": float(loss), "cert": ok, "rows": len(ROWS), "by_op": by_op,
+{"step": 100, "loss": 1.6741523742675781, "cert": 945, "rows": 1795, "by_op": {"SUM": 217, "MUL": 309, "ADD": 204, "ADZ": 202, "FLS": 2, "NXT": 11}, "min_margin": {"SUM": -6.67, "MUL": -7.22, "ADD": -3.18, "ADZ": -7.87, "FLS": 7.03, "NXT": 4.41}, "ppl_ratio": 0.9900878473709904, "fails": ["SUM:___", "SUM:_99", "SUM:1_3", "SUM:1_5", "SUM:1_7", "SUM:1_9", "SUM:100", "SUM:109", "SUM:118", "SUM:138", "SUM:159", "SUM:166"], "seconds": 181}
+{"step": 200, "loss": 2.0268590450286865, "cert": 1083, "rows": 1795, "by_op": {"SUM": 226, "MUL": 418, "ADD": 212, "ADZ": 215, "FLS": 2, "NXT": 10}, "min_margin": {"SUM": -10.86, "MUL": -10.7, "ADD": -6.28, "ADZ": -4.77, "FLS": 4.64, "NXT": -1.52}, "ppl_ratio": 1.0016010690103283, "fails": ["SUM:___", "SUM:_06", "SUM:_56", "SUM:_66", "SUM:_88", "SUM:101", "SUM:156", "SUM:165", "SUM:169", "SUM:177", "SUM:178", "SUM:183"], "seconds": 224}
+{"step": 300, "loss": 1.351666808128357, "cert": 1156, "rows": 1795, "by_op": {"SUM": 240, "MUL": 486, "ADD": 213, "ADZ": 204, "FLS": 2, "NXT": 11}, "min_margin": {"SUM": -4.07, "MUL": -10.73, "ADD": -4.65, "ADZ": -9.39, "FLS": 8.26, "NXT": 7.98}, "ppl_ratio": 0.9909836102349373, "fails": ["SUM:189", "SUM:198", "MUL:138", "MUL:146", "MUL:147", "MUL:148", "MUL:156", "MUL:157", "MUL:158", "MUL:165", "MUL:166", "MUL:167"], "seconds": 267}

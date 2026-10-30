@@ -1,0 +1,194 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Canvas Multiplier</title>
+<style>
+  :root { --ink: #111; --muted: #6b6b6b; --line: #d9d9d9; --cobalt: #1f3fbf; --rose: #c2185b; --bg: #fff; }
+  body { font: 14px/1.45 ui-monospace, Menlo, monospace; background: var(--bg); color: var(--ink); margin: 16px; max-width: 1100px; }
+  h1 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .muted { color: var(--muted); }
+  #cert { display: grid; grid-template-columns: repeat(64, 6px); gap: 1px; margin: 8px 0; }
+  #cert div { width: 6px; height: 6px; background: #eee; }
+  #cert div.ok { background: var(--cobalt); } #cert div.bad { background: var(--rose); }
+  #board { image-rendering: pixelated; cursor: pointer; max-width: 100%; }
+  input { font: inherit; width: 100%; max-width: 420px; }
+  button { font: inherit; padding: 4px 10px; }
+  pre { white-space: pre-wrap; font-size: 12px; }
+  .labels { display: inline-block; vertical-align: top; line-height: 32px; margin-right: 8px; color: var(--muted); font-size: 12px; text-align: right; }
+</style>
+</head>
+<body>
+<h1>Canvas multiplier: long multiplication on the model's own sketchpad</h1>
+<div class="muted">Each tick the model reads a 3-cell strip of the canvas through its own eyes and writes two glyphs and
+the name of its next step. The cursor's position is the loop counter; the canvas is the whole memory. Click a digit of
+the multiplier that the model has not reached yet to change it.</div>
+<p id="status">loading…</p>
+<div><b>Certificate</b> <span id="certsum" class="muted">(all 1,553 table rows, checked on this device)</span></div>
+<div id="cert"></div>
+<p><input id="a" /> × <input id="b" /> <button id="run" disabled>Multiply on the canvas</button> <span id="res"></span></p>
+<div><span class="labels">a<br />b<br />carry×<br />product<br />carry+<br />result</span><canvas id="board"></canvas></div>
+<pre id="log"></pre>
+<script type="module">
+import { AutoProcessor, Qwen3_5ForConditionalGeneration, RawImage, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+import { Canvas, ROWS, B, reference } from "./canvas_runtime.js";
+
+const params = new URLSearchParams(location.search);
+const REF = params.has("ref");              // drive the page with the true tables (UI and runtime test)
+const ID = params.get("model") || "qwen35-canvas-mul";
+const CELL = 32, GLYPHS = " 0123456789";
+const $ = (id) => document.getElementById(id);
+const log = (s) => ($("log").textContent += s + "\n");
+const E4 = (window.E4 = { cert: [], runs: [] });
+
+const sprites = await new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = "sprites.png"; });
+const strip = document.createElement("canvas"); strip.width = CELL; strip.height = 3 * CELL;
+function stripImage(cells) {
+  const ctx = strip.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, CELL, 3 * CELL);
+  cells.forEach((g, k) => { const gi = GLYPHS.indexOf(g); ctx.drawImage(sprites, gi * CELL, k * CELL, CELL, CELL, 0, k * CELL, CELL, CELL); });
+  return RawImage.fromCanvas(strip);
+}
+const outChars = (op, v) => { const [g1, g2, n] = reference(op, v); return [g1 === B ? "_" : g1, g2, n]; };
+
+// ---- the model -----------------------------------------------------------------------------------------------
+let processor, model, tok, policy;
+if (REF) {
+  policy = async (op, v) => reference(op, v);
+  $("status").textContent = "reference tables (no model)";
+} else {
+  env.allowLocalModels = false; env.allowRemoteModels = true; env.useBrowserCache = false;
+  env.remoteHost = new URL("./models/", location.href).href; env.remotePathTemplate = "{model}/";
+  const t0 = performance.now();
+  processor = await AutoProcessor.from_pretrained(ID);
+  model = await Qwen3_5ForConditionalGeneration.from_pretrained(ID, {
+    dtype: { embed_tokens: "q4", vision_encoder: "fp16", decoder_model_merged: params.get("dec") || "q4" }, device: "webgpu" });
+  tok = processor.tokenizer;
+  $("status").textContent = `loaded in ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+  const prompt = (op) => `${op}<|vision_start|><|image_pad|><|vision_end|>=`;
+  policy = async (op, v) => {
+    const inputs = await processor(prompt(op), [stripImage(v)]);
+    const out = await model.generate({ ...inputs, do_sample: false, max_new_tokens: 3 });
+    const ids = Array.from(out.data.slice(inputs.input_ids.dims[1])).map(Number);
+    const ch = ids.map((i) => tok.decode([i]));
+    return [ch[0] === "_" ? B : ch[0], ch[1], ch[2]];
+  };
+  // teacher-forced row check: margin of every answer token
+  // answer ids are appended one per character, as in training (tokenising "_-N" jointly would merge pieces)
+  const { Tensor } = await import("https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0");
+  const extend = (t, vals) => new Tensor(t.type, t.type === "int64"
+    ? BigInt64Array.from([...t.data, ...vals.map(BigInt)]) : Float32Array.from([...t.data, ...vals]), [1, t.dims[1] + vals.length]);
+  window.scoreRow = async (op, v) => {
+    const ans = outChars(op, v), ids = ans.map((c) => tok.encode(c, { add_special_tokens: false })[0]);
+    const inp = await processor(prompt(op), [stripImage(v)]);
+    const L = inp.input_ids.dims[1];
+    for (const k of Object.keys(inp)) {
+      const t = inp[k];
+      if (t?.dims?.length === 2 && t.dims[0] === 1 && t.dims[1] === L)
+        inp[k] = extend(t, k === "input_ids" ? ids : ids.map(() => (k === "attention_mask" ? 1 : 0)));
+    }
+    const out = await model(inp);
+    const [, S, V] = out.logits.dims, d = out.logits.data;
+    let m = Infinity;
+    ids.forEach((t, j) => {
+      const row = d.subarray((S - ids.length - 1 + j) * V, (S - ids.length + j) * V);
+      let best = -Infinity; for (let k = 0; k < V; k++) if (k !== t && row[k] > best) best = row[k];
+      m = Math.min(m, row[t] - best);
+    });
+    return m;
+  };
+}
+
+// ---- certificate over the whole table --------------------------------------------------------------------------
+const DOMAIN = [];
+for (const a of B + "0123456789") for (const b of "0123456789") for (const c of B + "012345678") DOMAIN.push(["MUL", [a, b, c]]);
+for (const op of ["ADD", "ADZ"]) for (const c of B + "1") for (const p of "0123456789") for (const r of B + "0123456789") DOMAIN.push([op, [c, p, r]]);
+for (const c of B + "1") DOMAIN.push(["FLS", [c, B, B]]);
+for (const b of B + "0123456789") DOMAIN.push(["NXT", [b, B, B]]);
+const grid = $("cert");
+for (let i = 0; i < DOMAIN.length; i++) grid.appendChild(document.createElement("div"));
+if (!REF && !params.has("skipcert")) {
+  let pass = 0, minM = Infinity; const byOp = {}; const tc = performance.now();
+  for (let i = 0; i < DOMAIN.length; i++) {
+    const [op, v] = DOMAIN[i];
+    const m = await window.scoreRow(op, v);
+    grid.children[i].className = m > 0 ? "ok" : "bad";
+    pass += m > 0; minM = Math.min(minM, m);
+    byOp[op] = byOp[op] || [0, 0, Infinity]; byOp[op][0] += m > 0; byOp[op][1]++; byOp[op][2] = Math.min(byOp[op][2], m);
+    E4.cert.push({ op, v: v.join("").replaceAll(" ", "_"), margin: m });
+    if (i % 25 === 0 || i === DOMAIN.length - 1) $("certsum").textContent = `${pass}/${i + 1} pass, lowest margin ${minM.toFixed(2)}`;
+  }
+  E4.certSummary = { pass, rows: DOMAIN.length, minMargin: minM, byOp, seconds: (performance.now() - tc) / 1000 };
+  $("certsum").textContent = `${pass}/${DOMAIN.length} table rows certified on this device, lowest margin ${minM.toFixed(2)} (${E4.certSummary.seconds.toFixed(0)} s)`;
+  log(JSON.stringify(E4.certSummary));
+} else if (REF) {
+  for (const d of grid.children) d.className = "ok";
+  $("certsum").textContent = "reference tables";
+}
+
+// ---- live canvas -----------------------------------------------------------------------------------------------
+const board = $("board");
+let cv = null;
+function draw() {
+  const W = cv.W, ctx = board.getContext("2d");
+  board.width = W * CELL; board.height = ROWS.length * CELL + 8;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, board.width, board.height);
+  ROWS.forEach((row, k) => {
+    const y = k * CELL + (k === 5 ? 8 : 0);
+    for (let x = 0; x < W; x++) {
+      const gi = GLYPHS.indexOf(cv.rows[row][x]);
+      ctx.drawImage(sprites, gi * CELL, CELL, CELL, CELL, (W - 1 - x) * CELL, y, CELL, CELL);
+    }
+  });
+  ctx.fillStyle = "#111"; ctx.fillRect(0, 5 * CELL + 3, W * CELL, 2);
+  if (!cv.done) {
+    const col = (W - 1 - cv.x) * CELL;
+    ctx.strokeStyle = "#1f3fbf"; ctx.lineWidth = 3;
+    if (cv.op === "MUL") { // the strip the eye reads: a[x-j], b[j], cM[x]
+      ctx.strokeRect((W - 1 - (cv.x - cv.j)) * CELL + 1.5, 1.5, CELL - 3, CELL - 3);
+      ctx.strokeRect((W - 1 - cv.j) * CELL + 1.5, CELL + 1.5, CELL - 3, CELL - 3);
+      ctx.strokeRect(col + 1.5, 2 * CELL + 1.5, CELL - 3, CELL - 3);
+    } else if (cv.op === "NXT") {
+      ctx.strokeRect((W - 1 - (cv.j + 1)) * CELL + 1.5, CELL + 1.5, CELL - 3, CELL - 3);
+    } else {
+      ctx.strokeRect(col + 1.5, 3 * CELL + 1.5, CELL - 3, 2 * CELL - 3);
+      ctx.strokeRect(col + 1.5, 5 * CELL + 9.5, CELL - 3, CELL - 3);
+    }
+  }
+}
+board.addEventListener("click", (e) => {
+  if (!cv || cv.done) return;
+  const r = board.getBoundingClientRect();
+  const x = cv.W - 1 - Math.floor(((e.clientX - r.left) / r.width) * cv.W);
+  const k = Math.floor(((e.clientY - r.top) / r.height) * (ROWS.length * CELL + 8) / CELL);
+  if (k === 1 && x > cv.j && x < cv.m) { // a multiplier digit the model has not reached yet
+    cv.rows.b[x] = String((+cv.rows.b[x] + 1) % 10);
+    cv.edits = (cv.edits || 0) + 1; draw();
+  }
+});
+async function run(a, b) {
+  cv = new Canvas(a, b); draw();
+  const ts = performance.now();
+  for (;;) {
+    const out = await policy(cv.op, cv.view());
+    if (!cv.apply(out)) break;
+    draw();
+    if (REF) await new Promise((r) => setTimeout(r, 20));
+  }
+  draw();
+  const A = [...cv.rows.a].reverse().join("").trim(), Bm = [...cv.rows.b].reverse().join("").trim();
+  const want = (BigInt(A) * BigInt(Bm)).toString(), got = cv.result();
+  const r = { n: a.length, m: b.length, ok: got === want, ticks: cv.ticks, msPerTick: (performance.now() - ts) / cv.ticks, edits: cv.edits || 0 };
+  E4.runs.push(r); log(JSON.stringify(r));
+  $("res").textContent = r.ok ? `exact: ${got} (${r.ticks} ticks, ${r.msPerTick.toFixed(0)} ms/tick)` : `WRONG: ${got}, want ${want}`;
+  return r;
+}
+const rnd = (n) => Array.from({ length: n }, (_, i) => (i === 0 ? 1 + Math.floor(Math.random() * 9) : Math.floor(Math.random() * 10))).join("");
+$("a").value = rnd(6); $("b").value = rnd(6);
+$("run").disabled = false;
+$("run").onclick = async () => { $("run").disabled = true; await run($("a").value.trim(), $("b").value.trim()); $("run").disabled = false; };
+window.runMul = run; window.canvasNow = () => cv;
+</script>
+</body>
+</html>

@@ -1,0 +1,15 @@
+job e5_s1_2000_h4.0_fast; start 2026-10-29 23:43:10; cmds [['python', 'e5_union.py', 'train', '2000', '1', '4.0']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e5_union.py train 2000 1 4.0
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<02:02,  3.87it/s]Loading weights:  56%|█████▌    | 265/473 [00:00<00:00, 941.28it/s]Loading weights:  99%|█████████▊| 466/473 [00:00<00:00, 1262.15it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 1008.52it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+/tmp/work/e5_union.py:151: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  log.append({"step": step, "loss": float(loss), "cert": ok, "rows": len(ROWS), "by_op": by_op,
+{"step": 100, "loss": 3.2003955841064453, "cert": 774, "rows": 1795, "by_op": {"SUM": 147, "MUL": 394, "ADD": 111, "ADZ": 110, "FLS": 2, "NXT": 10}, "min_margin": {"SUM": -7.85, "MUL": -6.11, "ADD": -3.59, "ADZ": -4.24, "FLS": 5.03, "NXT": -2.34}, "ppl_ratio": 0.9965774112878626, "fails": ["SUM:___", "SUM:__3", "SUM:__4", "SUM:__5", "SUM:_20", "SUM:_25", "SUM:_27", "SUM:_36", "SUM:_37", "SUM:_45", "SUM:_49", "SUM:_58"], "seconds": 168}
+{"step": 200, "loss": 1.716558814048767, "cert": 1150, "rows": 1795, "by_op": {"SUM": 218, "MUL": 535, "ADD": 196, "ADZ": 188, "FLS": 2, "NXT": 11}, "min_margin": {"SUM": -6.13, "MUL": -9.43, "ADD": -9.52, "ADZ": -6.86, "FLS": 6.24, "NXT": 6.19}, "ppl_ratio": 0.9800138546469711, "fails": ["SUM:_97", "SUM:_99", "SUM:119", "SUM:127", "SUM:155", "SUM:159", "SUM:166", "SUM:168", "SUM:171", "SUM:172", "SUM:173", "SUM:174"], "seconds": 207}
+{"step": 300, "loss": 1.037067174911499, "cert": 1400, "rows": 1795, "by_op": {"SUM": 240, "MUL": 710, "ADD": 219, "ADZ": 218, "FLS": 2, "NXT": 11}, "min_margin": {"SUM": -2.66, "MUL": -7.7, "ADD": -0.97, "ADZ": -5.66, "FLS": 4.5, "NXT": 2.14}, "ppl_ratio": 0.9862927600697236, "fails": ["SUM:157", "SUM:199", "MUL:_50", "MUL:_60", "MUL:10_", "MUL:11_", "MUL:12_", "MUL:13_", "MUL:15_", "MUL:16_", "MUL:166", "MUL:17_"], "seconds": 247}
+{"step": 400, "loss": 0.02960205078125, "cert": 1693, "rows": 1795, "by_op": {"SUM": 242, "MUL": 1000, "ADD": 219, "ADZ": 219, "FLS": 2, "NXT": 11}, "min_margin": {"SUM": 1.58, "MUL": -16.54, "ADD": -5.1, "ADZ": -8.08, "FLS": 5.58, "NXT": 7.86}, "ppl_ratio": 0.9872625269533786, "fails": ["MUL:11_", "MUL:120", "MUL:121", "MUL:128", "MUL:130", "MUL:15_", "MUL:210", "MUL:232", "MUL:233", "MUL:234", "MUL:237", "MUL:238"], "seconds": 289}

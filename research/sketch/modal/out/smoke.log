@@ -1,0 +1,12 @@
+job smoke; start 2026-10-29 19:50:37; cmds [['python', '-c', "import e2_column as e2, json; m=e2.load_base().eval(); ok,mn,_=e2.certify(m); print(json.dumps({'untouched_e2_rows_ok': ok, 'min_margin': mn, 'ppl': e2.text_ppl(m)}))"]]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python -c import e2_column as e2, json; m=e2.load_base().eval(); ok,mn,_=e2.certify(m); print(json.dumps({'untouched_e2_rows_ok': ok, 'min_margin': mn, 'ppl': e2.text_ppl(m)}))
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<03:12,  2.45it/s]Loading weights:  72%|███████▏  | 340/473 [00:00<00:00, 863.61it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 772.91it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `chunk_gated_delta_rule` is falling back to its reference PyTorch implementation because `flash-linear-attention` is not installed. This is correct but much slower; install `flash-linear-attention` for the optimized kernel.
+{"untouched_e2_rows_ok": 0, "min_margin": -12.1157808303833, "ppl": 18.46074879678439}
+
+returncode 0; wall so far 40.0s

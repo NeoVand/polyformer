@@ -1,0 +1,79 @@
+{
+ "askell2021_context_distillation_contexts": {
+  "n": 89,
+  "examples": [
+   [
+    "RubricOpt: Self-Revision of Semantic Rubrics for Preference Optimization",
+    "Context distillation trains on a context and then evaluates without it, introduced as an alignment technique (Askell et al., 2021) and developed as a standalone method (Snell et al., 2022)."
+   ],
+   [
+    "When Thoughts Become Memory: Unifying In-Context Learning and Fine-Tuning",
+    "Context distillation reproduces a context’s predictions in the weights (Askell et al., 2021; Snell et al., 2022), and Theorem 9 sets the floor of its divergence for a state that stores a given number of bits about the context."
+   ],
+   [
+    "Learning from Interaction Experience via Localized Context Distillation",
+    "Context distillation internalizes behaviors induced by additional context into model parameters by training a student without that context to match a context-conditioned teacher (Askell et al., 2021; Snell et al., 2022)."
+   ],
+   [
+    "Learning from Interaction Experience via Localized Context Distillation",
+    "Context distillation provides a framework for learning from interaction experience by using a teacher with access to privileged context to supervise a student without access to that context (Askell et al., 2021; Snell et al., 2022)."
+   ],
+   [
+    "Learning from Self-Generated Responses: Reliability--Uncertainty Self-Distillation for Reasoning",
+    "Context distillation transfers behavior elicited by additional teacher context (Askell et al., 2021; Snell et al., 2022; Ye et al., 2026b), connecting to learning with privileged information (Vapnik and Vashist, 2009; Lopez-Paz et al., 2016)."
+   ]
+  ]
+ },
+ "whittington2020tem_pubmed": {
+  "pmid": "33181068",
+  "abstract": "The hippocampal-entorhinal system is important for spatial and relational memory tasks. We formally link these domains, provide a mechanistic understanding of the hippocampal role in generalization, and offer unifying principles underlying many entorhinal and hippocampal cell types. We propose medial entorhinal cells form a basis describing structural knowledge, and hippocampal cells link this basis with sensory representations. Adopting these principles, we introduce the Tolman-Eichenbaum machine (TEM). After learning, TEM entorhinal cells display diverse properties resembling apparently bespoke spatial responses, such as grid, band, border, and object-vector cells. TEM hippocampal cells include place and landmark cells that remap between environments. Crucially, TEM also aligns with empirically recorded representations in complex non-spatial tasks. TEM also generates predictions that hippocampal remapping is not random as previously believed; rather, structural knowledge is preserved across environments. We confirm this structural transfer over remapping in simultaneously recorded place and grid cells."
+ },
+ "doi:10.1016/0890-5401(87)90052-6": {
+  "s2_title": "Learning Regular Sets from Queries and Counterexamples",
+  "s2_abstract": "The problem of identifying an unknown regular set from examples of its members and nonmembers is addressed. It is assumed that the regular set is presented by a minimaMy adequate Teacher, which can answer membership queries about the set and can also test a conjecture and indicate whether it is equal to the unknown set and provide a counterexample if not. (A counterexample is a string in the symmetric difference of the correct set and the conjectured set.) A learning algorithm L* is described that correctly learns any regular set from any minimally adequate Teacher in time polynomial in the number of states of the minimum dfa for the set and the maximum length of any counterexample provided by the Teacher. It is shown that in a stochastic setting the ability of the Teacher to test conjectures may be replaced by a random sampling oracle, EX( ). A polynomial-time learning algorithm is shown for a particular problem of context-free language identification.",
+  "s2_tldr": "A learning algorithm L* is described that correctly learns any regular set from any minimally adequate Teacher in time polynomial in the number of states of the minimum dfa for the set and the maximum length of any counterexample provided by the Teacher.",
+  "crossref_abstract": null
+ },
+ "doi:10.1016/S0004-3702(02)00376-4": {
+  "s2_title": "Equivalence notions and model minimization in Markov decision processes",
+  "s2_abstract": null,
+  "s2_tldr": "The generalization of bisimulation to stochastic processes yields a non-trivial notion of state equivalence that guarantees the optimal policy for the reduced model immediately induces a corresponding Optimal Policy for the original model.",
+  "crossref_abstract": null
+ },
+ "doi:10.1007/s10994-013-5416-x": {
+  "s2_title": "Spectral learning of weighted automata",
+  "s2_abstract": null,
+  "s2_tldr": "A derivation of the spectral method for learning WFA that puts emphasis on providing intuitions on the inner workings of the method and does not assume a strong background in formal algebraic methods is presented.",
+  "crossref_abstract": null
+ },
+ "doi:10.1103/PhysRevLett.63.105": {
+  "s2_title": "Inferring statistical complexity.",
+  "s2_abstract": null,
+  "s2_tldr": "A technique is presented that directly reconstructs minimal equations of motion from the recursive structure of measurement sequences, demonstrating a form of superuniversality that refers only to the entropy and complexity of a data stream.",
+  "crossref_abstract": null
+ },
+ "doi:10.1038/s41467-021-22559-5": {
+  "s2_title": "Clone-structured graph representations enable flexible learning and vicarious evaluation of cognitive maps",
+  "s2_abstract": "Cognitive maps are mental representations of spatial and conceptual relationships in an environment, and are critical for flexible behavior. To form these abstract maps, the hippocampus has to learn to separate or merge aliased observations appropriately in different contexts in a manner that enables generalization and efficient planning. Here we propose a specific higher-order graph structure, clone-structured cognitive graph (CSCG), which forms clones of an observation for different contexts as a representation that addresses these problems. CSCGs can be learned efficiently using a probabilistic sequence model that is inherently robust to uncertainty. We show that CSCGs can explain a variety of cognitive map phenomena such as discovering spatial relations from aliased sensations, transitive inference between disjoint episodes, and formation of transferable schemas. Learning different clones for different contexts explains the emergence of splitter cells observed in maze navigation and event-specific responses in lap-running experiments. Moreover, learning and inference dynamics of CSCGs offer a coherent explanation for disparate place cell remapping phenomena. By lifting aliased observations into a hidden space, CSCGs reveal latent modularity useful for hierarchical abstraction and planning. Altogether, CSCG provides a simple unifying framework for understanding hippocampal function, and could be a pathway for forming relational abstractions in artificial intelligence. Higher-order sequence learning using a structured graph representation - clone-structured cognitive graphs (CSCG) – can explain how the hippocampus learns cognitive maps. CSCG provides novel explanations for transferable schemas and transitive inference in the hippocampus, and for how place cells, splitter cells, lap-cells and a variety of phenomena emerge from the same set of fundamental principles.",
+  "s2_tldr": "Higher-order sequence learning using a structured graph representation - clone-structured cognitive graphs (CSCG) – can explain how the hippocampus learns cognitive maps and could be a pathway for forming relational abstractions in artificial intelligence.",
+  "crossref_abstract": "Abstract \n                   Cognitive maps are mental representations of spatial and conceptual relationships in an environment, and are critical for flexible behavior. To form these abstract maps, the hippocampus has to learn to separate or merge aliased observations appropriately in different contexts in a manner that enables generalization and efficient planning. Here we propose a specific higher-order graph structure, clone-structured cognitive graph (CSCG), which forms clones of an observation for different contexts as a representation that addresses these problems. CSCGs can be learned efficiently using a probabilistic sequence model that is inherently robust to uncertainty. We show that CSCGs can explain a variety of cognitive map phenomena such as discovering spatial relations from aliased sensations, transitive inference between disjoint episodes, and formation of transferable schemas. Learning different clones for different contexts explains the emergence of splitter cells observed in maze navigation and event-specific responses in lap-running experiments. Moreover, learning and inference dynamics of CSCGs offer a coherent explanation for disparate place cell remapping phenomena. By lifting aliased observations into a hidden space, CSCGs reveal latent modularity useful for hierarchical abstraction and planning. Altogether, CSCG provides a simple unifying framework for understanding hippocampal function, and could be a pathway for forming relational abstractions in artificial intelligence."
+ },
+ "doi:10.1006/jcss.1995.1013": {
+  "s2_title": null,
+  "s2_abstract": null,
+  "s2_tldr": null,
+  "crossref_abstract": null
+ },
+ "doi:10.1038/s41586-024-08148-8": {
+  "s2_title": "Learning high-accuracy error decoding for quantum processors",
+  "s2_abstract": "Building a large-scale quantum computer requires effective strategies to correct errors that inevitably arise in physical quantum systems1. Quantum error-correction codes2 present a way to reach this goal by encoding logical information redundantly into many physical qubits. A key challenge in implementing such codes is accurately decoding noisy syndrome information extracted from redundancy checks to obtain the correct encoded logical information. Here we develop a recurrent, transformer-based neural network that learns to decode the surface code, the leading quantum error-correction code3. Our decoder outperforms other state-of-the-art decoders on real-world data from Google’s Sycamore quantum processor for distance-3 and distance-5 surface codes4. On distances up to 11, the decoder maintains its advantage on simulated data with realistic noise including cross-talk and leakage, utilizing soft readouts and leakage information. After training on approximate synthetic data, the decoder adapts to the more complex, but unknown, underlying error distribution by training on a limited budget of experimental samples. Our work illustrates the ability of machine learning to go beyond human-designed algorithms by learning from data directly, highlighting machine learning as a strong contender for decoding in quantum computers. A recurrent, transformer-based neural network, called AlphaQubit, learns high-accuracy error decoding to suppress the errors that occur in quantum systems, opening the prospect of using neural-network decoders for real quantum hardware.",
+  "s2_tldr": "A recurrent, transformer-based neural network, called AlphaQubit, learns high-accuracy error decoding to suppress the errors that occur in quantum systems, opening the prospect of using neural-network decoders for real quantum hardware.",
+  "crossref_abstract": "Abstract \n                   \n                    Building a large-scale quantum computer requires effective strategies to correct errors that inevitably arise in physical quantum systems\n                     1 \n                    . Quantum error-correction codes\n                     2 \n                    present a way to reach this goal by encoding logical information redundantly into many physical qubits. A key challenge in implementing such codes is accurately decoding noisy syndrome information extracted from redundancy checks to obtain the correct encoded logical information. Here we develop a recurrent, transformer-based neural network that learns to decode the surface code, the leading quantum error-correction code\n                     3 \n                    . Our decoder outperforms other state-of-the-art decoders on real-world data from Google’s Sycamore quantum processor for distance-3 and distance-5 surface codes\n                     4 \n                    . On distances up to 11, the decoder maintains its advantage on simulated data with realistic noise including cross-talk and leakage, utilizing soft readouts and leakage information. After training on approximate synthetic data, the decoder adapts to the more complex, but unknown, underlying error distribution by training on a limited budget of experimental samples. Our work illustrates the ability of machine learning to go beyond human-designed algorithms by learning from data directly, highlighting machine learning as a strong contender for decoding in quantum computers."
+ },
+ "doi:10.1524/auto.1966.14.112.545": {
+  "s2_title": "Editorial: Effective construction of linear state-variable models from input/output functions",
+  "s2_abstract": null,
+  "s2_tldr": "This paper presents Markov parametric algorithm for effective construction of minimal realizations of linear state-variable finite-dimensional dynamical systems from input-output data.",
+  "crossref_abstract": null
+ }
+}

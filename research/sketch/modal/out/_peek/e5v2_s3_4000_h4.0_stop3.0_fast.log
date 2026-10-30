@@ -1,0 +1,13 @@
+job e5v2_s3_4000_h4.0_stop3.0_fast; start 2026-10-30 00:16:55; cmds [['python', 'e5_union.py', 'train2', '4000', '3', '4.0', '3.0']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e5_union.py train2 4000 3 4.0 3.0
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<01:18,  6.01it/s]Loading weights:  31%|███       | 147/473 [00:00<00:00, 671.67it/s]Loading weights:  49%|████▉     | 234/473 [00:00<00:00, 727.77it/s]Loading weights:  76%|███████▌  | 358/473 [00:00<00:00, 889.93it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 853.71it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+/tmp/work/e5_union.py:173: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  log.append({"step": step, "loss": float(loss), "cert": ok, "rows": len(ROWS), "by_op": by_op,
+{"step": 100, "loss": 1.6590561866760254, "cert": 994, "rows": 1795, "by_op": {"SUM": 193, "MUL": 374, "ADD": 208, "ADZ": 206, "FLS": 2, "NXT": 11}, "min_margin": {"SUM": -9.2, "MUL": -8.33, "ADD": -10.01, "ADZ": -8.53, "FLS": 2.62, "NXT": 4.05}, "ppl_ratio": 0.9858597079128415, "fails": ["SUM:_19", "SUM:_28", "SUM:_29", "SUM:_47", "SUM:_66", "SUM:_69", "SUM:_73", "SUM:_77", "SUM:_78", "SUM:_79", "SUM:_87", "SUM:_88"], "seconds": 195}
+{"step": 200, "loss": 1.05588960647583, "cert": 1057, "rows": 1795, "by_op": {"SUM": 226, "MUL": 401, "ADD": 211, "ADZ": 206, "FLS": 2, "NXT": 11}, "min_margin": {"SUM": -8.76, "MUL": -9.98, "ADD": -8.65, "ADZ": -10.21, "FLS": 5.65, "NXT": 3.71}, "ppl_ratio": 0.9964638437306627, "fails": ["SUM:_11", "SUM:_40", "SUM:_77", "SUM:1_2", "SUM:101", "SUM:104", "SUM:105", "SUM:109", "SUM:11_", "SUM:124", "SUM:127", "SUM:158"], "seconds": 258}

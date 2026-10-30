@@ -1,0 +1,8 @@
+Now the job and forward code.
+Now the registration document, before any GPU spend.
+root agent idle; waiting up to 30m0s for 1 background task(s)
+The probe is running; I'll wait for the timer.
+I'll wait for the probe check timer to fire.
+The report script is drafted. I'll wait for the early check.
+error: Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h26m43s. (response may be truncated)
+AGY_ERROR: {"short_error":"RESOURCE_EXHAUSTED (code 429): Individual quota reached. Please upgrade your subscription to increase your limits. Resets in 3h26m43s.","status":"RESOURCE_EXHAUSTED","error_code":429,"code_kind":"http","retryable":true,"error_id":"718eb4c3-9ce1-4ba8-9b5f-d1ea4e95d335-119"}

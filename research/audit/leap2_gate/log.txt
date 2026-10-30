@@ -1,0 +1,556 @@
+OpenAI Codex v0.165.0-alpha.1.2
+--------
+workdir: /Users/neo/repos/polyformer/research/audit/leap2_gate
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a18883-a254-77d1-9b94-895c288a774e
+--------
+user
+# Live prior-art gate: five candidate "new kind of model" directions (29 Oct 2026)
+
+You are a skeptical prior-art auditor with live web search. Today is 29 Oct 2026. Search arXiv, OpenReview, Hugging Face,
+GitHub, company blogs (2023 to Oct 2026). For every claim give a link and a date. Do not trust memory; open the pages.
+
+## Context
+We have: (1) learned recurrent states that "snap" (contract) onto a finite code set, which makes them exact at long
+horizons (S5 / Lean rewrite tracking, 4,096+ steps); (2) a theory that a pinned/contractive learned transition is
+history-independent, so enumerating its finite domain once certifies every input of every length (induction);
+(3) a learned register-ISA executor run by an external host clock (13 programs, bitwise exact, zero-shot on new
+programs); (4) a certified native digit ALU inside base Qwen3-4B. Previous gate (same folder, ../savant_r_gate/out.md)
+found "LLM runs its own programs exactly" mostly known: Meridian (Apr 2026, hand-compiled WASM coprocessor + nanochat),
+Percepta (transformer computer, Python interpreter), Schuurmans 2023/2024, nCPU, Naughton "Certified Grokking" (Jul 2026).
+Already found today: retrofitted recurrence (McLeish et al. arXiv 2511.07384; Shapiro arXiv 2608.11233, rank-16 LoRA loop on
+Qwen2.5-0.5B), Relaxed Recursive Transformers (2410.20672), Ouro/LoopLM (2510.25741), "Training-free looped transformers",
+"Looped LMs improve compositional tool calling" (2608.18171), Fan et al. looped length generalization (2409.15647),
+"Specifying exact circuit algorithms in universal transformers" (NeurIPS 2025). Go beyond these.
+
+## Candidates (judge each)
+C1 Crystallized loop. A learned (not hand-constructed) latent loop inside a pretrained LM (native looped base such as
+Ouro, or a retrofitted LoRA loop on Qwen) trained so its latent iterations ARE one exact universal executor (small register
+ISA or stack VM). Loss: (a) every training step covers the executor's whole finite transition domain with a margin hinge,
+(b) a snap/pin term keeps the loop state within delta of a finite codebook (so it is history-independent), (c) KL to the
+base on ordinary text. After merging, one finite enumeration certifies exactness for all programs and all lengths. The LM
+writes the program into latent registers from a plain prompt (SFT on a generator, then RL); no chain-of-thought tokens,
+no host clock. Claim to test: "first learned latent loop in a language model with a finite certificate of exactness for
+unbounded inputs".
+C2 Programs as weights. The LM emits a low-rank weight delta (composed from a finite certified codebook of instruction
+deltas) into its own looped core; executing the program = iterating the rewired core. Neighbours to check: fast-weight
+programmers, hypernetworks, Text-to-LoRA, Drag-and-Drop LLMs, TTT layers, Titans, any "LLM writes its own LoRA to compute".
+C3 Homomorphism loss. Train state encodings so enc(xy) = enc(x) o enc(y) for a learned associative o, with states snapped
+to a finite monoid, so exact state over N steps is computed by parallel prefix in O(log N) depth, certified by checking
+generators. Neighbours: Liu et al. 2023 shortcuts to automata, DeltaProduct, negative-eigenvalue linear RNNs, RWKV-7,
+bisimulation-metric representation learning, any associativity/homomorphism regulariser.
+C4 Compile then dissolve. Compile an exact interpreter into a looped block (ALTA / Tracr style), distil its hidden-state
+trajectory into the LM's own looped core through a learned linear map (state alignment, interchange intervention
+training), discard the compiled block, certify by enumeration. Neighbours: ALTA trace supervision, Geiger et al. IIT/DAS,
+Tracr, Meridian, compiled-weights initialisation or distillation.
+C5 Base-model choice. Which open base models (<=4B, browser-feasible) give native affordances for C1 to C4: looped
+(Ouro 1.4B/2.6B, Huginn-0125 3.5B, retrofitted checkpoints), matrix-state hybrids (RWKV-7, Gated DeltaNet hybrids,
+anything with proven state-tracking). Give HF ids, licence, loop counts usable at test time, known extrapolation behaviour,
+and any report of exact multi-digit arithmetic or state tracking inside the latent loop without CoT.
+
+## Specific questions
+Q1 Has anyone trained a looped or retrofitted LM to execute programs exactly within latent iterations (no CoT), with
+exactness over hundreds or thousands of steps? Best reported numbers.
+Q2 Has anyone certified or proven unbounded-length correctness of a TRAINED recurrent/looped network via a finite check
+(automata extraction with exactness guarantees, RNN verification, Naughton 2026, others)? What exactly do they prove?
+Q3 Is there any "new loss" in 2025-2026 that makes a network's latent loop a finite exact machine (quantised latent
+reasoning, discrete latent thoughts, VQ thought tokens, codebook-snapped recurrence)?
+Q4 Strongest 2026 demos of latent (no-CoT) reasoning that shocked researchers (HRM, TRM, successors): what do they do,
+what are their limits, does any keep a language model intact?
+
+## Output (write to out.md)
+Top: a table, one row per candidate: verdict KILLED / NARROW / OPEN, closest work (link, date), what remains open in one
+line. Then evidence per candidate, then Q1-Q5 answers, then base-model table. Be blunt. Under 2,500 words.
+
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+codex
+I’ll check the named work and search for closer precedents, separating exact execution, finite certification, and retained language ability. I’ll also check whether this session can write `out.md`.
+
+web search: 
+exec
+/bin/zsh -lc "pwd && rg --files -g 'AGENTS.md' -g 'out.md' .." in /Users/neo/repos/polyformer/research/audit/leap2_gate
+ succeeded in 0ms:
+/Users/neo/repos/polyformer/research/audit/leap2_gate
+../needle_gate/out.md
+../priorart_all/out.md
+../savant_r_gate/out.md
+../priorart_dec/out.md
+../needle_gate2/out.md
+
+web search: "learned" "looped" transformer exact program execution certificate ...
+web search: 
+web search: 
+exec
+/bin/zsh -lc 'cat ../savant_r_gate/out.md' in /Users/neo/repos/polyformer/research/audit/leap2_gate
+ succeeded in 0ms:
+**Verdict: NARROW. Do not present the claim as a new discovery that pretrained LLMs can be exact computers.** That proposition, finite local verification, learned machine execution, bounded-context recurrence, and internal execution alongside language generation all have substantial prior art. I did **not** find a source establishing the entire specified combination: Qwen3-4B + small LoRA + this cache protocol + inherited digit arithmetic + a complete execution certificate + measured capability retention.
+
+Search cutoff: **29 October 2026**. I ran the twelve requested search families and the named antecedent checks, using primary papers, OpenReview material, repositories, and company announcements. Google Scholar’s direct search endpoint was inaccessible; some OpenReview pages challenged access, although indexed PDFs were available. Repository and company claims below are treated as **public disclosures**, not independently reproduced results. No files were edited.
+
+“STATES” below kills the **explicitly identified component**. It does not mean that a paper containing one component anticipates the entire conjunction.
+
+| Claim | Overall prior-art grade | Gate result |
+|---|---|---|
+| S1: inherited arithmetic, exhaustively certified as primitives | **IMPLIES/PARTIAL** | Possible narrow contribution; exhaustive neural arithmetic certification itself is known. |
+| S2: self-written programs executed internally, exact at length | **IMPLIES/PARTIAL** | Learned execution and internal generation/execution are known; their certified realization in the specified pretrained model remains distinguishable. |
+| S3: cache policy yielding recurrence and finite certification | **IMPLIES/PARTIAL** | Eviction, position reuse, recurrence, and finite local verification are known separately. The particular closure theorem could matter. |
+| S4: semantic judgment followed by same-model certified arithmetic | **IMPLIES/PARTIAL** | Judgment plus exact aggregation is known; using inherited certified arithmetic in the same model is the remaining distinction. |
+| S5: complete combination | **IMPLIES/PARTIAL** | No exact antecedent located; substantial combination-level overlap prevents PASS. |
+
+**S1. Exhaustively certify inherited digit arithmetic and use it as an instruction set**
+
+The strongest predecessors are these:
+
+| Source and date | Short verbatim quote | Grade and consequence |
+|---|---|---|
+| Schuurmans, [*Memory Augmented Large Language Models are Computationally Universal*](https://arxiv.org/html/2301.04589v1), **10 January 2023** | “checking a finite set of prompt-result behaviours” | **STATES** finite verification of a pretrained LLM used as a computer. **PARTIAL** for S1: the system supplies external associative memory, and its host code performs integer increment/decrement. It does not establish inherited decimal arithmetic as the certified ALU. |
+| Schuurmans, Dai, Zanini, [*Autoregressive Large Language Models are Computationally Universal*](https://arxiv.org/abs/2410.03170), **4 October 2024** | “correctly apply each of the 2027 production rules” | **STATES** exhaustive rule checking for a pretrained model under extended greedy decoding. Kills novelty for “verify a finite instruction/rule set, then obtain universal computation.” |
+| Lewandowski, Machado, Schuurmans, [*Universal computation is intrinsic to language model decoding*](https://arxiv.org/html/2601.08061v2), **12 January 2026; revised 10 February** | “The proof consists of an enumeration of the 1857 cases” | **STATES** the local-enumeration-to-unbounded-execution proof strategy for a pretrained model. **PARTIAL** for inherited arithmetic: the system prompt supplies a universal production-rule table. |
+| Price, [*nCPU* manuscript, pinned repository version](https://github.com/robertcprice/nCPU/blob/bd56284c0b978cdd3dbd675023d6b1a486627f62/paper/ncpu_paper.md), **March 2026; present in a 7 March commit** | “finite, fully enumerable input spaces that can be exhaustively verified” | **STATES** exhaustive verification of neural ALU primitives: full adder, carry combination, logical operations, and byte multiplication. **PARTIAL** for S1: purpose-trained components, not inherited chat-model arithmetic. Its composition checks are less strong than its primitive checks. |
+| Naughton, [*Certified Grokking*](https://github.com/brian-naughton/certified-grokking), **M1 release commit: 2 July 2026** | “target argmax on all 12,769 inputs” | **STATES** full-domain arithmetic-transformer certification with independently checkable interval bounds. **PARTIAL**: modular addition in a small task-trained transformer, not decimal micro-prompts in a pretrained chat model. |
+| Naughton, [*Certified Inference*](https://github.com/brian-naughton/certified-inference), **4 July 2026** | “unique full-vocabulary exact-real next-token argmax” | **STATES** rigorous next-token certification for pretrained language models. **PARTIAL**: certifies model predictions, not an arithmetic specification or a universal executor. |
+
+Two corrections matter. The memory-augmented Schuurmans paper is **2023**, not 2024. Also, *Certified Grokking* explicitly distinguishes its **exact-real network certificate** from empirical agreement with floating-point execution. “Certified on the device” is a different guarantee, not automatically a stronger one.
+
+**Surviving S1 wording:** “We exhaustively validate a pinned pretrained chat model’s pre-existing decimal and Boolean micro-prompt behavior and use those validated behaviors as execution primitives.”
+
+That wording still requires evidence that the operations worked **before** executor fine-tuning. Testing only the adapted model does not establish inheritance. Exhaustive checking of 200 addition-with-carry inputs establishes that particular interface, not arithmetic competence under arbitrary prompts or cached contexts.
+
+**S2. Fine-tune an LLM to execute its own programs internally, exactly at length**
+
+| Source and date | Short verbatim quote | Grade and consequence |
+|---|---|---|
+| Cai, Shin, Song, [*Making Neural Programming Architectures Generalize via Recursion*](https://people.eecs.berkeley.edu/~dawnsong/papers/iclr_2017_recursion.pdf), **ICLR 2017; arXiv 21 April 2017** | “provably perfect generalization” | **STATES** learned neural execution with finite verification sufficient for unrestricted task-size generalization. Their addition verification set contains 20,181 problems under stated input assumptions. **PARTIAL**: recursive NPI, not a pretrained chat transformer. |
+| Giannou et al., [*Looped Transformers as Programmable Computers*](https://arxiv.org/abs/2301.13196), **30 January 2023; ICML 2023** | “function calls, program counters, and conditional branches” | **STATES** transformer execution of an instruction-set computer. Program counters, registers, branches, and looping are not differentiators. **PARTIAL**: constructed weights rather than LoRA learning in a chat model. |
+| Lai et al., [CAEF: *Executing Arithmetic*](https://arxiv.org/html/2410.07896v1), **10 October 2024** | “All the executors and the aligner are executed by the LLM.” | **STATES** LoRA-based LLaMA execution of arithmetic machines and composition of learned operators. **PARTIAL**: separate adapters, prescribed operators, and empirical near-perfect performance up to 100 digits—not an all-length certificate. |
+| Xu et al., [*Training Transformers as a Universal Computer* / MicroPy](https://arxiv.org/html/2604.25166v1), **28 April 2026** | “perfect accuracy on each task within the tested context lengths” | **STATES** a trained transformer predicting small-step execution of novel programs using bounded-context PENCIL scaffolding. **PARTIAL**: a 59.5M specialized model; tested-context accuracy, not certified correctness for every length. |
+| Tong et al., [*Is Code Better Than Language for Algorithmic Reasoning?*](https://arxiv.org/abs/2606.15589), **14 June 2026; ICML 2026** | “the language model simulates that code in context” | **STATES** the self-generated-code/internal-simulation workflow. **PARTIAL**: no exactness guarantee; their experiments find little benefit from changing representation without reliable execution. |
+
+CAEF is particularly damaging to a loosely written novelty claim: it already combines a **pretrained LLaMA, LoRA, machine-state transitions, arithmetic, and operator composition**. Its explicit limitation—“Prone to errors with repeated digit patterns”—is a useful distinction your certificate would have to eliminate, not merely outperform on sampled tests. [CAEF, §6](https://arxiv.org/html/2410.07896v1)
+
+The other requested execution-training checks do not kill the certified formulation, but they must not be omitted from related work:
+
+| Source/date | Verbatim quote | Grade |
+|---|---|---|
+| Zaremba–Sutskever, [*Learning to Execute*](https://arxiv.org/abs/1410.4615), **17 October 2014** | “training them to evaluate short computer programs” | **CONTEXT:** learned execution predates LLMs. |
+| Liu et al., [*Code Execution with Pre-trained Language Models*](https://arxiv.org/abs/2305.05383), **8 May 2023** | “code execution pre-training and curriculum learning” | **IMPLIES/PARTIAL:** execution-trace training of pretrained transformers is established. |
+| Ni et al., [*NExT*](https://arxiv.org/abs/2404.14662), **23 April 2024** | “inspect the execution traces of programs” | **CONTEXT:** execution-aware reasoning training, not certified interpretation. |
+| Ding et al., [*SemCoder*](https://arxiv.org/abs/2406.01006), **3 June 2024** | “linking static code text with dynamic execution states” | **IMPLIES/PARTIAL:** one model learns generation and execution reasoning. |
+| Li et al., [*CodeI/O*](https://arxiv.org/abs/2502.07316), **11 February 2025** | “predict inputs/outputs given code and test cases” | **CONTEXT:** input/output reasoning training; external ground truth checks predictions. |
+| [*PLSemanticsBench*](https://arxiv.org/abs/2510.03415), **3 October 2025** | “execution trace prediction” | **CONTEXT:** explicit evaluation of LLMs as formal-semantics interpreters. |
+| [*Self-Programmed Execution for Language-Model Agents*](https://arxiv.org/abs/2605.06898), **7 May 2026** | “the same data is both model context and executable program” | **CONTEXT:** self-orchestration through Spell; not evidence of certified neural arithmetic execution. |
+
+**Surviving S2 wording:** “A LoRA-adapted pretrained chat model generates candidate register programs and executes accepted programs through neural transitions whose correctness is established for every execution covered by a finite-state reduction.”
+
+“Candidate” and “accepted” matter: an exact executor can execute an incorrect program perfectly.
+
+**S3. KV eviction turns a decoder into a recurrent executor with a finite certificate**
+
+| Source and date | Short verbatim quote | Grade and consequence |
+|---|---|---|
+| Xiao et al., [*StreamingLLM*](https://arxiv.org/html/2309.17453v1), **29 September 2023; ICLR 2024** | “positions within the cache rather than those in the original text” | **STATES** persistent initial KVs + rolling recent KVs + cache-relative positional treatment. **PARTIAL** for S3: stability/perplexity, not exact machine execution. |
+| Zhang et al., [*H₂O*](https://arxiv.org/abs/2306.14048), **24 June 2023; NeurIPS 2023** | “dynamically retains a balance of recent and H₂ tokens” | **CONTEXT:** cache eviction with a theoretical optimization guarantee. That guarantee is not a semantic execution certificate. |
+| Oren et al., [*Transformers are Multi-State RNNs* / TOVA](https://arxiv.org/abs/2401.06104), **11 January 2024; EMNLP 2024** | “converted into bounded multi-state RNNs” | **STATES** the decoder-to-recurrent-system interpretation through bounded KV storage. **PARTIAL**: no finite symbolic transition certificate. |
+| Aghajohari et al., [*The Markovian Thinker* / Delethink](https://arxiv.org/abs/2510.06557), **8 October 2025; ICLR 2026** | “resets the context and reinitializes the prompt with a short carryover” | **STATES** bounded textual state and context resets for extended reasoning. **PARTIAL**: resource scaling and empirical reasoning results, not exact state tracking for every input. |
+| Bulatov et al., [*Recurrent Memory Transformer*](https://arxiv.org/abs/2207.06881), **14 July 2022** | “adding special memory tokens to the input or output sequence” | **CONTEXT:** recurrent memory vectors, not a certified finite alphabet of symbolic states. |
+| Wu et al., [*Memformer*](https://arxiv.org/abs/2010.06891), **14 October 2020** | “linear time complexity and constant memory space complexity” | **CONTEXT:** bounded recurrent memory, no exact interpreter certificate. |
+| Munkhdalai et al., [*Infini-attention*](https://arxiv.org/abs/2404.07143), **10 April 2024** | “incorporates a compressive memory into the vanilla attention mechanism” | **CONTEXT:** compression and long-context processing, not exact discrete execution. |
+| Behrouz et al., [*Titans*](https://arxiv.org/abs/2501.00663), **31 December 2024 submission; 2025 paper** | “learns to memorize historical context” | **CONTEXT:** adaptive neural memory, not exhaustive symbolic-state certification. |
+
+The strongest combination objection is **StreamingLLM/TOVA/Delethink plus Cai/Schuurmans**. These already supply the recurrence/reset machinery and the finite-local-correctness proof strategy. Merely putting those concepts together is weak novelty.
+
+The 2026 Lewandowski paper is especially close: its actual protocol forms each query from a fixed system prompt and the current local window, appends the generated symbols to an operational string, then advances the window. Its proof concerns those reconstructed local queries. It does **not** establish equivalence to retaining history-conditioned KVs across steps. [Protocol and proof](https://arxiv.org/html/2601.08061v2)
+
+**Surviving S3 wording:** “For this precise cache implementation, we prove that all execution histories represented by the same certified local state induce the same transition behavior, reducing arbitrary-duration execution to a finite check.”
+
+That history-independence statement—not eviction itself—is the potentially substantive contribution.
+
+**S4. Judge semantically, then aggregate exactly using the same model’s certified arithmetic**
+
+| Source and date | Short verbatim quote | Grade and consequence |
+|---|---|---|
+| Li et al., [*Chain of Code*](https://arxiv.org/abs/2312.04474), **7 December 2023; ICML 2024** | “counts the number of times it detects sarcasm in an essay” | **STATES** the motivating pattern: semantic judgments combined with precise programmatic computation. **PARTIAL**: ordinary code uses an external interpreter; the LM handles semantic operations. |
+| Patel et al., [*LOTUS / Semantic Operators*](https://arxiv.org/html/2407.11418v1), **16 July 2024** | “sorting or aggregating records using natural language criteria” | **IMPLIES/PARTIAL:** composable semantic analytics is established. Its semantic aggregation is not synonymous with certified arithmetic. |
+| Liu et al., [*Palimpzest*](https://arxiv.org/html/2405.14696v1), **23 May 2024** | “orchestrate large numbers of models, prompts, and data operations” | **IMPLIES/PARTIAL:** model judgments embedded in conventional analytical processing are established. No same-model arithmetic certificate. |
+| Peng et al., [*Codified Finite-state Machines for Role-playing*](https://openreview.net/pdf?id=xSuDJTQ3Ew), **arXiv 5 February 2026; ICLR 2026; earlier OpenReview submission** | “executable transition function” | **IMPLIES/PARTIAL:** generated state-transition code invokes semantic binary-question helpers. It does not establish that transformer forward passes implement the transition logic exactly. |
+
+I found no verified CFSM follow-up establishing the proposed certified neural executor. CFSM is relevant to semantic predicates plus structured state transitions; it is not a direct all-length execution result.
+
+**Surviving S4 wording:** “Given the model’s semantic judgments as inputs, the same checkpoint computes their aggregation through exhaustively validated arithmetic primitives.”
+
+The guarantee is **conditional on the judgments**. Exact counting cannot repair incorrect classifications, missing records, mistaken extraction, or a wrongly generated aggregation program.
+
+**S5. Has the combination already been published or announced?**
+
+**Not the full specified combination that I could verify. But the surrounding integration claim has already been announced.**
+
+The most important additional sources are:
+
+| Source and date | Short verbatim quote | Grade and consequence |
+|---|---|---|
+| Saldyt–Kambhampati, [*Algorithmic Language Models with Neurally Compiled Libraries*](https://arxiv.org/abs/2407.04899), **6 July 2024** | “memory, registers, basic operations, and adaptive recurrence” | **IMPLIES/PARTIAL:** explicitly combines an LLaMA-based architecture with an internal differentiable computer and compiled algorithm library. Arithmetic is supplied, not inherited and exhaustively certified. |
+| Percepta/Tzamos, [*Can LLMs Be Computers?*](https://www.percepta.ai/blog/can-llms-be-computers), **11 March 2026**, followed by [*Constructing an LLM-Computer*](https://www.percepta.ai/blog/constructing-llm-computer), **25 March**, and the [official implementation](https://github.com/Percepta-Core/transformer-vm) | “weights are computed analytically” | **STATES** program execution inside transformer weights; **PARTIAL** for the whole. The released VM is constructed, not an inherited-arithmetic chat model fine-tuned with LoRA. Its hull-based attention mechanism differs from the proposed eviction policy. |
+| [*Meridian*, public manuscript commit](https://huggingface.co/eastlondoner/nanochat-wasm-coprocessor/commit/956b2fe155cbe8dd53349a4714be81d87ec97d30), **11 April 2026** | “generates WASM bytecode as tokens and executes them within the model’s own forward pass” | **STATES**, as a public claim, model-generated code plus internal execution in a language-generating model. **PARTIAL**: a separately hand-compiled frozen coprocessor and trained bridges, not inherited arithmetic or a LoRA-only modification. |
+| Percepta, [*Can LLMs Grow Their Own Capabilities?*](https://www.percepta.ai/blog/can-llms-grow-their-own-capabilities), **2 October 2026** | “we hand-constructed a Python interpreter inside Spotlight” | **STATES** an announced extension to internal Python execution and writable memory. **PARTIAL**: changed architecture and constructed interpreter; no evidence of this Qwen/LoRA/certificate combination. |
+
+Meridian is easy to miss and materially changes the answer. Its manuscript describes internal bytecode generation, deterministic execution, and conversational responses. It also reports **95% arithmetic accuracy on its small evaluation**, with remaining errors attributed to program generation. That is precisely why executor correctness and question-answer correctness must be separated. I verified a public manuscript artifact, not peer-review acceptance or an independent reproduction. [Meridian manuscript](https://huggingface.co/eastlondoner/nanochat-wasm-coprocessor/commit/956b2fe155cbe8dd53349a4714be81d87ec97d30)
+
+Percepta’s October language-modeling experiments and its constructed interpreter should likewise not be silently combined into evidence that one pretrained chat model already possesses both properties. Its [Spotlight report](https://www.percepta.ai/blog/spotlight-memory) presents separate architecture-training experiments.
+
+The defensible combination distinction is therefore **the particular integration and proof boundary**: inherited primitives, a learned executor, a pinned cache implementation, and a valid finite certificate in one pretrained checkpoint. Qwen3-4B, approximately 18 opcodes, browser deployment, or a small adapter are implementation choices; none independently supplies a strong scientific novelty claim.
+
+**The wording also contains correctness claims that cannot pass merely because no identical paper was found.**
+
+These are my technical objections to the proposed statement:
+
+1. **Eviction is not necessarily a reset.** Retained state-token KVs can contain information obtained from now-evicted tokens. Restarting position indices does not erase that information. A certificate indexed only by textual `(state, input)` is incomplete unless all reachable KV realizations are covered or their transition equivalence is proved.
+
+2. **Unbounded digit-string registers make the state space unbounded.** You need a proved reduction to finite local digit/control observations. Checking 200 additions does not certify digit routing, copying, carry scheduling, instruction fetch, branching, termination, or serialization.
+
+3. **Positive margins are not unconditionally necessary.** For target token \(y\),
+   \[
+   m=z_y-\max_{j\ne y}z_j>0
+   \]
+   is equivalent to a **unique** correct argmax. A deterministic tie-breaker can return \(y\) at \(m=0\). Moreover, a conservative certified lower bound can fail to be positive even when the true margin is positive. State precisely which predicate is necessary and sufficient.
+
+4. **The certificate must match execution.** Fix the checkpoint, adapter status, tokenizer, prompts, decoding rule, positions, cache construction, precision, and runtime semantics. Fresh-prompt arithmetic checks do not automatically transfer into program-conditioned cached execution. Multi-token outputs require checking every decoding prefix, including termination.
+
+5. **Exact execution is not exact natural-language problem solving.** Program synthesis, semantic judgments, and preservation of GSM8K/MMLU/perplexity are separate empirical obligations. Benchmark retention supports a bounded capability-preservation claim; it does not certify “remaining a normal chat model.”
+
+**Final verdict: NARROW.** The following is the exact surviving sentence I would allow as a *candidate contribution claim*, contingent on the implementation and proof actually establishing it:
+
+> “For a pinned Qwen3-4B checkpoint with a small LoRA adapter, we combine model-generated register programs, exhaustively validated pre-existing digit-arithmetic primitives, and a learned executor under a specified cache/reset protocol, proving that finite local-transition checks suffice for exact execution of accepted programs at arbitrary run lengths under stated memory assumptions, while evaluating program-synthesis accuracy and chat-capability retention separately.”
+
+I would withhold “necessary-and-sufficient” until the tie semantics, reachable-state coverage, numerical certificate, and KV-history equivalence are explicit.
+
+**Is this already known?** Mostly yes. A skeptical ML researcher should recognize the central story as a combination of established ideas: learned neural interpreters, finite verification yielding unrestricted execution, pretrained LLMs implementing universal rule systems, bounded-context recurrence, and semantic judgments combined with exact computation. There are even public systems claiming language generation alongside internally executed model-generated programs. What I did not find is your exact inherited-arithmetic, LoRA, cache-policy, and certification package. That could support a useful systems-and-verification contribution if the proof closes the actual deployment semantics. It does not support selling “an LLM becomes an exact computer and still chats” as the discovery.
+web search: recurrent neural network finite verification unbounded length trained automata extraction guarantee 2025 2026 ...
+web search: "Text-to-LoRA" 2025 2026 ...
+web search: 
+web search: recurrent neural network finite verification unbounded length trained automata extraction guarantee 2025 2026 ...
+web search: 
+web search: "Drag-and-Drop LLMs" arxiv ...
+codex
+The finite-check claim needs a tighter boundary: checking codebook centres is insufficient unless you also prove that reachable states stay in certified regions and take the same transitions. A fixed finite state also needs a memory construction to support universal computation. ALTA is close to C4; prompt-to-LoRA work covers much of C2. This session’s filesystem is read-only, so I can prepare the report but cannot save `out.md`.
+
+web search: 
+web search: https://arxiv.org/abs/2511.07384
+web search: 
+web search: https://arxiv.org/abs/2506.06105
+web search: 
+web search: 2026 "quantized" "latent reasoning" codebook ...
+web search: 
+web search: "associativity" "regularization" monoid neural network ...
+web search: 
+web search: "Length Generalization with Log-Depth Recurrent Units" ...
+web search: 
+web search: "trained" "unbounded" "verification" "RNN" 2025 2026 ...
+web search: 
+web search: https://arxiv.org/abs/2605.26035
+codex
+Two close 2026 precedents turned up. STARS regularizes loop dynamics and reports 100% on a synthetic multi-digit addition test, but no all-length executor certificate. MLP-LDRU learns associative composition for logarithmic-depth reduction, and a September follow-up applies it to language modeling. Both substantially narrow the proposed loss claims.
+
+web search: 
+web search: site:huggingface.co Huginn-0125 license recurrent 32 64 ...
+web search: 
+web search: https://huggingface.co/tomg-group-umd/huginn-0125
+web search: 
+web search: https://huggingface.co/Qwen/Qwen3.5-0.8B-Base
+web search: 
+web search: "Su" "discrete" "latent" "reasoning" 2025 VQ ...
+web search: 
+web search: "InterpBench" arxiv ...
+web search: 
+web search: https://arxiv.org/abs/2407.14494
+web search: 
+web search: 
+web search: 
+web search: 
+web search: 
+web search: "Universal Reasoning Model" 2026 ARC ...
+web search: 
+web search: "Making Neural Programming Architectures Generalize via Recursion" finite verification ...
+web search: 
+web search: https://people.eecs.berkeley.edu/~dawnsong/papers/iclr_2017_recursion.pdf
+web search: 
+web search: "looped transformer" "exact" "trained" "certificate" ...
+codex
+I haven’t found a trained, pretrained LM that executes a general VM through thousands of exact latent steps with a finite all-length certificate. The closest results split across separate lines: latent task execution, stability training, compiled interpreters, and neural verification. InterpBench further narrows C4 by already training networks to preserve Tracr circuits through causal alignment.
+
+web search: 
+web search: "Codebook Features: Sparse and Discrete" arxiv ...
+web search: 
+web search: https://arxiv.org/abs/2310.17230
+web search: 
+web search: https://arxiv.org/abs/2503.02512
+web search: 
+web search: 'length'
+web search: 
+web search: https://clarabing.github.io/shortcut_automata/
+web search: 
+web search: https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct
+codex
+| Candidate | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **C1 Crystallized loop** | **NARROW** | [STARS](https://arxiv.org/abs/2605.26733), 26 May 2026; [Shapiro retrofit](https://arxiv.org/abs/2608.11233), 31 July 2026 | A learned general executor inside a pretrained LM, with a sound all-length certificate and measured language retention. |
+| **C2 Programs as weights** | **NARROW** | [Text-to-LoRA](https://arxiv.org/abs/2506.06105), 6 June 2025; [Drag-and-Drop LLMs](https://arxiv.org/abs/2506.16406), 19 June 2025 | Certified instruction semantics and compositional correctness of generated weight programs. |
+| **C3 Homomorphism loss** | **NARROW** | [MLP-LDRU](https://arxiv.org/abs/2605.26035), 25 May 2026; [Log-Depth Recurrent Language Modeling](https://arxiv.org/abs/2609.28212), 23 September 2026 | Exact, certified finite-monoid composition; associative training and logarithmic depth are already established. |
+| **C4 Compile then dissolve** | **NARROW** | [InterpBench](https://arxiv.org/abs/2407.14494), 19 July 2024; [ALTA](https://arxiv.org/abs/2410.18077), 23 October 2024 | Removing the teacher while certifying the pretrained student’s recurrent executor and retaining language capability. |
+| **C5 Base-model choice** | **KILLED as novelty** | [Huginn](https://arxiv.org/abs/2502.05171), 7 February 2025; [Ouro](https://ouro-llm.github.io/), 29 October 2025 | An engineering selection, not independently a new model concept. |
+
+**Audit cutoff: 29 October 2026.** Primary pages were opened across arXiv, repositories, Hugging Face and company sites; several OpenReview URLs returned verification challenges. Negative findings mean “not located,” not proof of absence. Results below are reported evidence, not independently reproduced.
+
+**`out.md` could not be written because this session’s filesystem is read-only. The complete report follows.**
+
+**C1 — The conjunction survives; the components do not.**
+
+STARS already combines recurrent-dynamics analysis, Jacobian spectral-radius regularization and randomized loop counts. Its synthetic addition model reaches reported 100% accuracy; its pretrained Ouro experiment improves depth robustness. Neither establishes an exact universal executor or exhaustive transition certificate. [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1).
+
+Shapiro already installs a reusable, stepwise latent procedure in pretrained Qwen while testing capability retention. Thus “learned computation installed inside an intact LM” is insufficient differentiation. [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233).
+
+The certificate strategy also has close antecedents: finite local checking supports universal computation through extended language-model decoding. That execution uses autoregressive symbols, so it does not establish your latent-loop conjunction. [Lewandowski–Machado–Schuurmans, revised 10 February 2026](https://arxiv.org/html/2601.08061v2).
+
+**Auditor’s mathematical objections, 29 October 2026:**
+
+- Contractivity does **not** imply exact history independence. It can shrink historical differences without eliminating them.
+- For code states \(q\), prove regions \(B_q\) satisfy \(F_a(B_q)\subseteq B_{\delta(q,a)}\), with correct decoding throughout. Checking centres alone is insufficient unless execution actually resets to them.
+- A globally finite machine supports unbounded run duration, not unrestricted universal storage. Specify extensible memory, finite local access, addressing and initialization.
+- “Every length” means correct finite execution prefixes; it cannot mean every program halts.
+- Certify the **merged, deployed numerical implementation**, including quantization, routing, caches and halting. KL training is not a retention certificate.
+- “No host clock” should mean no host-supplied algorithmic schedule. Some runtime must still iterate the block.
+
+Related theory explicitly distinguishes semantics-preserving correction within predictive equivalence classes from destructive contraction between distinguishable states. [*What Can a Recurrent State Safely Forget?*, 20 September 2026](https://arxiv.org/abs/2609.23366).
+
+**C2 — Generated weights are old; certified executable weights remain distinguishable.**
+
+Text-to-LoRA generates adapters from task descriptions; Drag-and-Drop maps prompt batches to LoRA matrices. Sakana’s later demonstration turns documents into adapters. These kill “language generates useful weights,” but do not establish program-counter semantics or exact instruction execution. [T2L, 6 June 2025](https://arxiv.org/abs/2506.06105); [DnD, 19 June 2025](https://arxiv.org/abs/2506.16406); [Sakana, February 2026](https://pub.sakana.ai/doc-to-lora/).
+
+Fast-weight programmers already use networks to modify another network’s effective weights. TTT makes the recurrent state a learned model; Titans updates neural memory at inference. None of these sources supplies the proposed finite certified instruction-delta library. [Irie–Gershman, December 2025](https://gershmanlab.com/pubs/IrieGershman26.pdf); [TTT, 5 July 2024](https://arxiv.org/abs/2407.04620); [Titans, 31 December 2024](https://arxiv.org/abs/2501.00663).
+
+**Deduction:** certificates for individual deltas do not certify their sums, orderings or interactions with base weights. Prove composition, instruction selection and shared-state invariants. Otherwise C2 is adapter generation with a programming metaphor.
+
+**C3 — The proposed loss has a particularly close 2026 predecessor.**
+
+MLP-LDRU performs parallel reduction with a learned composition operator. Appendix G explicitly penalizes disagreement between \((a\circ b)\circ c\) and \(a\circ(b\circ c)\). It reports 100% sampled OOD accuracy on 18/21 regular-language tasks, with evaluation through length 500. September’s follow-up computes all prefix representations for autoregressive language modeling. [MLP-LDRU, 25 May 2026](https://arxiv.org/html/2605.26035v1); [follow-up, 23 September 2026](https://arxiv.org/abs/2609.28212).
+
+Transformation-semigroup composition and \(O(\log N)\)-depth automaton simulation already underpin Liu et al. [ICLR 2023](https://clarabing.github.io/shortcut_automata/). Negative-eigenvalue RNNs and DeltaProduct supply adjacent representational results, rather than certificates for arbitrary trained checkpoints. [Grazzi et al., 19 November 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 February 2025; revised 22 October](https://arxiv.org/abs/2502.10297).
+
+Bisimulation losses concern behavioral similarity; convergence of a metric does not establish exact finite-monoid execution. [Zhang et al., 24 July 2025](https://arxiv.org/abs/2507.18519).
+
+**Deduction:** checking generators suffices only after establishing the representation’s extension law. For an arbitrary learned binary operation, verify closure, identity, associativity and task correspondence—or establish them structurally. A sampled homomorphism penalty proves none of these.
+
+**C4 — “Compile, supervise internals, discard teacher” is substantially anticipated.**
+
+ALTA supports loops, compiled universal transformers and trace-supervised learning. InterpBench uses Strict Interchange Intervention Training to train networks whose internal computation preserves Tracr circuits while suppressing alternative computational paths. Together they strongly anticipate your training mechanism. [ALTA, 23 October 2024; revised 19 June 2025](https://arxiv.org/html/2410.18077v2); [InterpBench, 19 July 2024](https://arxiv.org/abs/2407.14494).
+
+A further neighbor verifies a calibrated GPT-2-scale artifact over 1,280 prompts after architectural changes and program-head substitution. Its authors explicitly restrict claims to declared bounded domains. [*Towards Verifiable Transformers*, 21 May 2026; revised 29 July](https://arxiv.org/abs/2605.24033).
+
+The surviving contribution is **certified transfer into a pretrained recurrent student**, not hidden-state distillation itself. A learned linear alignment does not automatically establish a simulation relation.
+
+**C5 — Select by execution interface.**
+
+Depth recurrence, token recurrence and matrix-valued memory provide different interfaces. RWKV’s state-tracking expressivity is useful, but it does not make a released language checkpoint an exact VM. Its theorem and its language-model experiments must remain separate. [RWKV-7, 18 March 2025](https://arxiv.org/abs/2503.14456).
+
+The code-state bridge is already being studied: linear RNNs learn permutation tracking from Python REPL traces, with limitations under partially observable actions. This is not a latent general interpreter certificate. [Siems et al., 16 February 2026; revised 25 June](https://arxiv.org/abs/2602.14814).
+
+**Q1 — Exact latent program execution over hundreds/thousands of steps?**
+
+**No matching pretrained-LM result located.** The closest verified numerical reports are narrower:
+
+| Work, date | Reported result | Boundary |
+|---|---|---|
+| [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233) | Adapter 83.8% overall; approximately 70% through depth 18 | Learned latent procedure; neither exact nor thousands of steps |
+| [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1) | 100% on synthetic four-digit addition across its reported loop sweep; loop sampling during training spans 1–100 | Small task-trained model; repeated refinement of one answer, not 100 executed instructions |
+| [ALTA, revised 19 June 2025](https://arxiv.org/html/2410.18077v2) | Trace-supervised relative-position parity: 100%, trained through length 20, tested through 40 | Specialized task; compiled arithmetic and SUBLEQ are separate evidence |
+| [Fan et al., 24 September 2024](https://arxiv.org/html/2409.15647v1) | Parity above 95% at 100 digits after training through 20 | Empirical generalization, not exactness |
+| [Howe, 16 July 2026](https://arxiv.org/abs/2609.18966) | Removing additive injection yields median accuracy 1.00 through length 512 on specified automata | Small token-recurrent state tracker, not pretrained latent VM |
+
+Do not combine the strongest number from one system with the architectural properties of another.
+
+**Q2 — Finite verification implying unbounded correctness?**
+
+**Yes, broadly; no matching C1 implementation located.**
+
+- **Decisive older antecedent:** recursive Neural Programmer-Interpreters reduce verification to base cases and reduction rules. Addition’s verification set contains **20,181 problems** under stated input assumptions. Recursion resets local recurrent computation and external structured memory supplies scale. This kills a broad “first trained neural program certified by finite checking” claim. [Cai–Shin–Song, ICLR 2017, Appendix A.6](https://people.eecs.berkeley.edu/~dawnsong/papers/iclr_2017_recursion.pdf).
+- **Within the requested window:** trained RNN-controlled systems receive sound unbounded temporal-property verification through constraint solving and invariants. This proves specified agent/environment properties, not arbitrary program interpretation. [Hosseini–Lomuscio, AAMAS May–June 2023](https://aamas.csc.liv.ac.uk/Proceedings/aamas2023/pdfs/p2382.pdf); [full-LTL extension, 4 March 2025](https://arxiv.org/abs/2503.02512).
+- **Naughton requires careful reading.** *Certified Grokking* certifies 12,769 modular-addition inputs under exact-real semantics. *Verified Circuits* proves the **symbolic circuit** correct at all lengths, but circuit–network agreement only on declared finite domains, including 65,536 strings at length 16. Neither establishes unbounded correctness of the trained network. [Grokking](https://github.com/brian-naughton/certified-grokking), [Verified Circuits](https://github.com/brian-naughton/verified-circuits), both inspected 29 October 2026.
+- Automata extraction is not automatically certified equivalence: sampled agreement requires a sound abstraction/equivalence argument before transferring all-word properties. [Lattice-automata extraction, 26 September 2025; corrected 10 February 2026](https://arxiv.org/abs/2509.22489).
+
+**Q3 — A new loss making latent reasoning a finite exact machine?**
+
+**Discrete representations and stability losses: yes. The complete guarantee: not located.**
+
+Codebook Features already quantizes internal activations, including finite-state experiments and language models up to 410M parameters. [26 October 2023](https://arxiv.org/abs/2310.17230). Token Assorted mixes VQ latent codes with text; DLR converts rendered reasoning traces into discrete latent tokens. [5 February 2025](https://arxiv.org/abs/2502.03275); [29 June 2026](https://arxiv.org/abs/2606.29712).
+
+These compress or discretize reasoning; they do not certify the complete recurrent state-transition system. A finite token vocabulary is insufficient when continuous caches or growing histories remain.
+
+**Q4 — Strongest striking latent-reasoning evidence by October 2026?**
+
+“Shocked researchers” is not measurable. Strong relevant demonstrations include:
+
+- **HRM/TRM:** small puzzle specialists, not retained pretrained LMs. TRM reports approximately **45% ARC-AGI-1 / 8% ARC-AGI-2** with 7M parameters. [HRM, 26 June 2025](https://arxiv.org/abs/2506.21734); [TRM, 6 October 2025](https://arxiv.org/abs/2510.04871).
+- **URM:** **53.8% / 16.0% pass@1**, explicitly scoped to its small-model comparison setting. [16 December 2025](https://arxiv.org/abs/2512.14693).
+- **Looped Flows:** **58.8% / 12.2% pass@2**, using recurrent denoising/flow computation. Different metric from URM; not a language-preservation demonstration. [10 September 2026, Table 1](https://arxiv.org/html/2609.11801v1).
+- **BDH-CQ:** company-reported **29.5% ARC-AGI-1 pass@2**, 150M parameters, $0.00070/task; latent computation with candidate-answer decoding. The announcement places general language/math extensions in future work. [Pathway, 11 August 2026](https://pathway.com/research/introducing-bdh-cq).
+
+Huginn/Ouro are language models with recurrent computation; Shapiro directly tests retrofit retention. None of these sources supplies C1’s all-program exactness.
+
+**Q5 — No fifth question was supplied; interpreted as the practical base choice.**
+
+My recommendation is **Ouro-1.4B for native C1/C4**, **recurrent TinyLlama for cheaper experimentation**, and **RWKV-7 for C3 state-tracking experiments**. Treat C2 as a separate compositional-semantics project. Browser deployment and quantization require their own validation.
+
+**Base-model table**
+
+Model-card facts below were checked **29 October 2026**; dates identify paper/release provenance where available. “No certificate located” applies to every row.
+
+| HF ID / provenance date | Size; licence | Test-time recurrence | Extrapolation and exactness evidence |
+|---|---|---|---|
+| [ByteDance/Ouro-1.4B](https://huggingface.co/ByteDance/Ouro-1.4B), [Ouro-2.6B](https://huggingface.co/ByteDance/Ouro-2.6B); 29 Oct 2025 | 1.4B / 2.6B; Apache-2.0 | Configurable `total_ut_steps`, default 4; adaptive exit | Native depth loops. More loops can degrade performance; STARS improves robustness. No certified latent arithmetic in released bases located. |
+| [tomg-group-umd/huginn-0125](https://huggingface.co/tomg-group-umd/huginn-0125); 7 Feb 2025 paper | 3.5B; Apache-2.0 | Arbitrary `num_steps`; fewer than 4 discouraged | Card reports improvement to roughly 64 steps, generally plateauing thereafter. Heavy browser compute; no exact executor report located. |
+| [smcleish/Recurrent-TinyLlama-3T-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-TinyLlama-3T-train-recurrence-32); Nov 2025 | ~0.8B; Apache-2.0 | Configurable `num_steps`; 4/8/16/32-trained variants | Small released retrofit; no certified long-depth algorithmic extrapolation located. |
+| [smcleish/Recurrent-OLMo-2-0425-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-OLMo-2-0425-train-recurrence-32); Nov 2025 | ~1B; Apache-2.0 | Configurable `num_steps`; Huginn-derived runtime | Useful open retrofit; raw-text model, not instruction-tuned. No exact arithmetic report located. |
+| [Qwen/Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct); Shapiro experiment July 2026 | 0.49B; Apache-2.0 | **Base has no native depth loop** | Shapiro’s procedure extrapolates imperfectly to depth 18. I did not verify a public retrofit checkpoint ID. |
+| [RWKV/RWKV7-1.5B-20260805](https://huggingface.co/RWKV/RWKV7-1.5B-20260805); checkpoint 5 Aug 2026 | 1.5B; Apache-2.0 | Matrix-state recurrence per token; no native repeated-depth knob | Constant recurrent state. Architecture has regular-language expressivity; checkpoint correctness does not follow. |
+| [linear-moe-hub/Gated-Deltanet-1.3B](https://huggingface.co/linear-moe-hub/Gated-Deltanet-1.3B); available March 2025 | 1.3B; Apache-2.0 | Token-recurrent matrix state | Research base; negative-eigenvalue/DeltaProduct results cannot automatically be transferred to these weights. |
+| [Qwen/Qwen3.5-0.8B-Base](https://huggingface.co/Qwen/Qwen3.5-0.8B-Base), [4B-Base](https://huggingface.co/Qwen/Qwen3.5-4B-Base); cards checked 29 Oct 2026 | 0.8B / 4B; Apache-2.0 | Gated DeltaNet–attention hybrids; no native depth-loop knob | Relevant matrix-state substrates. Long-context support is not an exact state-tracking guarantee. |
+
+**Browser feasibility is an estimate:** raw four-bit weights require approximately \(0.5P\) GB for \(P\) billion parameters, before scales, buffers, activations and caches. Small parameter count does not establish browser kernel support or practical latency.
+
+**Defensible contribution claim:** “A learned executor in a pretrained depth-recurrent LM, with a checked invariant reducing arbitrary-duration execution to finite local verification, under explicit memory and numerical assumptions, with program-synthesis accuracy and language retention evaluated separately.”
+tokens used
+250,221
+| Candidate | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **C1 Crystallized loop** | **NARROW** | [STARS](https://arxiv.org/abs/2605.26733), 26 May 2026; [Shapiro retrofit](https://arxiv.org/abs/2608.11233), 31 July 2026 | A learned general executor inside a pretrained LM, with a sound all-length certificate and measured language retention. |
+| **C2 Programs as weights** | **NARROW** | [Text-to-LoRA](https://arxiv.org/abs/2506.06105), 6 June 2025; [Drag-and-Drop LLMs](https://arxiv.org/abs/2506.16406), 19 June 2025 | Certified instruction semantics and compositional correctness of generated weight programs. |
+| **C3 Homomorphism loss** | **NARROW** | [MLP-LDRU](https://arxiv.org/abs/2605.26035), 25 May 2026; [Log-Depth Recurrent Language Modeling](https://arxiv.org/abs/2609.28212), 23 September 2026 | Exact, certified finite-monoid composition; associative training and logarithmic depth are already established. |
+| **C4 Compile then dissolve** | **NARROW** | [InterpBench](https://arxiv.org/abs/2407.14494), 19 July 2024; [ALTA](https://arxiv.org/abs/2410.18077), 23 October 2024 | Removing the teacher while certifying the pretrained student’s recurrent executor and retaining language capability. |
+| **C5 Base-model choice** | **KILLED as novelty** | [Huginn](https://arxiv.org/abs/2502.05171), 7 February 2025; [Ouro](https://ouro-llm.github.io/), 29 October 2025 | An engineering selection, not independently a new model concept. |
+
+**Audit cutoff: 29 October 2026.** Primary pages were opened across arXiv, repositories, Hugging Face and company sites; several OpenReview URLs returned verification challenges. Negative findings mean “not located,” not proof of absence. Results below are reported evidence, not independently reproduced.
+
+**`out.md` could not be written because this session’s filesystem is read-only. The complete report follows.**
+
+**C1 — The conjunction survives; the components do not.**
+
+STARS already combines recurrent-dynamics analysis, Jacobian spectral-radius regularization and randomized loop counts. Its synthetic addition model reaches reported 100% accuracy; its pretrained Ouro experiment improves depth robustness. Neither establishes an exact universal executor or exhaustive transition certificate. [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1).
+
+Shapiro already installs a reusable, stepwise latent procedure in pretrained Qwen while testing capability retention. Thus “learned computation installed inside an intact LM” is insufficient differentiation. [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233).
+
+The certificate strategy also has close antecedents: finite local checking supports universal computation through extended language-model decoding. That execution uses autoregressive symbols, so it does not establish your latent-loop conjunction. [Lewandowski–Machado–Schuurmans, revised 10 February 2026](https://arxiv.org/html/2601.08061v2).
+
+**Auditor’s mathematical objections, 29 October 2026:**
+
+- Contractivity does **not** imply exact history independence. It can shrink historical differences without eliminating them.
+- For code states \(q\), prove regions \(B_q\) satisfy \(F_a(B_q)\subseteq B_{\delta(q,a)}\), with correct decoding throughout. Checking centres alone is insufficient unless execution actually resets to them.
+- A globally finite machine supports unbounded run duration, not unrestricted universal storage. Specify extensible memory, finite local access, addressing and initialization.
+- “Every length” means correct finite execution prefixes; it cannot mean every program halts.
+- Certify the **merged, deployed numerical implementation**, including quantization, routing, caches and halting. KL training is not a retention certificate.
+- “No host clock” should mean no host-supplied algorithmic schedule. Some runtime must still iterate the block.
+
+Related theory explicitly distinguishes semantics-preserving correction within predictive equivalence classes from destructive contraction between distinguishable states. [*What Can a Recurrent State Safely Forget?*, 20 September 2026](https://arxiv.org/abs/2609.23366).
+
+**C2 — Generated weights are old; certified executable weights remain distinguishable.**
+
+Text-to-LoRA generates adapters from task descriptions; Drag-and-Drop maps prompt batches to LoRA matrices. Sakana’s later demonstration turns documents into adapters. These kill “language generates useful weights,” but do not establish program-counter semantics or exact instruction execution. [T2L, 6 June 2025](https://arxiv.org/abs/2506.06105); [DnD, 19 June 2025](https://arxiv.org/abs/2506.16406); [Sakana, February 2026](https://pub.sakana.ai/doc-to-lora/).
+
+Fast-weight programmers already use networks to modify another network’s effective weights. TTT makes the recurrent state a learned model; Titans updates neural memory at inference. None of these sources supplies the proposed finite certified instruction-delta library. [Irie–Gershman, December 2025](https://gershmanlab.com/pubs/IrieGershman26.pdf); [TTT, 5 July 2024](https://arxiv.org/abs/2407.04620); [Titans, 31 December 2024](https://arxiv.org/abs/2501.00663).
+
+**Deduction:** certificates for individual deltas do not certify their sums, orderings or interactions with base weights. Prove composition, instruction selection and shared-state invariants. Otherwise C2 is adapter generation with a programming metaphor.
+
+**C3 — The proposed loss has a particularly close 2026 predecessor.**
+
+MLP-LDRU performs parallel reduction with a learned composition operator. Appendix G explicitly penalizes disagreement between \((a\circ b)\circ c\) and \(a\circ(b\circ c)\). It reports 100% sampled OOD accuracy on 18/21 regular-language tasks, with evaluation through length 500. September’s follow-up computes all prefix representations for autoregressive language modeling. [MLP-LDRU, 25 May 2026](https://arxiv.org/html/2605.26035v1); [follow-up, 23 September 2026](https://arxiv.org/abs/2609.28212).
+
+Transformation-semigroup composition and \(O(\log N)\)-depth automaton simulation already underpin Liu et al. [ICLR 2023](https://clarabing.github.io/shortcut_automata/). Negative-eigenvalue RNNs and DeltaProduct supply adjacent representational results, rather than certificates for arbitrary trained checkpoints. [Grazzi et al., 19 November 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 February 2025; revised 22 October](https://arxiv.org/abs/2502.10297).
+
+Bisimulation losses concern behavioral similarity; convergence of a metric does not establish exact finite-monoid execution. [Zhang et al., 24 July 2025](https://arxiv.org/abs/2507.18519).
+
+**Deduction:** checking generators suffices only after establishing the representation’s extension law. For an arbitrary learned binary operation, verify closure, identity, associativity and task correspondence—or establish them structurally. A sampled homomorphism penalty proves none of these.
+
+**C4 — “Compile, supervise internals, discard teacher” is substantially anticipated.**
+
+ALTA supports loops, compiled universal transformers and trace-supervised learning. InterpBench uses Strict Interchange Intervention Training to train networks whose internal computation preserves Tracr circuits while suppressing alternative computational paths. Together they strongly anticipate your training mechanism. [ALTA, 23 October 2024; revised 19 June 2025](https://arxiv.org/html/2410.18077v2); [InterpBench, 19 July 2024](https://arxiv.org/abs/2407.14494).
+
+A further neighbor verifies a calibrated GPT-2-scale artifact over 1,280 prompts after architectural changes and program-head substitution. Its authors explicitly restrict claims to declared bounded domains. [*Towards Verifiable Transformers*, 21 May 2026; revised 29 July](https://arxiv.org/abs/2605.24033).
+
+The surviving contribution is **certified transfer into a pretrained recurrent student**, not hidden-state distillation itself. A learned linear alignment does not automatically establish a simulation relation.
+
+**C5 — Select by execution interface.**
+
+Depth recurrence, token recurrence and matrix-valued memory provide different interfaces. RWKV’s state-tracking expressivity is useful, but it does not make a released language checkpoint an exact VM. Its theorem and its language-model experiments must remain separate. [RWKV-7, 18 March 2025](https://arxiv.org/abs/2503.14456).
+
+The code-state bridge is already being studied: linear RNNs learn permutation tracking from Python REPL traces, with limitations under partially observable actions. This is not a latent general interpreter certificate. [Siems et al., 16 February 2026; revised 25 June](https://arxiv.org/abs/2602.14814).
+
+**Q1 — Exact latent program execution over hundreds/thousands of steps?**
+
+**No matching pretrained-LM result located.** The closest verified numerical reports are narrower:
+
+| Work, date | Reported result | Boundary |
+|---|---|---|
+| [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233) | Adapter 83.8% overall; approximately 70% through depth 18 | Learned latent procedure; neither exact nor thousands of steps |
+| [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1) | 100% on synthetic four-digit addition across its reported loop sweep; loop sampling during training spans 1–100 | Small task-trained model; repeated refinement of one answer, not 100 executed instructions |
+| [ALTA, revised 19 June 2025](https://arxiv.org/html/2410.18077v2) | Trace-supervised relative-position parity: 100%, trained through length 20, tested through 40 | Specialized task; compiled arithmetic and SUBLEQ are separate evidence |
+| [Fan et al., 24 September 2024](https://arxiv.org/html/2409.15647v1) | Parity above 95% at 100 digits after training through 20 | Empirical generalization, not exactness |
+| [Howe, 16 July 2026](https://arxiv.org/abs/2609.18966) | Removing additive injection yields median accuracy 1.00 through length 512 on specified automata | Small token-recurrent state tracker, not pretrained latent VM |
+
+Do not combine the strongest number from one system with the architectural properties of another.
+
+**Q2 — Finite verification implying unbounded correctness?**
+
+**Yes, broadly; no matching C1 implementation located.**
+
+- **Decisive older antecedent:** recursive Neural Programmer-Interpreters reduce verification to base cases and reduction rules. Addition’s verification set contains **20,181 problems** under stated input assumptions. Recursion resets local recurrent computation and external structured memory supplies scale. This kills a broad “first trained neural program certified by finite checking” claim. [Cai–Shin–Song, ICLR 2017, Appendix A.6](https://people.eecs.berkeley.edu/~dawnsong/papers/iclr_2017_recursion.pdf).
+- **Within the requested window:** trained RNN-controlled systems receive sound unbounded temporal-property verification through constraint solving and invariants. This proves specified agent/environment properties, not arbitrary program interpretation. [Hosseini–Lomuscio, AAMAS May–June 2023](https://aamas.csc.liv.ac.uk/Proceedings/aamas2023/pdfs/p2382.pdf); [full-LTL extension, 4 March 2025](https://arxiv.org/abs/2503.02512).
+- **Naughton requires careful reading.** *Certified Grokking* certifies 12,769 modular-addition inputs under exact-real semantics. *Verified Circuits* proves the **symbolic circuit** correct at all lengths, but circuit–network agreement only on declared finite domains, including 65,536 strings at length 16. Neither establishes unbounded correctness of the trained network. [Grokking](https://github.com/brian-naughton/certified-grokking), [Verified Circuits](https://github.com/brian-naughton/verified-circuits), both inspected 29 October 2026.
+- Automata extraction is not automatically certified equivalence: sampled agreement requires a sound abstraction/equivalence argument before transferring all-word properties. [Lattice-automata extraction, 26 September 2025; corrected 10 February 2026](https://arxiv.org/abs/2509.22489).
+
+**Q3 — A new loss making latent reasoning a finite exact machine?**
+
+**Discrete representations and stability losses: yes. The complete guarantee: not located.**
+
+Codebook Features already quantizes internal activations, including finite-state experiments and language models up to 410M parameters. [26 October 2023](https://arxiv.org/abs/2310.17230). Token Assorted mixes VQ latent codes with text; DLR converts rendered reasoning traces into discrete latent tokens. [5 February 2025](https://arxiv.org/abs/2502.03275); [29 June 2026](https://arxiv.org/abs/2606.29712).
+
+These compress or discretize reasoning; they do not certify the complete recurrent state-transition system. A finite token vocabulary is insufficient when continuous caches or growing histories remain.
+
+**Q4 — Strongest striking latent-reasoning evidence by October 2026?**
+
+“Shocked researchers” is not measurable. Strong relevant demonstrations include:
+
+- **HRM/TRM:** small puzzle specialists, not retained pretrained LMs. TRM reports approximately **45% ARC-AGI-1 / 8% ARC-AGI-2** with 7M parameters. [HRM, 26 June 2025](https://arxiv.org/abs/2506.21734); [TRM, 6 October 2025](https://arxiv.org/abs/2510.04871).
+- **URM:** **53.8% / 16.0% pass@1**, explicitly scoped to its small-model comparison setting. [16 December 2025](https://arxiv.org/abs/2512.14693).
+- **Looped Flows:** **58.8% / 12.2% pass@2**, using recurrent denoising/flow computation. Different metric from URM; not a language-preservation demonstration. [10 September 2026, Table 1](https://arxiv.org/html/2609.11801v1).
+- **BDH-CQ:** company-reported **29.5% ARC-AGI-1 pass@2**, 150M parameters, $0.00070/task; latent computation with candidate-answer decoding. The announcement places general language/math extensions in future work. [Pathway, 11 August 2026](https://pathway.com/research/introducing-bdh-cq).
+
+Huginn/Ouro are language models with recurrent computation; Shapiro directly tests retrofit retention. None of these sources supplies C1’s all-program exactness.
+
+**Q5 — No fifth question was supplied; interpreted as the practical base choice.**
+
+My recommendation is **Ouro-1.4B for native C1/C4**, **recurrent TinyLlama for cheaper experimentation**, and **RWKV-7 for C3 state-tracking experiments**. Treat C2 as a separate compositional-semantics project. Browser deployment and quantization require their own validation.
+
+**Base-model table**
+
+Model-card facts below were checked **29 October 2026**; dates identify paper/release provenance where available. “No certificate located” applies to every row.
+
+| HF ID / provenance date | Size; licence | Test-time recurrence | Extrapolation and exactness evidence |
+|---|---|---|---|
+| [ByteDance/Ouro-1.4B](https://huggingface.co/ByteDance/Ouro-1.4B), [Ouro-2.6B](https://huggingface.co/ByteDance/Ouro-2.6B); 29 Oct 2025 | 1.4B / 2.6B; Apache-2.0 | Configurable `total_ut_steps`, default 4; adaptive exit | Native depth loops. More loops can degrade performance; STARS improves robustness. No certified latent arithmetic in released bases located. |
+| [tomg-group-umd/huginn-0125](https://huggingface.co/tomg-group-umd/huginn-0125); 7 Feb 2025 paper | 3.5B; Apache-2.0 | Arbitrary `num_steps`; fewer than 4 discouraged | Card reports improvement to roughly 64 steps, generally plateauing thereafter. Heavy browser compute; no exact executor report located. |
+| [smcleish/Recurrent-TinyLlama-3T-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-TinyLlama-3T-train-recurrence-32); Nov 2025 | ~0.8B; Apache-2.0 | Configurable `num_steps`; 4/8/16/32-trained variants | Small released retrofit; no certified long-depth algorithmic extrapolation located. |
+| [smcleish/Recurrent-OLMo-2-0425-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-OLMo-2-0425-train-recurrence-32); Nov 2025 | ~1B; Apache-2.0 | Configurable `num_steps`; Huginn-derived runtime | Useful open retrofit; raw-text model, not instruction-tuned. No exact arithmetic report located. |
+| [Qwen/Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct); Shapiro experiment July 2026 | 0.49B; Apache-2.0 | **Base has no native depth loop** | Shapiro’s procedure extrapolates imperfectly to depth 18. I did not verify a public retrofit checkpoint ID. |
+| [RWKV/RWKV7-1.5B-20260805](https://huggingface.co/RWKV/RWKV7-1.5B-20260805); checkpoint 5 Aug 2026 | 1.5B; Apache-2.0 | Matrix-state recurrence per token; no native repeated-depth knob | Constant recurrent state. Architecture has regular-language expressivity; checkpoint correctness does not follow. |
+| [linear-moe-hub/Gated-Deltanet-1.3B](https://huggingface.co/linear-moe-hub/Gated-Deltanet-1.3B); available March 2025 | 1.3B; Apache-2.0 | Token-recurrent matrix state | Research base; negative-eigenvalue/DeltaProduct results cannot automatically be transferred to these weights. |
+| [Qwen/Qwen3.5-0.8B-Base](https://huggingface.co/Qwen/Qwen3.5-0.8B-Base), [4B-Base](https://huggingface.co/Qwen/Qwen3.5-4B-Base); cards checked 29 Oct 2026 | 0.8B / 4B; Apache-2.0 | Gated DeltaNet–attention hybrids; no native depth-loop knob | Relevant matrix-state substrates. Long-context support is not an exact state-tracking guarantee. |
+
+**Browser feasibility is an estimate:** raw four-bit weights require approximately \(0.5P\) GB for \(P\) billion parameters, before scales, buffers, activations and caches. Small parameter count does not establish browser kernel support or practical latency.
+
+**Defensible contribution claim:** “A learned executor in a pretrained depth-recurrent LM, with a checked invariant reducing arbitrary-duration execution to finite local verification, under explicit memory and numerical assumptions, with program-synthesis accuracy and language retention evaluated separately.”

@@ -1,0 +1,33 @@
+job e4_s3_800_kl1.0; start 2026-10-29 19:51:46; cmds [['python', 'e4_train.py', 'train', '800', '3', '1.0'], ['python', 'e4_train.py', 'eval', 'e4_adapter_s3']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e4_train.py train 800 3 1.0
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<04:03,  1.94it/s]Loading weights:  67%|██████▋   | 318/473 [00:00<00:00, 687.27it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 658.79it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `chunk_gated_delta_rule` is falling back to its reference PyTorch implementation because `flash-linear-attention` is not installed. This is correct but much slower; install `flash-linear-attention` for the optimized kernel.
+/tmp/work/e4_train.py:96: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tot += float(loss)
+{"step": 100, "loss": 1.1744644167647493, "cert": 763, "by_op": {"MUL": 354, "ADD": 201, "ADZ": 196, "FLS": 2, "NXT": 10}, "min_margin": {"MUL": -2.93, "ADD": -5.25, "ADZ": -6.95, "FLS": 6.63, "NXT": -5.3}, "ppl_ratio": 0.9911095495627438, "fails": ["MUL:_0_", "MUL:_00", "MUL:_1_", "MUL:_17", "MUL:_20", "MUL:_30", "MUL:_40", "MUL:_60", "MUL:_70", "MUL:_80", "MUL:_90", "MUL:070"]} (310s)
+{"step": 200, "loss": 0.6762016058146401, "cert": 829, "by_op": {"MUL": 393, "ADD": 211, "ADZ": 212, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.18, "ADD": -4.61, "ADZ": -4.94, "FLS": 8.83, "NXT": 3.51}, "ppl_ratio": 0.9899332431968908, "fails": ["MUL:11_", "MUL:110", "MUL:112", "MUL:114", "MUL:116", "MUL:118", "MUL:12_", "MUL:121", "MUL:123", "MUL:125", "MUL:13_", "MUL:130"]} (606s)
+{"step": 300, "loss": 0.550598275037828, "cert": 953, "by_op": {"MUL": 512, "ADD": 212, "ADZ": 216, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -5.38, "ADD": -4.48, "ADZ": -3.02, "FLS": 9.02, "NXT": 6.48}, "ppl_ratio": 0.9971989357384734, "fails": ["MUL:11_", "MUL:122", "MUL:125", "MUL:13_", "MUL:132", "MUL:133", "MUL:134", "MUL:136", "MUL:138", "MUL:140", "MUL:144", "MUL:146"]} (944s)
+{"step": 400, "loss": 0.4157125658825862, "cert": 1095, "by_op": {"MUL": 642, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -8.88, "ADD": 1.69, "ADZ": 3.45, "FLS": 4.99, "NXT": 7.34}, "ppl_ratio": 0.9886619206526142, "fails": ["MUL:11_", "MUL:118", "MUL:124", "MUL:127", "MUL:128", "MUL:142", "MUL:167", "MUL:171", "MUL:172", "MUL:181", "MUL:188", "MUL:197"]} (1232s)
+{"step": 500, "loss": 0.4891288036462811, "cert": 1375, "by_op": {"MUL": 939, "ADD": 206, "ADZ": 217, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -9.67, "ADD": -8.84, "ADZ": -8.3, "FLS": 6.78, "NXT": 1.99}, "ppl_ratio": 1.0094396359014102, "fails": ["MUL:11_", "MUL:127", "MUL:195", "MUL:221", "MUL:222", "MUL:224", "MUL:225", "MUL:226", "MUL:227", "MUL:228", "MUL:232", "MUL:233"]} (1528s)
+{"step": 600, "loss": 0.00518580715652206, "cert": 1506, "by_op": {"MUL": 1060, "ADD": 217, "ADZ": 216, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -6.85, "ADD": -4.06, "ADZ": -4.65, "FLS": 7.38, "NXT": 4.75}, "ppl_ratio": 0.9883776887809437, "fails": ["MUL:142", "MUL:148", "MUL:181", "MUL:232", "MUL:233", "MUL:32_", "MUL:321", "MUL:322", "MUL:323", "MUL:33_", "MUL:330", "MUL:335"]} (1812s)
+{"step": 700, "loss": 0.001944311673298671, "cert": 1496, "by_op": {"MUL": 1046, "ADD": 218, "ADZ": 219, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -9.61, "ADD": -0.26, "ADZ": -0.77, "FLS": 9.38, "NXT": 6.32}, "ppl_ratio": 0.9907894162253311, "fails": ["MUL:128", "MUL:170", "MUL:171", "MUL:174", "MUL:177", "MUL:178", "MUL:191", "MUL:196", "MUL:197", "MUL:198", "MUL:292", "MUL:296"]} (2104s)
+{"step": 800, "loss": 0.0006532541709134421, "cert": 1550, "by_op": {"MUL": 1097, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -3.45, "ADD": 2.28, "ADZ": 2.71, "FLS": 10.67, "NXT": 7.03}, "ppl_ratio": 0.9947682861761475, "fails": ["MUL:734", "MUL:737", "MUL:871"]} (2395s)
+
+returncode 0; wall so far 2408.6s
+
+$ python e4_train.py eval e4_adapter_s3
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<03:18,  2.38it/s]Loading weights:  67%|██████▋   | 316/473 [00:00<00:00, 795.69it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 779.73it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `chunk_gated_delta_rule` is falling back to its reference PyTorch implementation because `flash-linear-attention` is not installed. This is correct but much slower; install `flash-linear-attention` for the optimized kernel.
+{"cert": 1550, "rows": 1553, "by_op": {"MUL": 1097, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -3.4482688903808594, "ADD": 2.2791690826416016, "ADZ": 2.7058162689208984, "FLS": 10.674846649169922, "NXT": 7.026081085205078}, "fails": ["MUL:734", "MUL:737", "MUL:871"], "ppl": 18.364167442105586}
+4 20/20
+6 10/10
+10 5/5
+
+returncode 0; wall so far 2956.2s

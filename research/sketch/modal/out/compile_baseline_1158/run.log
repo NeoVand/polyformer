@@ -1,0 +1,20 @@
+job compile_baseline_1158; start 2026-10-30 16:58:05; cmds [['python', 'compile_baseline.py'], ['python', 'compile_baseline.py', '/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python compile_baseline.py
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<01:38,  4.78it/s]Loading weights:  42%|████▏     | 200/473 [00:01<00:02, 117.44it/s]Loading weights:  71%|███████   | 336/473 [00:01<00:00, 213.73it/s]Loading weights: 100%|██████████| 473/473 [00:01<00:00, 244.96it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `causal_conv1d_update` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+{"plan": "15/60", "equation": "0/60", "word": "44/60", "adapter": null}
+
+returncode 0; wall so far 311.8s
+
+$ python compile_baseline.py /vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<00:49,  9.48it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 2670.48it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `causal_conv1d_update` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+{"plan": "0/60", "equation": "0/60", "word": "1/60", "adapter": "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"}
+
+returncode 0; wall so far 926.0s

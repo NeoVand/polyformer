@@ -1,0 +1,54 @@
+root agent idle; waiting up to 30m0s for 1 background task(s)
+I have pre-registered the pass/kill bars in [ASKQ.md](file:///Users/neo/repos/polyformer-wt/askq/research/askq/ASKQ.md), committed the evaluation and reporting harness ([askq_core.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_core.py), [askq_eval.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_eval.py), [askq_modal.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_modal.py), [askq_report.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_report.py)) and the smoke manifest ([smoke-askq.json](file:///Users/neo/repos/polyformer-wt/askq/research/askq/manifests/smoke-askq.json)) to branch `askq`, deployed `polyformer-askq`, and launched the 2-item smoke test (`smoke-askq`). Waiting for the timer notification to collect it before launching the full 88-item runs.
+After fixing the `chat_prompt` and `score_call` signatures in [askq_eval.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_eval.py) and [askq_core.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_core.py) and verifying the full analysis/report pipeline in `--selftest`, I redeployed `polyformer-askq`, committed [smoke-askq-b.json](file:///Users/neo/repos/polyformer-wt/askq/research/askq/manifests/smoke-askq-b.json), and launched `smoke-askq-b` on Modal. Waiting for the timer notification to collect it.
+`smoke-askq-b` is still running on Modal; I have set a 45-second timer to collect it once adapter merge and vLLM + HF passes finish.
+`smoke-askq-b` caught `detokenize=False` conflicting with stop strings in `vllm.SamplingParams`. I removed `detokenize=False` in [askq_eval.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_eval.py), redeployed `polyformer-askq`, committed [smoke-askq-c.json](file:///Users/neo/repos/polyformer-wt/askq/research/askq/manifests/smoke-askq-c.json), and spawned `smoke-askq-c`. Waiting for the timer notification to collect it.
+`smoke-askq-c` completed and passed independent verification via [askq_report.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_report.py) ($0.2515 settled; $0.6604 total smoke spend). I committed the manifest [askq-main.json](file:///Users/neo/repos/polyformer-wt/askq/research/askq/manifests/askq-main.json) and spawned both full 88-item evaluation jobs (`askq-r4` and `askq-s1`) on Modal. Waiting for the 180-second timer to check their progress.
+Both `askq-r4` and `askq-s1` are still running on Modal; I have scheduled a 120-second timer to check and collect them.
+`askq-r4` and `askq-s1` are still running (~5.5 minutes elapsed); I have set another 120-second timer to check and collect them.
+`askq-r4` and `askq-s1` are still running (~8 minutes elapsed); I have set a 90-second timer to check and collect them.
+
+Waiting for the 90-second timer (`task-334`) to fire.
+Both `askq-r4` and `askq-s1` are still running (~10 minutes elapsed); I have set a 90-second timer to check and collect them.
+Both jobs are in their final stage on Modal (`askq-r4` completed greedy with 85/88 calls in 64.2s and `T=0.7` with 1,332/1,408 calls in 287.8s; `askq-s1` completed greedy with 79/88 calls in 69.1s and `T=0.7` with 1,308/1,408 calls in 276.0s; both are now finishing `T=1.0` and the HF teacher-forced logprob pass). I have set a 95-second timer to collect them.
+I have collected both `askq-r4` ($0.8233) and `askq-s1` ($0.8419) from Modal and launched [askq_report.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_report.py) (`task-364`) to independently re-parse and verify all sampled programs and row log-probabilities. Waiting for `task-364` to finish.
+### Summary of Results (Unaudited) & Spend
+
+Full details, breakdowns, and self-audit are recorded in [ASKQ.md](file:///Users/neo/repos/polyformer-wt/askq/research/askq/ASKQ.md) (committed to branch `askq` at `f85ad356`; pass/kill bars pre-registered in `0484985e` prior to sampling). All results are independently re-parsed and verified from raw saved `<program>...</program><exec/>` strings by [`verify_and_summarize_tag`](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_report.py#L46-L115) in [askq_report.py](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_report.py).
+
+#### 1. Coverage $c_{16}$, Behavioural Classes, and GBS Questions (`88` held-out compile items, `seed = 777`)
+
+- **Pre-registered bars**: **Pass**: $c_{16} \ge 70/88$ ($79.5\%$) and median $\le 2$ questions. **Kill**: $c_{16} \le 50/88$ ($56.8\%$).
+- **Verdict**: **Kill bar triggered** ($c_{16} \le 50/88$) for both adapters at both temperatures.
+
+| Adapter | Setting | Transducer Coverage $c_k$ (`tables_exact`) | Call+Reading Coverage (`score_call`) | Behavioural Classes (All 88: mean / med [IQR], max) | Behavioural Classes (Covered: mean / med [IQR], max) | GBS Questions (All 88: mean / med [IQR], max) | GBS Questions (Covered: mean / med [IQR], max) | Verdict |
+| :--- | :--- | :---: | :---: | :---: | :---: | :---: | :---: | :---: |
+| **`r4`** (`adapter_iter40`) | Greedy ($k=1, T=0$) | **30/88** (34.1%) | 27/88 (30.7%) | 0.69 / 1.0 [0, 1], 1 | 1.00 / 1.0 [1, 1], 1 | 0.00 / 0.0 [0, 0], 0 | 0.00 / 0.0 [0, 0], 0 | Baseline |
+| **`r4`** (`adapter_iter40`) | **$T = 0.7$ ($k=16$)** | **43/88** (48.9%) | 38/88 (43.2%) | 2.93 / **2.0** [1, 4], 11 | 2.07 / **1.0** [1, 3], 7 | 0.81 / **1.0** [0, 1], 3 | 0.53 / **0.0** [0, 1], 3 | **KILL** |
+| **`r4`** (`adapter_iter40`) | **$T = 1.0$ ($k=16$)** | **44/88** (50.0%) | 37/88 (42.0%) | 3.65 / **3.0** [1, 5], 14 | 2.91 / **2.0** [1, 5], 8 | 1.05 / **1.0** [0, 1], 4 | 0.82 / **1.0** [0, 1], 4 | **KILL** |
+| **`r4`** (`adapter_iter40`) | Pooled ($k=32$) | **45/88** (51.1%) | 40/88 (45.5%) | 4.99 / 4.0 [1, 7], 24 | 3.22 / 2.0 [1, 5], 11 | 1.10 / 1.0 [0, 2], 4 | 0.93 / 1.0 [0, 1], 4 | Diagnostic |
+| **`reason-s1`** (`step500`) | Greedy ($k=1, T=0$) | **23/88** (26.1%) | 17/88 (19.3%) | 0.74 / 1.0 [0, 1], 1 | 1.00 / 1.0 [1, 1], 1 | 0.00 / 0.0 [0, 0], 0 | 0.00 / 0.0 [0, 0], 0 | Baseline |
+| **`reason-s1`** (`step500`) | **$T = 0.7$ ($k=16$)** | **25/88** (28.4%) | 22/88 (25.0%) | 2.64 / **1.0** [1, 3], 16 | 1.32 / **1.0** [1, 1], 3 | 0.58 / **0.0** [0, 1], 2 | 0.24 / **0.0** [0, 0], 2 | **KILL** |
+| **`reason-s1`** (`step500`) | **$T = 1.0$ ($k=16$)** | **25/88** (28.4%) | 23/88 (26.1%) | 2.91 / **2.0** [1, 4], 15 | 1.64 / **1.0** [1, 2], 6 | 0.69 / **1.0** [0, 1], 3 | 0.40 / **0.0** [0, 1], 2 | **KILL** |
+| **`reason-s1`** (`step500`) | Pooled ($k=32$) | **26/88** (29.5%) | 23/88 (26.1%) | 3.93 / 2.0 [1, 5], 29 | 1.81 / 1.0 [1, 2], 7 | 0.77 / 1.0 [0, 1], 3 | 0.42 / 0.0 [0, 1], 2 | Diagnostic |
+
+- **Why the kill bar triggers (known vs unseen machine topologies)**:
+  - On the **48 items with known machine topologies** under held-out phrasing/templates/styles (`style|tape`, `style|num`, `tmpl|tape`, `tmpl|num`, `legacy|elevator`, `legacy|clock`), `r4` sampling lifts coverage from **$28/48$ ($58.3\%$) greedy to $39/48$ ($81.3\%$) at $T=0.7$ and $40/48$ ($83.3\%$) at $T=1.0$** ($41/48 = 85.4\%$ pooled; `legacy|clock` rises from $0/8 \to 8/8$).
+  - On the **40 items with held-out machine topologies** (`kind|tape`, `kind|num`, `all3|tape`, `all3|num`, `legacy|pattern`), `r4` coverage is **$2/40$ ($5.0\%$) greedy and $4/40$ ($10.0\%$) at $T=0.7$ and $T=1.0$**. Temperature sampling cannot invent unseen state-transition structures when the policy places near-zero mass on them.
+- **Disambiguation efficiency**: Whenever the intended transducer is in the sampled set, canonical minimisation ([`minimise_moore_reg`](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_core.py#L169-L257), [`minimise_mealy_reg`](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_core.py#L59-L133)) and generalised binary search ([`run_gbs`](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_core.py#L415-L498)) isolate it in a median of **$0$–$1$ questions** (with $97.7\%$ of items at $T=0.7$ and $93.2\%$ at $T=1.0$ needing $\le 2$ questions, and $100\%$ of distinguishing words satisfying $|w| \le n_i + n_j - 1$).
+
+#### 2. Per-Row Token Log-Probabilities of the Greedy Table (AUROC for Flagging Wrong Rows)
+
+Computed via exact teacher-forced `torch.log_softmax` in [`compute_hf_call_logprobs`](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_eval.py#L79-L110) and scored by [`summarize_row_auroc`](file:///Users/neo/repos/polyformer-wt/askq/research/askq/askq_core.py#L691-L719):
+- **`r4` (`84` tables, `5,601` rows; `2,916` exact-wrong / `2,880` normalised-wrong)**:
+  - **All rows**: `-mean_logprob` pooled AUROC $= \mathbf{0.5523}$ (exact) / $\mathbf{0.5475}$ (norm); within-table mean AUROC $= \mathbf{0.5427}$ / $\mathbf{0.5597}$ (`-rhs_logprob` within-table $= \mathbf{0.5546}$ / $\mathbf{0.5698}$).
+  - **By arm**: On `tape` (Moore, $1,362$ rows), `-mean_logprob` has a real table-level signal (**pooled AUROC $= 0.7700$ / $0.7918$**, within-table `-rhs_logprob` AUROC $= 0.6104$ / $0.6318$); on 200-row `number` (Mealy, $4,239$ rows), the model emits wrong tables with $>99\%$ token confidence (**pooled AUROC $= 0.4952$**, **within-table AUROC $= 0.4807$**).
+- **`reason-s1` (`78` tables, `6,599` rows; `4,391` exact-wrong / `4,359` normalised-wrong)**:
+  - **All rows**: `-mean_logprob` pooled AUROC $= \mathbf{0.5565}$ (exact) / $\mathbf{0.5503}$ (norm); within-table mean AUROC $= \mathbf{0.5166}$ / $\mathbf{0.4909}$.
+  - **By arm**: `tape` pooled AUROC $= \mathbf{0.7532}$ / $\mathbf{0.7424}$ (within-table $= 0.5904$ / $0.5264$); `number` pooled AUROC $= \mathbf{0.5882}$ (within-table $= 0.4492$).
+
+#### 3. Spend ([modal_ledger.json](file:///Users/neo/repos/polyformer-wt/askq/research/askq/results/modal_ledger.json))
+
+- **Smoke tests** (`smoke-askq`, `smoke-askq-b`, `smoke-askq-c` on `L40S`): **$0.6604**
+- **Counted runs** (`askq-r4`: **$0.8233**, `646.9s` on `L40S`; `askq-s1`: **$0.8419**, `665.9s` on `L40S`): **$1.6652**
+- **Total settled spend**: **$2.3256** of **$10.00** cap (**$7.6744** under cap; `0` open jobs).

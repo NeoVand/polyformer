@@ -1,0 +1,52 @@
+{
+ "eval8": {
+  "n": 512,
+  "prefix9_eq_train_chain": 0,
+  "eval8_chain_eq_train_partner": 0,
+  "start_expr_seen_in_train": 512,
+  "end_state_seen_in_train_targets": 512,
+  "windows8": 512,
+  "windows8_seen": 0,
+  "frac": 0.0
+ },
+ "eval64": {
+  "n": 512,
+  "prefix9_eq_train_chain": 2,
+  "eval8_chain_eq_train_partner": null,
+  "start_expr_seen_in_train": 512,
+  "end_state_seen_in_train_targets": 512,
+  "windows8": 29184,
+  "windows8_seen": 26,
+  "frac": 0.000891
+ },
+ "eval256": {
+  "n": 512,
+  "prefix9_eq_train_chain": 1,
+  "eval8_chain_eq_train_partner": null,
+  "start_expr_seen_in_train": 512,
+  "end_state_seen_in_train_targets": 512,
+  "windows8": 127488,
+  "windows8_seen": 152,
+  "frac": 0.001192
+ },
+ "eval1024": {
+  "n": 256,
+  "prefix9_eq_train_chain": 0,
+  "eval8_chain_eq_train_partner": null,
+  "start_expr_seen_in_train": 256,
+  "end_state_seen_in_train_targets": 256,
+  "windows8": 260352,
+  "windows8_seen": 292,
+  "frac": 0.001122
+ },
+ "eval4096": {
+  "n": 256,
+  "prefix9_eq_train_chain": 0,
+  "eval8_chain_eq_train_partner": null,
+  "start_expr_seen_in_train": 256,
+  "end_state_seen_in_train_targets": 256,
+  "windows8": 1046784,
+  "windows8_seen": 1339,
+  "frac": 0.001279
+ }
+}

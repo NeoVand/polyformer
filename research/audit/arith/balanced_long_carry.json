@@ -1,0 +1,242 @@
+{
+ "floors": {
+  "1024": {
+   "final_carry_1": 0.5,
+   "reset0_window_8": 0.5,
+   "reset1_window_8": 0.5
+  },
+  "4096": {
+   "final_carry_1": 0.5,
+   "reset0_window_8": 0.5,
+   "reset1_window_8": 0.5
+  }
+ },
+ "ctl_add_RIr_s6": {
+  "arm": "RIr",
+  "seed": 6,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_RIr_s7": {
+  "arm": "RIr",
+  "seed": 7,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 0.998046875,
+   "carry1_half": 1.0,
+   "carry0_half": 0.99609375,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 0.990234375,
+   "carry1_half": 1.0,
+   "carry0_half": 0.98046875,
+   "n": 512
+  }
+ },
+ "ctl_add_RIr_s8": {
+  "arm": "RIr",
+  "seed": 8,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_RNLIr_s6": {
+  "arm": "RNLIr",
+  "seed": 6,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_RNLIr_s7": {
+  "arm": "RNLIr",
+  "seed": 7,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_RNLIr_s8": {
+  "arm": "RNLIr",
+  "seed": 8,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_RNLr_s6": {
+  "arm": "RNLr",
+  "seed": 6,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_RNLr_s7": {
+  "arm": "RNLr",
+  "seed": 7,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_RNLr_s8": {
+  "arm": "RNLr",
+  "seed": 8,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_Rr_s6": {
+  "arm": "Rr",
+  "seed": 6,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_Rr_s7": {
+  "arm": "Rr",
+  "seed": 7,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ },
+ "ctl_add_Rr_s8": {
+  "arm": "Rr",
+  "seed": 8,
+  "fidelity_record": 1.0,
+  "fidelity_rerun": 1.0,
+  "fidelity_ok": true,
+  "1024": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  },
+  "4096": {
+   "answer_exact": 1.0,
+   "carry1_half": 1.0,
+   "carry0_half": 1.0,
+   "n": 512
+  }
+ }
+}

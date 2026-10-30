@@ -1,0 +1,560 @@
+OpenAI Codex v0.165.0-alpha.1.2
+--------
+workdir: /Users/neo/repos/polyformer/research/audit/leap3_gate
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a18892-61b7-7e81-bca4-8ef25788fb90
+--------
+user
+# Live prior-art gate 3: registers in a delta-rule state, and computation as pictures (29 Oct 2026)
+
+You are a skeptical prior-art auditor with live web search. Today is 29 Oct 2026. Open the pages; link and date every
+claim; negative results mean "not located". Previous gate: ../leap2_gate/out.md (read its table first; do not repeat it).
+
+## F. Fable's leap (research/meta/LEAP2.md, section 2)
+A hybrid LM whose recurrent layers are delta-rule states (Gated DeltaNet in Qwen3.5 / Qwen3-Next / Kimi Linear, RWKV-7)
+holds a register machine IN the state: registers are snapped key directions, a write is the rank-one delta update
+S <- S(I - b k k^T) + b v k^T (erase then write), a read is S q. Control stays in attention over a pinned program prefix.
+LoRA on the DeltaNet projections only. Certificate: enumerated local rows + a locality lemma (Gram matrix of snapped keys
+bounds cross-register interference) + a basin condition F_a(B_q) in B_delta(q,a). Thesis: a decoder is finitely
+certifiable iff its view of the past is a finite function of a history-independent state; full-attention transformers
+need a host to satisfy this, delta-rule hybrids satisfy it by construction. Search at least: "Gated DeltaNet register
+file", "linear attention associative memory interpreter", "Qwen3-Next / Qwen3.5 state tracking exact", "fast weight
+programmers instruction set", "delta rule erase write locality bound", "hybrid linear attention program execution without
+chain of thought", "certifiable decoder finite state history independence", Schlag 2021, Siems 2026 REPL traces,
+Howe 2026, Grazzi 2024, DeltaProduct, Merrill "illusion of state".
+
+## M. Multimodal ideas (Neo: "imagine programs as videos or images, think bold")
+M1 The state is a picture. In Qwen3.5-0.8B each Gated DeltaNet head carries a 128x128 matrix state (18 layers x 16
+heads). Show that working memory live as images while the model computes; let a user poke (edit) the state and the model
+continues from the edited memory; registers appear as rank-one strokes. Prior art on visualising / editing linear-RNN or
+fast-weight states as images, "memory editing" of recurrent state, interactive state intervention demos.
+M2 Drawn machines. Computation as a video of one learned local rule on a 2D canvas (cellular automaton / Wireworld /
+systolic array) inside a multimodal LM: programs are drawings (circuits, systolic multipliers), execution is a video,
+certificate = enumerate the rule's finite neighbourhood table, exact for any canvas size and any number of steps. Prior
+art: neural cellular automata (Mordvintsev 2020+), NCA for ARC (2025-26), CNNs learning Game of Life (Springer & Kenyon),
+LLMs trained on elementary CA ("Intelligence at the edge of chaos"), learned systolic arrays, Wireworld computers,
+any LM or VLM with an internal CA executor, certified CA rule learning.
+M3 Watch, then run. Show the model a few frames of a process (CA, sorting animation, long division on paper, a cube
+being turned); it induces the exact rule and continues it exactly for 10^6 steps, with a certificate once every
+neighbourhood has been observed. Prior art: rule induction from video, "video models are zero-shot learners and
+reasoners" (Veo 3, 2025), visual planning / thinking with images, ARC video variants, physics rule discovery.
+M4 Program as an image input. A program (flowchart, circuit, handwritten algorithm, a register-machine listing as a
+picture) is given as an image; the multimodal LM compiles it into its own state and executes it without chain of thought.
+Prior art: VLMs reading flowcharts/code screenshots and executing them, visual programming benchmarks.
+
+## Output (write to out.md in this folder)
+Top table: one row per item (F, M1-M4): verdict KILLED / NARROW / OPEN, closest work (link, date), what remains open.
+Then evidence per item. Then: is anything known about the actual numerics of Qwen3.5's Gated DeltaNet decay (alpha
+range, state precision in HF/FLA/transformers.js kernels) that would kill long-horizon register storage? Under 2,000 words.
+Be blunt.
+
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+codex
+I’ll read the previous gate’s table first, then check the closest primary sources and kernel implementations. I’ll distinguish “not located” from evidence that an idea is new.
+exec
+/bin/zsh -lc 'cat ../leap2_gate/out.md' in /Users/neo/repos/polyformer/research/audit/leap3_gate
+ succeeded in 0ms:
+| Candidate | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **C1 Crystallized loop** | **NARROW** | [STARS](https://arxiv.org/abs/2605.26733), 26 May 2026; [Shapiro retrofit](https://arxiv.org/abs/2608.11233), 31 July 2026 | A learned general executor inside a pretrained LM, with a sound all-length certificate and measured language retention. |
+| **C2 Programs as weights** | **NARROW** | [Text-to-LoRA](https://arxiv.org/abs/2506.06105), 6 June 2025; [Drag-and-Drop LLMs](https://arxiv.org/abs/2506.16406), 19 June 2025 | Certified instruction semantics and compositional correctness of generated weight programs. |
+| **C3 Homomorphism loss** | **NARROW** | [MLP-LDRU](https://arxiv.org/abs/2605.26035), 25 May 2026; [Log-Depth Recurrent Language Modeling](https://arxiv.org/abs/2609.28212), 23 September 2026 | Exact, certified finite-monoid composition; associative training and logarithmic depth are already established. |
+| **C4 Compile then dissolve** | **NARROW** | [InterpBench](https://arxiv.org/abs/2407.14494), 19 July 2024; [ALTA](https://arxiv.org/abs/2410.18077), 23 October 2024 | Removing the teacher while certifying the pretrained student’s recurrent executor and retaining language capability. |
+| **C5 Base-model choice** | **KILLED as novelty** | [Huginn](https://arxiv.org/abs/2502.05171), 7 February 2025; [Ouro](https://ouro-llm.github.io/), 29 October 2025 | An engineering selection, not independently a new model concept. |
+
+**Audit cutoff: 29 October 2026.** Primary pages were opened across arXiv, repositories, Hugging Face and company sites; several OpenReview URLs returned verification challenges. Negative findings mean “not located,” not proof of absence. Results below are reported evidence, not independently reproduced.
+
+**`out.md` could not be written because this session’s filesystem is read-only. The complete report follows.**
+
+**C1 — The conjunction survives; the components do not.**
+
+STARS already combines recurrent-dynamics analysis, Jacobian spectral-radius regularization and randomized loop counts. Its synthetic addition model reaches reported 100% accuracy; its pretrained Ouro experiment improves depth robustness. Neither establishes an exact universal executor or exhaustive transition certificate. [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1).
+
+Shapiro already installs a reusable, stepwise latent procedure in pretrained Qwen while testing capability retention. Thus “learned computation installed inside an intact LM” is insufficient differentiation. [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233).
+
+The certificate strategy also has close antecedents: finite local checking supports universal computation through extended language-model decoding. That execution uses autoregressive symbols, so it does not establish your latent-loop conjunction. [Lewandowski–Machado–Schuurmans, revised 10 February 2026](https://arxiv.org/html/2601.08061v2).
+
+**Auditor’s mathematical objections, 29 October 2026:**
+
+- Contractivity does **not** imply exact history independence. It can shrink historical differences without eliminating them.
+- For code states \(q\), prove regions \(B_q\) satisfy \(F_a(B_q)\subseteq B_{\delta(q,a)}\), with correct decoding throughout. Checking centres alone is insufficient unless execution actually resets to them.
+- A globally finite machine supports unbounded run duration, not unrestricted universal storage. Specify extensible memory, finite local access, addressing and initialization.
+- “Every length” means correct finite execution prefixes; it cannot mean every program halts.
+- Certify the **merged, deployed numerical implementation**, including quantization, routing, caches and halting. KL training is not a retention certificate.
+- “No host clock” should mean no host-supplied algorithmic schedule. Some runtime must still iterate the block.
+
+Related theory explicitly distinguishes semantics-preserving correction within predictive equivalence classes from destructive contraction between distinguishable states. [*What Can a Recurrent State Safely Forget?*, 20 September 2026](https://arxiv.org/abs/2609.23366).
+
+**C2 — Generated weights are old; certified executable weights remain distinguishable.**
+
+Text-to-LoRA generates adapters from task descriptions; Drag-and-Drop maps prompt batches to LoRA matrices. Sakana’s later demonstration turns documents into adapters. These kill “language generates useful weights,” but do not establish program-counter semantics or exact instruction execution. [T2L, 6 June 2025](https://arxiv.org/abs/2506.06105); [DnD, 19 June 2025](https://arxiv.org/abs/2506.16406); [Sakana, February 2026](https://pub.sakana.ai/doc-to-lora/).
+
+Fast-weight programmers already use networks to modify another network’s effective weights. TTT makes the recurrent state a learned model; Titans updates neural memory at inference. None of these sources supplies the proposed finite certified instruction-delta library. [Irie–Gershman, December 2025](https://gershmanlab.com/pubs/IrieGershman26.pdf); [TTT, 5 July 2024](https://arxiv.org/abs/2407.04620); [Titans, 31 December 2024](https://arxiv.org/abs/2501.00663).
+
+**Deduction:** certificates for individual deltas do not certify their sums, orderings or interactions with base weights. Prove composition, instruction selection and shared-state invariants. Otherwise C2 is adapter generation with a programming metaphor.
+
+**C3 — The proposed loss has a particularly close 2026 predecessor.**
+
+MLP-LDRU performs parallel reduction with a learned composition operator. Appendix G explicitly penalizes disagreement between \((a\circ b)\circ c\) and \(a\circ(b\circ c)\). It reports 100% sampled OOD accuracy on 18/21 regular-language tasks, with evaluation through length 500. September’s follow-up computes all prefix representations for autoregressive language modeling. [MLP-LDRU, 25 May 2026](https://arxiv.org/html/2605.26035v1); [follow-up, 23 September 2026](https://arxiv.org/abs/2609.28212).
+
+Transformation-semigroup composition and \(O(\log N)\)-depth automaton simulation already underpin Liu et al. [ICLR 2023](https://clarabing.github.io/shortcut_automata/). Negative-eigenvalue RNNs and DeltaProduct supply adjacent representational results, rather than certificates for arbitrary trained checkpoints. [Grazzi et al., 19 November 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 February 2025; revised 22 October](https://arxiv.org/abs/2502.10297).
+
+Bisimulation losses concern behavioral similarity; convergence of a metric does not establish exact finite-monoid execution. [Zhang et al., 24 July 2025](https://arxiv.org/abs/2507.18519).
+
+**Deduction:** checking generators suffices only after establishing the representation’s extension law. For an arbitrary learned binary operation, verify closure, identity, associativity and task correspondence—or establish them structurally. A sampled homomorphism penalty proves none of these.
+
+**C4 — “Compile, supervise internals, discard teacher” is substantially anticipated.**
+
+ALTA supports loops, compiled universal transformers and trace-supervised learning. InterpBench uses Strict Interchange Intervention Training to train networks whose internal computation preserves Tracr circuits while suppressing alternative computational paths. Together they strongly anticipate your training mechanism. [ALTA, 23 October 2024; revised 19 June 2025](https://arxiv.org/html/2410.18077v2); [InterpBench, 19 July 2024](https://arxiv.org/abs/2407.14494).
+
+A further neighbor verifies a calibrated GPT-2-scale artifact over 1,280 prompts after architectural changes and program-head substitution. Its authors explicitly restrict claims to declared bounded domains. [*Towards Verifiable Transformers*, 21 May 2026; revised 29 July](https://arxiv.org/abs/2605.24033).
+
+The surviving contribution is **certified transfer into a pretrained recurrent student**, not hidden-state distillation itself. A learned linear alignment does not automatically establish a simulation relation.
+
+**C5 — Select by execution interface.**
+
+Depth recurrence, token recurrence and matrix-valued memory provide different interfaces. RWKV’s state-tracking expressivity is useful, but it does not make a released language checkpoint an exact VM. Its theorem and its language-model experiments must remain separate. [RWKV-7, 18 March 2025](https://arxiv.org/abs/2503.14456).
+
+The code-state bridge is already being studied: linear RNNs learn permutation tracking from Python REPL traces, with limitations under partially observable actions. This is not a latent general interpreter certificate. [Siems et al., 16 February 2026; revised 25 June](https://arxiv.org/abs/2602.14814).
+
+**Q1 — Exact latent program execution over hundreds/thousands of steps?**
+
+**No matching pretrained-LM result located.** The closest verified numerical reports are narrower:
+
+| Work, date | Reported result | Boundary |
+|---|---|---|
+| [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233) | Adapter 83.8% overall; approximately 70% through depth 18 | Learned latent procedure; neither exact nor thousands of steps |
+| [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1) | 100% on synthetic four-digit addition across its reported loop sweep; loop sampling during training spans 1–100 | Small task-trained model; repeated refinement of one answer, not 100 executed instructions |
+| [ALTA, revised 19 June 2025](https://arxiv.org/html/2410.18077v2) | Trace-supervised relative-position parity: 100%, trained through length 20, tested through 40 | Specialized task; compiled arithmetic and SUBLEQ are separate evidence |
+| [Fan et al., 24 September 2024](https://arxiv.org/html/2409.15647v1) | Parity above 95% at 100 digits after training through 20 | Empirical generalization, not exactness |
+| [Howe, 16 July 2026](https://arxiv.org/abs/2609.18966) | Removing additive injection yields median accuracy 1.00 through length 512 on specified automata | Small token-recurrent state tracker, not pretrained latent VM |
+
+Do not combine the strongest number from one system with the architectural properties of another.
+
+**Q2 — Finite verification implying unbounded correctness?**
+
+**Yes, broadly; no matching C1 implementation located.**
+
+- **Decisive older antecedent:** recursive Neural Programmer-Interpreters reduce verification to base cases and reduction rules. Addition’s verification set contains **20,181 problems** under stated input assumptions. Recursion resets local recurrent computation and external structured memory supplies scale. This kills a broad “first trained neural program certified by finite checking” claim. [Cai–Shin–Song, ICLR 2017, Appendix A.6](https://people.eecs.berkeley.edu/~dawnsong/papers/iclr_2017_recursion.pdf).
+- **Within the requested window:** trained RNN-controlled systems receive sound unbounded temporal-property verification through constraint solving and invariants. This proves specified agent/environment properties, not arbitrary program interpretation. [Hosseini–Lomuscio, AAMAS May–June 2023](https://aamas.csc.liv.ac.uk/Proceedings/aamas2023/pdfs/p2382.pdf); [full-LTL extension, 4 March 2025](https://arxiv.org/abs/2503.02512).
+- **Naughton requires careful reading.** *Certified Grokking* certifies 12,769 modular-addition inputs under exact-real semantics. *Verified Circuits* proves the **symbolic circuit** correct at all lengths, but circuit–network agreement only on declared finite domains, including 65,536 strings at length 16. Neither establishes unbounded correctness of the trained network. [Grokking](https://github.com/brian-naughton/certified-grokking), [Verified Circuits](https://github.com/brian-naughton/verified-circuits), both inspected 29 October 2026.
+- Automata extraction is not automatically certified equivalence: sampled agreement requires a sound abstraction/equivalence argument before transferring all-word properties. [Lattice-automata extraction, 26 September 2025; corrected 10 February 2026](https://arxiv.org/abs/2509.22489).
+
+**Q3 — A new loss making latent reasoning a finite exact machine?**
+
+**Discrete representations and stability losses: yes. The complete guarantee: not located.**
+
+Codebook Features already quantizes internal activations, including finite-state experiments and language models up to 410M parameters. [26 October 2023](https://arxiv.org/abs/2310.17230). Token Assorted mixes VQ latent codes with text; DLR converts rendered reasoning traces into discrete latent tokens. [5 February 2025](https://arxiv.org/abs/2502.03275); [29 June 2026](https://arxiv.org/abs/2606.29712).
+
+These compress or discretize reasoning; they do not certify the complete recurrent state-transition system. A finite token vocabulary is insufficient when continuous caches or growing histories remain.
+
+**Q4 — Strongest striking latent-reasoning evidence by October 2026?**
+
+“Shocked researchers” is not measurable. Strong relevant demonstrations include:
+
+- **HRM/TRM:** small puzzle specialists, not retained pretrained LMs. TRM reports approximately **45% ARC-AGI-1 / 8% ARC-AGI-2** with 7M parameters. [HRM, 26 June 2025](https://arxiv.org/abs/2506.21734); [TRM, 6 October 2025](https://arxiv.org/abs/2510.04871).
+- **URM:** **53.8% / 16.0% pass@1**, explicitly scoped to its small-model comparison setting. [16 December 2025](https://arxiv.org/abs/2512.14693).
+- **Looped Flows:** **58.8% / 12.2% pass@2**, using recurrent denoising/flow computation. Different metric from URM; not a language-preservation demonstration. [10 September 2026, Table 1](https://arxiv.org/html/2609.11801v1).
+- **BDH-CQ:** company-reported **29.5% ARC-AGI-1 pass@2**, 150M parameters, $0.00070/task; latent computation with candidate-answer decoding. The announcement places general language/math extensions in future work. [Pathway, 11 August 2026](https://pathway.com/research/introducing-bdh-cq).
+
+Huginn/Ouro are language models with recurrent computation; Shapiro directly tests retrofit retention. None of these sources supplies C1’s all-program exactness.
+
+**Q5 — No fifth question was supplied; interpreted as the practical base choice.**
+
+My recommendation is **Ouro-1.4B for native C1/C4**, **recurrent TinyLlama for cheaper experimentation**, and **RWKV-7 for C3 state-tracking experiments**. Treat C2 as a separate compositional-semantics project. Browser deployment and quantization require their own validation.
+
+**Base-model table**
+
+Model-card facts below were checked **29 October 2026**; dates identify paper/release provenance where available. “No certificate located” applies to every row.
+
+| HF ID / provenance date | Size; licence | Test-time recurrence | Extrapolation and exactness evidence |
+|---|---|---|---|
+| [ByteDance/Ouro-1.4B](https://huggingface.co/ByteDance/Ouro-1.4B), [Ouro-2.6B](https://huggingface.co/ByteDance/Ouro-2.6B); 29 Oct 2025 | 1.4B / 2.6B; Apache-2.0 | Configurable `total_ut_steps`, default 4; adaptive exit | Native depth loops. More loops can degrade performance; STARS improves robustness. No certified latent arithmetic in released bases located. |
+| [tomg-group-umd/huginn-0125](https://huggingface.co/tomg-group-umd/huginn-0125); 7 Feb 2025 paper | 3.5B; Apache-2.0 | Arbitrary `num_steps`; fewer than 4 discouraged | Card reports improvement to roughly 64 steps, generally plateauing thereafter. Heavy browser compute; no exact executor report located. |
+| [smcleish/Recurrent-TinyLlama-3T-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-TinyLlama-3T-train-recurrence-32); Nov 2025 | ~0.8B; Apache-2.0 | Configurable `num_steps`; 4/8/16/32-trained variants | Small released retrofit; no certified long-depth algorithmic extrapolation located. |
+| [smcleish/Recurrent-OLMo-2-0425-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-OLMo-2-0425-train-recurrence-32); Nov 2025 | ~1B; Apache-2.0 | Configurable `num_steps`; Huginn-derived runtime | Useful open retrofit; raw-text model, not instruction-tuned. No exact arithmetic report located. |
+| [Qwen/Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct); Shapiro experiment July 2026 | 0.49B; Apache-2.0 | **Base has no native depth loop** | Shapiro’s procedure extrapolates imperfectly to depth 18. I did not verify a public retrofit checkpoint ID. |
+| [RWKV/RWKV7-1.5B-20260805](https://huggingface.co/RWKV/RWKV7-1.5B-20260805); checkpoint 5 Aug 2026 | 1.5B; Apache-2.0 | Matrix-state recurrence per token; no native repeated-depth knob | Constant recurrent state. Architecture has regular-language expressivity; checkpoint correctness does not follow. |
+| [linear-moe-hub/Gated-Deltanet-1.3B](https://huggingface.co/linear-moe-hub/Gated-Deltanet-1.3B); available March 2025 | 1.3B; Apache-2.0 | Token-recurrent matrix state | Research base; negative-eigenvalue/DeltaProduct results cannot automatically be transferred to these weights. |
+| [Qwen/Qwen3.5-0.8B-Base](https://huggingface.co/Qwen/Qwen3.5-0.8B-Base), [4B-Base](https://huggingface.co/Qwen/Qwen3.5-4B-Base); cards checked 29 Oct 2026 | 0.8B / 4B; Apache-2.0 | Gated DeltaNet–attention hybrids; no native depth-loop knob | Relevant matrix-state substrates. Long-context support is not an exact state-tracking guarantee. |
+
+**Browser feasibility is an estimate:** raw four-bit weights require approximately \(0.5P\) GB for \(P\) billion parameters, before scales, buffers, activations and caches. Small parameter count does not establish browser kernel support or practical latency.
+
+**Defensible contribution claim:** “A learned executor in a pretrained depth-recurrent LM, with a checked invariant reducing arbitrary-duration execution to finite local verification, under explicit memory and numerical assumptions, with program-synthesis accuracy and language retention evaluated separately.”
+web search: 
+web search: 
+exec
+/bin/zsh -lc "sed -n '1,220p' /Users/neo/repos/polyformer/research/meta/LEAP2.md" in /Users/neo/repos/polyformer/research/audit/leap3_gate
+ succeeded in 0ms:
+# LEAP2: the register is the state, not the token
+
+Fable, 29 Oct 2026, for Neo. Read-only; nothing run, $0. Answers the orchestrator's four questions after the Savant-R
+gate (NARROW) and the leap2 gate (C1–C4 NARROW, C5 "killed as novelty").
+
+## 1. Assumptions we are still not questioning
+
+1. **Attention is the substrate.** Every design since 20 Oct lives in a full-attention transformer, where the past is a
+   growing cache. Our own no-finite-test theorem says such a decoder cannot be certified; the pinned policy and the host
+   clock exist only to fight that. We never asked which architecture makes the theorem's hypothesis true for free.
+2. **Memory lives outside the model.** NEW_MODEL's bus floor (READ/WRITE/EVICT) was proven for a transformer. A delta-rule
+   layer (Gated DeltaNet, RWKV-7) *is* a writable key-value memory: S ← S(I − βkkᵀ) + βvkᵀ erases the value at key k and
+   writes a new one, inside the forward pass. We treated the bus as physics; it is a base choice.
+3. **A certificate is an enumeration.** We only ever checked rows; the one continuous certificate we tried (UNIFY, 25
+   Oct) died on the nonlinear residual flow. A rank-one write with near-orthogonal keys has *provable* locality: one
+   lemma instead of 10^260 rows. We never looked for structure to prove instead of rows to check.
+4. **The state is a token.** "Register, not transcript" was forced by the cache. In a matrix-state model the register is
+   latent and Theorem P still applies; condition 4 (no chain of thought) is met literally, not by wording.
+5. **The compiler learns from traces or RL.** We never trained it *through* the certified executor. Soft execution of a
+   distribution over ISA tokens by a finite automaton is a product of stochastic matrices, differentiable (TerpreT 2016).
+   RL was null because the reward was sparse; this gradient is dense. Known, cheap, the fix for P4's 20/88; not the leap.
+6. **Qwen3 is the base.** Qwen3.5 shipped 16 Feb 2026. The 4B card (verified today): Apache-2.0, "Hidden Layout: 8 × (3 ×
+   (Gated DeltaNet → FFN) → 1 × (Gated Attention → FFN))", 262k context; Transformers.js v4.1 lists Qwen3.5, and a WebML
+   demo runs 0.8B/2B/4B in the browser. The substrate we need has been in our own model family for eight months and
+   nobody in this project opened the card. That is the most embarrassing line here and I am leaving it in.
+7. **Novelty must sit in a mechanism.** Two gates say every mechanism is NARROW. What no gate can call narrow: a theorem
+   that classifies which decoders are certifiable, and one measured instance that nobody has.
+
+## 2. The single best leap: history-independence as architecture
+
+**Claim.** A hybrid LM whose recurrent layers are delta-rule states holds a register machine *in the state*: registers
+are key directions, a write is the rank-one update, a read is Sq. Control (fetch, decode, branch) stays in attention over
+a pinned program prefix, as REGVM does today. No host logic touches data. Certificate in three parts: (a) enumerated
+local rows over (opcode, addressed register's digit code, flags), once per device, like REGVM's 648-row ROM; (b) a
+locality lemma, linear algebra, bounding how far a write to kᵢ moves the value at kⱼ by the Gram matrix of the snapped
+keys; (c) a basin condition, in the gate's own words: F_a(B_q) ⊆ B_δ(q,a) with correct decoding throughout, not "the
+centres are right". Exact means unbounded *duration* with bounded storage (64 cells), which is what REGVM already means.
+
+**Why this is a leap and not a base swap.** The gate killed C5 "as novelty" and is right that picking RWKV or Ouro is
+engineering. The concept is different: the theorem's hypothesis (the view of the past is a finite function of a
+history-independent state) is enforced by the host in Savant and by the *architecture* here. In 24 of 32 layers the
+state is the only channel to the past; the 8 attention layers see a fixed window (pinned prefix plus current block, a
+runtime setting like a stop token). The bus's WRITE is the layer's own update rule. Condition 2 is met in the strong
+sense of 27 Oct: the remaining host action is a fixed window on eight layers, with no data path.
+
+**Against the twelve conditions, relative to Savant-R.** 2: bus floor → fixed window only. 4: truly latent state. 7:
+"certified once for all programs" holds for ISA and register file (rows (a) and lemma (b) are per device; control rows
+stay per program, six per line). 10: the new architecture is no longer a funding ask; it ships at frontier scale
+(Qwen3-Next, Qwen3.5, Kimi Linear), and our result is that *this class is a certifiable computer and full-attention
+transformers are not*. 11: Qwen3.5-4B runs in Transformers.js (verify M4 latency; 0.8B is the safe tier). 3, 6, 8, 9:
+unchanged, same recipe, same risks.
+
+**Base: Qwen3.5-4B (instruct) for the model, Qwen3.5-0.8B for pilots.** Same tokenizer family, chat template and
+Stage 2r mix. Not Ouro or Huginn: a depth loop adds compute per step and no memory across steps, the wrong loop (the
+gate's Q1 table: Shapiro's retrofit 83.8%, 70% by depth 18). Not Mamba-2 hybrids (Falcon-H1, Nemotron-H): diagonal SSMs
+cannot track S5 (Merrill 2024); delta-rule and Householder states can (Grazzi 2024, DeltaProduct 2025, Howe 2026 at
+1.00 to 512). RWKV-7 1.5B is the pure-RNN fallback if the hybrid's attention layers turn out to carry the registers.
+
+**Risks, in order.** (i) The decay gate: Gated DeltaNet scales each head state by α_t < 1 every step. Uniform scale plus a
+norm on the read leaves decoding unchanged until underflow; survival over 10⁵ ticks depends on α saturating in the state
+precision (fp32 state in the FLA kernels: fine; bf16: dead by ~10³). Measured on day one. (ii) Interference: 24
+registers × 64 cells need ~64 near-orthogonal snapped keys per head at head dim 128; feasible, learned, not given.
+(iii) Our three latent collapses (INMODEL, L-AIM, QINTERP2) all wrote *programs* into latent space; here the program
+stays in tokens, and the one latent positive (LATENT-1, exact at 4,096) was a *state*, which is what a register is.
+(iv) Tooling: LoRA on the DeltaNet projections through FLA kernels, plus a per-layer window on attention; one day.
+(v) Prior art: Schlag et al. 2021 introduced the delta rule *as* fast-weight programming; Siems et al. 2026 train linear
+RNNs on REPL traces for permutation state; Howe 2026; "What Can a Recurrent State Safely Forget?" (Sep 2026) for (c).
+None certifies a register file or runs self-written programs in an LM. Searches for Astra: "Gated DeltaNet register
+file", "linear attention associative memory interpreter certified", "Qwen3-Next state tracking exact", "fast weight
+programmers instruction set", "delta rule erase write locality bound", "hybrid linear attention program execution no
+chain of thought".
+
+## 3. C1–C4
+
+- **C1: sharpen into §2.** The loop must run along the sequence (state across ticks), not depth; on a transformer base a
+  retrofitted loop leaves the cache, and the certificate, where they were. Keep the full-domain hinge and the snap term.
+  Kill "program into latent registers, then RL": three collapses and HR1–HR3.
+- **C2: kill as stated, keep its truth.** Delta composition is nonlinear, so the certificate is per program, worse than
+  Theorem R; T2L and Drag-and-Drop own the mechanism. Its true content is that fast weights are a register file: §2.
+- **C3: narrow to an operator.** A scan needs the input in advance; a branch makes the next input depend on the state, so
+  control flow is sequential. MLP-LDRU already trains associativity. Keep "scan" as the packed fold in the ISA.
+- **C4: kill.** The compiled teacher gives traces we already have; distilling into the core is the full fine-tune that
+  cost language in INSIDE (ppl 19 → 2×10⁴); ALTA and InterpBench own the method.
+
+## 4. The one cheap experiment (≤ $10, one day; someone else runs it)
+
+**Register-file pilot on Qwen3.5-0.8B-Base.** 8 registers × 10 digits; opcodes SET r d, INC r, CPY r s, OUT r; random
+streams of 2,048 ops; the model emits one token per OUT and nothing else. LoRA rank 32 on the DeltaNet projections only
+(q, k, v, β, gate) of all 24 DeltaNet layers; attention frozen, windowed to prefix + 64 tokens if the config allows.
+1,500 steps, 20% ordinary text with KL 1.0, three seeds; ≈ 15 min per seed on an H100 at $5.22/h.
+
+**Predictions.** P1: per-OUT exactness ≥ 0.999 and all eight registers correct after 10⁴ and 10⁵ ops under free
+generation on ≥ 2/3 seeds. P2 (locality): zeroing the DeltaNet state at the end of a run changes the next OUT, so the
+registers live in the state, not the cache; a register's read is unchanged by 1,000 intervening writes to other
+registers; the carrying layer's snapped register keys have max |cos| < 0.2. P3: state norm after 10⁵ ops within 10× of
+its value at 10³ (α saturates, no underflow). P4: text perplexity ratio ≤ 1.05.
+
+**Kills.** K1: P1 fails on all seeds → the delta state does not hold registers under LoRA; drop the switch, run
+NEW_MODEL's Savant-R on Qwen3-4B as written. K2: P2 fails (registers in the cache, or interference) → no locality lemma;
+same fallback. K3: P3 fails in fp32 → registers need refresh ticks, which buys the clock back; say so. **Arm B**
+(diagnostic, same cost): the identical run on Qwen3-1.7B under plain decoding; if it is also exact at 10⁵, the leap is a
+certificate result, not a capability result, and the paper says exactly that.
+
+If P1–P4 hold: day 2, REGVM's 13 fixtures with the native ALU and registers in the state (Pilot R1 re-based); day 3, the
+certificate (rows, Gram bound, basins); day 4, Stage A on Qwen3.5-4B with the language term from step one; days 5–7,
+export, DAUDIT, page. Budget unchanged (≤ $500, $1k reserve).
+
+**What this is and is not.** One measured instance of a theorem we can state and partly have in Lean: a decoder is
+finitely certifiable iff its view of the past is a finite function of a history-independent state; transformers need a
+host to satisfy it, delta-rule hybrids satisfy it by construction. Not a new mechanism; the gates are right that none is
+left. A different answer to where the computer lives: in the state the frontier labs already ship, unused.
+
+web search: "delta rule" "erase" "write" locality ...
+web search: "Gated DeltaNet" "register" "file" ...
+web search: 
+web search: Merrill illusion state state space models 2024 ...
+web search: 
+web search: "linear recurrent" "memory editing" ...
+codex
+A potentially decisive overlap surfaced: an October 2026 report describes “Qwenputer,” which uses Qwen3.5’s DeltaNet state as addressable RAM for a RISC-V processor. I’m checking the original implementation to establish what it actually demonstrates. The learned LoRA executor and certificate may still be distinct.
+web search: 
+web search: Qwenputer Divyansh Agrawal github ...
+web search: 
+web search: https://github.com/divagr18/qwenputer
+web search: 
+web search: https://raw.githubusercontent.com/divagr18/qwenputer/main/README.md
+web search: 
+web search: "Video models are zero-shot learners and reasoners" ...
+web search: 
+web search: "LSTMVis" "arxiv" ...
+codex
+The original Qwenputer repository confirms one-hot reads and writes in DeltaNet memory, with decay fixed at 1. It adds compiled CPU layers and emits execution-trace tokens, so it anticipates the RAM mechanism but does not establish the proposed LoRA-only, trace-free executor.
+
+This session’s filesystem is read-only. I can complete the audit, but I cannot save `out.md`; I’ll provide the full report here.
+web search: 
+web search: https://arxiv.org/abs/2609.33093
+web search: 
+web search: Wireworld computer David Moore Mark Owen 2004 2005 ...
+web search: 
+web search: "Qwen3-Next" "state tracking" "exact" ...
+web search: 
+web search: "Cellular automata as convolutional neural networks" Gilpin arxiv ...
+web search: 
+web search: https://raw.githubusercontent.com/fla-org/flash-linear-attention/main/fla/ops/gated_delta_rule/fused_recurrent.py
+web search: 
+web search: site:github.com/huggingface/transformers.js "qwen3_5" "float32" ...
+web search: 
+web search: site:github.com/huggingface/transformers.js "recurrent_state" "qwen" ...
+web search: 
+web search: https://raw.githubusercontent.com/huggingface/transformers.js/main/src/models/qwen3_5/modeling_qwen3_5.js
+codex
+Two more overlaps matter: September papers already intervene on GDN memory, including targeted edits and Qwen3.5 state swaps; Gilpin’s 2018 work already learns CA rules from videos.
+
+The numerical evidence also contradicts LEAP2’s “fp32 fine; bf16 dead by ~10³” shortcut. The inspected HF and FLA paths retain fp32 state, but storage lifetime depends on cumulative decay, interference, rounding, and readout margins—not dtype alone.
+web search: 
+web search: "code screenshots" "execution" benchmark multimodal ...
+web search: 
+web search: "benchmark" "code images" execution multimodal ...
+web search: 
+web search: https://arxiv.org/html/2505.13058v2
+web search: 
+web search: http://www.quinapalus.com/wi-index.html
+exec
+/bin/zsh -lc "rg -n 'GatedDeltaNet|gated_delta|recurrent_state|mamba_ssm_dtype' /Users/neo/repos/polyformer/node_modules/@huggingface/transformers/src /Users/neo/repos/polyformer/node_modules/onnxruntime-web/lib/wasm 2>/dev/null" in /Users/neo/repos/polyformer/research/audit/leap3_gate
+ exited 2 in 0ms:
+web search: 
+web search: site:github.com/microsoft/onnxruntime "GatedDeltaNet" WebGPU ...
+web search: 
+web search: "Symbolic pregression: Discovering physical laws" Liu Tegmark 2021 ...
+web search: 
+web search: https://arxiv.org/abs/2005.11212
+web search: 
+web search: https://arxiv.org/html/2609.33093v1
+web search: 
+web search: 'transformers'
+web search: 
+web search: https://raw.githubusercontent.com/huggingface/transformers.js/main/packages/transformers/src/models.js
+web search: 
+web search: https://raw.githubusercontent.com/huggingface/transformers.js/main/packages/transformers/src/models/qwen3_vl/modeling_qwen3_vl.js
+web search: 
+web search: https://github.com/huggingface/transformers.js/tree/main/packages/transformers/src
+web search: 
+web search: https://raw.githubusercontent.com/huggingface/transformers.js/main/packages/transformers/src/cache_utils.js
+web search: 
+web search: "delta rule" "erase" "write" "locality" "bound" ...
+web search: 
+web search: https://raw.githubusercontent.com/divagr18/qwenputer/main/docs/q35.md
+web search: 
+web search: https://www.percepta.ai/blog/spotlight-memory
+web search: 
+web search: site:percepta.ai "Can LLMs Grow Their Own Capabilities" ...
+codex
+The surviving claims are narrower than the framing suggests. DeltaNet RAM, recurrent-memory intervention, learned local computation, video rule induction, and flowchart reasoning all have direct antecedents. What I have not located is the complete combination: a learned executor inside the proposed LM, with a sound certificate covering arbitrary-duration execution under its deployed numerics.
+web search: 
+web search: https://www.percepta.ai/blog/can-llms-grow-their-own-capabilities
+web search: 
+web search: 'float16'
+codex
+| Item | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **F** | **NARROW** | [Qwenputer](https://divagr.com/blog/qwenputer), 22 Oct 2026; [Schlag et al.](https://arxiv.org/abs/2102.11174), 22 Feb 2021 | LoRA-only learned register execution, without execution-trace tokens, with a sound deployed-numerics certificate. |
+| **M1** | **NARROW** | [How Linear Attention Remembers](https://arxiv.org/abs/2609.33093), 27 Sep 2026 | A live, semantically meaningful paint/edit/resume interface for pretrained matrix memory. |
+| **M2** | **NARROW** | [A Path to Universal NCA](https://arxiv.org/abs/2505.13058), 19 May 2025 | A certified discrete local executor integrated into a multimodal LM. |
+| **M3** | **NARROW** | [Gilpin](https://arxiv.org/abs/1809.02942), 9 Sep 2018; [CellARC](https://arxiv.org/abs/2511.07908), 11 Nov 2025 | Perception-to-rule identification plus certified execution within an explicitly restricted process class. |
+| **M4** | **NARROW** | [FlowVQA](https://arxiv.org/abs/2406.19237), 27 Jun 2024; [Flow2Code](https://arxiv.org/abs/2506.02073), 2 Jun 2025 | Verified image-to-state compilation and internal execution without textual reasoning. |
+
+**Audit cutoff: 29 October 2026.** Previous gate’s table read; not reproduced. Negative findings mean **“not located.”** Results are author-reported, not independently reproduced. Mathematical objections below are this audit’s deductions, dated today.
+
+**`out.md` could not be written: this session’s filesystem is read-only.**
+
+**F — “The register is the state” has a direct predecessor.**
+
+Qwenputer explicitly stores **code, data, registers and program counter in Gated DeltaNet state**. One-hot keys overwrite individual rows; one-hot queries read them; α and β are fixed to 1 for RAM. Its RISC-V implementation adds eleven compiled layers before Qwen’s layers. This kills novelty in “a computer’s addressable registers live inside Qwen3.5’s delta state.” [Announcement, 22 Oct 2026](https://divagr.com/blog/qwenputer); [repository, inspected 29 Oct](https://github.com/divagr18/qwenputer).
+
+The distinction matters: these weights are compiled, not learned through projection-only LoRA; execution produces special trace tokens. The RISC-V driver loads firmware into state and excludes chip tokens from Qwen’s layers. The accelerated path executes the circuit’s intermediate representation. **It does not establish F’s full conjunction.** [Implementation notes, inspected 29 Oct 2026](https://raw.githubusercontent.com/divagr18/qwenputer/main/experimental/riscv/docs/rv32.md).
+
+Schlag already presents delta updates as elementary fast-weight programming instructions. Independent erase/write control also has explicit successors: Gated DeltaNet-2 and Erase-then-Delta Attention. Renaming addresses “registers” supplies no mechanism novelty. [Schlag, 22 Feb 2021](https://arxiv.org/abs/2102.11174); [GDN-2, 21 May 2026](https://arxiv.org/abs/2605.22791); [EDA, 25 Jun 2026](https://arxiv.org/abs/2606.26560).
+
+A particularly relevant new experiment fine-tunes hybrids on answer-only parity. Qwen3.5-4B reaches mean **0.55 at 128 flips**, versus **0.89 for OLMo-Hybrid**, after training through 64; capping OLMo’s β at 1 destroys extrapolation. This is a small, author-run experiment, but directly challenges “stock Qwen’s recurrence makes learning exact tracking straightforward.” [Agrawal, 22 Oct 2026; raw results](https://github.com/divagr18/hidden-reasoning).
+
+The requested theoretical neighbors establish different things: negative-eigenvalue expressivity, Householder-product expressivity, REPL-trained variable tracking, and an optimization intervention. None supplies F’s certificate for a pretrained Qwen checkpoint. [Grazzi, 19 Nov 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 Feb 2025](https://arxiv.org/abs/2502.10297); [Siems, 16 Feb 2026, revised 25 Jun](https://arxiv.org/abs/2602.14814); [Howe, 16 Jul 2026](https://arxiv.org/abs/2609.18966).
+
+**The locality calculation is elementary; closing it indefinitely is the contribution.** For fixed update coefficients, unit register keys and \(G_{ij}=k_i^\top k_j\),
+
+\[
+(S'-S)k_j=(\alpha-1)Sk_j+
+\beta(v-\alpha Sk_i)G_{ij}.
+\]
+
+Orthogonality eliminates write interference, **not global decay**. Small Gram entries provide one-step bounds, not arbitrary-duration correctness. You need bounded write residuals, numerical-error bounds and invariant basins for the complete transition—including control and other memory channels.
+
+**Reject the architectural “iff” as stated.** Fixed-dimensional real state is not automatically finite; recurrent state is history-dependent. What helps is a sound finite abstraction of all behaviorally relevant state. Finite inductive proofs are not generally restricted to finite-state systems. A transformer that ignores its historical cache can be certifiable without a host. A Qwen hybrid still has attention caches, convolution state and positional machinery; pinning/windowing is an additional execution policy. Merrill’s result concerns specified SSM expressivity, not this proposed certifiability classification. [Merrill et al., ICML, 21–27 Jul 2024](https://proceedings.mlr.press/v235/merrill24a.html).
+
+Also, Kimi’s channel-wise KDA and RWKV-7’s generalized delta dynamics require separate proofs; they are not interchangeable instances of the displayed scalar-gated equation. [Kimi Linear, 30 Oct 2025](https://arxiv.org/abs/2510.26692); [RWKV-7, 18 Mar 2025](https://arxiv.org/abs/2503.14456).
+
+**M1 — Useful interface; weak standalone research novelty.**
+
+The dimensions check out: Qwen3.5-0.8B has **18 recurrent layers, 16 state heads per layer, and 128×128 states**. It has 24 text layers total, correcting LEAP2’s pilot reference to “all 24 DeltaNet layers.” [Official configuration, inspected 29 Oct 2026](https://huggingface.co/Qwen/Qwen3.5-0.8B/raw/main/config.json).
+
+Visual inspection of recurrent hidden states predates this by a decade. More decisively, September 2026 work already performs targeted edits and causal interventions on pretrained GDN memory; another paper swaps Qwen3.5 recurrent states between contexts and continues generation. [LSTMVis, 23 Jun 2016](https://arxiv.org/abs/1606.07461); [Lee et al., 27 Sep 2026](https://arxiv.org/html/2609.33093v1); [Afendulev et al., 3 Sep 2026](https://arxiv.org/abs/2609.04434).
+
+**Not located:** the exact live matrix-painting interface proposed here. Its meaningful novelty would be reliable semantic edits with measured collateral effects. A heatmap alone is instrumentation. Rank-one updates need not look like localized strokes; arbitrary basis coordinates need not correspond to human concepts. With decay, the total state change includes a generally full-rank term.
+
+**M2 — Drawn computation and learned local computation are established.**
+
+Growing NCA already offers interactive damage-and-resume behavior. Springer–Kenyon studies CNNs learning Life. *A Path to Universal NCA* learns local computation over a fixed heterogeneous “hardware” scaffold, including matrix multiplication, transposition and neural-network emulation—particularly close to drawn systolic machinery. Its emulation is approximate, not certified. [Mordvintsev et al., 11 Feb 2020](https://distill.pub/2020/growing-ca/); [Springer–Kenyon, 3 Sep 2020](https://arxiv.org/abs/2009.01398); [Béna et al., 19 May 2025](https://arxiv.org/html/2505.13058v2).
+
+ARC and broader reasoning are also occupied: task-trained NCA for ARC, and later local asynchronous NCA solving mazes, Sudoku and ARC with empirical size/rollout generalization. Training LMs on elementary-CA sequences is likewise established. [Xu–Miikkulainen, 18 Jun 2025](https://arxiv.org/abs/2506.15746); [Etcheverry et al., 28 Sep 2026](https://arxiv.org/abs/2609.36126); [Edge of Chaos, 3 Oct 2024](https://arxiv.org/abs/2410.02536).
+
+**The certificate works only after enforcing its premises.** For a deterministic binary radius-one Moore rule, 512 neighborhoods suffice to establish local equivalence; global equivalence follows by induction, given matching boundaries and synchronous updates. Continuous hidden channels, global attention, stochastic updates or unverified image decoding invalidate that simple enumeration.
+
+**Not located:** a multimodal LM containing the complete certified executor described here. Wireworld’s authors’ site returned HTTP 403; it was not treated as opened evidence.
+
+**M3 — Learning rules from video is old; finite observations do not certify arbitrary processes.**
+
+Gilpin explicitly learns CA dynamics from videos and constructs CNN representations of arbitrary finite CA rule tables. CellARC tests few-shot induction of hidden multicolor CA rules and explicitly controls neighborhood coverage. These are closer than generic video-generation demonstrations. [Gilpin, 9 Sep 2018](https://arxiv.org/html/1809.02942v2); [CellARC, 11 Nov 2025](https://arxiv.org/abs/2511.07908).
+
+Veo 3 demonstrates zero-shot visual tasks and early reasoning, not certified million-step execution. Image-based intermediate reasoning and physical-law discovery from distorted video also predate M3. [Wiedemer et al., 24 Sep 2025](https://arxiv.org/abs/2509.20328); [Thinking with Generated Images, 28 May 2025](https://arxiv.org/abs/2505.22525); [Symbolic Pregression, 19 May 2020](https://arxiv.org/abs/2005.11212).
+
+**Coverage is sufficient only within a known hypothesis class:** fixed alphabet, neighborhood, timing, boundaries and fully observed state. Two rules can agree on every observed frame and differ on an unseen neighborhood. Unknown hidden state or neighborhood radius makes “every neighborhood observed” itself unverified.
+
+With those premises and exact local-rule verification, a million steps follows by induction; the number is not the breakthrough. **Not located:** one system delivering the proposed end-to-end guarantee across CA, sorting, arithmetic and cube videos.
+
+**M4 — Image input is not the leap.**
+
+FlowVQA already evaluates logical progression and decisions from flowchart images, including a zero-shot condition without explicit CoT prompting. Flow2Code evaluates executable-code generation from flowcharts across fifteen languages. Neither demonstrates verified compilation into recurrent state or trace-free internal interpretation. [FlowVQA, 27 Jun 2024](https://flowvqa.github.io/); [Flow2Code, 2 Jun 2025](https://arxiv.org/abs/2506.02073).
+
+**Not located:** the complete image→internal program→certified execution pipeline. Answer-only output does not establish that pipeline. The surviving contribution requires a compiler correctness relation: the state must implement the pictured program, including arrows, operands and branch conditions.
+
+**Qwen3.5 numerics — a serious obstruction, not a demonstrated universal kill.**
+
+Implementation inspection dated **29 Oct 2026**:
+
+- **HF:** \(g=-\exp(A_{\log})\,\mathrm{softplus}(a+dt_{\mathrm{bias}})\), \(\alpha=\exp(g)\), and \(\beta=\sigma(b)\). For finite real parameters, \(0<\alpha,\beta<1\); floating-point saturation can reach endpoints. The inspected fallback computes recurrent updates in fp32. Its gated RMSNorm includes epsilon, so read normalization is not perfectly scale-invariant. [HF source](https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/models/qwen3_5/modeling_qwen3_5.py).
+- **FLA:** the inspected fused recurrent kernel accumulates in fp32 and allocates the returned state in fp32, even with lower-precision inputs. Output activations are cast back. [FLA source](https://raw.githubusercontent.com/fla-org/flash-linear-attention/main/fla/ops/gated_delta_rule/fused_recurrent.py).
+- **Transformers.js/browser:** do not infer recurrent precision from weight precision or `kv_cache_dtype`. The inspected export lists fp16 KV caches for fp16/q4f16 and separately `mamba_ssm_dtype: float32`; that metadata does not establish every exported intermediate. Available WebGPU linear-attention kernels support fp16 or fp32 states. **Exact recurrent-state precision across the relevant shipped JS graph/kernel combinations was not established.** [Export configuration](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX/blob/3ce256c28db23722eef89191c5910de829c02398/config.json); [kernel contract](https://huggingface.co/kernels/webgpu-kernels/ai.onnx.LinearAttention).
+
+**Deduction:** an untouched orthogonal register retains amplitude \(\prod_t\alpha_t\). At constant α=0.999, \(10^5\) steps leave approximately \(3.5\times10^{-44}\), already below fp32’s normal range. Keeping half its amplitude requires geometric-mean α≥0.9999931. Readout can fail much earlier through interference, casting and epsilon.
+
+**Checkpoint-specific α distributions were not located.** Therefore neither “fp32 is fine” nor “bf16 dies around 1,000 steps” is supported. bf16 and fp32 share the normal exponent range; rounding behavior differs substantially. Persistent exact storage needs a proved invariant, exact retention, or refresh—not a favorable dtype label.
+tokens used
+219,138
+| Item | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **F** | **NARROW** | [Qwenputer](https://divagr.com/blog/qwenputer), 22 Oct 2026; [Schlag et al.](https://arxiv.org/abs/2102.11174), 22 Feb 2021 | LoRA-only learned register execution, without execution-trace tokens, with a sound deployed-numerics certificate. |
+| **M1** | **NARROW** | [How Linear Attention Remembers](https://arxiv.org/abs/2609.33093), 27 Sep 2026 | A live, semantically meaningful paint/edit/resume interface for pretrained matrix memory. |
+| **M2** | **NARROW** | [A Path to Universal NCA](https://arxiv.org/abs/2505.13058), 19 May 2025 | A certified discrete local executor integrated into a multimodal LM. |
+| **M3** | **NARROW** | [Gilpin](https://arxiv.org/abs/1809.02942), 9 Sep 2018; [CellARC](https://arxiv.org/abs/2511.07908), 11 Nov 2025 | Perception-to-rule identification plus certified execution within an explicitly restricted process class. |
+| **M4** | **NARROW** | [FlowVQA](https://arxiv.org/abs/2406.19237), 27 Jun 2024; [Flow2Code](https://arxiv.org/abs/2506.02073), 2 Jun 2025 | Verified image-to-state compilation and internal execution without textual reasoning. |
+
+**Audit cutoff: 29 October 2026.** Previous gate’s table read; not reproduced. Negative findings mean **“not located.”** Results are author-reported, not independently reproduced. Mathematical objections below are this audit’s deductions, dated today.
+
+**`out.md` could not be written: this session’s filesystem is read-only.**
+
+**F — “The register is the state” has a direct predecessor.**
+
+Qwenputer explicitly stores **code, data, registers and program counter in Gated DeltaNet state**. One-hot keys overwrite individual rows; one-hot queries read them; α and β are fixed to 1 for RAM. Its RISC-V implementation adds eleven compiled layers before Qwen’s layers. This kills novelty in “a computer’s addressable registers live inside Qwen3.5’s delta state.” [Announcement, 22 Oct 2026](https://divagr.com/blog/qwenputer); [repository, inspected 29 Oct](https://github.com/divagr18/qwenputer).
+
+The distinction matters: these weights are compiled, not learned through projection-only LoRA; execution produces special trace tokens. The RISC-V driver loads firmware into state and excludes chip tokens from Qwen’s layers. The accelerated path executes the circuit’s intermediate representation. **It does not establish F’s full conjunction.** [Implementation notes, inspected 29 Oct 2026](https://raw.githubusercontent.com/divagr18/qwenputer/main/experimental/riscv/docs/rv32.md).
+
+Schlag already presents delta updates as elementary fast-weight programming instructions. Independent erase/write control also has explicit successors: Gated DeltaNet-2 and Erase-then-Delta Attention. Renaming addresses “registers” supplies no mechanism novelty. [Schlag, 22 Feb 2021](https://arxiv.org/abs/2102.11174); [GDN-2, 21 May 2026](https://arxiv.org/abs/2605.22791); [EDA, 25 Jun 2026](https://arxiv.org/abs/2606.26560).
+
+A particularly relevant new experiment fine-tunes hybrids on answer-only parity. Qwen3.5-4B reaches mean **0.55 at 128 flips**, versus **0.89 for OLMo-Hybrid**, after training through 64; capping OLMo’s β at 1 destroys extrapolation. This is a small, author-run experiment, but directly challenges “stock Qwen’s recurrence makes learning exact tracking straightforward.” [Agrawal, 22 Oct 2026; raw results](https://github.com/divagr18/hidden-reasoning).
+
+The requested theoretical neighbors establish different things: negative-eigenvalue expressivity, Householder-product expressivity, REPL-trained variable tracking, and an optimization intervention. None supplies F’s certificate for a pretrained Qwen checkpoint. [Grazzi, 19 Nov 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 Feb 2025](https://arxiv.org/abs/2502.10297); [Siems, 16 Feb 2026, revised 25 Jun](https://arxiv.org/abs/2602.14814); [Howe, 16 Jul 2026](https://arxiv.org/abs/2609.18966).
+
+**The locality calculation is elementary; closing it indefinitely is the contribution.** For fixed update coefficients, unit register keys and \(G_{ij}=k_i^\top k_j\),
+
+\[
+(S'-S)k_j=(\alpha-1)Sk_j+
+\beta(v-\alpha Sk_i)G_{ij}.
+\]
+
+Orthogonality eliminates write interference, **not global decay**. Small Gram entries provide one-step bounds, not arbitrary-duration correctness. You need bounded write residuals, numerical-error bounds and invariant basins for the complete transition—including control and other memory channels.
+
+**Reject the architectural “iff” as stated.** Fixed-dimensional real state is not automatically finite; recurrent state is history-dependent. What helps is a sound finite abstraction of all behaviorally relevant state. Finite inductive proofs are not generally restricted to finite-state systems. A transformer that ignores its historical cache can be certifiable without a host. A Qwen hybrid still has attention caches, convolution state and positional machinery; pinning/windowing is an additional execution policy. Merrill’s result concerns specified SSM expressivity, not this proposed certifiability classification. [Merrill et al., ICML, 21–27 Jul 2024](https://proceedings.mlr.press/v235/merrill24a.html).
+
+Also, Kimi’s channel-wise KDA and RWKV-7’s generalized delta dynamics require separate proofs; they are not interchangeable instances of the displayed scalar-gated equation. [Kimi Linear, 30 Oct 2025](https://arxiv.org/abs/2510.26692); [RWKV-7, 18 Mar 2025](https://arxiv.org/abs/2503.14456).
+
+**M1 — Useful interface; weak standalone research novelty.**
+
+The dimensions check out: Qwen3.5-0.8B has **18 recurrent layers, 16 state heads per layer, and 128×128 states**. It has 24 text layers total, correcting LEAP2’s pilot reference to “all 24 DeltaNet layers.” [Official configuration, inspected 29 Oct 2026](https://huggingface.co/Qwen/Qwen3.5-0.8B/raw/main/config.json).
+
+Visual inspection of recurrent hidden states predates this by a decade. More decisively, September 2026 work already performs targeted edits and causal interventions on pretrained GDN memory; another paper swaps Qwen3.5 recurrent states between contexts and continues generation. [LSTMVis, 23 Jun 2016](https://arxiv.org/abs/1606.07461); [Lee et al., 27 Sep 2026](https://arxiv.org/html/2609.33093v1); [Afendulev et al., 3 Sep 2026](https://arxiv.org/abs/2609.04434).
+
+**Not located:** the exact live matrix-painting interface proposed here. Its meaningful novelty would be reliable semantic edits with measured collateral effects. A heatmap alone is instrumentation. Rank-one updates need not look like localized strokes; arbitrary basis coordinates need not correspond to human concepts. With decay, the total state change includes a generally full-rank term.
+
+**M2 — Drawn computation and learned local computation are established.**
+
+Growing NCA already offers interactive damage-and-resume behavior. Springer–Kenyon studies CNNs learning Life. *A Path to Universal NCA* learns local computation over a fixed heterogeneous “hardware” scaffold, including matrix multiplication, transposition and neural-network emulation—particularly close to drawn systolic machinery. Its emulation is approximate, not certified. [Mordvintsev et al., 11 Feb 2020](https://distill.pub/2020/growing-ca/); [Springer–Kenyon, 3 Sep 2020](https://arxiv.org/abs/2009.01398); [Béna et al., 19 May 2025](https://arxiv.org/html/2505.13058v2).
+
+ARC and broader reasoning are also occupied: task-trained NCA for ARC, and later local asynchronous NCA solving mazes, Sudoku and ARC with empirical size/rollout generalization. Training LMs on elementary-CA sequences is likewise established. [Xu–Miikkulainen, 18 Jun 2025](https://arxiv.org/abs/2506.15746); [Etcheverry et al., 28 Sep 2026](https://arxiv.org/abs/2609.36126); [Edge of Chaos, 3 Oct 2024](https://arxiv.org/abs/2410.02536).
+
+**The certificate works only after enforcing its premises.** For a deterministic binary radius-one Moore rule, 512 neighborhoods suffice to establish local equivalence; global equivalence follows by induction, given matching boundaries and synchronous updates. Continuous hidden channels, global attention, stochastic updates or unverified image decoding invalidate that simple enumeration.
+
+**Not located:** a multimodal LM containing the complete certified executor described here. Wireworld’s authors’ site returned HTTP 403; it was not treated as opened evidence.
+
+**M3 — Learning rules from video is old; finite observations do not certify arbitrary processes.**
+
+Gilpin explicitly learns CA dynamics from videos and constructs CNN representations of arbitrary finite CA rule tables. CellARC tests few-shot induction of hidden multicolor CA rules and explicitly controls neighborhood coverage. These are closer than generic video-generation demonstrations. [Gilpin, 9 Sep 2018](https://arxiv.org/html/1809.02942v2); [CellARC, 11 Nov 2025](https://arxiv.org/abs/2511.07908).
+
+Veo 3 demonstrates zero-shot visual tasks and early reasoning, not certified million-step execution. Image-based intermediate reasoning and physical-law discovery from distorted video also predate M3. [Wiedemer et al., 24 Sep 2025](https://arxiv.org/abs/2509.20328); [Thinking with Generated Images, 28 May 2025](https://arxiv.org/abs/2505.22525); [Symbolic Pregression, 19 May 2020](https://arxiv.org/abs/2005.11212).
+
+**Coverage is sufficient only within a known hypothesis class:** fixed alphabet, neighborhood, timing, boundaries and fully observed state. Two rules can agree on every observed frame and differ on an unseen neighborhood. Unknown hidden state or neighborhood radius makes “every neighborhood observed” itself unverified.
+
+With those premises and exact local-rule verification, a million steps follows by induction; the number is not the breakthrough. **Not located:** one system delivering the proposed end-to-end guarantee across CA, sorting, arithmetic and cube videos.
+
+**M4 — Image input is not the leap.**
+
+FlowVQA already evaluates logical progression and decisions from flowchart images, including a zero-shot condition without explicit CoT prompting. Flow2Code evaluates executable-code generation from flowcharts across fifteen languages. Neither demonstrates verified compilation into recurrent state or trace-free internal interpretation. [FlowVQA, 27 Jun 2024](https://flowvqa.github.io/); [Flow2Code, 2 Jun 2025](https://arxiv.org/abs/2506.02073).
+
+**Not located:** the complete image→internal program→certified execution pipeline. Answer-only output does not establish that pipeline. The surviving contribution requires a compiler correctness relation: the state must implement the pictured program, including arrows, operands and branch conditions.
+
+**Qwen3.5 numerics — a serious obstruction, not a demonstrated universal kill.**
+
+Implementation inspection dated **29 Oct 2026**:
+
+- **HF:** \(g=-\exp(A_{\log})\,\mathrm{softplus}(a+dt_{\mathrm{bias}})\), \(\alpha=\exp(g)\), and \(\beta=\sigma(b)\). For finite real parameters, \(0<\alpha,\beta<1\); floating-point saturation can reach endpoints. The inspected fallback computes recurrent updates in fp32. Its gated RMSNorm includes epsilon, so read normalization is not perfectly scale-invariant. [HF source](https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/models/qwen3_5/modeling_qwen3_5.py).
+- **FLA:** the inspected fused recurrent kernel accumulates in fp32 and allocates the returned state in fp32, even with lower-precision inputs. Output activations are cast back. [FLA source](https://raw.githubusercontent.com/fla-org/flash-linear-attention/main/fla/ops/gated_delta_rule/fused_recurrent.py).
+- **Transformers.js/browser:** do not infer recurrent precision from weight precision or `kv_cache_dtype`. The inspected export lists fp16 KV caches for fp16/q4f16 and separately `mamba_ssm_dtype: float32`; that metadata does not establish every exported intermediate. Available WebGPU linear-attention kernels support fp16 or fp32 states. **Exact recurrent-state precision across the relevant shipped JS graph/kernel combinations was not established.** [Export configuration](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX/blob/3ce256c28db23722eef89191c5910de829c02398/config.json); [kernel contract](https://huggingface.co/kernels/webgpu-kernels/ai.onnx.LinearAttention).
+
+**Deduction:** an untouched orthogonal register retains amplitude \(\prod_t\alpha_t\). At constant α=0.999, \(10^5\) steps leave approximately \(3.5\times10^{-44}\), already below fp32’s normal range. Keeping half its amplitude requires geometric-mean α≥0.9999931. Readout can fail much earlier through interference, casting and epsilon.
+
+**Checkpoint-specific α distributions were not located.** Therefore neither “fp32 is fine” nor “bf16 dies around 1,000 steps” is supported. bf16 and fp32 share the normal exponent range; rounding behavior differs substantially. Persistent exact storage needs a proved invariant, exact retention, or refresh—not a favorable dtype label.

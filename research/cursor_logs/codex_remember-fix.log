@@ -1,0 +1,3369 @@
+Reading additional input from stdin...
+OpenAI Codex v0.165.0-alpha.1.2
+--------
+workdir: /Users/neo/repos/polyformer-wt/remember
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: danger-full-access
+reasoning effort: high
+reasoning summaries: none
+session id: 01a186b7-3f63-79a0-beec-37759cccff72
+--------
+user
+You are taking over the REMEMBER fair test from an agent stopped by a model quota. Brief: research/remember/REMEMBER_FIX_BRIEF.md (audit: research/remember/audit/codex_audit.md). State at handover (commit 912f5ba7): the train wave and the first two Qwen3-1.7B evals are settled; eval-fair-qwen3-1.7b-s3 timed out and its registered carry retry was spawned; three Qwen3-4B evals were still running on Modal. First run git log -8 and git status, read the Modal ledger and call ids. Do NOT relaunch any job recorded as running: check each with short non-blocking status calls until it completes, then collect and settle it. Then write the fair-test table exactly by the frozen registration in REMEMBER2.md (labelled unaudited) and commit. Rules: never run a blocking long-lived command; nice -n 19; commit to this branch only; never push; touch no other worktree. Finish with a short plain summary: the fair-test table and spend.
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+codex
+I’ll check the handover, ledger, and Modal call IDs, then collect the existing jobs and build the table from the frozen registration without relaunching running work.
+exec
+/bin/zsh -lc 'nice -n 19 git log -8' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+commit 912f5ba734beb0b88d720ba76033896cdf9b03ba
+Author: NeoVand <mmv@mit.edu>
+Date:   Thu Oct 29 02:56:23 2026 -0500
+
+    Fair report reads a timed-out eval from its carry retry, with provenance checks.
+    
+    The retry must carry the original's argv and every finished run unchanged; the recount follows the same map. Selftest covers the accept and both refusals.
+
+commit 71c64de27fa760c56f1b0b8b7e3cefeaf1dbe2d7
+Author: NeoVand <mmv@mit.edu>
+Date:   Thu Oct 29 02:55:13 2026 -0500
+
+    Fair test: spawn the carry retry for Qwen3-1.7B seed 3.
+
+commit cf12dfb1b396eb0ca722e5cbd9e33ab11e394a0b
+Author: NeoVand <mmv@mit.edu>
+Date:   Thu Oct 29 02:54:56 2026 -0500
+
+    Fair test: eval-fair-qwen3-1.7b-s3 timed out at 6133 s with 22 of 24 runs; register its carry retry.
+    
+    A timeout is not a trace failure. The retry runs hist tok and hist adv on table 5 with --carry of the 22 finished runs, under a new job id. Unaudited.
+
+commit 879754c2a9360b947f960374bfc23d3406d3c85b
+Author: NeoVand <mmv@mit.edu>
+Date:   Thu Oct 29 02:43:34 2026 -0500
+
+    Fair test: settle the train wave and the first two Qwen3-1.7B evals.
+    
+    Four evals are still running on Modal and stay unrelaunched. Results unaudited.
+
+commit c91069caac3182b9a3617b5daef30fba0df7a27f
+Author: NeoVand <mmv@mit.edu>
+Date:   Thu Oct 29 00:58:24 2026 -0500
+
+    Record the fair-test smoke and keep the counted rung.
+    
+    The deployed launcher was importing a module that is not in the image. The smoke pin rate stays under the tripwire, so both models and three tables remain the plan.
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+commit a000e9bf1fd5568bd638132855dbe63cecc0aa6d
+Author: NeoVand <mmv@mit.edu>
+Date:   Thu Oct 29 00:45:56 2026 -0500
+
+    Register the fair paired test and correct the certification verdict before any GPU spend.
+    
+    The round-1 verdict now requires each counted edit hash, and the margin sampler stays inside its cap of 96. The fair test trains pin and history as the same rank-1 LoRA on shared trajectories.
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+commit 4305de0a3bad3109d99cdad64167420020bf1c38
+Author: NeoVand <mmv@mit.edu>
+Date:   Thu Oct 29 00:16:58 2026 -0500
+
+    REMEMBER: audit and fix brief.
+
+commit 4094749cb4e34d2e982fd2745548e8c0c1546956
+Author: NeoVand <mmv@mit.edu>
+Date:   Wed Oct 28 20:55:34 2026 -0500
+
+    REMEMBER-2: counted results, the three numbers, and the figure.
+    
+    Co-authored-by: Cursor <cursoragent@cursor.com>
+
+exec
+/bin/zsh -lc 'nice -n 19 git status --short' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+exec
+/bin/zsh -lc 'nice -n 19 cat research/remember/REMEMBER_FIX_BRIEF.md research/remember/audit/codex_audit.md' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+# REMEMBER fix after the audit, and the fair learnability test
+
+Read `audit/codex_audit.md` in full first. Do not edit frozen registration text; add sections.
+
+1. **CPU.**
+   - Fix the two reporting bugs:
+     - round 1's certification verdict must include the hash check;
+     - round 2's decimation must respect its cap.
+   - Add **"Audit corrections"** to REMEMBER.md and REMEMBER2.md. Round 1's descriptive counts stand. Round 2's
+     "only the pin is learnable at rank 1" does not, because of unequal data exposure, selected evaluation tables
+     and mixed edit classes. Say so plainly.
+2. **The fair test (GPU, cap $35).** Register it first in REMEMBER2.md as a frozen section, with predictions and
+   falsifiers, and commit before launching.
+   - **Question:** at a rank-1 budget, is exact execution learnable when the step forgets (pin) and not when it
+     remembers (history)?
+   - **Paired edits.** Train both arms on identical tables, identical trajectories, the same supervised positions,
+     steps, learning rate and seeds, and a common frozen selection rule fixed before training. The only difference
+     is the context policy: pinned (Π, s, e, positions restarted) or full history.
+   - **Evaluation.** Fresh tables drawn independently of either edit, chosen by a rule fixed in advance. Lengths
+     256, 1,024 and 4,096. At least 3 training seeds and 2 models: Qwen3-1.7B, and Qwen3-4B if the budget allows.
+   - **Attribution controls.** Separate the position reset from forgetting, using the existing `TOK` and `ADV`
+     policies in `../bigidea/bi_stream.py`:
+     - history with positions restarted;
+     - pinned with positions advancing.
+   - **Report:** exact runs per cell, first-error step, and ticks bitwise equal to rows.
+3. Modal: deploy + spawn + volume, ledger, `nice -n 19`. Label all results unaudited. Commit to this branch; do not
+   push; touch no other worktree. Finish with a short summary: the corrected claims, the fair-test table, the spend.
+**The headline counts reproduce. The claims “forgetting is necessary” and “only pin is learnable at rank 1” do not follow.** The main problems are experimental design; I found two reporting bugs with no effect on the headline counts.
+
+Read-only audit; no files edited. Paths below are relative to `research/remember`. Round 2’s report is `REMEMBER2.md`.
+
+1. **Headline recount — OK**
+
+   I ran a separate, in-memory Python script using only JSON/CSV readers. It selected jobs from each plan, required complete records, reconstructed exactness as `first_error is None or first_error >= length`, checked every JSON/CSV cell, sorted failing runs’ 1-based error steps, and selected index `(n−1)//2`. Pin counters were summed once per complete tape, excluding duplicate prefix rows.
+
+   | Claim | Independent result | Match |
+   |---|---:|---|
+   | R1 pin exact at 2048 | **80/80** | Yes: `REMEMBER.md:8`, “80 of 80” |
+   | R1 bitwise pin ticks | **163,840/163,840** = 80 × 2048 | Yes: `REMEMBER.md:7` |
+   | R1 remember models with zero exact runs | **7/10** | Yes: `REMEMBER.md:5` |
+   | R1 remember lower median first error | **3**, over **76 failures**, excluding **4 survivors** | Yes: `REMEMBER.md:6` |
+   | R1 window exact at 1024 | **0/80**, zero in **10/10 models** | Yes: `REMEMBER.md:9` |
+   | OLMo 5B / 84B / base, pin at 1024 | **0/4, 4/4, 4/4** | Yes: `REMEMBER.md:10` |
+   | Same OLMo checkpoints, remember | **0/4, 1/4, 0/4** | Yes: `REMEMBER.md:10` |
+   | R2 E-hist/remember exact at 256 | **4/16** | Yes: `REMEMBER2.md:5` |
+   | R2 E-hist/remember median at 4096 | **26**, 16 failures, zero excluded | Yes: `REMEMBER2.md:6` |
+   | R2 E-hist/pin exact at 4096 | **7/16** | Yes: `REMEMBER2.md:7` |
+   | R2 E-pin/pin exact; E-pin/remember median | **16/16; 3** | Yes: `REMEMBER2.md:9` |
+   | R2 E-pin bitwise ticks | **65,536/65,536** | Yes: `REMEMBER2.md:236` |
+
+   “Full-history arms fail” requires qualification. The four R1 survivors are directly recorded by the substring `remember,2048,2048,1` at `results/r-qwen3-0.6b/runs.csv:41`, `:47`, `results/r-qwen3-1.7b/runs.csv:35`, and `results/r-qwen3-14b/runs.csv:29`.
+
+   I also checked all displayed exactness cells, first-error anatomy, and margin summaries; they reproduce under the report’s **lower-median** convention. However, JSON and CSV are two serializations of the same measurements: `rem_job.py:324` explicitly says “written from the same payload as the json.” The recount validates arithmetic, not the original `torch.equal` measurements; those are performed at `rem_job.py:279`.
+
+2. **Frozen predictions and verdicts — OK arithmetic; BUG in one guard; DESIGN FLAW in interpretation**
+
+   The prediction sections match their registration commits (`9807f8d1` and `e9699430`). The shortened horizons are disclosed: `REMEMBER.md:108` says “Read the measured claims at 2048”; `REMEMBER2.md:76` records one tape and lengths `[256, 1024, 4096]`.
+
+   The observations do **not** satisfy several registered predictions:
+
+   - R1 predicted zero remember survivors in **each** model (`REMEMBER.md:65`); only 7/10 meet that condition. OLMo-84B also contradicts the zero-survivor prediction (`REMEMBER.md:71`; raw survivor at `results/r-olmo2-7b-84B/runs.csv:7`).
+   - R2 predicted at least half the history runs exact at 256 in **at least three models** (`REMEMBER2.md:53`). Counts are **0/4, 1/4, 2/4, 1/4**: only Llama qualifies (`REMEMBER2.md:179`, `:183`, `:187`, `:191`).
+   - R2 predicted a history median **above 32** and all E-hist/pin runs exact (`REMEMBER2.md:55`, `:57`); observed values are **26** and **7/16**. The decline from 4/16 at 256 to 0/16 at 4096 supports decline at the measured horizon, not the unmeasured 8192 prediction.
+
+   **BUG:** R1’s registered certification guard requires “the edit file’s sha256 is in the job record” (`REMEMBER.md:127`). The actual predicate at `rem_report.py:244–246` checks certification, bitwise counts, and exactness but never checks edit metadata. Removing `edits` from an in-memory summary still returns `ruled_out=True`. Require hash presence for every counted model; compare registered hashes if claiming identity. **Current numerical effect: none**—the records contain hashes.
+
+   **DESIGN FLAW:** Neither report implements a test of impossibility or exclusive learnability. The exactness rule is merely `return first_error is None or first_error >= length` (`rem_models.py:108`). Failure of one training recipe cannot establish that no rank-1 history solution is learnable.
+
+3. **Context, feedback, and leakage — OK execution; DESIGN FLAW for broader claims**
+
+   - **Exact pinned context:** tokenizer document prefix plus the **entire transition table**, followed by `[predicted current state, supplied event]`. Every table row contains its answer: `pb_pin.py:140` writes `[id_of[s], id_of[e], id_of[t], nl]`. `rem_job.py:394` prepends the document prefix; `../promptbox/pb_pin.py:243–246` uses positions `[P, P+1]` and `_clone(past)`. Thus every tick can look up its destination in Π. This is legitimate table execution, but not answer-free inference.
+   - **No oracle state feedback during evaluation:** `rem_job.py:275` obtains `nxt` from the model; `:288` assigns `s = nxt`; `:290` feeds that state. `want` is used for comparison at `:282`. Round 2 does the same at `r2_eval.py:64`, `:71`, `:78–81`.
+   - **Training teacher forcing is causal:** the true next state becomes the following block’s state (`r2_data.py:33–36`), while supervision is at the preceding event position (`:57`). Visibility is `idx[:, None] >= idx[None, :]` (`:82`), so that future state cannot be attended to. Training samples `pool["train"]` (`r2_train.py:155`); evaluation samples `pool["test"]` (`r2_eval.py:42`), with duplicate token IDs excluded by `../universal/uni_models.py:160`.
+   - **Selection leakage/design bias:** evaluated tables were selected because E-pin already passed them: `rem_models.py:128`, `passed = [t for t in records if t["pass"]]`. Round 2 reuses that selection (`r2_models.py:88`, `return R.TABLES[name]`). This supports performance **conditional on E-pin certification**, not an unbiased comparison of the two edits’ generalization.
+   - **“10 families” is inaccurate:** `rem_models.py:69–70` lists ten model checkpoints, five Qwen3 sizes. The machine generator has four shapes—`"random", "perm", "counter", "sticky"` (`../promptbox/pb_pin.py:109`)—and tables repeat across models (`rem_models.py:75–94`). These are not ten distinct machine families.
+   - **A tick is one event transition**, not one bit or independent test: `rem_job.py:273–281` makes one prediction per event. Repeated visits to the same certified row contribute additional ticks.
+
+4. **Fairness, rank, and checkpoint selection — DESIGN FLAW overall; implementation checks OK**
+
+   **R1:** policies receive the same `pi`, tape, initial state, and weights (`rem_job.py:419–422`). Table encoding is identical; positions and execution format are not. PIN processes two tokens together at `[P,P+1]`; FULL processes individual tokens at `P+j` (`../bigidea/bi_stream.py:131`, `:140`, `:154–170`). Consequently, this comparison combines history retention, advancing positions, and forward-pass format. It does not isolate forgetting alone.
+
+   **R2:** matching “budget” means matching supervised labels and optimizer updates. The report explicitly says “the number of tables in a step drops from 48 to 3” (`REMEMBER2.md:27`). Therefore, over 100 steps:
+
+   - Both receive **76,800 supervised destinations**.
+   - E-pin receives **4,800 table draws**; E-hist receives **300**, with correlated trajectory states.
+
+   These are unequal data exposure and coverage, despite equal label counts. The implementations are `../universal/uni_job.py:343` for independent pinned examples and `r2_train.py:154–157` for history trajectories.
+
+   **OK:** the actual compared recipes use 100 steps, five-step warmup, matching within-model learning rates and parameter counts. All four history records select run zero (`results2/train-*/train.json:3`, `"chosen": 0`). There is one CE loss from the first step (`r2_train.py:179–180`); checkpoint writes occur afterward (`:198–209`). There is no checkpoint selected before a delayed loss term activates. The optional retry selects by **pinned** validation (`:288–294`), which would favor pin performance, but it did not run here.
+
+   **OK rank implementation, qualified terminology:** LoRA uses `r=1`, `lora_alpha=2`, q/k/v/o targets, and all layers (`r2_train.py:128–134`; saved config `results2/train-llama3.1-8b/edit/chosen/adapter_config.json:18`, `:20`, `:31`, `:34–38`). This is rank one **per adapted projection**, not one rank-one update for the whole network. Qwen uses an additive activation vector—`h = h + ... * add` (`../universal/uni_models.py:275`)—rather than LoRA. The report correctly distinguishes these classes at `REMEMBER2.md:21`.
+
+5. **Figures — OK; trace-size promise — BUG**
+
+   Both saved PNGs agree with the independently checked counts. R1 plots `exact / n` and lower-median first errors (`rem_fig.py:45`, `:55–57`). R2 plots `exact / n`, with the documented color/style mapping and E-hist/remember title counts (`r2_fig.py:30–34`, `:51`, `:57–58`), matching its caption at `REMEMBER2.md:172`.
+
+   **BUG:** `REMEMBER2.md:35` promises “at most 96 points.” `r2_data.py:108–116` subsamples, then appends the endpoint and first-error point without enforcing the cap. Stored traces reach **97–98 points**; an example begins at `results2/eval-qwen3-1.7b/runs.json:95` and includes the appended endpoint at `:481`. Reserve slots for mandatory points before sampling. **Effect on headline numbers and these figures: none.**
+
+**BUGs by severity**
+
+- **Medium:** R1 certification verdict omits its required hash check; current counts unchanged.
+- **Low:** R2 decimation exceeds its promised cap; current counts and figures unchanged.
+
+**Headline claims that survive**
+
+- **R1:** 80/80 selected, certified pin runs are recorded exact through 2048, with 163,840 matching tick logits.
+- **R1 history:** 76/80 runs fail; universal failure and necessity of forgetting are unsupported.
+- **R2:** this history-training recipe yields 4/16 exact at 256, 0/16 at 4096, and median first error 26.
+- **R2 learnability:** “only pin is learnable at rank 1” does not survive the unequal data exposure, selected evaluation tables, and mixed edit classes.
+
+**Minimal re-runs**
+
+No GPU rerun is needed to retain the descriptive counts or fix the two reporting bugs. For a fair learnability comparison, retrain paired edits on identical tables, trajectories, supervised positions, steps, learning rates, and a common frozen selection rule; evaluate on fresh tables selected independently of either edit. To attribute the difference specifically to forgetting, additionally separate position reset and token-by-token versus two-token execution—the existing `TOK` and `ADV` controls already expose those distinctions (`../bigidea/bi_stream.py:156–165`).
+exec
+/bin/zsh -lc "nice -n 19 rg --files -g AGENTS.md -g '*ledger*' -g '*fair*' -g '*modal*' -g '*call*' research/remember .agents" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+research/remember/r2_modal.py
+research/remember/rf_modal.py
+research/remember/rem_modal.py
+research/remember/results/modal_ledger.lock
+research/remember/results_fair/modal_ledger.json
+research/remember/results_fair/modal_ledger.lock
+research/remember/results/modal_ledger.json
+research/remember/results2/modal_ledger.lock
+research/remember/results2/modal_ledger.json
+
+exec
+/bin/zsh -lc 'nice -n 19 cat research/remember/REMEMBER2.md' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+# REMEMBER-2
+
+<!-- SUMMARY -->
+
+E-hist under remember, exact at 256: 4 of 16.
+Lower median first-error step on inexact E-hist remember runs at 4096: 26 (0 exact runs excluded, 16 runs).
+E-hist under pin, exact at 4096: 7 of 16.
+The three numbers above are the json count. r2_recount.py reads the csv and agrees.
+E-pin under pin, exact at 4096: 16 of 16. E-pin under remember, lower median first error at 4096: 3.
+
+<!-- /SUMMARY -->
+
+## Question
+
+REMEMBER found pin trace-exact on 80 of 80 runs at 2048 events, and the same weights with the history kept failed at a median first error of step 3. A referee can say that those edits were learned in pinned format, so the failure is a format shift. This run trains the same edit class on the remember presentation and measures both edits under both policies as the tape grows.
+
+## Protocol
+
+Four models: Qwen3-1.7B, Qwen3-4B, Llama-3.1-8B, Mistral-7B. Two edits each.
+
+E-pin is the checkpoint REMEMBER measured. It is not retrained. Qwen3-1.7B and Qwen3-4B were measured as an E7 vector, and UNIVERSAL did not train an E3 for them. Reusing the edit means not training a new pinned LoRA. E-hist is a new edit of that same class: E7 for both Qwen models, rank-1 LoRA for Llama-3.1-8B and Mistral-7B. A Qwen LoRA beside an E7 pin would mix the format with the parameterization. Paths and the E-pin sha256 values are `pin_path` and `PIN_SHA` in `r2_models.py`. The eval aborts if the E-pin file does not match.
+
+E-hist uses UNIVERSAL's optimizer and schedule. 100 steps, warmup 5, AdamW betas (0.9, 0.99), weight decay 0, gradient clip 1.0, seed 1. The data RNG is `Random(1 + 7919)`. Learning rate 2e-2 for E7 and 2e-3 for E3. E7 may retry once at a quarter of the learning rate when the run diverged and the elapsed time times 2.5 is still under max_seconds. Diverged means a non-finite loss, or the mean accuracy of the last 10 steps more than 0.02 below the mean of steps 21 through 30. The first checkpoint is written to `edit/chosen` before the retry, so a kill leaves it. The retry replaces it only when the retry's pinned validation accepts more tables, then more rows. E3 does not retry. The saved edit is step 100 unless that retry wins.
+
+Validation is 128 tables from `Random(101)` on the held-out name pool, scored with UNIVERSAL's packed fast eval at steps 10, 30, and 100, plus 4 teacher-forced history trajectories. The history score is recorded and is not used to choose the checkpoint. The validation tables are not the REMEMBER tables.
+
+A UNIVERSAL step supervises 48 × 16 = 768 event positions. E-hist keeps 768 by training on 3 trajectories of 256 events, not on 48 independent pinned blocks. The number of tables in a step drops from 48 to 3, because each trajectory contributes 256 losses. The length is 256, not a mixture. "Up to 256" is that cap. A miss at 256 is then either cross-table generalization, when the training accuracy is high, or a failure to learn the history, when it is low. Both answer Q1.
+
+The loss is cross-entropy on the true destination, teacher-forced along the true trace. The sequence is Π, including the tokenizer's document prefix, then s0 e0 s1 e1 … with s_{k+1} = δ(s_k, e_k). Positions are 0, 1, 2, … through the whole sequence. They are not reset to |Π| and |Π|+1. Attention is causal: each token sees Π and the run so far, not a block-diagonal mask. Loss is only on the event token, the second token of each tick. The steer mask is 0 on Π and on padding and 1 on the stream tokens. `use_cache` is false. Gradient checkpointing uses `use_reentrant` false, and `enable_input_require_grads` runs before the base is frozen, the same order as UNIVERSAL. The E7 vector is added only on stream tokens and is off during Π's prefill.
+
+Policies are the ones REMEMBER ran. Pin is `bi_stream` PIN: Π is kept, the block is computed on a clone at positions |Π| and |Π|+1, and the clone is discarded. Remember is FULL: nothing is evicted, positions continue, and the run stops at the first wrong state, before that state is fed. There is no window. The patches are `rem_job`'s: `rotate_kv`, the sliding-window crop, and the rope check before any tape.
+
+Tables are REMEMBER's four certified tables per model, redrawn at seed 777. Tapes use seed 20261028, the same generator as REMEMBER. Four tapes. Lengths 256, 1024, 4096, and 8192. A shorter length is a prefix of the long tape. The smoke length 64 is a prefix of that same generator. Trace-exactness is against the true machine. `exact_at` is true at L when the first mismatch is at index L or later, or there is none. `first_error` is the 0-based index. The first-error step is 1-based. The lower median is the value at index (n−1)//2 of the sorted values.
+
+E-pin is re-certified in the same process. A failed table aborts the job. E-hist failing certification is a result for Q3, and the tapes still run. Bitwise equality is `torch.equal` on the bf16 logits against the certificate computed in that process. Pin runs the whole tape. The margin at each recorded length is kept for every run that executed that step, and the full trace is stored decimated to at most 96 points, always including step 1, the last step, and the first-error step.
+
+LoRA stays unmerged. Each job loads the base and one edit from scratch. Bases come from the read-only snapshot on `polyformer-universal-hf` (`/hf`). E-pin files come from `polyformer-universal-results` (`/uni`) and `polyformer-bigidea-results` (`/bi`). Writes go only to `polyformer-remember2-results` (`/vol`). The hub is offline. Models are not downloaded locally. Results go to `research/remember/results2`, so REMEMBER's `results/plan.json` is left alone.
+
+Qwen3-1.7B and Qwen3-4B use the A10G price class. The Modal function requests `gpu="A10"`, and the ledger field stays `A10G`. Llama-3.1-8B and Mistral-7B use L40S. An out-of-memory failure before a complete result is replaced on the next GPU: L40S for an A10G model, H100 for an L40S model, under a new job id. The amendment records it. Measured claims come from the complete replacement.
+
+A timeout is not a trace failure. The retry has a new job id and `--carry` of the finished cells. The complete `runs.json` is the file the plan's job id names. An incomplete job is not a counted result.
+
+The three numbers `r2_report.py` checks against `r2_recount.py` are: how many E-hist remember runs are exact at the training length, 256; the lower median first-error step of the E-hist remember runs that are inexact at the plan's key length, together with how many exact runs were excluded and how many runs there were; and how many E-hist pin runs are exact at that key length. The report reads `runs.json`. The recount reads `runs.csv` and does not import the report. The training length and the key length come from `results2/plan.json`. A train sha256 that does not match the E-hist file the eval loaded is an exit, and that edit is not published.
+
+## Registered predictions
+
+These paragraphs stay as written. A smoke amendment is inserted by `r2_smoke_read.py` before any counted job, under Amendments, and only by the rules in that file.
+
+**E-pin, pin.** Probability 0.95. Every E-pin run under pin is trace-exact at 256, 1024, 4096, and 8192, and every pin tick is bitwise equal to the certificate made in that process. A smoke in which E-pin under pin is not exact, or not bitwise, is a bug. It is not a reason to change this sentence.
+
+**E-pin, remember.** Probability 0.85 that the lower median first-error step on the inexact E-pin remember runs at 8192 is at most 8. Point median 3. 90% range 2 to 32. Probability 0.80 that fewer than half of the E-pin remember runs are exact at 256.
+
+**E-hist, remember, at the training length.** Probability 0.65 that, in at least 3 of the 4 models, at least half of that model's E-hist remember runs are exact at 256. Point fraction 0.75. 90% range 0.25 to 1.
+
+**E-hist, remember, as the tape grows.** Probability 0.70 that the fraction exact at 8192 is strictly below the fraction exact at 256. Probability 0.75 that the lower median first-error step on the inexact E-hist remember runs at 8192 is above 32. Point median 512. 90% range 16 to 4096. The shape this names is drift past the training length, the pattern BRIDGE saw, rather than a failure at step 3.
+
+**E-hist, pin.** Probability 0.60 that every E-hist pin run is trace-exact at every recorded length. The doubt is that the edit never saw positions reset to |Π| and |Π|+1.
+
+The sentences name 8192 events and 4 tapes. If the cost ladder shortens the tape or the tape count, the measured lines say which length and which n were run. These sentences are not edited.
+
+## Cost and cuts
+
+The cap is $30, in `r2_modal.CAP_USD`, recorded in the ledger before any spend. Rates are the Modal list prices in `r2_modal.py`: H100 0.001097, L40S 0.000542, A10G 0.000306, plus 8 CPU at 0.0000131 per second and 48 GiB at 0.00000222 per second. A reservation is that rate times max_seconds + 30 + 240. Reserved amounts count against the cap until the job settles. Settlement is the same rate times the wall, capped at max_seconds + 30, plus the 240-second startup. The ledger records the GPU at reserve and the GPU and the host CPU at settle.
+
+<!-- SMOKE-COST -->
+
+Smoke reservation from `reservation()` in `r2_modal.py`: GPU rate plus 8 CPU plus 48 GiB, times max_seconds + 30 + 240. One job, before any counted job.
+- `smoke-qwen3-1.7b` A10G, max_seconds 1500, reserved_usd 0.915727
+Sum of smoke reservations: 0.915727.
+
+<!-- /SMOKE-COST -->
+
+<!-- COUNTED-COST -->
+
+Counted plan from the smoke probe. pin seconds per tick 0.029666015625. Remember seconds ≈ 0.05355367647058823 T + 0.0 T² on the smoke model, scaled by SIZE_B for the others.
+Tapes 1. Lengths [256, 1024, 4096]. Key length 4096. Registered tapes 4. Registered lengths [256, 1024, 4096, 8192].
+Cuts: ['tapes 4 to 2', 'long length 8192 to 4096', 'tapes 2 to 1'].
+Sum of reservations 19.845515 against remaining 29.851241.
+
+- `train-qwen3-1.7b` A10G max_seconds 350 reserved_usd 0.320763 projected_seconds 125.4
+- `eval-qwen3-1.7b` A10G max_seconds 2708 reserved_usd 1.540698 projected_seconds 1872.4
+- `train-qwen3-4b` A10G max_seconds 579 reserved_usd 0.439239 projected_seconds 295.1
+- `eval-qwen3-4b` A10G max_seconds 5049 reserved_usd 2.751838 projected_seconds 3606.2
+- `train-llama3.1-8b` L40S max_seconds 977 reserved_usd 0.93944 projected_seconds 590.1
+- `eval-llama3.1-8b` L40S max_seconds 8695 reserved_usd 6.753872 projected_seconds 6307.3
+- `train-mistral-7b` L40S max_seconds 897 reserved_usd 0.879171 projected_seconds 531.1
+- `eval-mistral-7b` L40S max_seconds 7987 reserved_usd 6.220494 projected_seconds 5782.6
+The registered sentences name 8192 events and 4 tapes. Read the measured claims at the key length and tape count above. Those sentences are not edited.
+
+<!-- /COUNTED-COST -->
+
+The smoke is one job, `smoke-qwen3-1.7b`, on Qwen3-1.7B, table 8, A10G, max_seconds 1500. It trains 2 steps at the counted batch shape, with no validation and no retry, then evaluates both edits under both policies at length 64 on one tape. It also times 256 pin ticks and 256 remember ticks on E-pin, with remember marks every 32 ticks and no early stop. The 2-step weights are not the counted edit. E-hist's smoke exactness does not amend a prediction.
+
+Smoke rules, applied by `r2_smoke_read.py` and not by hand. If any E-pin remember run is exact at the smoke length L, the amendment sets the point median to 2L and the 90% range to 2 through 3L. If an E-pin remember first-error step falls outside 2 to 32, the amendment widens the range to include the observed steps. E-pin under pin not exact, not bitwise, a failed E-pin re-certification, or any remember run with `stream_tokens` other than 2 × ticks or `max_delta` other than 0, is a bug: the reader exits 2 and writes nothing.
+
+`r2_cost.py` reads `timing.json` and walks this ladder until the train reservations and the eval reservations both fit in the cap minus what the ledger has already reserved or settled. It does not drop a model or an edit. It does not drop 256: those cells are prefixes, so dropping them saves no compute.
+
+1. 4 tapes, long length 8192.
+2. Tapes 4 to 2.
+3. Long length 8192 to 4096.
+4. Tapes 2 to 1.
+5. Long length 4096 to 2048. The recorded lengths are then 256, 1024, and 2048.
+6. Long length 2048 to 1024.
+
+The projection, fixed here. Pin seconds per tick is the probe's pin seconds divided by its pin ticks, scaled by (S / 1.7)^0.5 for a model of nominal size S. Remember seconds to reach T ticks are a least-squares fit of a T + b T² to the probe marks. A negative coefficient is set to zero and the other coefficient is refit. Remember seconds scale by S / 1.7 and are at least the pin price of the same ticks. A training step scales by S / 1.7. The first smoke step is the compile step and the last is the steady step. Counted training is the compile step plus 99 steady steps, plus the load, plus a validation budget at each of the three checkpoints: 128 packed tables at a quarter of one trajectory forward, and 4 history trajectories. An eval load scales by (S / 1.7)^0.5, and an eval pays for two loads. E-hist remember is priced as a full tape. E-pin remember is priced as pin ticks up to min(T, max(64, 8 times the greatest smoke first-error step)) when every smoke E-pin remember run failed, and as a full remember tape when any of those runs was exact or that tick budget reaches T. The eval also prices two certifications and two full pin tapes. max_seconds is ceil(1.35 times the projection plus 180), and at least 120. A projection that needs more than 24000 seconds does not fit in one container, because the function timeout is 30000 and the subprocess must stop first.
+
+If the last rung still does not fit, `r2_cost.py` exits 2, writes that fact, and launches nothing.
+
+Train jobs are spawned and settled before any eval job. The eval's `--hist-path` is `/vol/train-{model}/edit/chosen`. The weights have to be on the volume before the eval starts.
+
+## What could be wrong
+
+The verdicts are in the results section, filled from the job files. The checks are:
+
+1. **E-pin is not the certified function.** Ruled out when every E-pin table re-certifies, every E-pin pin run is trace-exact at the tape length, the bitwise-equal pin ticks equal the pin ticks, none are off-table, there is no logit mismatch, and each E-pin sha256 matches `PIN_SHA`.
+2. **Remember evicts or restarts positions.** Ruled out when every remember run, both edits, has `stream_tokens = 2 × ticks` and `max_delta = 0`.
+3. **E-hist was trained as pinned blocks.** Ruled out when each train record has 100 steps, trajectory length 256, 768 supervised positions, `causal_mismatches` 0, `presentation.ok`, and the saved example passes `presentation_ok` again at report time, and the train sha256 equals the sha256 of the E-hist file the eval loaded.
+
+## Amendments
+
+Prediction paragraphs above are not edited after this file is committed. The smoke readout and any cost cut are inserted below, by script, before a counted spawn.
+
+<!-- AMENDMENTS -->
+
+<!-- SMOKE -->
+
+Smoke readout. Every number is taken from the smoke runs.json and timing.json.
+
+qwen3-1.7b. T 64. tapes 1. seed 20261028.
+Probe pin_ticks 256, pin_seconds 7.5945, remember_ticks 256, remember_seconds 13.6538.
+Probe remember marks: [{"seconds": 1.7018, "ticks": 32}, {"seconds": 3.4242, "ticks": 64}, {"seconds": 5.118, "ticks": 96}, {"seconds": 6.9165, "ticks": 128}, {"seconds": 8.6352, "ticks": 160}, {"seconds": 10.3131, "ticks": 192}, {"seconds": 11.9816, "ticks": 224}, {"seconds": 13.6378, "ticks": 256}].
+Train steps 2. Step deltas [1.0, 0.9]. Load seconds 2.9.
+e-pin table 8: rows 10, cert_pass True, rows_wrong 0, min_margin 2.625.
+e-hist table 8: rows 10, cert_pass False, rows_wrong 2, min_margin 0.25.
+E-hist was trained for the smoke step count only. These runs do not amend the predictions.
+e-pin pin table 8 tape 0: exact_at {"64": true}, first_error_step None, kind None, pin_bitwise 64, ticks 64, stream_tokens None, max_delta 0.
+e-pin remember table 8 tape 0: exact_at {"64": false}, first_error_step 3, kind step, pin_bitwise 0, ticks 3, stream_tokens 6, max_delta 0.
+e-hist pin table 8 tape 0: exact_at {"64": false}, first_error_step 2, kind step, pin_bitwise 64, ticks 64, stream_tokens None, max_delta 0.
+e-hist remember table 8 tape 0: exact_at {"64": false}, first_error_step 2, kind reading, pin_bitwise 0, ticks 2, stream_tokens 4, max_delta 0.
+
+### Prediction amendments
+No change to the registered predictions.
+
+<!-- /SMOKE -->
+
+<!-- COST -->
+
+Counted plan from the smoke probe. pin seconds per tick 0.029666015625. Remember seconds ≈ 0.05355367647058823 T + 0.0 T² on the smoke model, scaled by SIZE_B for the others.
+Tapes 1. Lengths [256, 1024, 4096]. Key length 4096. Registered tapes 4. Registered lengths [256, 1024, 4096, 8192].
+Cuts: ['tapes 4 to 2', 'long length 8192 to 4096', 'tapes 2 to 1'].
+Sum of reservations 19.845515 against remaining 29.851241.
+
+- `train-qwen3-1.7b` A10G max_seconds 350 reserved_usd 0.320763 projected_seconds 125.4
+- `eval-qwen3-1.7b` A10G max_seconds 2708 reserved_usd 1.540698 projected_seconds 1872.4
+- `train-qwen3-4b` A10G max_seconds 579 reserved_usd 0.439239 projected_seconds 295.1
+- `eval-qwen3-4b` A10G max_seconds 5049 reserved_usd 2.751838 projected_seconds 3606.2
+- `train-llama3.1-8b` L40S max_seconds 977 reserved_usd 0.93944 projected_seconds 590.1
+- `eval-llama3.1-8b` L40S max_seconds 8695 reserved_usd 6.753872 projected_seconds 6307.3
+- `train-mistral-7b` L40S max_seconds 897 reserved_usd 0.879171 projected_seconds 531.1
+- `eval-mistral-7b` L40S max_seconds 7987 reserved_usd 6.220494 projected_seconds 5782.6
+The registered sentences name 8192 events and 4 tapes. Read the measured claims at the key length and tape count above. Those sentences are not edited.
+
+<!-- /COST -->
+
+<!-- /AMENDMENTS -->
+
+## Results
+
+<!-- RESULTS -->
+
+Seed 20261028. Tapes 1. Key length 4096. Each cell is trace-exact runs over runs. A shorter length is a prefix of the long tape.
+Figure `figs/remember2.png`. Cobalt is pin, rose is remember, solid is E-pin, dashed is E-hist. The y-axis is the fraction exact. The titles use the E-hist remember count at the key length.
+
+| model | edit | policy | host | 256 | 1024 | 4096 |
+| --- | --- | --- | --- | --- | --- | --- |
+| qwen3-1.7b | e-pin | pin | NVIDIA A10G; unknown; avx512f=False; ledger gpu NVIDIA A10G; ledger cpu AuthenticAMD / 23 / 49 / unknown / avx512f=False | 4/4 | 4/4 | 4/4 |
+|  | e-pin | remember |  | 0/4 | 0/4 | 0/4 |
+|  | e-hist | pin |  | 1/4 | 1/4 | 1/4 |
+|  | e-hist | remember |  | 0/4 | 0/4 | 0/4 |
+| qwen3-4b | e-pin | pin | NVIDIA A10G; unknown; avx512f=False; ledger gpu NVIDIA A10G; ledger cpu AuthenticAMD / 23 / 49 / unknown / avx512f=False | 4/4 | 4/4 | 4/4 |
+|  | e-pin | remember |  | 0/4 | 0/4 | 0/4 |
+|  | e-hist | pin |  | 1/4 | 1/4 | 1/4 |
+|  | e-hist | remember |  | 1/4 | 1/4 | 0/4 |
+| llama3.1-8b | e-pin | pin | NVIDIA L40S; unknown; avx512f=True; ledger gpu NVIDIA L40S; ledger cpu GenuineIntel / 6 / 143 / unknown / avx512f=True | 4/4 | 4/4 | 4/4 |
+|  | e-pin | remember |  | 0/4 | 0/4 | 0/4 |
+|  | e-hist | pin |  | 3/4 | 3/4 | 3/4 |
+|  | e-hist | remember |  | 2/4 | 0/4 | 0/4 |
+| mistral-7b | e-pin | pin | NVIDIA L40S; unknown; avx512f=False; ledger gpu NVIDIA L40S; ledger cpu AuthenticAMD / 25 / 1 / unknown / avx512f=False | 4/4 | 4/4 | 4/4 |
+|  | e-pin | remember |  | 0/4 | 0/4 | 0/4 |
+|  | e-hist | pin |  | 2/4 | 2/4 | 2/4 |
+|  | e-hist | remember |  | 1/4 | 1/4 | 0/4 |
+
+Three numbers, json and csv: E-hist remember exact at 256 4 of 16; lower median first-error step 26 (0 exact runs excluded); E-hist pin exact at 4096 7 of 16.
+
+## First-error anatomy
+
+One count per run. Step: the argmax is a state of the table and not the true next state. Reading: the argmax is not a state. Remember stops at that state. Pin runs the whole tape.
+
+e-pin pin: 16 runs, 16 exact through the tape, lower median first error undefined. Kind: none. Argmax: none. Copy of the fed state: 0. Other row of the same event: 0.
+e-pin remember: 16 runs, 0 exact through the tape, lower median first error 3. Kind: reading 8, step 8. Argmax: event 2, newline 4, other 2, state 8. Copy of the fed state: 1. Other row of the same event: 7.
+e-hist pin: 16 runs, 7 exact through the tape, lower median first error 22. Kind: reading 3, step 6. Argmax: newline 1, other 2, state 6. Copy of the fed state: 5. Other row of the same event: 3.
+e-hist remember: 16 runs, 0 exact through the tape, lower median first error 26. Kind: reading 8, step 8. Argmax: newline 2, other 6, state 8. Copy of the fed state: 1. Other row of the same event: 7.
+
+E-hist remember, lower median first error among runs that are inexact at that length:
+qwen3-1.7b: 256 2, 1024 2, 4096 2.
+qwen3-4b: 256 5, 1024 5, 4096 5.
+llama3.1-8b: 256 26, 1024 67, 4096 67.
+mistral-7b: 256 29, 1024 29, 4096 29.
+
+## Margin trajectory
+
+Median top-2 margin at that step, over runs that executed the step. Remember has no value once it has stopped.
+e-pin pin:
+qwen3-1.7b: 256 3.625 (n 4), 1024 3.625 (n 4), 4096 5.375 (n 4).
+qwen3-4b: 256 8.375 (n 4), 1024 7.75 (n 4), 4096 7.25 (n 4).
+llama3.1-8b: 256 5.125 (n 4), 1024 10.75 (n 4), 4096 10.875 (n 4).
+mistral-7b: 256 4.4375 (n 4), 1024 5.1875 (n 4), 4096 4.75 (n 4).
+e-pin remember:
+qwen3-1.7b: 256 undefined (n 0), 1024 undefined (n 0), 4096 undefined (n 0).
+qwen3-4b: 256 undefined (n 0), 1024 undefined (n 0), 4096 undefined (n 0).
+llama3.1-8b: 256 undefined (n 0), 1024 undefined (n 0), 4096 undefined (n 0).
+mistral-7b: 256 undefined (n 0), 1024 undefined (n 0), 4096 undefined (n 0).
+e-hist pin:
+qwen3-1.7b: 256 3.0 (n 4), 1024 2.0 (n 4), 4096 1.5 (n 4).
+qwen3-4b: 256 6.625 (n 4), 1024 5.25 (n 4), 4096 6.75 (n 4).
+llama3.1-8b: 256 3.375 (n 4), 1024 8.5625 (n 4), 4096 11.625 (n 4).
+mistral-7b: 256 5.8125 (n 4), 1024 6.8125 (n 4), 4096 6.0 (n 4).
+e-hist remember:
+qwen3-1.7b: 256 undefined (n 0), 1024 undefined (n 0), 4096 undefined (n 0).
+qwen3-4b: 256 7.125 (n 1), 1024 8.6875 (n 1), 4096 undefined (n 0).
+llama3.1-8b: 256 1.125 (n 2), 1024 undefined (n 0), 4096 undefined (n 0).
+mistral-7b: 256 3.3125 (n 1), 1024 5.625 (n 1), 4096 undefined (n 0).
+
+## What could be wrong
+
+1. E-pin is not the certified function. Ruled out. E-pin tables that failed re-certification: 0. E-pin pin trace-exact runs at the tape length: 16 of 16. E-pin pin ticks bitwise equal to the certified row: 65536 of 65536. Off-table pin ticks: 0. Pin logit mismatches: 0. E-pin sha256 matches the registered file: 4 of 4.
+2. Remember evicts or restarts positions. Ruled out. Remember runs: 32. Runs with stream_tokens = 2 × ticks and max_delta = 0: 32.
+3. E-hist was trained as pinned blocks. Ruled out. Trains whose saved batch is a continuing length-256 history and whose sha matches the eval load: 4 of 4. qwen3-1.7b steps 100 traj_len 256 supervised_per_step 768 causal_mismatches 0 last_pos 895 pi_len 384 sha_match True qwen3-4b steps 100 traj_len 256 supervised_per_step 768 causal_mismatches 0 last_pos 895 pi_len 384 sha_match True llama3.1-8b steps 100 traj_len 256 supervised_per_step 768 causal_mismatches 0 last_pos 896 pi_len 385 sha_match True mistral-7b steps 100 traj_len 256 supervised_per_step 768 causal_mismatches 0 last_pos 896 pi_len 385 sha_match True
+
+## Edits
+
+qwen3-1.7b: e-pin e7 /uni/m-qwen3-1.7b/qwen3-1.7b/e7/step100 sha256 397555886d4b3064c857339aea110619b93a199616c1b7314b8247c617547a9c merged=None. e-hist e7 /vol/train-qwen3-1.7b/edit/chosen sha256 9fbfdbb78165717e97bda8dbc3894094ca25d671975d72907bd1b1116bf97a13 trainable_params 2048 acc_last10 0.892188 wall 115.7 diverged False chosen 0.
+qwen3-4b: e-pin e7 /bi/scr-6b/E7-steer-L18-block-s100/step100 sha256 4099b56964aa0214cdf7a01b30f7d2184b20fd592120b28e11f45fa5ba431151 merged=None. e-hist e7 /vol/train-qwen3-4b/edit/chosen sha256 3442fdf0bbc0e4d34414032a125561479b6b21def1dabf6faddd797c0e3547fb trainable_params 2560 acc_last10 0.983204 wall 252.7 diverged False chosen 0.
+llama3.1-8b: e-pin e3 /uni/a3-llama3.1-8b/llama3.1-8b/e3/step100 sha256 753bf9cddded9f0d4838775f38a67015b308114a47f0f68f31e23f1335417700 merged=False. e-hist e3 /vol/train-llama3.1-8b/edit/chosen sha256 6ee10aabbbcf6ab50991cf2a6bd9a8cbd382fdc7c8c15e855594ee544e342cb5 trainable_params 851968 acc_last10 0.997005 wall 126.9 diverged False chosen 0.
+mistral-7b: e-pin e3 /uni/a3-mistral-7b/mistral-7b/e3/step100 sha256 6879897e48505926cb0ff6b71970b8d86f54ed2b7b4575c73230e4b5fa2e7017 merged=False. e-hist e3 /vol/train-mistral-7b/edit/chosen sha256 ffdce01850b8f222add1ef34e6a99b20b338ae05a371b43d6a8084fd3febea31 trainable_params 851968 acc_last10 0.989584 wall 125.5 diverged False chosen 0.
+
+<!-- /RESULTS -->
+
+## Audit corrections
+
+The descriptive counts in the results section stand. The margin sampler could append the last step and the first-error step after it had already taken its budget, so a stored trace from these counted jobs can hold 97 or 98 points. `decimate` now reserves those points inside the cap of 96. The counted traces were not recomputed. The counts and the figure do not read the trace length.
+
+"Only the pin is learnable at rank 1" does not follow from those counts. E-pin saw 48 tables on a step and E-hist saw 3 trajectories. The evaluation tables were the ones E-pin had already passed. Qwen's edit is an added vector and Llama's and Mistral's edit is a rank-1 LoRA. The fair test below trains both context policies as the same rank-1 LoRA, on the same tables and the same trajectories, and scores them on tables that neither arm selected.
+
+## Fair test
+
+Question: at a rank-1 budget, is exact execution learnable when the step forgets (pin) and not when it remembers (history)?
+
+Results of this test are unaudited. Every measured number in the results marker is written by `rf_report.py` from the job files. `rf_recount.py` reads `runs.csv` and does not import the report. The report exits if the per-run exact bits, first-error steps, or bitwise counts disagree.
+
+### Paired edits
+
+Both arms are a rank-1 LoRA: r = 1, alpha = 2, dropout 0, all layers, targets `q_proj` `k_proj` `v_proj` `o_proj` (or `qkv_proj` `o_proj` if that is what the model has). The LoRA stays unmerged. The learning rate is 2e-3 for both arms. AdamW betas are (0.9, 0.99), weight decay is 0, the gradient clip is 1.0, warmup is 5 steps, and the run is 100 steps. The checkpoint is step 100. There is no validation score and no retry. The selection rule, fixed before training, is: keep the last step.
+
+One process builds the batches, then trains the pin arm from a fresh base, then trains the history arm from a fresh base. `torch.manual_seed(seed)` and `torch.cuda.manual_seed_all(seed)` run immediately before each LoRA is created, so both arms start from the same initialization. The seeds are 1, 2 and 3. The data RNG is `Random(seed + 7919)` and it is consumed once. Both arms then see that list.
+
+A step is 3 tables from the training name pool and, on each table, one trajectory of 256 events. That is 768 supervised destinations, the same tuples in the same order for both arms. The trajectory is the true run: s_{k+1} = δ(s_k, e_k), teacher-forced. Loss is cross-entropy on the destination token, summed over the step and divided by 768.
+
+The pin view packs each tick as its own block at positions |Π| and |Π|+1, with a block-diagonal mask, so a block sees Π and itself. The history view lays the same ticks out with positions 0, 1, 2, … continuing through Π and the run, and a causal mask. Π includes the tokenizer's document prefix in both views. The RoPE positions and the mask are the context policy. The (state, event, destination) list is not.
+
+### Evaluation
+
+Tables are drawn from the held-out name pool with `Random(20261029)`, 128 draws. The rule takes the lowest index in each size bin (`4-16`, `17-64`, `65-128`, `129-256`), then the lowest remaining indices, until four tables, and sorts that list by index. It does not read a model, a loss, or a pass bit. A cost cut keeps a prefix of that list. Tapes use `Random(20261028 + table_index * 100003)` and do not depend on the training seed. One tape. Lengths 256, 1024 and 4096. A shorter length is a prefix of the tape of 4096. Trace-exactness is against the true machine. The model is fed its own argmax. `exact_at` is true at L when the first mismatch is at index L or later, or there is none. The first-error step is 1-based. The lower median is the value at index (n−1)//2.
+
+Both arms are evaluated under four policies from `bi_stream`:
+
+- pin is PIN: the block [s, e] in one forward, positions |Π| and |Π|+1, on a clone that is discarded. The step forgets and positions restart.
+- remember is FULL: token by token, nothing evicted, positions continuing. The step remembers.
+- tok is TOK: s alone at |Π|, then e alone at |Π|+1, then both evicted. This is the history step's token-by-token format with positions restarted. The step also forgets.
+- adv is ADV: the two-token block at |Π|+2(i−1) and the next position, then evicted. This is the pinned block with positions advancing. The step also forgets.
+
+Pin, tok and adv run the whole tape. Remember stops at the first wrong state, before that state is fed. A pin tick is bitwise equal to a row when its bf16 logits equal the pin certificate of (model state, event) made in that process. A tok tick uses the tok certificate the same way. Adv and remember have no position-invariant row certificate; those cells report exactness and the first-error step. A certificate that fails is a result. The tapes still run. The stored margin trace has at most 96 points, including step 1, the last executed step, and the first-error step.
+
+Models are Qwen3-1.7B and Qwen3-4B when the rung keeps Qwen3-4B. Both use the A10G price class. The Modal function requests `gpu="A10"`. An out-of-memory failure before a complete result is replaced on L40S under a new job id, recorded as an amendment. A timeout is not a trace failure. The retry has a new job id and `--carry` of the finished cells. An incomplete job is not a counted result.
+
+### Registered predictions
+
+These fair-test paragraphs stay as written. The smoke does not amend them. A cost cut is written in the plan marker and does not amend them.
+
+**F1.** Probability 0.75 that the pin arm under the pin policy is trace-exact at 256 on at least half its runs, in every counted model, pooling seeds, tables and tapes. Point fraction 0.75. The 90% interval is 0.50 to 1. Falsified if any counted model is below one half.
+
+**F2.** Probability 0.65 that the history arm under remember is trace-exact at 256 on fewer than half its runs, in every counted model. Point fraction 0.25. The 90% interval is 0 to 0.50, excluding 0.50. Falsified if any counted model is at or above one half.
+
+**F3.** Probability 0.70 that, in every counted model, the pin arm's pin exact fraction at 256 is strictly greater than the history arm's remember exact fraction at 256. Falsified if any counted model has history at or above pin.
+
+**F4.** Probability 0.70 that, in every counted model, the history arm's remember fraction at 4096 is less than or equal to its fraction at 256. Falsified if any counted model is more exact at 4096 than at 256.
+
+**F5.** Probability 0.55 that the pin arm under adv is strictly less exact at 256 than the pin arm under pin, in every counted model whose pin fraction is positive. If the pin fraction is 0, F5 is void for that model. Falsified if any such model has adv at or above pin.
+
+**F6.** Probability 0.55 that the pin arm under tok is strictly less exact at 256 than the pin arm under pin, on the same condition. Void when the pin fraction is 0. Falsified if any such model has tok at or above pin.
+
+### Cost
+
+The cap is $35, on app `polyformer-remember-fair` and volume `polyformer-remember-fair-results`. The rate is the A10G list price plus 8 CPU and 48 GiB, the same numbers as REMEMBER-2. A reservation is that rate times max_seconds + 30 + 240. The estimator is `rf_cost.py`. Pin, tok and adv use `results2/plan.json`'s pin seconds per tick, times sqrt(size/1.7); tok counts two forwards. Remember uses that file's linear coefficient and a quadratic coefficient of 0, times size/1.7. Train budgets 180 seconds an arm for Qwen3-1.7B and 360 seconds an arm for Qwen3-4B, above the REMEMBER-2 E7 walls, plus two loads. max_seconds is ceil(1.35 × projected + 180) and must be at most 24000.
+
+The ladder, highest first, never drops a seed, a length, an arm, or a policy: 4 eval tables and both models; 3 tables and both models; 2 tables and both models; 2 tables and Qwen3-1.7B only. If the last rung does not fit, do not launch. The smoke is one job before any counted job. If its pin seconds per tick exceed three times the registered pin rate, recompute the rung with that smoke rate before the counted spawn. The smoke cannot promote a higher rung. Waves are smoke, then every train, then every eval. Settle a wave before reserving the next.
+
+<!-- FAIR-PLAN -->
+
+Unaudited. This block is the rung, not a measured result.
+
+Estimator. Pin, tok and adv seconds per tick start from `results2/plan.json` pin_seconds_per_tick 0.029666015625, times sqrt(size/1.7). Tok is two such forwards. Remember seconds per tick start from remember_a 0.05355367647058823 with remember_b 0.0, times size/1.7. An eval job prices both arms, all four policies, a full tape at the key length, a 256-row pin certificate and a 256-row tok certificate, and two loads. A train job prices both arms at 180s for Qwen3-1.7B and 360s for Qwen3-4B, plus two loads. max_seconds is ceil(1.35 × projected + 180) and must be at most 24000. A reservation is the A10G rate in `rf_cost.py` times max_seconds + 30 + 240.
+
+Models ['qwen3-1.7b', 'qwen3-4b']. Seeds [1, 2, 3]. Eval tables 3. Tapes 1. Lengths [256, 1024, 4096]. Key length 4096. Train tables 3. Supervised positions per step 768.
+Cuts: 4 tables, qwen3-1.7b+qwen3-4b: reserved 40.417714.
+Smoke reserved 0.915727. Counted reserved 31.016766. Together 31.932493 against cap 35.0.
+
+- `smoke-fair-qwen3-1.7b` A10G max_seconds 1500 reserved_usd 0.915727 projected_seconds None
+- `fair-qwen3-1.7b-s1` A10G max_seconds 720 reserved_usd 0.512186 projected_seconds 400.0
+- `fair-qwen3-1.7b-s2` A10G max_seconds 720 reserved_usd 0.512186 projected_seconds 400.0
+- `fair-qwen3-1.7b-s3` A10G max_seconds 720 reserved_usd 0.512186 projected_seconds 400.0
+- `eval-fair-qwen3-1.7b-s1` A10G max_seconds 6133 reserved_usd 3.312656 projected_seconds 4409.1
+- `eval-fair-qwen3-1.7b-s2` A10G max_seconds 6133 reserved_usd 3.312656 projected_seconds 4409.1
+- `eval-fair-qwen3-1.7b-s3` A10G max_seconds 6133 reserved_usd 3.312656 projected_seconds 4409.1
+- `fair-qwen3-4b-s1` A10G max_seconds 1260 reserved_usd 0.791561 projected_seconds 800.0
+- `fair-qwen3-4b-s2` A10G max_seconds 1260 reserved_usd 0.791561 projected_seconds 800.0
+- `fair-qwen3-4b-s3` A10G max_seconds 1260 reserved_usd 0.791561 projected_seconds 800.0
+- `eval-fair-qwen3-4b-s1` A10G max_seconds 10791 reserved_usd 5.722519 projected_seconds 7859.9
+- `eval-fair-qwen3-4b-s2` A10G max_seconds 10791 reserved_usd 5.722519 projected_seconds 7859.9
+- `eval-fair-qwen3-4b-s3` A10G max_seconds 10791 reserved_usd 5.722519 projected_seconds 7859.9
+
+<!-- /FAIR-PLAN -->
+
+<!-- FAIR-SMOKE -->
+
+Unaudited. The smoke is not a counted result. No change to the registered predictions.
+
+Steps 2. Eval length [64]. Runs 8. Max stored trace 64. Pin seconds per tick 0.0574359375.
+same_init True. same_data True. causal_mismatches 0.
+
+<!-- /FAIR-SMOKE -->
+
+<!-- FAIR-RESULTS -->
+
+Pending the counted jobs. Unaudited when written.
+
+<!-- /FAIR-RESULTS -->
+
+exec
+/bin/zsh -lc 'nice -n 19 cat research/remember/results_fair/modal_ledger.json research/remember/rf_modal.py' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+{
+ "app": "polyformer-remember-fair",
+ "cap_history": [
+  {
+   "at": "2026-10-29T05:46:40.314077+00:00",
+   "cap_usd": 35.0,
+   "why": "Fair paired test: cap $35 recorded before any spend"
+  }
+ ],
+ "cap_usd_total": 35.0,
+ "cost_basis": "upper-rate estimate (GPU + 8 CPU + 48 GiB at Modal list prices) from max_seconds at reservation, actual wall plus startup at settlement; not an invoice",
+ "jobs": {
+  "eval-fair-qwen3-1.7b-s1": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "1",
+    "--train-job",
+    "fair-qwen3-1.7b-s1",
+    "--tables",
+    "3"
+   ],
+   "call_id": "fc-01M634AE8BQ1743RZYWSHYAS09",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "runs.json",
+    "runs.csv",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "eval-fair-qwen3-1.7b-s1",
+   "launched_at": "2026-10-29T06:07:26.006547+00:00",
+   "max_seconds": 6133,
+   "reserved_at": "2026-10-29T06:07:25.751858+00:00",
+   "reserved_usd": 3.312656,
+   "script": "rf_eval.py",
+   "settled_at": "2026-10-29T07:43:15.371181+00:00",
+   "settled_usd": 2.773905,
+   "status": "complete",
+   "wall": 5121.653
+  },
+  "eval-fair-qwen3-1.7b-s2": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "2",
+    "--train-job",
+    "fair-qwen3-1.7b-s2",
+    "--tables",
+    "3"
+   ],
+   "call_id": "fc-01M634AEDBYY2WGREDKQNFTDD4",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "runs.json",
+    "runs.csv",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "eval-fair-qwen3-1.7b-s2",
+   "launched_at": "2026-10-29T06:07:26.183150+00:00",
+   "max_seconds": 6133,
+   "reserved_at": "2026-10-29T06:07:26.008451+00:00",
+   "reserved_usd": 3.312656,
+   "script": "rf_eval.py",
+   "settled_at": "2026-10-29T07:43:15.749755+00:00",
+   "settled_usd": 2.818229,
+   "status": "complete",
+   "wall": 5207.327
+  },
+  "eval-fair-qwen3-1.7b-s3": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "3",
+    "--train-job",
+    "fair-qwen3-1.7b-s3",
+    "--tables",
+    "3"
+   ],
+   "call_id": "fc-01M634AEK3G6AMQ70VFMWV4CH1",
+   "cpu_actual": "AuthenticAMD | 23 | 49 | unknown | avx512f=False",
+   "error": "subprocess exceeded 6133 seconds",
+   "files": [
+    "runs.json",
+    "runs.csv",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10G",
+   "job_id": "eval-fair-qwen3-1.7b-s3",
+   "launched_at": "2026-10-29T06:07:26.384730+00:00",
+   "max_seconds": 6133,
+   "reserved_at": "2026-10-29T06:07:26.184864+00:00",
+   "reserved_usd": 3.312656,
+   "script": "rf_eval.py",
+   "settled_at": "2026-10-29T07:54:00.149185+00:00",
+   "settled_usd": 3.297222,
+   "status": "error",
+   "wall": 6133.167
+  },
+  "eval-fair-qwen3-1.7b-s3-r1": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "3",
+    "--train-job",
+    "fair-qwen3-1.7b-s3",
+    "--tables",
+    "3",
+    "--carry",
+    "/vol/eval-fair-qwen3-1.7b-s3/runs.json"
+   ],
+   "call_id": "fc-01M63AFNAJE5C9M71ABFMXZ3K0",
+   "gpu": "A10G",
+   "job_id": "eval-fair-qwen3-1.7b-s3-r1",
+   "launched_at": "2026-10-29T07:55:08.530835+00:00",
+   "max_seconds": 1800,
+   "reserved_at": "2026-10-29T07:55:08.280662+00:00",
+   "reserved_usd": 1.070935,
+   "script": "rf_eval.py",
+   "status": "running"
+  },
+  "eval-fair-qwen3-4b-s1": {
+   "argv": [
+    "--model",
+    "qwen3-4b",
+    "--seed",
+    "1",
+    "--train-job",
+    "fair-qwen3-4b-s1",
+    "--tables",
+    "3"
+   ],
+   "call_id": "fc-01M634AESA7ZBJHZEF4JMSJGD4",
+   "gpu": "A10G",
+   "job_id": "eval-fair-qwen3-4b-s1",
+   "launched_at": "2026-10-29T06:07:26.549646+00:00",
+   "max_seconds": 10791,
+   "reserved_at": "2026-10-29T06:07:26.386614+00:00",
+   "reserved_usd": 5.722519,
+   "script": "rf_eval.py",
+   "status": "running"
+  },
+  "eval-fair-qwen3-4b-s2": {
+   "argv": [
+    "--model",
+    "qwen3-4b",
+    "--seed",
+    "2",
+    "--train-job",
+    "fair-qwen3-4b-s2",
+    "--tables",
+    "3"
+   ],
+   "call_id": "fc-01M634AEYFH95G6VAASQEYF1BS",
+   "gpu": "A10G",
+   "job_id": "eval-fair-qwen3-4b-s2",
+   "launched_at": "2026-10-29T06:07:26.717507+00:00",
+   "max_seconds": 10791,
+   "reserved_at": "2026-10-29T06:07:26.551402+00:00",
+   "reserved_usd": 5.722519,
+   "script": "rf_eval.py",
+   "status": "running"
+  },
+  "eval-fair-qwen3-4b-s3": {
+   "argv": [
+    "--model",
+    "qwen3-4b",
+    "--seed",
+    "3",
+    "--train-job",
+    "fair-qwen3-4b-s3",
+    "--tables",
+    "3"
+   ],
+   "call_id": "fc-01M634AF41302D9VGRGSBYJQ0G",
+   "gpu": "A10G",
+   "job_id": "eval-fair-qwen3-4b-s3",
+   "launched_at": "2026-10-29T06:07:26.886051+00:00",
+   "max_seconds": 10791,
+   "reserved_at": "2026-10-29T06:07:26.719294+00:00",
+   "reserved_usd": 5.722519,
+   "script": "rf_eval.py",
+   "status": "running"
+  },
+  "fair-qwen3-1.7b-s1": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "1"
+   ],
+   "call_id": "fc-01M633T99N0ZR02V7D3RWAVK92",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "edit/hist/adapter_config.json",
+    "edit/pin/adapter_config.json",
+    "train.json",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "fair-qwen3-1.7b-s1",
+   "launched_at": "2026-10-29T05:58:36.635232+00:00",
+   "max_seconds": 720,
+   "reserved_at": "2026-10-29T05:58:36.371131+00:00",
+   "reserved_usd": 0.512186,
+   "script": "rf_train.py",
+   "settled_at": "2026-10-29T06:02:58.410934+00:00",
+   "settled_usd": 0.234146,
+   "status": "complete",
+   "wall": 212.579
+  },
+  "fair-qwen3-1.7b-s2": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "2"
+   ],
+   "call_id": "fc-01M633T9F3QEPQ3Y2DC2EM7419",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "edit/hist/adapter_config.json",
+    "edit/pin/adapter_config.json",
+    "train.json",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "fair-qwen3-1.7b-s2",
+   "launched_at": "2026-10-29T05:58:36.804215+00:00",
+   "max_seconds": 720,
+   "reserved_at": "2026-10-29T05:58:36.636661+00:00",
+   "reserved_usd": 0.512186,
+   "script": "rf_train.py",
+   "settled_at": "2026-10-29T06:02:58.743754+00:00",
+   "settled_usd": 0.229228,
+   "status": "complete",
+   "wall": 203.073
+  },
+  "fair-qwen3-1.7b-s3": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "3"
+   ],
+   "call_id": "fc-01M633T9M84J5P8VZ0EKZGZ3RJ",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "edit/hist/adapter_config.json",
+    "edit/pin/adapter_config.json",
+    "train.json",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "fair-qwen3-1.7b-s3",
+   "launched_at": "2026-10-29T05:58:36.975434+00:00",
+   "max_seconds": 720,
+   "reserved_at": "2026-10-29T05:58:36.805902+00:00",
+   "reserved_usd": 0.512186,
+   "script": "rf_train.py",
+   "settled_at": "2026-10-29T06:02:59.045617+00:00",
+   "settled_usd": 0.232733,
+   "status": "complete",
+   "wall": 209.847
+  },
+  "fair-qwen3-4b-s1": {
+   "argv": [
+    "--model",
+    "qwen3-4b",
+    "--seed",
+    "1"
+   ],
+   "call_id": "fc-01M633T9S7GZDDC7BTMYDBSW44",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "edit/hist/adapter_config.json",
+    "edit/pin/adapter_config.json",
+    "train.json",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "fair-qwen3-4b-s1",
+   "launched_at": "2026-10-29T05:58:37.139691+00:00",
+   "max_seconds": 1260,
+   "reserved_at": "2026-10-29T05:58:36.977303+00:00",
+   "reserved_usd": 0.791561,
+   "script": "rf_train.py",
+   "settled_at": "2026-10-29T06:07:11.849771+00:00",
+   "settled_usd": 0.363801,
+   "status": "complete",
+   "wall": 463.187
+  },
+  "fair-qwen3-4b-s2": {
+   "argv": [
+    "--model",
+    "qwen3-4b",
+    "--seed",
+    "2"
+   ],
+   "call_id": "fc-01M633T9YGZM5NMVZQW0XATBE9",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "edit/hist/adapter_config.json",
+    "edit/pin/adapter_config.json",
+    "train.json",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "fair-qwen3-4b-s2",
+   "launched_at": "2026-10-29T05:58:37.301166+00:00",
+   "max_seconds": 1260,
+   "reserved_at": "2026-10-29T05:58:37.141226+00:00",
+   "reserved_usd": 0.791561,
+   "script": "rf_train.py",
+   "settled_at": "2026-10-29T06:07:12.150663+00:00",
+   "settled_usd": 0.360834,
+   "status": "complete",
+   "wall": 457.453
+  },
+  "fair-qwen3-4b-s3": {
+   "argv": [
+    "--model",
+    "qwen3-4b",
+    "--seed",
+    "3"
+   ],
+   "call_id": "fc-01M633TA3Q2138R2F9MMAQM5JC",
+   "cpu_actual": "GenuineIntel | 6 | 106 | unknown | avx512f=True",
+   "files": [
+    "edit/hist/adapter_config.json",
+    "edit/pin/adapter_config.json",
+    "train.json",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10",
+   "job_id": "fair-qwen3-4b-s3",
+   "launched_at": "2026-10-29T05:58:37.465658+00:00",
+   "max_seconds": 1260,
+   "reserved_at": "2026-10-29T05:58:37.302657+00:00",
+   "reserved_usd": 0.791561,
+   "script": "rf_train.py",
+   "settled_at": "2026-10-29T06:07:12.449308+00:00",
+   "settled_usd": 0.35676,
+   "status": "complete",
+   "wall": 449.577
+  },
+  "smoke-fair-qwen3-1.7b": {
+   "argv": [
+    "--model",
+    "qwen3-1.7b",
+    "--seed",
+    "1",
+    "--steps",
+    "2",
+    "--eval-length",
+    "64"
+   ],
+   "call_id": "fc-01M6334E0CYF6F5JEYN8F2Y0ZG",
+   "cpu_actual": "AuthenticAMD | 23 | 49 | unknown | avx512f=False",
+   "files": [
+    "edit/hist/adapter_config.json",
+    "edit/pin/adapter_config.json",
+    "runs.json",
+    "timing.json",
+    "train.json",
+    "runs.csv",
+    "job.log.json"
+   ],
+   "gpu": "A10G",
+   "gpu_actual": "NVIDIA A10G",
+   "job_id": "smoke-fair-qwen3-1.7b",
+   "launched_at": "2026-10-29T05:46:40.567185+00:00",
+   "max_seconds": 1500,
+   "reserved_at": "2026-10-29T05:46:40.314212+00:00",
+   "reserved_usd": 0.915727,
+   "script": "rf_smoke.py",
+   "settled_at": "2026-10-29T05:57:42.919617+00:00",
+   "settled_usd": 0.17214,
+   "status": "complete",
+   "wall": 92.728
+  }
+ },
+ "schema": 1,
+ "volume": "polyformer-remember-fair-results"
+}"""
+Modal launcher for the fair paired test. Own app `polyformer-remember-fair`, own volume
+`polyformer-remember-fair-results`. Cap $35, recorded before any spend.
+
+    python research/remember/rf_modal.py status
+    uv run --no-project --with modal modal deploy research/remember/rf_modal.py
+    uv run --no-project --with modal python research/remember/rf_modal.py spawn --manifest research/remember/manifests_fair/smoke.json
+    uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/smoke.json
+"""
+
+from __future__ import annotations
+
+import contextlib
+import datetime as dt
+import fcntl
+import hashlib
+import json
+import os
+import pathlib
+import signal
+import subprocess
+import sys
+import time
+
+ROOT = pathlib.Path(__file__).resolve().parent
+PB_ROOT = ROOT.parent / "promptbox"
+BI_ROOT = ROOT.parent / "bigidea"
+UNI_ROOT = ROOT.parent / "universal"
+REPO = ROOT.parent.parent
+MANIFESTS = ROOT / "manifests_fair"
+RESULTS = ROOT / "results_fair"
+LEDGER = RESULTS / "modal_ledger.json"
+LOCK = RESULTS / "modal_ledger.lock"
+APP_NAME = "polyformer-remember-fair"
+VOLUME_NAME = "polyformer-remember-fair-results"
+HF_VOLUME = "polyformer-universal-hf"
+UNI_VOLUME = "polyformer-universal-results"
+BI_VOLUME = "polyformer-bigidea-results"
+# Mirrored from rf_cost.py. The deployed module is imported from /root, and rf_cost is not
+# in that image. Local commands check the mirror in main().
+CAP_USD = 35.0
+CPU_MAX = 8
+RAM_GIB_MAX = 48
+STARTUP_SECONDS = 240
+PB_SOURCES = ("pb_common.py", "pb_pin.py", "pb_lit.py", "pb_lang.py", "pb_data.py", "pb_families.py")
+OWN = ("rf_data.py", "rf_eval.py", "rf_models.py", "rf_smoke.py", "rf_train.py",
+       "r2_data.py", "r2_load.py", "r2_models.py", "rem_job.py", "rem_models.py")
+
+
+def stamp():
+    return dt.datetime.now(dt.timezone.utc).isoformat()
+
+
+def sha256_bytes(data):
+    return hashlib.sha256(data).hexdigest()
+
+
+def atomic_json(path, value):
+    path = pathlib.Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    tmp = path.with_suffix(path.suffix + f".{os.getpid()}.tmp")
+    tmp.write_text(json.dumps(value, indent=1, sort_keys=True, default=str))
+    os.replace(tmp, path)
+
+
+def source_files():
+    own = [ROOT / n for n in OWN]
+    bi = [BI_ROOT / "bi_stream.py", BI_ROOT / "bi_edit.py"]
+    uni = [UNI_ROOT / "uni_models.py"]
+    pb = [PB_ROOT / n for n in PB_SOURCES]
+    files = own + bi + uni + pb
+    missing = [str(p) for p in files if not p.is_file()]
+    if missing:
+        raise FileNotFoundError(f"source files missing: {missing}")
+    return files
+
+
+def remote_name(p):
+    parent = p.parent
+    if parent == ROOT:
+        return "rem/" + p.name
+    if parent == BI_ROOT:
+        return "bi/" + p.name
+    if parent == UNI_ROOT:
+        return "uni/" + p.name
+    return "pb/" + p.name
+
+
+def sources():
+    return {remote_name(p): sha256_bytes(p.read_bytes()) for p in source_files()}
+
+
+def reservation(job):
+    import rf_cost
+    return rf_cost.reservation(job)
+
+
+@contextlib.contextmanager
+def locked_ledger():
+    LOCK.parent.mkdir(parents=True, exist_ok=True)
+    with LOCK.open("a+") as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX)
+        ledger = json.loads(LEDGER.read_text()) if LEDGER.exists() else {
+            "schema": 1, "app": APP_NAME, "volume": VOLUME_NAME, "cap_usd_total": CAP_USD, "cap_history": [
+                {"at": stamp(), "cap_usd": CAP_USD, "why": "Fair paired test: cap $35 recorded before any spend"}],
+            "jobs": {},
+            "cost_basis": "upper-rate estimate (GPU + 8 CPU + 48 GiB at Modal list prices) from max_seconds at "
+                          "reservation, actual wall plus startup at settlement; not an invoice"}
+        yield ledger
+        atomic_json(LEDGER, ledger)
+        fcntl.flock(lock, fcntl.LOCK_UN)
+
+
+def used(ledger):
+    return sum(e.get("settled_usd", e["reserved_usd"]) for e in ledger["jobs"].values())
+
+
+def normalize(raw, hashes):
+    import rf_cost
+    job = {"id": str(raw["id"]), "script": str(raw["script"]), "argv": [str(a) for a in raw.get("argv", [])],
+           "gpu": str(raw.get("gpu", "A10G")), "max_seconds": int(raw["max_seconds"])}
+    if job["gpu"] not in rf_cost.GPU_RATE or not (60 <= job["max_seconds"] <= 24000) or "rem/" + job["script"] not in hashes:
+        raise ValueError(f"bad job {job}")
+    job["reserved_usd"] = reservation(job)
+    return job
+
+
+def plan(name, jobs_path):
+    hashes = sources()
+    jobs = [normalize(j, hashes) for j in json.loads(pathlib.Path(jobs_path).read_text())]
+    if len({j["id"] for j in jobs}) != len(jobs):
+        raise ValueError("duplicate job ids")
+    commit = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=REPO, text=True).strip()
+    paths = [str(p) for p in source_files()]
+    dirty = subprocess.check_output(["git", "status", "--porcelain", "--", *paths], cwd=REPO, text=True)
+    dirty = [line for line in dirty.splitlines() if line.strip()]
+    manifest = {"name": name, "app": APP_NAME, "created_at": stamp(), "commit": commit,
+                "uncommitted_sources": bool(dirty), "source_hashes": hashes, "jobs": jobs,
+                "reserved_usd": round(sum(j["reserved_usd"] for j in jobs), 6)}
+    MANIFESTS.mkdir(exist_ok=True)
+    path = MANIFESTS / f"{name}.json"
+    if path.exists():
+        raise ValueError(f"manifest already exists: {path}")
+    path.write_text(json.dumps(manifest, indent=1))
+    print(json.dumps({"manifest": str(path), "jobs": len(jobs), "commit": commit,
+                      "uncommitted_sources": bool(dirty), "reserved_usd": manifest["reserved_usd"]}, indent=1))
+    return path
+
+
+def reserve(job):
+    with locked_ledger() as ledger:
+        if job["id"] in ledger["jobs"]:
+            return ledger["jobs"][job["id"]], False
+        cap = ledger.get("cap_usd_total", CAP_USD)
+        if used(ledger) + job["reserved_usd"] > cap + 1e-9:
+            raise RuntimeError(f"cap: {used(ledger):.3f} USD reserved or settled; {job['id']} needs "
+                               f"{job['reserved_usd']:.3f}; cap {cap}")
+        entry = {"job_id": job["id"], "script": job["script"], "argv": job["argv"], "gpu": job["gpu"],
+                 "reserved_usd": job["reserved_usd"], "max_seconds": job["max_seconds"], "status": "reserved",
+                 "reserved_at": stamp()}
+        ledger["jobs"][job["id"]] = entry
+        return entry, True
+
+
+def record_call(job_id, call_id):
+    with locked_ledger() as ledger:
+        ledger["jobs"][job_id].update({"call_id": call_id, "status": "running", "launched_at": stamp()})
+
+
+def settle(job, result):
+    import rf_cost
+    wall = float(result.get("wall", job["max_seconds"]))
+    amount = round(rf_cost.rate(job["gpu"]) * (min(wall, job["max_seconds"] + rf_cost.WRAPPER) + STARTUP_SECONDS), 6)
+    out = RESULTS / job["id"]
+    out.mkdir(parents=True, exist_ok=True)
+    written = []
+    for name, text in result.get("files", {}).items():
+        target = out / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(text)
+        written.append(name)
+    with locked_ledger() as ledger:
+        entry = ledger["jobs"][job["id"]]
+        entry.update({"status": "error" if result.get("error") else "complete", "settled_usd": amount, "wall": wall,
+                      "settled_at": stamp(), "files": written, "gpu_actual": result.get("gpu_actual"),
+                      "cpu_actual": result.get("cpu_actual")})
+        if result.get("error"):
+            entry["error"] = str(result["error"])[-2000:]
+    return amount, written
+
+
+def worker(job, expected_sources, vol_commit):
+    started = time.monotonic()
+    remote_root = pathlib.Path("/root/src")
+    actual = {str(p.relative_to(remote_root)): sha256_bytes(p.read_bytes())
+              for p in sorted(remote_root.glob("*/*.py"))}
+    if actual != expected_sources:
+        diff = sorted(k for k in set(actual) | set(expected_sources) if actual.get(k) != expected_sources.get(k))
+        return {"error": f"remote source hash mismatch: {diff}", "wall": round(time.monotonic() - started, 3)}
+    out_dir = pathlib.Path("/vol") / job["id"]
+    out_dir.mkdir(parents=True, exist_ok=True)
+    log_path = out_dir / "job.log"
+    command = [sys.executable, "-u", str(remote_root / "rem" / job["script"]), *job["argv"], "--out", str(out_dir)]
+    env = os.environ.copy()
+    for key in ("HF_TOKEN", "HF_HUB_TOKEN", "HUGGING_FACE_HUB_TOKEN"):
+        env.pop(key, None)
+    env.update({"REMEMBER_JOB_ID": job["id"], "TOKENIZERS_PARALLELISM": "false", "HF_HUB_OFFLINE": "1",
+                "TRANSFORMERS_OFFLINE": "1", "HF_HOME": "/tmp/hf", "HF_HUB_CACHE": "/tmp/hf/hub",
+                "HF_HUB_DISABLE_TELEMETRY": "1", "PYTORCH_CUDA_ALLOC_CONF": "expandable_segments:True",
+                "PYTHONPATH": ":".join(str(remote_root / n) for n in ("rem", "bi", "uni", "pb"))})
+    timed_out, last_commit = False, time.monotonic()
+    with log_path.open("w") as fout:
+        process = subprocess.Popen(command, cwd=remote_root, stdout=fout, stderr=subprocess.STDOUT, text=True,
+                                   start_new_session=True, env=env)
+        deadline, offset = time.monotonic() + job["max_seconds"], 0
+        while process.poll() is None:
+            remaining = deadline - time.monotonic()
+            if remaining <= 0:
+                timed_out = True
+                os.killpg(process.pid, signal.SIGKILL)
+                process.wait()
+                break
+            try:
+                process.wait(timeout=min(20, remaining))
+            except subprocess.TimeoutExpired:
+                pass
+            with log_path.open() as f:
+                f.seek(offset)
+                new = f.read()
+                offset = f.tell()
+            if new.strip():
+                print(f"[{job['id']}] {new.strip()[-3000:]}", flush=True)
+            if time.monotonic() - last_commit > 300:
+                with contextlib.suppress(Exception):
+                    vol_commit()
+                last_commit = time.monotonic()
+    text = log_path.read_text()
+    result = {"wall": round(time.monotonic() - started, 3), "log_tail": text[-12000:],
+              "python_version": sys.version.split()[0], "remote_completed_at": stamp()}
+    if timed_out:
+        result["error"] = f"subprocess exceeded {job['max_seconds']} seconds"
+    elif process.returncode != 0:
+        result["error"] = f"subprocess exit {process.returncode}: {text[-4000:]}"
+    files = {}
+    for p in sorted(out_dir.rglob("*.json")):
+        if p.name.startswith("_"):
+            continue
+        if p.stat().st_size < 2_000_000:
+            files[str(p.relative_to(out_dir))] = p.read_text()
+    csv_path = out_dir / "runs.csv"
+    if csv_path.is_file() and csv_path.stat().st_size < 2_000_000:
+        files["runs.csv"] = csv_path.read_text()
+    files["job.log.json"] = json.dumps({"job_id": job["id"], "log": text[-300000:]})
+    result["files"] = files
+    try:
+        result["gpu_actual"] = subprocess.check_output(
+            ["nvidia-smi", "--query-gpu=name", "--format=csv,noheader"], text=True, timeout=5).strip()
+    except Exception:
+        result["gpu_actual"] = "none"
+    try:
+        info = pathlib.Path("/proc/cpuinfo").read_text()
+        cpu = [line.split(":", 1)[1].strip() for line in info.splitlines()
+               if line.lower().startswith(("model name", "vendor_id", "cpu family", "model\t"))]
+        flags = next((line.split(":", 1)[1].split() for line in info.splitlines() if line.startswith("flags")), [])
+        result["cpu_actual"] = " | ".join(cpu[:4]) + f" | avx512f={'avx512f' in flags}"
+    except Exception:
+        result["cpu_actual"] = "unknown"
+    (out_dir / "_result.json").write_text(json.dumps({k: v for k, v in result.items() if k != "files"}
+                                                     | {"file_names": list(files)}))
+    return result
+
+
+try:
+    import modal
+except ImportError:
+    modal = None
+
+if modal is not None:
+    app = modal.App(APP_NAME)
+    results_vol = modal.Volume.from_name(VOLUME_NAME, create_if_missing=True)
+    hf_vol = modal.Volume.from_name(HF_VOLUME).read_only()
+    uni_vol = modal.Volume.from_name(UNI_VOLUME).read_only()
+    bi_vol = modal.Volume.from_name(BI_VOLUME).read_only()
+    image = (modal.Image.debian_slim(python_version="3.12")
+             .pip_install("torch==2.13.0", "transformers==5.19.0", "peft==0.21.2", "accelerate==1.15.0",
+                          "numpy", "safetensors", "huggingface_hub")
+             .env({"HF_HUB_OFFLINE": "1", "TRANSFORMERS_OFFLINE": "1", "HF_HOME": "/tmp/hf",
+                   "HF_HUB_CACHE": "/tmp/hf/hub", "HF_HUB_DISABLE_TELEMETRY": "1",
+                   "TOKENIZERS_PARALLELISM": "false"}))
+    if (ROOT / "rf_train.py").is_file():
+        for _src in source_files():
+            image = image.add_local_file(_src, f"/root/src/{remote_name(_src)}")
+
+    def _run(job, expected_sources):
+        results_vol.reload()
+        result = worker(job, expected_sources, results_vol.commit)
+        with contextlib.suppress(Exception):
+            results_vol.commit()
+        return result
+
+    _common = dict(image=image, timeout=30000, startup_timeout=STARTUP_SECONDS + 600, retries=0, scaledown_window=2,
+                   volumes={"/vol": results_vol, "/hf": hf_vol, "/uni": uni_vol, "/bi": bi_vol},
+                   cpu=(4.0, CPU_MAX), memory=(32768, RAM_GIB_MAX * 1024))
+
+    @app.function(gpu="H100", **_common)
+    def execute_h100(job, expected_sources):
+        return _run(job, expected_sources)
+
+    @app.function(gpu="A10", **_common)
+    def execute_a10g(job, expected_sources):
+        return _run(job, expected_sources)
+
+    @app.function(gpu="L40S", **_common)
+    def execute_l40s(job, expected_sources):
+        return _run(job, expected_sources)
+
+
+FN_OF = {"H100": "execute_h100", "A10G": "execute_a10g", "L40S": "execute_l40s"}
+
+
+def spawn_deployed(manifest):
+    spec = json.loads(pathlib.Path(manifest).read_text())
+    if spec.get("uncommitted_sources"):
+        raise RuntimeError("refusing to spawn: sources were dirty when the manifest was planned")
+    if sources() != spec["source_hashes"]:
+        raise ValueError("sources changed since planning; plan a new manifest and redeploy")
+    for job in spec["jobs"]:
+        fn = modal.Function.from_name(APP_NAME, FN_OF[job["gpu"]])
+        entry, created = reserve(job)
+        if not created or entry.get("call_id"):
+            print(json.dumps({"job_id": job["id"], "status": "already_" + entry["status"]}))
+            continue
+        call = fn.spawn(job, spec["source_hashes"])
+        record_call(job["id"], call.object_id)
+        print(json.dumps({"job_id": job["id"], "status": "spawned", "call_id": call.object_id}), flush=True)
+
+
+def collect(manifest):
+    spec = json.loads(pathlib.Path(manifest).read_text())
+    with locked_ledger() as ledger:
+        known = dict(ledger["jobs"])
+    vol = modal.Volume.from_name(VOLUME_NAME)
+    for job in spec["jobs"]:
+        entry = known.get(job["id"], {})
+        if entry.get("status") != "running" or not entry.get("call_id"):
+            print(json.dumps({"job_id": job["id"], "status": entry.get("status", "not launched")}))
+            continue
+        try:
+            result = modal.FunctionCall.from_id(entry["call_id"]).get(timeout=0)
+        except TimeoutError:
+            print(json.dumps({"job_id": job["id"], "status": "still running"}))
+            continue
+        except Exception as exc:
+            try:
+                meta = json.loads(b"".join(vol.read_file(f"{job['id']}/_result.json")))
+                files = {}
+                for n in meta.get("file_names", []):
+                    if n == "job.log.json":
+                        files[n] = json.dumps({"log": b"".join(vol.read_file(f"{job['id']}/job.log")).decode()[-300000:]})
+                    else:
+                        files[n] = b"".join(vol.read_file(f"{job['id']}/{n}")).decode()
+                result = dict(meta, files=files)
+            except Exception:
+                files = {}
+                for name in ("runs.json", "runs.csv", "train.json", "timing.json", "job.log"):
+                    try:
+                        raw = b"".join(vol.read_file(f"{job['id']}/{name}"))
+                    except Exception:
+                        continue
+                    if name == "job.log":
+                        files["job.log.json"] = json.dumps({"log": raw.decode(errors="replace")[-300000:]})
+                    else:
+                        files[name] = raw.decode()
+                if not files:
+                    print(json.dumps({"job_id": job["id"], "status": "unresolved",
+                                      "error": f"{type(exc).__name__}: {str(exc)[:300]}"}))
+                    continue
+                result = {"error": f"{type(exc).__name__}: {str(exc)[:300]}", "files": files,
+                          "wall": job["max_seconds"], "gpu_actual": None, "cpu_actual": None}
+        amount, written = settle(job, result)
+        print(json.dumps({"job_id": job["id"], "status": "error" if result.get("error") else "complete",
+                          "usd": amount, "files": len(written), "gpu": result.get("gpu_actual"),
+                          "cpu": result.get("cpu_actual"),
+                          "error": (str(result.get("error"))[-800:] if result.get("error") else None)}), flush=True)
+
+
+def status():
+    with locked_ledger() as ledger:
+        counts, open_jobs = {}, []
+        for entry in ledger["jobs"].values():
+            counts[entry["status"]] = counts.get(entry["status"], 0) + 1
+            if entry["status"] in ("reserved", "running"):
+                open_jobs.append(entry["job_id"])
+        settled = sum(entry.get("settled_usd", 0.0) for entry in ledger["jobs"].values())
+        print(json.dumps({"app": APP_NAME, "settled_usd": round(settled, 4),
+                          "reserved_or_settled_usd": round(used(ledger), 4),
+                          "cap_usd": ledger.get("cap_usd_total", CAP_USD), "jobs": counts, "open": open_jobs}, indent=1))
+
+
+def main():
+    import argparse
+    import rf_cost
+    if (CAP_USD, CPU_MAX, RAM_GIB_MAX, STARTUP_SECONDS) != (
+            rf_cost.M.CAP_USD, rf_cost.CPU_MAX, rf_cost.RAM_GIB, rf_cost.STARTUP):
+        raise SystemExit("rf_modal constants drifted from rf_cost")
+    ap = argparse.ArgumentParser()
+    sub = ap.add_subparsers(dest="cmd", required=True)
+    p = sub.add_parser("plan")
+    p.add_argument("--name", required=True)
+    p.add_argument("--jobs", required=True)
+    sub.add_parser("status")
+    sp = sub.add_parser("spawn")
+    sp.add_argument("--manifest", required=True)
+    co = sub.add_parser("collect")
+    co.add_argument("--manifest", required=True)
+    args = ap.parse_args()
+    if args.cmd == "plan":
+        plan(args.name, args.jobs)
+    elif args.cmd == "spawn":
+        spawn_deployed(args.manifest)
+    elif args.cmd == "collect":
+        collect(args.manifest)
+    else:
+        status()
+
+
+if __name__ == "__main__":
+    main()
+
+exec
+/bin/zsh -lc "nice -n 19 rg --files research/remember/results_fair research/remember | rg '(rf_|call|amend|AGENTS)'" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+research/remember/rf_report.py
+research/remember/rf_train.py
+research/remember/rf_modal.py
+research/remember/rf_selftest.py
+research/remember/rf_data.py
+research/remember/rf_smoke.py
+research/remember/rf_eval.py
+research/remember/rf_cost.py
+research/remember/rf_recount.py
+research/remember/rf_models.py
+
+exec
+/bin/zsh -lc "nice -n 19 rg --files -g AGENTS.md -g '*fair*' -g '*.json' research/remember/manifests_fair research/remember/results_fair | head -60" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+research/remember/manifests_fair/eval.json
+research/remember/manifests_fair/smoke.json
+research/remember/manifests_fair/train.json
+research/remember/manifests_fair/eval-retry-1.json
+research/remember/results_fair/smoke-fair-qwen3-1.7b/runs.json
+research/remember/results_fair/smoke-fair-qwen3-1.7b/train.json
+research/remember/results_fair/smoke-fair-qwen3-1.7b/edit/hist/adapter_config.json
+research/remember/results_fair/smoke-fair-qwen3-1.7b/edit/pin/adapter_config.json
+research/remember/results_fair/smoke-fair-qwen3-1.7b/job.log.json
+research/remember/results_fair/smoke-fair-qwen3-1.7b/timing.json
+research/remember/results_fair/fair-qwen3-4b-s3/train.json
+research/remember/results_fair/fair-qwen3-4b-s3/edit/hist/adapter_config.json
+research/remember/results_fair/fair-qwen3-4b-s3/edit/pin/adapter_config.json
+research/remember/results_fair/fair-qwen3-4b-s3/job.log.json
+research/remember/results_fair/fair-qwen3-4b-s2/train.json
+research/remember/results_fair/fair-qwen3-4b-s2/edit/hist/adapter_config.json
+research/remember/results_fair/fair-qwen3-4b-s2/edit/pin/adapter_config.json
+research/remember/results_fair/fair-qwen3-4b-s2/job.log.json
+research/remember/results_fair/eval-fair-qwen3-1.7b-s2/runs.json
+research/remember/results_fair/eval-fair-qwen3-1.7b-s2/job.log.json
+research/remember/results_fair/retries.json
+research/remember/results_fair/fair-qwen3-4b-s1/job.log.json
+research/remember/results_fair/modal_ledger.json
+research/remember/results_fair/fair-qwen3-4b-s1/train.json
+research/remember/results_fair/fair-qwen3-1.7b-s1/train.json
+research/remember/results_fair/fair-qwen3-1.7b-s3/train.json
+research/remember/results_fair/eval-fair-qwen3-1.7b-s3/runs.json
+research/remember/results_fair/eval-fair-qwen3-1.7b-s3/job.log.json
+research/remember/results_fair/fair-qwen3-1.7b-s2/train.json
+research/remember/results_fair/fair-qwen3-1.7b-s3/edit/hist/adapter_config.json
+research/remember/results_fair/fair-qwen3-4b-s1/edit/pin/adapter_config.json
+research/remember/results_fair/fair-qwen3-1.7b-s1/job.log.json
+research/remember/results_fair/fair-qwen3-1.7b-s2/edit/hist/adapter_config.json
+research/remember/results_fair/fair-qwen3-4b-s1/edit/hist/adapter_config.json
+research/remember/results_fair/fair-qwen3-1.7b-s2/job.log.json
+research/remember/results_fair/plan.json
+research/remember/results_fair/fair-qwen3-1.7b-s3/job.log.json
+research/remember/results_fair/fair-qwen3-1.7b-s1/edit/hist/adapter_config.json
+research/remember/results_fair/fair-qwen3-1.7b-s3/edit/pin/adapter_config.json
+research/remember/results_fair/eval-fair-qwen3-1.7b-s1/job.log.json
+research/remember/results_fair/eval-fair-qwen3-1.7b-s1/runs.json
+research/remember/results_fair/fair-qwen3-1.7b-s2/edit/pin/adapter_config.json
+research/remember/results_fair/fair-qwen3-1.7b-s1/edit/pin/adapter_config.json
+
+exec
+/bin/zsh -lc 'nice -n 19 cat research/remember/rf_report.py research/remember/rf_recount.py' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+"""
+Fair-test results, from the json records. Shells out to rf_recount.py and writes nothing
+unless every per-run exact bit, first-error step and bitwise count agrees.
+
+The results are labeled unaudited. This file does not edit the registered predictions.
+"""
+
+from __future__ import annotations
+
+import json
+import pathlib
+import subprocess
+import sys
+
+import rf_models as M
+
+HERE = pathlib.Path(__file__).resolve().parent
+MD = HERE / "REMEMBER2.md"
+
+
+def lower_median(values):
+    xs = sorted(values)
+    if not xs:
+        return None
+    return xs[(len(xs) - 1) // 2]
+
+
+def _splice(marker, body):
+    text = MD.read_text()
+    start, end = f"<!-- {marker} -->", f"<!-- /{marker} -->"
+    i, j = text.index(start), text.index(end)
+    MD.write_text(text[:i] + start + "\n\n" + body.strip() + "\n\n" + text[j:])
+
+
+def digest_payload(payload):
+    out = {}
+    lengths = [int(x) for x in payload["lengths"]]
+    for run in payload["runs"]:
+        first = run["first_error"]
+        for length in lengths:
+            exact = int(first is None or int(first) >= length)
+            if bool(run["exact_at"][str(length)]) != bool(exact):
+                raise SystemExit(f"exact_at disagrees with first_error in {payload['model']} seed {payload['seed']}")
+            bit, ticks = "", ""
+            if length == int(run["T"]) and run["bitwise"] is not None:
+                bit, ticks = int(run["bitwise"]), int(run["ticks"])
+            key = [payload["model"], int(payload["seed"]), run["arm"], run["policy"], int(run["table"]),
+                   int(run["tape"]), length]
+            out[json.dumps(key)] = [exact, "" if first is None else int(first), bit, ticks]
+    return out
+
+
+def recount(root):
+    proc = subprocess.run([sys.executable, str(HERE / "rf_recount.py"), str(root)],
+                          capture_output=True, text=True)
+    if proc.returncode != 0:
+        raise SystemExit(proc.stderr.strip() or proc.stdout.strip() or "rf_recount failed")
+    raw = json.loads(proc.stdout)
+    return {k: ["" if x == "" else int(x) for x in v] for k, v in raw.items()}
+
+
+def _items(digest):
+    for raw, value in digest.items():
+        model, seed, arm, policy, table, tape, length = json.loads(raw)
+        exact, first, bit, ticks = value
+        yield {"model": model, "seed": int(seed), "arm": arm, "policy": policy, "table": int(table),
+               "tape": int(tape), "length": int(length), "exact": int(exact),
+               "first": None if first == "" else int(first), "bitwise": None if bit == "" else int(bit),
+               "ticks": None if ticks == "" else int(ticks)}
+
+
+def _cell(rows):
+    return {"exact": sum(r["exact"] for r in rows), "n": len(rows)}
+
+
+def _median_line(rows):
+    steps = sorted(r["first"] + 1 for r in rows if r["exact"] == 0)
+    excluded = sum(r["exact"] for r in rows)
+    return {"median": lower_median(steps), "inexact": len(steps), "excluded": excluded, "n": len(rows),
+            "steps": steps}
+
+
+def retries(root, ledger):
+    """Timeout retries from retries.json: plan job id -> the carry retry whose record replaces it.
+
+    A retry counts only if the original settled as a timeout, the retry settled complete with the
+    original's argv plus --carry of the original's runs.json, and every run in the original's
+    record appears unchanged in the retry's record.
+    """
+    path = pathlib.Path(root) / "retries.json"
+    if not path.exists():
+        return {}
+    out = {}
+    for original, item in json.loads(path.read_text()).items():
+        retry = item["retry"]
+        first, second = ledger["jobs"].get(original, {}), ledger["jobs"].get(retry, {})
+        if first.get("status") != "error" or "exceeded" not in str(first.get("error", "")):
+            raise SystemExit(f"{original} is not a settled timeout")
+        if second.get("status") != "complete":
+            raise SystemExit(f"{retry} is not settled complete")
+        if second.get("argv") != list(first.get("argv", [])) + ["--carry", f"/vol/{original}/runs.json"]:
+            raise SystemExit(f"{retry} is not {original} with --carry of its runs")
+        old = json.loads((pathlib.Path(root) / original / "runs.json").read_text())["runs"]
+        new = json.loads((pathlib.Path(root) / retry / "runs.json").read_text())["runs"]
+        if len(old) != int(item["carried_runs"]):
+            raise SystemExit(f"{original} has {len(old)} runs, retries.json says {item['carried_runs']}")
+        have = {json.dumps(r, sort_keys=True) for r in new}
+        if any(json.dumps(r, sort_keys=True) not in have for r in old):
+            raise SystemExit(f"{retry} changed a carried run")
+        out[original] = retry
+    return out
+
+
+def build(root):
+    root = pathlib.Path(root)
+    plan = json.loads((root / "plan.json").read_text())
+    ledger = json.loads((root / "modal_ledger.json").read_text())
+    swap = retries(root, ledger)
+    payloads = []
+    trains = []
+    for job in plan["jobs"]:
+        path = root / swap.get(job["id"], job["id"])
+        if job["kind"] == "train":
+            trains.append(json.loads((path / "train.json").read_text()))
+        else:
+            payloads.append(json.loads((path / "runs.json").read_text()))
+    digest = {}
+    for payload in payloads:
+        part = digest_payload(payload)
+        if set(digest) & set(part):
+            raise SystemExit("duplicate json cells")
+        digest.update(part)
+    other = recount(root)
+    if other != digest:
+        raise SystemExit(f"json and csv disagree on {len(set(digest) ^ set(other))} cells")
+    _require(plan, payloads, trains, ledger, swap)
+    rows = list(_items(digest))
+    lengths = [int(x) for x in plan["lengths"]]
+    pooled, per_seed, medians, bitwise = {}, {}, {}, {}
+    for row in rows:
+        pooled.setdefault(row["model"], {}).setdefault(row["arm"], {}).setdefault(row["policy"], {}).setdefault(
+            row["length"], []).append(row)
+        per_seed.setdefault((row["model"], row["seed"]), {}).setdefault(row["arm"], {}).setdefault(
+            row["policy"], {}).setdefault(row["length"], []).append(row)
+        if row["bitwise"] is not None:
+            slot = bitwise.setdefault(row["model"], {}).setdefault(row["arm"], {}).setdefault(row["policy"], [0, 0])
+            slot[0] += row["bitwise"]
+            slot[1] += row["ticks"]
+    def pack_cells(groups):
+        return {model: {arm: {policy: {str(L): _cell(bucket[L]) for L in lengths}
+                              for policy, bucket in arms.items()}
+                        for arm, arms in model_arms.items()}
+                for model, model_arms in groups.items()}
+    # medians are pooled over seeds
+    for model, arms in pooled.items():
+        for arm, policies in arms.items():
+            for policy, bucket in policies.items():
+                medians.setdefault(model, {}).setdefault(arm, {})[policy] = {
+                    str(L): _median_line(bucket[L]) for L in lengths}
+    scores = score(pack_cells(pooled), plan["models"])
+    return {"audit": "unaudited", "plan": {k: plan[k] for k in (
+                "models", "seeds", "eval_tables", "tapes", "lengths", "key_length", "train_length",
+                "train_tables", "supervised_per_step", "arms", "policies", "cuts")},
+            "pooled": pack_cells(pooled), "per_seed": {
+                f"{model} seed {seed}": pack_cells({model: arms})[model]
+                for (model, seed), arms in per_seed.items()},
+            "medians": medians, "bitwise": bitwise, "scores": scores,
+            "checks": _check_lines(trains, payloads), "tables": _table_lines(payloads),
+            "certs": _certs(payloads), "hosts": _hosts(payloads, ledger, swap), "spend": _spend(ledger),
+            "retries": [{"job": k, "retry": v, "carried_runs": len(json.loads(
+                (root / k / "runs.json").read_text())["runs"]), "error": ledger["jobs"][k].get("error")}
+                        for k, v in sorted(swap.items())],
+            "n_runs": len({(r["model"], r["seed"], r["arm"], r["policy"], r["table"], r["tape"]) for r in rows})}
+
+
+def _require(plan, payloads, trains, ledger, swap=None):
+    swap = swap or {}
+    if plan.get("audit") != "unaudited":
+        raise SystemExit("plan is not labeled unaudited")
+    if [int(x) for x in plan["lengths"]] != list(M.LENGTHS):
+        raise SystemExit("plan lengths are not 256, 1024, 4096")
+    eval_jobs = [j for j in plan["jobs"] if j["kind"] == "eval"]
+    train_jobs = [j for j in plan["jobs"] if j["kind"] == "train"]
+    if len(payloads) != len(eval_jobs) or len(trains) != len(train_jobs):
+        raise SystemExit("a plan job has no record")
+    expect = len(plan["arms"]) * len(plan["policies"]) * int(plan["eval_tables"]) * int(plan["tapes"])
+    indices = None
+    for payload in payloads:
+        if not payload.get("complete") or payload.get("audit") != "unaudited":
+            raise SystemExit(f"{payload['model']} seed {payload['seed']} eval is not a complete unaudited record")
+        if [int(x) for x in payload["lengths"]] != [int(x) for x in plan["lengths"]]:
+            raise SystemExit(f"{payload['model']} seed {payload['seed']} lengths differ from the plan")
+        if int(payload["tapes"]) != int(plan["tapes"]):
+            raise SystemExit(f"{payload['model']} seed {payload['seed']} tapes differ from the plan")
+        if len(payload["runs"]) != expect:
+            raise SystemExit(f"{payload['model']} seed {payload['seed']} has {len(payload['runs'])} runs, expected {expect}")
+        if payload["table_index"] != sorted(payload["table_index"]) or len(payload["table_index"]) != int(plan["eval_tables"]):
+            raise SystemExit("table index list is not the plan prefix")
+        if indices is None:
+            indices = (payload["table_index"], [(t["i"], t["rows"], t["shape"], t["bin"])
+                                                for t in payload["tables"] if t["arm"] == "pin"])
+        else:
+            got = (payload["table_index"], [(t["i"], t["rows"], t["shape"], t["bin"])
+                                            for t in payload["tables"] if t["arm"] == "pin"])
+            if got != indices:
+                raise SystemExit(f"{payload['model']} seed {payload['seed']} tables differ from the first job")
+    by_train = {(t["model"], int(t["seed"])): t for t in trains}
+    for payload in payloads:
+        train = by_train[(payload["model"], int(payload["seed"]))]
+        if not train.get("complete") or int(train["steps"]) != M.STEPS:
+            raise SystemExit(f"{payload['model']} seed {payload['seed']} train is not the 100-step edit")
+        if train["fingerprint"] != payload["train_fingerprint"]:
+            raise SystemExit("eval fingerprint does not match the train file")
+        for arm in M.ARMS:
+            if train["arms"][arm]["sha256"] != payload["edit_meta"][arm]["sha256"]:
+                raise SystemExit(f"{arm} sha does not match the file the eval loaded")
+        for run in payload["runs"]:
+            if len(run["margin_trace"]) > 96:
+                raise SystemExit("a counted trace exceeds 96 points")
+    for job in plan["jobs"]:
+        entry = ledger["jobs"].get(swap.get(job["id"], job["id"]))
+        if not entry or entry.get("status") != "complete":
+            raise SystemExit(f"{swap.get(job['id'], job['id'])} is not settled complete")
+
+
+def _check_lines(trains, payloads):
+    lines = []
+    for train in trains:
+        pin, hist = train["arms"]["pin"], train["arms"]["hist"]
+        same_init = pin["init_sha256"] == hist["init_sha256"]
+        same_data = pin["fingerprint"] == hist["fingerprint"] == train["fingerprint"]
+        same_budget = (pin["trainable_params"] == hist["trainable_params"] and pin["lr"] == hist["lr"] == M.LR
+                       and pin["rank"] == hist["rank"] == M.RANK and pin["steps"] == hist["steps"] == M.STEPS
+                       and pin["chosen_step"] == M.STEPS and train["supervised_per_step"] == M.SUPERVISED
+                       and train["selection"] == "last step")
+        pres = train["presentation"]
+        lines.append({
+            "model": train["model"], "seed": train["seed"], "same_init": same_init, "same_data": same_data,
+            "same_budget": same_budget, "labels": pres["labels"], "pi_len": pres["pi_len"],
+            "causal_mismatches": pres["causal_mismatches"], "params": pin["trainable_params"],
+            "acc_pin": pin["acc_last10"], "acc_hist": hist["acc_last10"],
+            "wall_pin": pin["wall"], "wall_hist": hist["wall"], "diverged_pin": pin["diverged"],
+            "diverged_hist": hist["diverged"],
+        })
+        if not (same_init and same_data and same_budget and pres["causal_mismatches"] == 0
+                and pres["labels"] == M.TRAIN_LENGTH):
+            raise SystemExit(f"paired-train check failed for {train['model']} seed {train['seed']}")
+    if not lines:
+        raise SystemExit("no training records")
+    return lines
+
+
+def _table_lines(payloads):
+    tables = [t for t in payloads[0]["tables"] if t["arm"] == "pin"]
+    return [{"i": t["i"], "rows": t["rows"], "shape": t["shape"], "bin": t["bin"]}
+            for t in sorted(tables, key=lambda t: t["i"])]
+
+
+def _certs(payloads):
+    out = {}
+    for payload in payloads:
+        for table in payload["tables"]:
+            slot = out.setdefault(payload["model"], {}).setdefault(table["arm"], {"pin": [0, 0], "tok": [0, 0]})
+            slot["pin"][1] += 1
+            slot["tok"][1] += 1
+            slot["pin"][0] += int(bool(table["pin_pass"]))
+            slot["tok"][0] += int(bool(table["tok_pass"]))
+    return out
+
+
+def _hosts(payloads, ledger, swap=None):
+    swap = swap or {}
+    lines = []
+    for payload in payloads:
+        job = f"eval-fair-{payload['model']}-s{payload['seed']}"
+        entry = ledger["jobs"].get(swap.get(job, job), {})
+        host = payload.get("host") or {}
+        lines.append({"model": payload["model"], "seed": payload["seed"], "gpu": host.get("gpu"),
+                      "cpu": host.get("cpu"), "gpu_actual": entry.get("gpu_actual"),
+                      "cpu_actual": entry.get("cpu_actual")})
+    return lines
+
+
+def _spend(ledger):
+    rows = []
+    total = 0.0
+    for entry in ledger["jobs"].values():
+        usd = float(entry.get("settled_usd") or 0.0)
+        total += usd
+        rows.append({"id": entry["job_id"], "status": entry["status"], "settled_usd": usd,
+                     "gpu": entry.get("gpu"), "gpu_actual": entry.get("gpu_actual")})
+    return {"rows": rows, "settled_usd": round(total, 6), "cap_usd": ledger.get("cap_usd_total")}
+
+
+def _frac(cell):
+    if cell["n"] == 0:
+        raise SystemExit("empty cell")
+    return cell["exact"] / cell["n"]
+
+
+def score(pooled, models):
+    """The six registered fair-test predictions. Outcomes are hit, miss, or void."""
+    detail = {name: {} for name in models}
+
+    def grab(model, arm, policy, length):
+        return _frac(pooled[model][arm][policy][str(length)])
+
+    f5, f6 = [], []
+    miss = {1: [], 2: [], 3: [], 4: []}
+    for model in models:
+        pin = grab(model, "pin", "pin", 256)
+        hist = grab(model, "hist", "remember", 256)
+        hist_long = grab(model, "hist", "remember", 4096)
+        adv = grab(model, "pin", "adv", 256)
+        tok = grab(model, "pin", "tok", 256)
+        detail[model] = {"pin_pin_256": pin, "hist_remember_256": hist, "hist_remember_4096": hist_long,
+                         "pin_adv_256": adv, "pin_tok_256": tok}
+        if pin < 0.5:
+            miss[1].append(model)
+        if hist >= 0.5:
+            miss[2].append(model)
+        if not hist < pin:
+            miss[3].append(model)
+        if hist_long > hist:
+            miss[4].append(model)
+        if pin == 0:
+            f5.append("void")
+            f6.append("void")
+        else:
+            f5.append("hit" if adv < pin else "miss")
+            f6.append("hit" if tok < pin else "miss")
+
+    def join(marks):
+        if any(m == "miss" for m in marks):
+            return "miss"
+        if marks and all(m == "void" for m in marks):
+            return "void"
+        return "hit"
+
+    names = {
+        1: "Pin arm under pin is exact at 256 on at least half its runs, in every counted model.",
+        2: "History arm under remember is exact at 256 on fewer than half its runs, in every counted model.",
+        3: "Pin-arm pin exact fraction at 256 is strictly above the history-arm remember fraction, in every counted model.",
+        4: "History-arm remember exact fraction at 4096 is at most the fraction at 256, in every counted model.",
+        5: "Pin arm under adv is strictly less exact at 256 than pin arm under pin, where the pin fraction is positive.",
+        6: "Pin arm under tok is strictly less exact at 256 than pin arm under pin, where the pin fraction is positive.",
+    }
+    out = []
+    for i in (1, 2, 3, 4):
+        out.append({"id": i, "name": names[i], "outcome": "miss" if miss[i] else "hit", "models": miss[i]})
+    out.append({"id": 5, "name": names[5], "outcome": join(f5), "models": []})
+    out.append({"id": 6, "name": names[6], "outcome": join(f6), "models": []})
+    return {"detail": detail, "predictions": out}
+
+
+def _fmt_cell(cell):
+    return f"{cell['exact']}/{cell['n']}"
+
+
+def _fmt_median(item):
+    if item["inexact"] == 0:
+        return f"undefined (0 inexact, {item['excluded']} exact excluded, {item['n']} runs)"
+    steps = ", ".join(str(s) for s in item["steps"])
+    return (f"{item['median']} (steps {steps}; {item['excluded']} exact excluded, {item['n']} runs)")
+
+
+def results_md(summary):
+    plan = summary["plan"]
+    lengths = [int(x) for x in plan["lengths"]]
+    lines = [
+        "Unaudited.",
+        "",
+        f"Seeds {plan['seeds']}. Eval tables {plan['eval_tables']}. Tapes {plan['tapes']}. "
+        f"Lengths {lengths}. Key length {plan['key_length']}. "
+        f"Train length {plan['train_length']}, {plan['train_tables']} tables, "
+        f"{plan['supervised_per_step']} supervised positions a step. "
+        "Each length cell is trace-exact runs over runs, pooled over seeds, tables and tapes. "
+        "A shorter length is a prefix of the long tape.",
+        "",
+        "Tables, from the fresh-list prefix: " + "; ".join(
+            f"index {t['i']} rows {t['rows']} {t['shape']} bin {t['bin']}" for t in summary["tables"]) + ".",
+        "",
+        "| model | arm | policy | " + " | ".join(str(L) for L in lengths) + " |",
+        "| --- | --- | --- | " + " | ".join("---" for _ in lengths) + " |",
+    ]
+    for model in plan["models"]:
+        for arm in plan["arms"]:
+            for policy in plan["policies"]:
+                cells = [model, arm, policy]
+                for length in lengths:
+                    cells.append(_fmt_cell(summary["pooled"][model][arm][policy][str(length)]))
+                lines.append("| " + " | ".join(cells) + " |")
+    lines += ["", "Lower median first-error step on the inexact runs.", ""]
+    for model in plan["models"]:
+        for arm in plan["arms"]:
+            for policy in plan["policies"]:
+                bits = [f"{L} {_fmt_median(summary['medians'][model][arm][policy][str(L)])}" for L in lengths]
+                lines.append(f"{model} {arm} {policy}: " + "; ".join(bits) + ".")
+    lines += ["", "Ticks whose logits equal that policy's row certificate. "
+              "Pin uses the pin certificate. Tok uses the tok certificate. "
+              "Adv and remember have no position-invariant row certificate.", ""]
+    for model in plan["models"]:
+        for arm in plan["arms"]:
+            for policy in M.BITWISE_POLICIES:
+                bit, ticks = summary["bitwise"].get(model, {}).get(arm, {}).get(policy, [0, 0])
+                lines.append(f"{model} {arm} {policy}: {bit} of {ticks}.")
+    lines += ["", "Per seed. Same exact/n cells.", ""]
+    lines.append("| model | seed | arm | policy | " + " | ".join(str(L) for L in lengths) + " |")
+    lines.append("| --- | --- | --- | --- | " + " | ".join("---" for _ in lengths) + " |")
+    for model in plan["models"]:
+        for seed in plan["seeds"]:
+            block = summary["per_seed"][f"{model} seed {seed}"]
+            for arm in plan["arms"]:
+                for policy in plan["policies"]:
+                    cells = [model, str(seed), arm, policy]
+                    for length in lengths:
+                        cells.append(_fmt_cell(block[arm][policy][str(length)]))
+                    lines.append("| " + " | ".join(cells) + " |")
+    lines += ["", "Row certificates. A pass is every row's argmax equal to the destination with positive margin. "
+              "A failed certificate is a result; the tapes still ran.", ""]
+    for model in plan["models"]:
+        for arm in plan["arms"]:
+            pin, tok = summary["certs"][model][arm]["pin"], summary["certs"][model][arm]["tok"]
+            lines.append(f"{model} {arm}: pin certificate {pin[0]} of {pin[1]}, tok certificate {tok[0]} of {tok[1]}.")
+    lines += ["", "Paired training. Both arms, one fingerprint, one init, last step kept.", ""]
+    for row in summary["checks"]:
+        lines.append(
+            f"{row['model']} seed {row['seed']}: same_init {row['same_init']}, same_data {row['same_data']}, "
+            f"same_budget {row['same_budget']}, first trajectory labels {row['labels']}, pi_len {row['pi_len']}, "
+            f"causal_mismatches {row['causal_mismatches']}, params {row['params']}, "
+            f"acc_last10 pin {row['acc_pin']} hist {row['acc_hist']}, "
+            f"wall pin {row['wall_pin']} hist {row['wall_hist']}, "
+            f"diverged pin {row['diverged_pin']} hist {row['diverged_hist']}.")
+    lines += ["", "Registered predictions, scored from the pooled cells above.", ""]
+    for pred in summary["scores"]["predictions"]:
+        lines.append(f"F{pred['id']}. {pred['outcome']}. {pred['name']}")
+    lines += ["", "Hosts. For a carry retry, the payload host is the retry's; the carried runs ran on the "
+              "original job's host, listed under Retries.", ""]
+    for row in summary["hosts"]:
+        lines.append(f"{row['model']} seed {row['seed']}: gpu {row['gpu']}; cpu {row['cpu']}; "
+                     f"ledger gpu {row['gpu_actual']}; ledger cpu {row['cpu_actual']}.")
+    lines += ["", "Retries. A timeout is not a trace failure; the retry has a new job id and carries the "
+              "finished runs unchanged.", ""]
+    if not summary.get("retries"):
+        lines.append("None.")
+    for row in summary.get("retries", []):
+        lines.append(f"`{row['job']}` ({row['error']}) is replaced by `{row['retry']}`, "
+                     f"which carries its {row['carried_runs']} finished runs.")
+    spend = summary["spend"]
+    lines += ["", f"Settled {spend['settled_usd']} against cap {spend['cap_usd']}.", ""]
+    for row in spend["rows"]:
+        lines.append(f"- `{row['id']}` {row['status']} {row['settled_usd']} reserved-gpu {row['gpu']} "
+                     f"actual {row['gpu_actual']}")
+    lines.append("")
+    lines.append(f"Runs in the pooled table: {summary['n_runs']}.")
+    return "\n".join(lines)
+
+
+def write(root):
+    root = pathlib.Path(root)
+    summary = build(root)
+    (root / "summary.json").write_text(json.dumps(summary, indent=1, sort_keys=True))
+    _splice("FAIR-RESULTS", results_md(summary))
+    print(json.dumps({"wrote": str(MD), "runs": summary["n_runs"],
+                      "scores": [p["outcome"] for p in summary["scores"]["predictions"]],
+                      "settled_usd": summary["spend"]["settled_usd"]}))
+
+
+def write_smoke(root):
+    root = pathlib.Path(root)
+    job = M.SMOKE["id"]
+    train = json.loads((root / job / "train.json").read_text())
+    payload = json.loads((root / job / "runs.json").read_text())
+    timing = json.loads((root / job / "timing.json").read_text())
+    problems = []
+    if not train.get("complete") or int(train["steps"]) != 2:
+        problems.append("train did not finish 2 steps")
+    if train["arms"]["pin"]["fingerprint"] != train["arms"]["hist"]["fingerprint"]:
+        problems.append("smoke arms saw different trajectories")
+    if train["arms"]["pin"]["init_sha256"] != train["arms"]["hist"]["init_sha256"]:
+        problems.append("smoke arms did not share an init")
+    if train["presentation"]["causal_mismatches"] != 0 or train["presentation"]["labels"] != M.TRAIN_LENGTH:
+        problems.append("smoke presentation failed")
+    have = {(r["arm"], r["policy"]) for r in payload.get("runs", [])}
+    for arm in M.ARMS:
+        for policy in M.POLICIES:
+            if (arm, policy) not in have:
+                problems.append(f"missing {arm} {policy}")
+    traces = [len(r["margin_trace"]) for r in payload.get("runs", [])]
+    longest = max(traces) if traces else 0
+    if longest > 96:
+        problems.append(f"trace length {longest}")
+    rates = timing["pin_seconds_per_tick"]
+    body = [
+        "Unaudited. The smoke is not a counted result. No change to the registered predictions.",
+        "",
+        f"Steps {train['steps']}. Eval length {payload['lengths']}. Runs {len(payload['runs'])}. "
+        f"Max stored trace {longest}. Pin seconds per tick {rates}.",
+        f"same_init {train['arms']['pin']['init_sha256'] == train['arms']['hist']['init_sha256']}. "
+        f"same_data {train['arms']['pin']['fingerprint'] == train['fingerprint']}. "
+        f"causal_mismatches {train['presentation']['causal_mismatches']}.",
+    ]
+    if problems:
+        body.append("Problems: " + "; ".join(problems) + ".")
+        _splice("FAIR-SMOKE", "\n".join(body))
+        raise SystemExit("smoke failed: " + "; ".join(problems))
+    _splice("FAIR-SMOKE", "\n".join(body))
+    print(json.dumps({"pin_seconds_per_tick": rates, "max_trace": longest}))
+
+
+if __name__ == "__main__":
+    mode = sys.argv[1] if len(sys.argv) > 1 else "--write"
+    root = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else HERE / "results_fair"
+    if mode == "--smoke":
+        write_smoke(root)
+    elif mode == "--write":
+        write(root)
+    else:
+        raise SystemExit(f"unknown {mode}")
+"""
+Second count of the fair test, from runs.csv only.
+
+Does not import the report. A run is exact at L when its first error is missing or at least L.
+The lower median is the value at index (n-1)//2.
+"""
+
+from __future__ import annotations
+
+import csv
+import json
+import pathlib
+import sys
+
+
+def lower_median(values):
+    xs = sorted(values)
+    if not xs:
+        return None
+    return xs[(len(xs) - 1) // 2]
+
+
+def _blank(value):
+    return value is None or value == ""
+
+
+def digest_csv(path):
+    out = {}
+    with pathlib.Path(path).open() as f:
+        for row in csv.DictReader(f):
+            first = None if _blank(row["first_error_step"]) else int(row["first_error_step"]) - 1
+            length = int(row["length"])
+            exact = int(first is None or first >= length)
+            if int(row["exact"]) != exact:
+                raise SystemExit(f"{path} exact bit disagrees with first_error_step at {row}")
+            bit = "" if _blank(row["bitwise"]) else int(row["bitwise"])
+            ticks = "" if _blank(row["ticks"]) else int(row["ticks"])
+            if bit != "" and ticks == "":
+                raise SystemExit(f"{path} has bitwise ticks without a tick count")
+            key = (row["model"], int(row["seed"]), row["arm"], row["policy"], int(row["table"]),
+                   int(row["tape"]), length)
+            if key in out:
+                raise SystemExit(f"duplicate csv row {key}")
+            out[key] = (exact, "" if first is None else first, bit, ticks)
+    return out
+
+
+def main():
+    root = pathlib.Path(sys.argv[1])
+    plan = json.loads((root / "plan.json").read_text())
+    # A timed-out plan job is read from its carry retry; the report checks the retry's provenance.
+    swap_path = root / "retries.json"
+    swap = {k: v["retry"] for k, v in json.loads(swap_path.read_text()).items()} if swap_path.exists() else {}
+    digest = {}
+    for job in plan["jobs"]:
+        if job["kind"] != "eval":
+            continue
+        part = digest_csv(root / swap.get(job["id"], job["id"]) / "runs.csv")
+        overlap = set(digest) & set(part)
+        if overlap:
+            raise SystemExit(f"duplicate cells across jobs {list(overlap)[:3]}")
+        digest.update(part)
+    serial = {json.dumps(k): v for k, v in digest.items()}
+    print(json.dumps(serial))
+
+
+if __name__ == "__main__":
+    main()
+
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1150ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "still running"}
+
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval-retry-1.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1612ms:
+{"job_id": "eval-fair-qwen3-1.7b-s3-r1", "status": "complete", "usd": 0.398853, "files": 3, "gpu": "NVIDIA A10", "cpu": "GenuineIntel | 6 | 106 | unknown | avx512f=True", "error": null}
+
+exec
+/bin/zsh -lc 'nice -n 19 cat research/remember/results_fair/retries.json research/remember/rf_selftest.py' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+{
+ "eval-fair-qwen3-1.7b-s3": {
+  "retry": "eval-fair-qwen3-1.7b-s3-r1",
+  "carried_runs": 22,
+  "why": "subprocess exceeded 6133 seconds on an AMD-host A10G; 22 of 24 runs finished. A timeout is not a trace failure (REMEMBER2.md, Fair test, Evaluation)."
+ }
+}
+"""
+Local checks for the fair paired test. No model weights and no GPU.
+
+    nice -n 19 uv run --no-project --with torch python3 research/remember/rf_selftest.py
+"""
+
+from __future__ import annotations
+
+import csv
+import json
+import random
+import subprocess
+import sys
+import tempfile
+import pathlib
+
+HERE = pathlib.Path(__file__).resolve().parent
+sys.path.insert(0, str(HERE))
+
+import rf_cost  # noqa: E402
+import rf_data  # noqa: E402
+import rf_models as M  # noqa: E402
+import rf_recount  # noqa: E402
+import rf_report  # noqa: E402
+import r2_modal  # noqa: E402
+
+
+def fake_pool():
+    names = [f"name{i:02d}" for i in range(40)]
+    return {"train": list(names), "test": list(names), "id_of": {n: i + 1 for i, n in enumerate(names)}, "nl": 1000}
+
+
+def cell(exact, n=4):
+    return {"exact": exact, "n": n}
+
+
+def pooled(pin, hist, hist_long, adv, tok):
+    return {"qwen3-1.7b": {
+        "pin": {"pin": {"256": cell(pin)}, "adv": {"256": cell(adv)}, "tok": {"256": cell(tok)}},
+        "hist": {"remember": {"256": cell(hist), "4096": cell(hist_long)}},
+    }}
+
+
+def check_views():
+    pool = fake_pool()
+    def batches(seed):
+        rng = random.Random(seed + M.DATA_SALT)
+        return [rf_data.draw_batch(rng, pool, M.TRAIN_TABLES, 8) for _ in range(2)]
+    assert rf_data.fingerprint(batches(1)) == rf_data.fingerprint(batches(1))
+    assert rf_data.fingerprint(batches(1)) != rf_data.fingerprint(batches(2))
+    for ex in batches(1)[0]:
+        stat = rf_data.compare_views(ex, [7, 8])
+        assert stat["labels"] == 8 and stat["causal_mismatches"] == 0
+        assert stat["hist_seq"] == stat["pi_len"] + 16
+
+
+def check_tables():
+    pool = fake_pool()
+    full = M.fresh_list(pool)
+    assert M.fresh_list(pool) == full
+    assert len(full) == 4
+    assert [r["i"] for r in full] == sorted(r["i"] for r in full)
+    assert [r["i"] for r in M.select_fresh(pool, 2)] == [r["i"] for r in full[:2]]
+    assert all("pass" not in r for r in full)
+
+
+def check_scores():
+    hit = rf_report.score(pooled(4, 1, 0, 0, 0), ["qwen3-1.7b"])
+    assert [p["outcome"] for p in hit["predictions"]] == ["hit", "hit", "hit", "hit", "hit", "hit"]
+    void = rf_report.score(pooled(0, 0, 0, 0, 0), ["qwen3-1.7b"])
+    assert [p["outcome"] for p in void["predictions"]] == ["miss", "hit", "miss", "hit", "void", "void"]
+    tied = rf_report.score(pooled(3, 0, 0, 3, 3), ["qwen3-1.7b"])
+    assert tied["predictions"][4]["outcome"] == "miss"
+    assert tied["predictions"][5]["outcome"] == "miss"
+    assert rf_recount.lower_median([3, 1, 8]) == rf_report.lower_median([3, 1, 8]) == 3
+
+
+def check_recount_formula():
+    with tempfile.TemporaryDirectory() as tmp:
+        path = pathlib.Path(tmp) / "runs.csv"
+        with path.open("w", newline="") as f:
+            writer = csv.DictWriter(f, fieldnames=["model", "seed", "arm", "policy", "table", "tape", "length",
+                                                   "T", "exact", "first_error_step", "bitwise", "ticks",
+                                                   "rows", "bin", "shape"])
+            writer.writeheader()
+            writer.writerow({"model": "qwen3-1.7b", "seed": 1, "arm": "pin", "policy": "pin", "table": 2,
+                             "tape": 0, "length": 2, "T": 4, "exact": 1, "first_error_step": 3,
+                             "bitwise": "", "ticks": "", "rows": 4, "bin": "4-16", "shape": "perm"})
+            writer.writerow({"model": "qwen3-1.7b", "seed": 1, "arm": "pin", "policy": "pin", "table": 2,
+                             "tape": 0, "length": 4, "T": 4, "exact": 0, "first_error_step": 3,
+                             "bitwise": 1, "ticks": 4, "rows": 4, "bin": "4-16", "shape": "perm"})
+        digest = rf_recount.digest_csv(path)
+        short = digest[("qwen3-1.7b", 1, "pin", "pin", 2, 0, 2)]
+        full = digest[("qwen3-1.7b", 1, "pin", "pin", 2, 0, 4)]
+        assert short[0] == 1 and short[1] == 2 and short[2] == ""
+        assert full[0] == 0 and full[1] == 2 and full[2] == 1 and full[3] == 4
+
+
+def check_cost():
+    assert r2_modal.GPU_RATE == rf_cost.GPU_RATE
+    assert r2_modal.rate("A10G") == rf_cost.rate("A10G")
+    rf_cost.selftest()
+
+
+def check_registration():
+    text = (HERE / "REMEMBER2.md").read_text()
+    for phrase in ("These fair-test paragraphs stay as written",
+                   "Probability 0.75 that the pin arm",
+                   "Probability 0.65 that the history arm",
+                   "Probability 0.70 that, in every counted model, the pin arm",
+                   "Probability 0.70 that, in every counted model, the history arm's remember fraction at 4096",
+                   "Probability 0.55 that the pin arm under adv",
+                   "Probability 0.55 that the pin arm under tok",
+                   "keep the last step", "cap is $35", "<!-- FAIR-PLAN -->", "<!-- FAIR-RESULTS -->"):
+        assert phrase in text, phrase
+    audit = (HERE / "REMEMBER.md").read_text()
+    assert "## Audit corrections" in audit and "## Audit corrections" in text
+
+
+def check_smoke_refuses():
+    proc = subprocess.run([sys.executable, str(HERE / "rf_smoke.py"), "--model", "qwen3-1.7b", "--seed", "1",
+                           "--steps", "3", "--eval-length", "64", "--out", "/tmp/rf-smoke-refuse"],
+                          capture_output=True, text=True)
+    assert proc.returncode != 0
+    assert "2 training steps" in (proc.stderr + proc.stdout)
+
+
+def check_retries():
+    argv = ["--model", "qwen3-1.7b", "--seed", "3"]
+    runs = [{"arm": "pin", "policy": "pin", "table": 0, "first_error": None}]
+    with tempfile.TemporaryDirectory() as tmp:
+        root = pathlib.Path(tmp)
+        for job, rs in (("e", runs), ("e-r1", runs + [{"arm": "hist", "policy": "tok", "table": 5}])):
+            (root / job).mkdir()
+            (root / job / "runs.json").write_text(json.dumps({"runs": rs}))
+        ledger = {"jobs": {"e": {"status": "error", "error": "subprocess exceeded 6133 seconds", "argv": argv},
+                           "e-r1": {"status": "complete", "argv": argv + ["--carry", "/vol/e/runs.json"]}}}
+        (root / "retries.json").write_text(json.dumps({"e": {"retry": "e-r1", "carried_runs": 1}}))
+        assert rf_report.retries(root, ledger) == {"e": "e-r1"}
+        (root / "e-r1" / "runs.json").write_text(json.dumps({"runs": [dict(runs[0], first_error=3)]}))
+        try:
+            rf_report.retries(root, ledger)
+        except SystemExit as exc:
+            assert "changed a carried run" in str(exc)
+        else:
+            raise AssertionError("a changed carried run was accepted")
+        ledger["jobs"]["e"]["error"] = "subprocess exit 1"
+        try:
+            rf_report.retries(root, ledger)
+        except SystemExit as exc:
+            assert "not a settled timeout" in str(exc)
+        else:
+            raise AssertionError("a non-timeout was retried")
+
+
+def main():
+    check_views()
+    check_tables()
+    check_scores()
+    check_recount_formula()
+    check_retries()
+    check_cost()
+    check_registration()
+    check_smoke_refuses()
+    print(json.dumps({"selftest": "ok"}))
+
+
+if __name__ == "__main__":
+    main()
+
+codex
+The Qwen3-1.7B seed-3 carry retry completed and is settled. All three Qwen3-4B calls still report running. The registered report checks that the retry preserves all 22 carried runs, compares JSON with a separate CSV recount, and requires complete records before writing the table.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with torch python research/remember/rf_selftest.py' in /Users/neo/repos/polyformer-wt/remember
+exec
+/bin/zsh -lc 'nice -n 19 git status --short' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+ M research/remember/results_fair/modal_ledger.json
+?? research/remember/results_fair/eval-fair-qwen3-1.7b-s3-r1/
+
+exec
+/bin/zsh -lc "nice -n 19 rg --files -g AGENTS.md -g '*retry*' -g '*amend*' research .agents" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+research/remember/manifests_fair/eval-retry-1.json
+research/remember/jobs_fair/eval-retry-1.json
+research/manifests/inv_amend2.json
+research/manifests/inv_amend.json
+research/results/wp_amend.jsonl
+research/results/wp_amend2.jsonl
+
+ succeeded in 4024ms:
+/Users/neo/.cache/uv/archive-v0/wwVRhGeyKF3o0Da_A09M8/lib/python3.13/site-packages/torch/_subclasses/functional_tensor.py:377: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:82.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+{"selftest": "ok"}
+
+exec
+/bin/zsh -lc "nice -n 19 uv run --no-project --with modal python - <<'PY'
+import json, modal
+from pathlib import Path
+ledger=json.loads(Path('research/remember/results_fair/modal_ledger.json').read_text())
+v=modal.Volume.from_name(ledger['volume'])
+for job,e in ledger['jobs'].items():
+    if e['status']"'!='"'running': continue
+    try:
+        p=json.loads(b''.join(v.read_file(f'{job}/runs.json')))
+        print(json.dumps({'job':job,'complete':p.get('complete'),'runs':len(p.get('runs',[])),'last':{k:p['runs'][-1].get(k) for k in ('arm','policy','table','ticks')}}),flush=True)
+    except Exception as exc: print(job,type(exc).__name__,str(exc)[:200],flush=True)
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 6283ms:
+{"job": "eval-fair-qwen3-4b-s1", "complete": false, "runs": 21, "last": {"arm": "hist", "policy": "pin", "table": 5, "ticks": 4096}}
+{"job": "eval-fair-qwen3-4b-s2", "complete": false, "runs": 23, "last": {"arm": "hist", "policy": "tok", "table": 5, "ticks": 4096}}
+{"job": "eval-fair-qwen3-4b-s3", "complete": true, "runs": 24, "last": {"arm": "hist", "policy": "adv", "table": 5, "ticks": 4096}}
+
+exec
+/bin/zsh -lc "nice -n 19 python3 - <<'PY'
+import json, pathlib, sys, subprocess
+p=pathlib.Path('research/remember')
+sys.path.insert(0,str(p))
+import rf_report
+root=p/'results_fair'
+ledger=json.loads((root/'modal_ledger.json').read_text())
+print('Retry provenance:',rf_report.retries(root,ledger))
+for seed in (1,2,3):
+    job=f'eval-fair-qwen3-1.7b-s{seed}'+('-r1' if seed==3 else '')
+    data=json.loads((root/job/'runs.json').read_text())
+    import rf_recount
+    js=rf_report.digest_payload(data)
+    csv={json.dumps(k):list(v) for k,v in rf_recount.digest_csv(root/job/'runs.csv').items()}
+    assert js==csv
+    print(job, 'complete',data['complete'],'runs',len(data['runs']),'CSV matches JSON')
+old=subprocess.check_output(['git','show','a000e9bf1fd5568bd638132855dbe63cecc0aa6d:research/remember/REMEMBER2.md'],text=True)
+new=(p/'REMEMBER2.md').read_text()
+old_reg=old.split('## Fair test\\n',1)[1].split('<"'!-- FAIR-PLAN -->'"',1)[0]
+new_reg=new.split('## Fair test\\n',1)[1].split('<"'!-- FAIR-PLAN -->'"',1)[0]
+assert old_reg==new_reg
+print('Frozen fair registration matches original commit')
+print('Settled USD',sum(e.get('settled_usd',0) for e in ledger['jobs'].values()))
+PY" in /Users/neo/repos/polyformer-wt/remember
+ exited 1 in 86ms:
+Retry provenance: {'eval-fair-qwen3-1.7b-s3': 'eval-fair-qwen3-1.7b-s3-r1'}
+Traceback (most recent call last):
+  File "<stdin>", line 14, in <module>
+AssertionError
+
+exec
+/bin/zsh -lc "nice -n 19 python3 - <<'PY'
+import json,pathlib,sys
+p=pathlib.Path('research/remember');sys.path.insert(0,str(p))
+import rf_report,rf_recount
+r=p/'results_fair/eval-fair-qwen3-1.7b-s1'
+a=rf_report.digest_payload(json.loads((r/'runs.json').read_text()));b={json.dumps(k):list(v) for k,v in rf_recount.digest_csv(r/'runs.csv').items()}
+print('sizes',len(a),len(b));print('key diff',list(set(a)"'^set(b))[:3]);print('"'value diff',[(k,v,b.get(k)) for k,v in a.items() if b.get(k)"'!=v][:5])
+PY' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+sizes 72 72
+key diff []
+value diff [('["qwen3-1.7b", 1, "pin", "remember", 0, 0, 4096]', [0, 9, '', ''], [0, 9, '', 10]), ('["qwen3-1.7b", 1, "pin", "adv", 0, 0, 4096]', [0, 136, '', ''], [0, 136, '', 4096]), ('["qwen3-1.7b", 1, "pin", "remember", 1, 0, 4096]', [0, 1, '', ''], [0, 1, '', 2]), ('["qwen3-1.7b", 1, "pin", "adv", 1, 0, 4096]', [0, 15, '', ''], [0, 15, '', 4096]), ('["qwen3-1.7b", 1, "pin", "remember", 5, 0, 4096]', [0, 1, '', ''], [0, 1, '', 2])]
+
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 2319ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete", "usd": 4.00029, "files": 3, "gpu": "NVIDIA A10G", "cpu": "AuthenticAMD | 23 | 49 | unknown | avx512f=False", "error": null}
+
+codex
+The volume snapshots show 21, 23, and 24 of 24 runs saved for the three Qwen3-4B jobs. The local self-test passed, but checking the completed records exposed a report bug: JSON counting drops executed-tick counts for remember and adv, while CSV retains them. I’ll fix that comparison without changing measurements or the registration.
+apply patch
+patch: completed
+/Users/neo/repos/polyformer-wt/remember/research/remember/rf_report.py
+diff --git a/research/remember/rf_report.py b/research/remember/rf_report.py
+index 9666f12c939fc2232437e6ade6c745ff3a64d7b1..1b600e2fa8069f9737c2965c962bc4b5ded8e7df
+--- a/research/remember/rf_report.py
++++ b/research/remember/rf_report.py
+@@ -42,8 +42,10 @@
+             if bool(run["exact_at"][str(length)]) != bool(exact):
+                 raise SystemExit(f"exact_at disagrees with first_error in {payload['model']} seed {payload['seed']}")
+             bit, ticks = "", ""
+-            if length == int(run["T"]) and run["bitwise"] is not None:
+-                bit, ticks = int(run["bitwise"]), int(run["ticks"])
++            if length == int(run["T"]):
++                ticks = int(run["ticks"])
++                if run["bitwise"] is not None:
++                    bit = int(run["bitwise"])
+             key = [payload["model"], int(payload["seed"]), run["arm"], run["policy"], int(run["table"]),
+                    int(run["tape"]), length]
+             out[json.dumps(key)] = [exact, "" if first is None else int(first), bit, ticks]
+
+exec
+/bin/zsh -lc "nice -n 19 rg -n 'ticks|bitwise' research/remember/rf_eval.py" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+77:    bitwise = off = 0
+81:    ticks = 0
+91:                bitwise += 1
+97:                ticks = i
+100:        ticks = i
+104:            log(policy=policy, tick=i, bitwise=bitwise, off=off)
+106:        if runner.j != 2 * ticks:
+107:            raise RuntimeError(f"remember stream length j={runner.j} ticks={ticks}")
+108:        if first is not None and ticks != first + 1:
+111:        if ticks != len(tape):
+112:            raise RuntimeError(f"{policy} stopped at {ticks}")
+117:    if first is None and ticks != len(tape):
+124:        "ticks": ticks, "first_error": first, "first_error_step": first_step, "first_error_kind": kind,
+126:        "bitwise": None if cert is None else bitwise, "bitwise_off": None if cert is None else off,
+127:        "bitwise_kind": None if cert is None else policy,
+128:        "stream_tokens": runner_j_saved(policy, ticks), "max_delta": 0, "pi_len": P,
+136:def runner_j_saved(policy, ticks):
+137:    return 2 * ticks if policy == "remember" else 0
+146:            bit = run["bitwise"] if full and run["bitwise"] is not None else ""
+152:                "bitwise": bit, "ticks": run["ticks"] if full else "",
+156:              "first_error_step", "bitwise", "ticks", "rows", "bin", "shape"]
+168:    if run.get("first_error") is None and int(run.get("ticks", 0)) != int(T):
+170:    if run.get("policy") != "remember" and int(run.get("ticks", 0)) != int(T):
+275:                            first_error_step=row["first_error_step"], ticks=row["ticks"], seconds=row["seconds"],
+276:                            bitwise=row["bitwise"], trace=len(row["margin_trace"]))
+
+apply patch
+patch: completed
+/Users/neo/repos/polyformer-wt/remember/research/remember/rf_selftest.py
+diff --git a/research/remember/rf_report.py b/research/remember/rf_report.py
+index 9666f12c939fc2232437e6ade6c745ff3a64d7b1..1b600e2fa8069f9737c2965c962bc4b5ded8e7df
+--- a/research/remember/rf_report.py
++++ b/research/remember/rf_report.py
+@@ -42,8 +42,10 @@
+             if bool(run["exact_at"][str(length)]) != bool(exact):
+                 raise SystemExit(f"exact_at disagrees with first_error in {payload['model']} seed {payload['seed']}")
+             bit, ticks = "", ""
+-            if length == int(run["T"]) and run["bitwise"] is not None:
+-                bit, ticks = int(run["bitwise"]), int(run["ticks"])
++            if length == int(run["T"]):
++                ticks = int(run["ticks"])
++                if run["bitwise"] is not None:
++                    bit = int(run["bitwise"])
+             key = [payload["model"], int(payload["seed"]), run["arm"], run["policy"], int(run["table"]),
+                    int(run["tape"]), length]
+             out[json.dumps(key)] = [exact, "" if first is None else int(first), bit, ticks]
+diff --git a/research/remember/rf_selftest.py b/research/remember/rf_selftest.py
+index c13c2db19a14898dd0aa4008573dbd1fb81eb8f1..b5e04a24caae15fa7b39681d825dd79f13f1dc2c
+--- a/research/remember/rf_selftest.py
++++ b/research/remember/rf_selftest.py
+@@ -96,6 +96,21 @@
+         assert full[0] == 0 and full[1] == 2 and full[2] == 1 and full[3] == 4
+ 
+ 
++def check_uncertified_ticks():
++    # Remember and adv have no row certificate, but their executed ticks still
++    # appear in CSV at T and must agree with the JSON digest.
++    for policy, ticks in (("remember", 3), ("adv", 4)):
++        payload = {"model": "qwen3-1.7b", "seed": 1, "lengths": [2, 4], "runs": [{
++            "arm": "hist", "policy": policy, "table": 0, "tape": 0, "T": 4,
++            "first_error": 2, "exact_at": {"2": True, "4": False},
++            "bitwise": None, "ticks": ticks,
++        }]}
++        digest = rf_report.digest_payload(payload)
++        key = ["qwen3-1.7b", 1, "hist", policy, 0, 0]
++        assert digest[json.dumps(key + [2])] == [1, 2, "", ""]
++        assert digest[json.dumps(key + [4])] == [0, 2, "", ticks]
++
++
+ def check_cost():
+     assert r2_modal.GPU_RATE == rf_cost.GPU_RATE
+     assert r2_modal.rate("A10G") == rf_cost.rate("A10G")
+@@ -158,6 +173,7 @@
+     check_tables()
+     check_scores()
+     check_recount_formula()
++    check_uncertified_ticks()
+     check_retries()
+     check_cost()
+     check_registration()
+
+exec
+/bin/zsh -lc "nice -n 19 python3 - <<'PY'
+import json, pathlib, sys, subprocess
+p=pathlib.Path('research/remember');sys.path.insert(0,str(p))
+import rf_report,rf_recount
+root=p/'results_fair'
+ledger=json.loads((root/'modal_ledger.json').read_text())
+print('Retry provenance:',rf_report.retries(root,ledger))
+for job,e in ledger['jobs'].items():
+    if not job.startswith('eval-') or e['status']"'!='"'complete': continue
+    data=json.loads((root/job/'runs.json').read_text())
+    js=rf_report.digest_payload(data)
+    csv={json.dumps(k):list(v) for k,v in rf_recount.digest_csv(root/job/'runs.csv').items()}
+    assert js==csv
+    print(job,'complete',data['complete'],'runs',len(data['runs']),'CSV matches JSON')
+old=subprocess.check_output(['git','show','a000e9bf1fd5568bd638132855dbe63cecc0aa6d:research/remember/REMEMBER2.md'],text=True)
+new=(p/'REMEMBER2.md').read_text()
+assert old.split('## Fair test\\n',1)[1].split('<"'!-- FAIR-PLAN -->'"',1)[0]==new.split('## Fair test\\n',1)[1].split('<"'!-- FAIR-PLAN -->'"',1)[0]
+print('Frozen fair registration matches original commit')
+print('Settled USD',sum(e.get('settled_usd',0) for e in ledger['jobs'].values()))
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+Retry provenance: {'eval-fair-qwen3-1.7b-s3': 'eval-fair-qwen3-1.7b-s3-r1'}
+eval-fair-qwen3-1.7b-s1 complete True runs 24 CSV matches JSON
+eval-fair-qwen3-1.7b-s2 complete True runs 24 CSV matches JSON
+eval-fair-qwen3-1.7b-s3-r1 complete True runs 24 CSV matches JSON
+eval-fair-qwen3-4b-s3 complete True runs 24 CSV matches JSON
+Frozen fair registration matches original commit
+Settled USD 15.238141
+
+exec
+/bin/zsh -lc 'nice -n 19 git diff --stat' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+ research/remember/results_fair/modal_ledger.json | 24 ++++++++++++++++++++++--
+ research/remember/rf_report.py                   |  6 ++++--
+ research/remember/rf_selftest.py                 | 16 ++++++++++++++++
+ 3 files changed, 42 insertions(+), 4 deletions(-)
+
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with torch python research/remember/rf_selftest.py' in /Users/neo/repos/polyformer-wt/remember
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1247ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+ succeeded in 3694ms:
+/Users/neo/.cache/uv/archive-v0/wwVRhGeyKF3o0Da_A09M8/lib/python3.13/site-packages/torch/_subclasses/functional_tensor.py:377: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:82.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+{"selftest": "ok"}
+
+codex
+Qwen3-4B seed 3 is collected and settled; seeds 1 and 2 are still running. The comparison fix passes its regression check, and all four completed evaluations now agree with the CSV recount. The frozen fair-test registration matches its original commit.
+ERROR: Reconnecting... 2/5
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1720ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete", "usd": 4.065361, "files": 3, "gpu": "NVIDIA A10G", "cpu": "AuthenticAMD | 23 | 49 | unknown | avx512f=False", "error": null}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+exec
+/bin/zsh -lc "nice -n 19 uv run --no-project --with modal python - <<'PY'
+import json, modal
+from pathlib import Path
+ledger=json.loads(Path('research/remember/results_fair/modal_ledger.json').read_text())
+v=modal.Volume.from_name(ledger['volume'])
+for job,e in ledger['jobs'].items():
+    if e['status']=='running':
+        raw=b''.join(v.read_file(f'{job}/job.log')).decode(errors='replace')
+        print(job, raw[-1800:],flush=True)
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 2163ms:
+eval-fair-qwen3-4b-s1 se": 0, "off": 0}
+{"policy": "adv", "tick": 1024, "bitwise": 0, "off": 0}
+{"policy": "adv", "tick": 1536, "bitwise": 0, "off": 0}
+{"policy": "adv", "tick": 2048, "bitwise": 0, "off": 0}
+{"policy": "adv", "tick": 2560, "bitwise": 0, "off": 0}
+{"policy": "adv", "tick": 3072, "bitwise": 0, "off": 0}
+{"policy": "adv", "tick": 3584, "bitwise": 0, "off": 0}
+{"policy": "adv", "tick": 4096, "bitwise": 0, "off": 0}
+{"arm": "hist", "table": 1, "tape": 0, "policy": "adv", "exact_at": {"256": true, "1024": true, "4096": true}, "first_error_step": null, "ticks": 4096, "seconds": 290.9709, "bitwise": null, "trace": 96}
+{"i": 5, "arm": "hist", "rows": 12, "n": 3, "a": 4, "shape": "random", "bin": "4-16", "pin_pass": true, "pin_rows_wrong": 0, "pin_min_margin": 2.5, "tok_pass": true, "tok_rows_wrong": 0, "tok_min_margin": 2.5}
+{"policy": "pin", "tick": 512, "bitwise": 512, "off": 0}
+{"policy": "pin", "tick": 1024, "bitwise": 1024, "off": 0}
+{"policy": "pin", "tick": 1536, "bitwise": 1536, "off": 0}
+{"policy": "pin", "tick": 2048, "bitwise": 2048, "off": 0}
+{"policy": "pin", "tick": 2560, "bitwise": 2560, "off": 0}
+{"policy": "pin", "tick": 3072, "bitwise": 3072, "off": 0}
+{"policy": "pin", "tick": 3584, "bitwise": 3584, "off": 0}
+{"policy": "pin", "tick": 4096, "bitwise": 4096, "off": 0}
+{"arm": "hist", "table": 5, "tape": 0, "policy": "pin", "exact_at": {"256": true, "1024": true, "4096": true}, "first_error_step": null, "ticks": 4096, "seconds": 295.2398, "bitwise": 4096, "trace": 96}
+{"policy": "remember", "tick": 512, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 1024, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 1536, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2048, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2560, "bitwise": 0, "off": 0}
+
+
+codex
+Qwen3-4B seed 2 is settled. Only seed 1 remains running; its latest saved log reaches step 2,560 of the final table’s history run. Settled spend is $19.30, with $5.72 still reserved for that call, within the $35 cap.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+exec
+/bin/zsh -lc 'nice -n 19 git diff --check' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+ succeeded in 1117ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+exec
+/bin/zsh -lc "nice -n 19 python3 - <<'PY'
+import json,pathlib,sys
+p=pathlib.Path('research/remember');sys.path.insert(0,str(p))
+import rf_report,rf_recount
+root=p/'results_fair';ledger=json.loads((root/'modal_ledger.json').read_text())
+trains=[json.loads((root/j/'train.json').read_text()) for j,e in ledger['jobs'].items() if j.startswith('fair-')]
+checks=rf_report._check_lines(trains,[])
+print('Paired-training checks:',len(checks),'passed')
+job='eval-fair-qwen3-4b-s2';payload=json.loads((root/job/'runs.json').read_text())
+a=rf_report.digest_payload(payload);b={json.dumps(k):list(v) for k,v in rf_recount.digest_csv(root/job/'runs.csv').items()}
+assert a==b
+print(job,'CSV matches JSON')
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 5ms:
+Paired-training checks: 6 passed
+eval-fair-qwen3-4b-s2 CSV matches JSON
+
+codex
+All six paired-training records pass the checks for shared initialization, shared data, and matched training budgets. Seed 2’s evaluation also agrees with its CSV recount. The final call is still running.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1161ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The last call still reports running. The completed data and report checks are ready; I’m waiting for its full record before writing the pooled table.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1201ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+apply patch
+patch: completed
+/Users/neo/repos/polyformer-wt/remember/research/remember/rf_report.py
+diff --git a/research/remember/rf_report.py b/research/remember/rf_report.py
+index 9666f12c939fc2232437e6ade6c745ff3a64d7b1..8d2b9c49159968a6209cb0088d2e530035263a7c
+--- a/research/remember/rf_report.py
++++ b/research/remember/rf_report.py
+@@ -42,8 +42,10 @@
+             if bool(run["exact_at"][str(length)]) != bool(exact):
+                 raise SystemExit(f"exact_at disagrees with first_error in {payload['model']} seed {payload['seed']}")
+             bit, ticks = "", ""
+-            if length == int(run["T"]) and run["bitwise"] is not None:
+-                bit, ticks = int(run["bitwise"]), int(run["ticks"])
++            if length == int(run["T"]):
++                ticks = int(run["ticks"])
++                if run["bitwise"] is not None:
++                    bit = int(run["bitwise"])
+             key = [payload["model"], int(payload["seed"]), run["arm"], run["policy"], int(run["table"]),
+                    int(run["tape"]), length]
+             out[json.dumps(key)] = [exact, "" if first is None else int(first), bit, ticks]
+@@ -168,7 +170,9 @@
+             "checks": _check_lines(trains, payloads), "tables": _table_lines(payloads),
+             "certs": _certs(payloads), "hosts": _hosts(payloads, ledger, swap), "spend": _spend(ledger),
+             "retries": [{"job": k, "retry": v, "carried_runs": len(json.loads(
+-                (root / k / "runs.json").read_text())["runs"]), "error": ledger["jobs"][k].get("error")}
++                (root / k / "runs.json").read_text())["runs"]), "error": ledger["jobs"][k].get("error"),
++                "original_gpu": ledger["jobs"][k].get("gpu_actual"),
++                "original_cpu": ledger["jobs"][k].get("cpu_actual")}
+                         for k, v in sorted(swap.items())],
+             "n_runs": len({(r["model"], r["seed"], r["arm"], r["policy"], r["table"], r["tape"]) for r in rows})}
+ 
+@@ -445,7 +449,8 @@
+         lines.append("None.")
+     for row in summary.get("retries", []):
+         lines.append(f"`{row['job']}` ({row['error']}) is replaced by `{row['retry']}`, "
+-                     f"which carries its {row['carried_runs']} finished runs.")
++                     f"which carries its {row['carried_runs']} finished runs. "
++                     f"Original host: gpu {row['original_gpu']}; cpu {row['original_cpu']}.")
+     spend = summary["spend"]
+     lines += ["", f"Settled {spend['settled_usd']} against cap {spend['cap_usd']}.", ""]
+     for row in spend["rows"]:
+diff --git a/research/remember/rf_selftest.py b/research/remember/rf_selftest.py
+index c13c2db19a14898dd0aa4008573dbd1fb81eb8f1..b5e04a24caae15fa7b39681d825dd79f13f1dc2c
+--- a/research/remember/rf_selftest.py
++++ b/research/remember/rf_selftest.py
+@@ -96,6 +96,21 @@
+         assert full[0] == 0 and full[1] == 2 and full[2] == 1 and full[3] == 4
+ 
+ 
++def check_uncertified_ticks():
++    # Remember and adv have no row certificate, but their executed ticks still
++    # appear in CSV at T and must agree with the JSON digest.
++    for policy, ticks in (("remember", 3), ("adv", 4)):
++        payload = {"model": "qwen3-1.7b", "seed": 1, "lengths": [2, 4], "runs": [{
++            "arm": "hist", "policy": policy, "table": 0, "tape": 0, "T": 4,
++            "first_error": 2, "exact_at": {"2": True, "4": False},
++            "bitwise": None, "ticks": ticks,
++        }]}
++        digest = rf_report.digest_payload(payload)
++        key = ["qwen3-1.7b", 1, "hist", policy, 0, 0]
++        assert digest[json.dumps(key + [2])] == [1, 2, "", ""]
++        assert digest[json.dumps(key + [4])] == [0, 2, "", ticks]
++
++
+ def check_cost():
+     assert r2_modal.GPU_RATE == rf_cost.GPU_RATE
+     assert r2_modal.rate("A10G") == rf_cost.rate("A10G")
+@@ -158,6 +173,7 @@
+     check_tables()
+     check_scores()
+     check_recount_formula()
++    check_uncertified_ticks()
+     check_retries()
+     check_cost()
+     check_registration()
+
+codex
+The final call is still running. I also corrected the report’s retry provenance section to include the original host, since the carried runs and the retry ran on different hosts.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 686ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+exec
+/bin/zsh -lc "nice -n 19 uv run --no-project --with modal python - <<'PY'
+import json, modal
+v=modal.Volume.from_name('polyformer-remember-fair-results')
+j='eval-fair-qwen3-4b-s1'
+p=json.loads(b''.join(v.read_file(f'{j}/runs.json')))
+print(json.dumps({'job':j,'complete':p['complete'],'finished_runs':len(p['runs'])}),flush=True)
+raw=b''.join(v.read_file(f'{j}/job.log')).decode(errors='replace')
+print(raw[-1200:])
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1778ms:
+{"job": "eval-fair-qwen3-4b-s1", "complete": false, "finished_runs": 22}
+off": 0}
+{"policy": "pin", "tick": 2560, "bitwise": 2560, "off": 0}
+{"policy": "pin", "tick": 3072, "bitwise": 3072, "off": 0}
+{"policy": "pin", "tick": 3584, "bitwise": 3584, "off": 0}
+{"policy": "pin", "tick": 4096, "bitwise": 4096, "off": 0}
+{"arm": "hist", "table": 5, "tape": 0, "policy": "pin", "exact_at": {"256": true, "1024": true, "4096": true}, "first_error_step": null, "ticks": 4096, "seconds": 295.2398, "bitwise": 4096, "trace": 96}
+{"policy": "remember", "tick": 512, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 1024, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 1536, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2048, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2560, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 3072, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 3584, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 4096, "bitwise": 0, "off": 0}
+{"arm": "hist", "table": 5, "tape": 0, "policy": "remember", "exact_at": {"256": true, "1024": true, "4096": true}, "first_error_step": null, "ticks": 4096, "seconds": 590.9196, "bitwise": null, "trace": 96}
+{"policy": "tok", "tick": 512, "bitwise": 512, "off": 0}
+
+
+codex
+Seed 1 has now saved 22 of 24 runs and started the final TOK control. Its final-table history run completed all 4,096 steps. I’ll keep polling until TOK and ADV finish.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 554ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The last call remains active. No additional retries or jobs have been launched.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 483ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The final control runs are still in progress. Once the call completes, I’ll generate the registered table, first-error summaries, bitwise counts, and prediction scores together.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 664ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The final call still reports running, with the remaining work inside its existing reservation.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 582ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+No completion yet from Qwen3-4B seed 1. I’m continuing the short status checks on the same call ID.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+exec
+/bin/zsh -lc "nice -n 19 uv run --no-project --with modal python - <<'PY'
+import json, modal
+v=modal.Volume.from_name('polyformer-remember-fair-results');j='eval-fair-qwen3-4b-s1'
+p=json.loads(b''.join(v.read_file(f'{j}/runs.json')))
+print(json.dumps({'complete':p['complete'],'finished_runs':len(p['runs'])}),flush=True)
+print(b''.join(v.read_file(f'{j}/job.log')).decode(errors='replace')[-900:])
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 2342ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+ succeeded in 4903ms:
+{"complete": false, "finished_runs": 22}
+ck": 1536, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2048, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2560, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 3072, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 3584, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 4096, "bitwise": 0, "off": 0}
+{"arm": "hist", "table": 5, "tape": 0, "policy": "remember", "exact_at": {"256": true, "1024": true, "4096": true}, "first_error_step": null, "ticks": 4096, "seconds": 590.9196, "bitwise": null, "trace": 96}
+{"policy": "tok", "tick": 512, "bitwise": 512, "off": 0}
+{"policy": "tok", "tick": 1024, "bitwise": 1024, "off": 0}
+{"policy": "tok", "tick": 1536, "bitwise": 1536, "off": 0}
+{"policy": "tok", "tick": 2048, "bitwise": 2048, "off": 0}
+{"policy": "tok", "tick": 2560, "bitwise": 2560, "off": 0}
+{"policy": "tok", "tick": 3072, "bitwise": 3072, "off": 0}
+
+
+codex
+The latest saved log reaches step 3,072 of 4,096 in the final TOK run. ADV is the only run after it.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 580ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The final call is still active. Collection and settlement are waiting on its two remaining controls.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 533ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The last call remains running. I’m checking the small reporting changes while the remote controls finish.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with torch python research/remember/rf_selftest.py' in /Users/neo/repos/polyformer-wt/remember
+exec
+/bin/zsh -lc 'nice -n 19 git diff -- research/remember/rf_report.py research/remember/rf_selftest.py' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+diff --git a/research/remember/rf_report.py b/research/remember/rf_report.py
+index 9666f12c..8d2b9c49 100644
+--- a/research/remember/rf_report.py
++++ b/research/remember/rf_report.py
+@@ -42,8 +42,10 @@ def digest_payload(payload):
+             if bool(run["exact_at"][str(length)]) != bool(exact):
+                 raise SystemExit(f"exact_at disagrees with first_error in {payload['model']} seed {payload['seed']}")
+             bit, ticks = "", ""
+-            if length == int(run["T"]) and run["bitwise"] is not None:
+-                bit, ticks = int(run["bitwise"]), int(run["ticks"])
++            if length == int(run["T"]):
++                ticks = int(run["ticks"])
++                if run["bitwise"] is not None:
++                    bit = int(run["bitwise"])
+             key = [payload["model"], int(payload["seed"]), run["arm"], run["policy"], int(run["table"]),
+                    int(run["tape"]), length]
+             out[json.dumps(key)] = [exact, "" if first is None else int(first), bit, ticks]
+@@ -168,7 +170,9 @@ def build(root):
+             "checks": _check_lines(trains, payloads), "tables": _table_lines(payloads),
+             "certs": _certs(payloads), "hosts": _hosts(payloads, ledger, swap), "spend": _spend(ledger),
+             "retries": [{"job": k, "retry": v, "carried_runs": len(json.loads(
+-                (root / k / "runs.json").read_text())["runs"]), "error": ledger["jobs"][k].get("error")}
++                (root / k / "runs.json").read_text())["runs"]), "error": ledger["jobs"][k].get("error"),
++                "original_gpu": ledger["jobs"][k].get("gpu_actual"),
++                "original_cpu": ledger["jobs"][k].get("cpu_actual")}
+                         for k, v in sorted(swap.items())],
+             "n_runs": len({(r["model"], r["seed"], r["arm"], r["policy"], r["table"], r["tape"]) for r in rows})}
+ 
+@@ -445,7 +449,8 @@ def results_md(summary):
+         lines.append("None.")
+     for row in summary.get("retries", []):
+         lines.append(f"`{row['job']}` ({row['error']}) is replaced by `{row['retry']}`, "
+-                     f"which carries its {row['carried_runs']} finished runs.")
++                     f"which carries its {row['carried_runs']} finished runs. "
++                     f"Original host: gpu {row['original_gpu']}; cpu {row['original_cpu']}.")
+     spend = summary["spend"]
+     lines += ["", f"Settled {spend['settled_usd']} against cap {spend['cap_usd']}.", ""]
+     for row in spend["rows"]:
+diff --git a/research/remember/rf_selftest.py b/research/remember/rf_selftest.py
+index c13c2db1..b5e04a24 100644
+--- a/research/remember/rf_selftest.py
++++ b/research/remember/rf_selftest.py
+@@ -96,6 +96,21 @@ def check_recount_formula():
+         assert full[0] == 0 and full[1] == 2 and full[2] == 1 and full[3] == 4
+ 
+ 
++def check_uncertified_ticks():
++    # Remember and adv have no row certificate, but their executed ticks still
++    # appear in CSV at T and must agree with the JSON digest.
++    for policy, ticks in (("remember", 3), ("adv", 4)):
++        payload = {"model": "qwen3-1.7b", "seed": 1, "lengths": [2, 4], "runs": [{
++            "arm": "hist", "policy": policy, "table": 0, "tape": 0, "T": 4,
++            "first_error": 2, "exact_at": {"2": True, "4": False},
++            "bitwise": None, "ticks": ticks,
++        }]}
++        digest = rf_report.digest_payload(payload)
++        key = ["qwen3-1.7b", 1, "hist", policy, 0, 0]
++        assert digest[json.dumps(key + [2])] == [1, 2, "", ""]
++        assert digest[json.dumps(key + [4])] == [0, 2, "", ticks]
++
++
+ def check_cost():
+     assert r2_modal.GPU_RATE == rf_cost.GPU_RATE
+     assert r2_modal.rate("A10G") == rf_cost.rate("A10G")
+@@ -158,6 +173,7 @@ def main():
+     check_tables()
+     check_scores()
+     check_recount_formula()
++    check_uncertified_ticks()
+     check_retries()
+     check_cost()
+     check_registration()
+
+ succeeded in 2259ms:
+/Users/neo/.cache/uv/archive-v0/wwVRhGeyKF3o0Da_A09M8/lib/python3.13/site-packages/torch/_subclasses/functional_tensor.py:377: UserWarning: Failed to initialize NumPy: No module named 'numpy' (Triggered internally at /Users/runner/work/pytorch/pytorch/torch/csrc/utils/tensor_numpy.cpp:82.)
+  cpu = _conversion_method_template(device=torch.device("cpu"))
+{"selftest": "ok"}
+
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 514ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The reporting self-test passes after both fixes. The final Modal call has not returned yet.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 523ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+exec
+/bin/zsh -lc "nice -n 19 uv run --no-project --with modal python - <<'PY'
+import json, modal
+v=modal.Volume.from_name('polyformer-remember-fair-results');j='eval-fair-qwen3-4b-s1'
+p=json.loads(b''.join(v.read_file(f'{j}/runs.json')))
+print(json.dumps({'complete':p['complete'],'finished_runs':len(p['runs'])}),flush=True)
+print(b''.join(v.read_file(f'{j}/job.log')).decode(errors='replace')[-900:])
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1713ms:
+{"complete": false, "finished_runs": 23}
+ck": 1536, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2048, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 2560, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 3072, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 3584, "bitwise": 0, "off": 0}
+{"policy": "remember", "tick": 4096, "bitwise": 0, "off": 0}
+{"arm": "hist", "table": 5, "tape": 0, "policy": "remember", "exact_at": {"256": true, "1024": true, "4096": true}, "first_error_step": null, "ticks": 4096, "seconds": 590.9196, "bitwise": null, "trace": 96}
+{"policy": "tok", "tick": 512, "bitwise": 512, "off": 0}
+{"policy": "tok", "tick": 1024, "bitwise": 1024, "off": 0}
+{"policy": "tok", "tick": 1536, "bitwise": 1536, "off": 0}
+{"policy": "tok", "tick": 2048, "bitwise": 2048, "off": 0}
+{"policy": "tok", "tick": 2560, "bitwise": 2560, "off": 0}
+{"policy": "tok", "tick": 3072, "bitwise": 3072, "off": 0}
+
+
+codex
+The saved run count is now 23 of 24. Only the final ADV control remains before collection.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 713ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The last ADV run is still executing. I’ll collect and settle the call as soon as it returns, then write and commit the unaudited results.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 600ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "still running"}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+The same call still reports running; all other jobs are settled.
+exec
+/bin/zsh -lc 'nice -n 19 uv run --no-project --with modal python research/remember/rf_modal.py collect --manifest research/remember/manifests_fair/eval.json' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 1247ms:
+{"job_id": "eval-fair-qwen3-1.7b-s1", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-1.7b-s3", "status": "error"}
+{"job_id": "eval-fair-qwen3-4b-s1", "status": "complete", "usd": 4.558829, "files": 3, "gpu": "NVIDIA A10G", "cpu": "AuthenticAMD | 23 | 49 | unknown | avx512f=False", "error": null}
+{"job_id": "eval-fair-qwen3-4b-s2", "status": "complete"}
+{"job_id": "eval-fair-qwen3-4b-s3", "status": "complete"}
+
+codex
+All calls are settled. The final Qwen3-4B evaluation completed, bringing the ledger’s estimated spend to $23.862331 against the $35 cap. I’m generating the report and checking the complete table against the frozen registration.
+exec
+/bin/zsh -lc 'nice -n 19 python3 research/remember/rf_report.py --write' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+{"wrote": "/Users/neo/repos/polyformer-wt/remember/research/remember/REMEMBER2.md", "runs": 144, "scores": ["hit", "miss", "miss", "hit", "hit", "miss"], "settled_usd": 23.862331}
+
+exec
+/bin/zsh -lc 'nice -n 19 python3 research/remember/rf_modal.py status' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+{
+ "app": "polyformer-remember-fair",
+ "settled_usd": 23.8623,
+ "reserved_or_settled_usd": 23.8623,
+ "cap_usd": 35.0,
+ "jobs": {
+  "complete": 13,
+  "error": 1
+ },
+ "open": []
+}
+
+exec
+/bin/zsh -lc 'nice -n 19 git diff -- research/remember/REMEMBER2.md' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+diff --git a/research/remember/REMEMBER2.md b/research/remember/REMEMBER2.md
+index dd3ae502..41c66223 100644
+--- a/research/remember/REMEMBER2.md
++++ b/research/remember/REMEMBER2.md
+@@ -342,6 +342,169 @@ same_init True. same_data True. causal_mismatches 0.
+ 
+ <!-- FAIR-RESULTS -->
+ 
+-Pending the counted jobs. Unaudited when written.
++Unaudited.
++
++Seeds [1, 2, 3]. Eval tables 3. Tapes 1. Lengths [256, 1024, 4096]. Key length 4096. Train length 256, 3 tables, 768 supervised positions a step. Each length cell is trace-exact runs over runs, pooled over seeds, tables and tapes. A shorter length is a prefix of the long tape.
++
++Tables, from the fresh-list prefix: index 0 rows 95 random bin 65-128; index 1 rows 40 perm bin 17-64; index 5 rows 12 random bin 4-16.
++
++| model | arm | policy | 256 | 1024 | 4096 |
++| --- | --- | --- | --- | --- | --- |
++| qwen3-1.7b | pin | pin | 9/9 | 9/9 | 9/9 |
++| qwen3-1.7b | pin | remember | 0/9 | 0/9 | 0/9 |
++| qwen3-1.7b | pin | tok | 9/9 | 9/9 | 9/9 |
++| qwen3-1.7b | pin | adv | 5/9 | 3/9 | 0/9 |
++| qwen3-1.7b | hist | pin | 9/9 | 9/9 | 9/9 |
++| qwen3-1.7b | hist | remember | 9/9 | 9/9 | 8/9 |
++| qwen3-1.7b | hist | tok | 9/9 | 9/9 | 9/9 |
++| qwen3-1.7b | hist | adv | 7/9 | 6/9 | 1/9 |
++| qwen3-4b | pin | pin | 9/9 | 9/9 | 9/9 |
++| qwen3-4b | pin | remember | 0/9 | 0/9 | 0/9 |
++| qwen3-4b | pin | tok | 9/9 | 9/9 | 9/9 |
++| qwen3-4b | pin | adv | 4/9 | 2/9 | 0/9 |
++| qwen3-4b | hist | pin | 9/9 | 9/9 | 9/9 |
++| qwen3-4b | hist | remember | 8/9 | 6/9 | 5/9 |
++| qwen3-4b | hist | tok | 9/9 | 9/9 | 9/9 |
++| qwen3-4b | hist | adv | 9/9 | 9/9 | 4/9 |
++
++Lower median first-error step on the inexact runs.
++
++qwen3-1.7b pin pin: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-1.7b pin remember: 256 3 (steps 2, 2, 2, 2, 3, 7, 10, 13, 22; 0 exact excluded, 9 runs); 1024 3 (steps 2, 2, 2, 2, 3, 7, 10, 13, 22; 0 exact excluded, 9 runs); 4096 3 (steps 2, 2, 2, 2, 3, 7, 10, 13, 22; 0 exact excluded, 9 runs).
++qwen3-1.7b pin tok: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-1.7b pin adv: 256 16 (steps 7, 16, 55, 137; 5 exact excluded, 9 runs); 1024 55 (steps 7, 16, 55, 137, 305, 797; 3 exact excluded, 9 runs); 4096 305 (steps 7, 16, 55, 137, 305, 797, 1173, 1685, 1775; 0 exact excluded, 9 runs).
++qwen3-1.7b hist pin: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-1.7b hist remember: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 1639 (steps 1639; 8 exact excluded, 9 runs).
++qwen3-1.7b hist tok: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-1.7b hist adv: 256 120 (steps 120, 139; 7 exact excluded, 9 runs); 1024 139 (steps 120, 139, 789; 6 exact excluded, 9 runs); 4096 1236 (steps 120, 139, 789, 1236, 1270, 1825, 2863, 2969; 1 exact excluded, 9 runs).
++qwen3-4b pin pin: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-4b pin remember: 256 2 (steps 2, 2, 2, 2, 2, 3, 3, 4, 5; 0 exact excluded, 9 runs); 1024 2 (steps 2, 2, 2, 2, 2, 3, 3, 4, 5; 0 exact excluded, 9 runs); 4096 2 (steps 2, 2, 2, 2, 2, 3, 3, 4, 5; 0 exact excluded, 9 runs).
++qwen3-4b pin tok: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-4b pin adv: 256 81 (steps 11, 11, 81, 169, 208; 4 exact excluded, 9 runs); 1024 169 (steps 11, 11, 81, 169, 208, 456, 965; 2 exact excluded, 9 runs); 4096 208 (steps 11, 11, 81, 169, 208, 456, 965, 2178, 3064; 0 exact excluded, 9 runs).
++qwen3-4b hist pin: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-4b hist remember: 256 23 (steps 23; 8 exact excluded, 9 runs); 1024 310 (steps 23, 310, 456; 6 exact excluded, 9 runs); 4096 310 (steps 23, 310, 456, 1138; 5 exact excluded, 9 runs).
++qwen3-4b hist tok: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 undefined (0 inexact, 9 exact excluded, 9 runs).
++qwen3-4b hist adv: 256 undefined (0 inexact, 9 exact excluded, 9 runs); 1024 undefined (0 inexact, 9 exact excluded, 9 runs); 4096 2374 (steps 1183, 1653, 2374, 2427, 2502; 4 exact excluded, 9 runs).
++
++Ticks whose logits equal that policy's row certificate. Pin uses the pin certificate. Tok uses the tok certificate. Adv and remember have no position-invariant row certificate.
++
++qwen3-1.7b pin pin: 36864 of 36864.
++qwen3-1.7b pin tok: 36864 of 36864.
++qwen3-1.7b hist pin: 36864 of 36864.
++qwen3-1.7b hist tok: 36864 of 36864.
++qwen3-4b pin pin: 36864 of 36864.
++qwen3-4b pin tok: 36864 of 36864.
++qwen3-4b hist pin: 36864 of 36864.
++qwen3-4b hist tok: 36864 of 36864.
++
++Per seed. Same exact/n cells.
++
++| model | seed | arm | policy | 256 | 1024 | 4096 |
++| --- | --- | --- | --- | --- | --- | --- |
++| qwen3-1.7b | 1 | pin | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 1 | pin | remember | 0/3 | 0/3 | 0/3 |
++| qwen3-1.7b | 1 | pin | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 1 | pin | adv | 0/3 | 0/3 | 0/3 |
++| qwen3-1.7b | 1 | hist | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 1 | hist | remember | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 1 | hist | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 1 | hist | adv | 3/3 | 2/3 | 0/3 |
++| qwen3-1.7b | 2 | pin | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 2 | pin | remember | 0/3 | 0/3 | 0/3 |
++| qwen3-1.7b | 2 | pin | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 2 | pin | adv | 2/3 | 1/3 | 0/3 |
++| qwen3-1.7b | 2 | hist | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 2 | hist | remember | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 2 | hist | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 2 | hist | adv | 2/3 | 2/3 | 1/3 |
++| qwen3-1.7b | 3 | pin | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 3 | pin | remember | 0/3 | 0/3 | 0/3 |
++| qwen3-1.7b | 3 | pin | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 3 | pin | adv | 3/3 | 2/3 | 0/3 |
++| qwen3-1.7b | 3 | hist | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 3 | hist | remember | 3/3 | 3/3 | 2/3 |
++| qwen3-1.7b | 3 | hist | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-1.7b | 3 | hist | adv | 2/3 | 2/3 | 0/3 |
++| qwen3-4b | 1 | pin | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 1 | pin | remember | 0/3 | 0/3 | 0/3 |
++| qwen3-4b | 1 | pin | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 1 | pin | adv | 2/3 | 1/3 | 0/3 |
++| qwen3-4b | 1 | hist | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 1 | hist | remember | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 1 | hist | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 1 | hist | adv | 3/3 | 3/3 | 2/3 |
++| qwen3-4b | 2 | pin | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 2 | pin | remember | 0/3 | 0/3 | 0/3 |
++| qwen3-4b | 2 | pin | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 2 | pin | adv | 2/3 | 1/3 | 0/3 |
++| qwen3-4b | 2 | hist | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 2 | hist | remember | 3/3 | 2/3 | 1/3 |
++| qwen3-4b | 2 | hist | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 2 | hist | adv | 3/3 | 3/3 | 0/3 |
++| qwen3-4b | 3 | pin | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 3 | pin | remember | 0/3 | 0/3 | 0/3 |
++| qwen3-4b | 3 | pin | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 3 | pin | adv | 0/3 | 0/3 | 0/3 |
++| qwen3-4b | 3 | hist | pin | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 3 | hist | remember | 2/3 | 1/3 | 1/3 |
++| qwen3-4b | 3 | hist | tok | 3/3 | 3/3 | 3/3 |
++| qwen3-4b | 3 | hist | adv | 3/3 | 3/3 | 2/3 |
++
++Row certificates. A pass is every row's argmax equal to the destination with positive margin. A failed certificate is a result; the tapes still ran.
++
++qwen3-1.7b pin: pin certificate 9 of 9, tok certificate 9 of 9.
++qwen3-1.7b hist: pin certificate 9 of 9, tok certificate 9 of 9.
++qwen3-4b pin: pin certificate 9 of 9, tok certificate 9 of 9.
++qwen3-4b hist: pin certificate 9 of 9, tok certificate 9 of 9.
++
++Paired training. Both arms, one fingerprint, one init, last step kept.
++
++qwen3-1.7b seed 1: same_init True, same_data True, same_budget True, first trajectory labels 256, pi_len 384, causal_mismatches 0, params 401408, acc_last10 pin 0.999349 hist 1.0, wall pin 106.2 hist 100.8, diverged pin False hist False.
++qwen3-1.7b seed 2: same_init True, same_data True, same_budget True, first trajectory labels 256, pi_len 576, causal_mismatches 0, params 401408, acc_last10 pin 0.99974 hist 0.99961, wall pin 101.0 hist 96.2, diverged pin False hist False.
++qwen3-1.7b seed 3: same_init True, same_data True, same_budget True, first trajectory labels 256, pi_len 336, causal_mismatches 0, params 401408, acc_last10 pin 1.0 hist 0.99935, wall pin 104.4 hist 100.0, diverged pin False hist False.
++qwen3-4b seed 1: same_init True, same_data True, same_budget True, first trajectory labels 256, pi_len 384, causal_mismatches 0, params 737280, acc_last10 pin 0.99961 hist 0.999089, wall pin 231.7 hist 225.7, diverged pin False hist False.
++qwen3-4b seed 2: same_init True, same_data True, same_budget True, first trajectory labels 256, pi_len 576, causal_mismatches 0, params 737280, acc_last10 pin 0.999479 hist 0.99961, wall pin 228.3 hist 223.2, diverged pin False hist False.
++qwen3-4b seed 3: same_init True, same_data True, same_budget True, first trajectory labels 256, pi_len 336, causal_mismatches 0, params 737280, acc_last10 pin 1.0 hist 0.99974, wall pin 224.4 hist 219.2, diverged pin False hist False.
++
++Registered predictions, scored from the pooled cells above.
++
++F1. hit. Pin arm under pin is exact at 256 on at least half its runs, in every counted model.
++F2. miss. History arm under remember is exact at 256 on fewer than half its runs, in every counted model.
++F3. miss. Pin-arm pin exact fraction at 256 is strictly above the history-arm remember fraction, in every counted model.
++F4. hit. History-arm remember exact fraction at 4096 is at most the fraction at 256, in every counted model.
++F5. hit. Pin arm under adv is strictly less exact at 256 than pin arm under pin, where the pin fraction is positive.
++F6. miss. Pin arm under tok is strictly less exact at 256 than pin arm under pin, where the pin fraction is positive.
++
++Hosts. For a carry retry, the payload host is the retry's; the carried runs ran on the original job's host, listed under Retries.
++
++qwen3-1.7b seed 1: gpu NVIDIA A10; cpu unknown; ledger gpu NVIDIA A10; ledger cpu GenuineIntel | 6 | 106 | unknown | avx512f=True.
++qwen3-1.7b seed 2: gpu NVIDIA A10; cpu unknown; ledger gpu NVIDIA A10; ledger cpu GenuineIntel | 6 | 106 | unknown | avx512f=True.
++qwen3-1.7b seed 3: gpu NVIDIA A10; cpu unknown; ledger gpu NVIDIA A10; ledger cpu GenuineIntel | 6 | 106 | unknown | avx512f=True.
++qwen3-4b seed 1: gpu NVIDIA A10G; cpu unknown; ledger gpu NVIDIA A10G; ledger cpu AuthenticAMD | 23 | 49 | unknown | avx512f=False.
++qwen3-4b seed 2: gpu NVIDIA A10G; cpu unknown; ledger gpu NVIDIA A10G; ledger cpu AuthenticAMD | 23 | 49 | unknown | avx512f=False.
++qwen3-4b seed 3: gpu NVIDIA A10G; cpu unknown; ledger gpu NVIDIA A10G; ledger cpu AuthenticAMD | 23 | 49 | unknown | avx512f=False.
++
++Retries. A timeout is not a trace failure; the retry has a new job id and carries the finished runs unchanged.
++
++`eval-fair-qwen3-1.7b-s3` (subprocess exceeded 6133 seconds) is replaced by `eval-fair-qwen3-1.7b-s3-r1`, which carries its 22 finished runs. Original host: gpu NVIDIA A10G; cpu AuthenticAMD | 23 | 49 | unknown | avx512f=False.
++
++Settled 23.862331 against cap 35.0.
++
++- `eval-fair-qwen3-1.7b-s1` complete 2.773905 reserved-gpu A10G actual NVIDIA A10
++- `eval-fair-qwen3-1.7b-s2` complete 2.818229 reserved-gpu A10G actual NVIDIA A10
++- `eval-fair-qwen3-1.7b-s3` error 3.297222 reserved-gpu A10G actual NVIDIA A10G
++- `eval-fair-qwen3-1.7b-s3-r1` complete 0.398853 reserved-gpu A10G actual NVIDIA A10
++- `eval-fair-qwen3-4b-s1` complete 4.558829 reserved-gpu A10G actual NVIDIA A10G
++- `eval-fair-qwen3-4b-s2` complete 4.065361 reserved-gpu A10G actual NVIDIA A10G
++- `eval-fair-qwen3-4b-s3` complete 4.00029 reserved-gpu A10G actual NVIDIA A10G
++- `fair-qwen3-1.7b-s1` complete 0.234146 reserved-gpu A10G actual NVIDIA A10
++- `fair-qwen3-1.7b-s2` complete 0.229228 reserved-gpu A10G actual NVIDIA A10
++- `fair-qwen3-1.7b-s3` complete 0.232733 reserved-gpu A10G actual NVIDIA A10
++- `fair-qwen3-4b-s1` complete 0.363801 reserved-gpu A10G actual NVIDIA A10
++- `fair-qwen3-4b-s2` complete 0.360834 reserved-gpu A10G actual NVIDIA A10
++- `fair-qwen3-4b-s3` complete 0.35676 reserved-gpu A10G actual NVIDIA A10
++- `smoke-fair-qwen3-1.7b` complete 0.17214 reserved-gpu A10G actual NVIDIA A10G
++
++Runs in the pooled table: 144.
+ 
+ <!-- /FAIR-RESULTS -->
+
+exec
+/bin/zsh -lc 'nice -n 19 git status --short' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+ M research/remember/REMEMBER2.md
+ M research/remember/results_fair/modal_ledger.json
+ M research/remember/rf_report.py
+ M research/remember/rf_selftest.py
+?? research/remember/results_fair/eval-fair-qwen3-1.7b-s3-r1/
+?? research/remember/results_fair/eval-fair-qwen3-4b-s1/
+?? research/remember/results_fair/eval-fair-qwen3-4b-s2/
+?? research/remember/results_fair/eval-fair-qwen3-4b-s3/
+?? research/remember/results_fair/summary.json
+
+codex
+The table is written and the JSON/CSV recount agrees across all 144 runs. History-trained edits are exact under remember on 9/9 and 8/9 runs at 256, falling to 8/9 and 5/9 at 4,096. That falsifies F2; F3 and F6 also miss. I’m checking that only the result block changed in the document, then committing.
+exec
+/bin/zsh -lc "nice -n 19 python3 - <<'PY'
+import itertools,json,pathlib,subprocess,sys
+p=pathlib.Path('research/remember');r=p/'results_fair'
+sys.path.insert(0,str(p));import rf_report
+plan=json.loads((r/'plan.json').read_text());ledger=json.loads((r/'modal_ledger.json').read_text())
+swap=rf_report.retries(r,ledger)
+for j in plan['jobs']:
+    if j['kind']"'!='"'eval': continue
+    payload=json.loads((r/swap.get(j['id'],j['id'])/'runs.json').read_text())
+    keys=[(x['arm'],x['policy'],x['table'],x['tape']) for x in payload['runs']]
+    expected=set(itertools.product(plan['arms'],plan['policies'],payload['table_index'],range(plan['tapes'])))
+    assert len(keys)==len(set(keys)) and set(keys)==expected
+    assert j['id']==f\"eval-fair-{payload['model']}-s{payload['seed']}\"
+assert not [e for e in ledger['jobs'].values() if e['status'] in ('running','reserved')]
+old=subprocess.check_output(['git','show','HEAD:research/remember/REMEMBER2.md'],text=True)
+new=(p/'REMEMBER2.md').read_text()
+def outside(text):
+    a,b=text.split('<"'!-- FAIR-RESULTS -->'"',1)
+    return a+b.split('<"'!-- /FAIR-RESULTS -->'"',1)[1]
+assert outside(old)==outside(new)
+frozen=subprocess.check_output(['git','show','a000e9bf:research/remember/REMEMBER2.md'],text=True)
+def registration(text):return text.split('## Fair test\\n',1)[1].split('<"'!-- FAIR-PLAN -->'"',1)[0]
+assert registration(frozen)==registration(new)
+summary=json.loads((r/'summary.json').read_text())
+assert summary==rf_report.build(r)
+assert rf_report.results_md(summary).strip()==new.split('<"'!-- FAIR-RESULTS -->'"',1)[1].split('<"'!-- /FAIR-RESULTS -->'"',1)[0].strip()
+print('PASS: complete Cartesian run coverage, zero open jobs, frozen registration unchanged, only result marker updated, summary and rendered table reproduce')
+print('Runs:',summary['n_runs'],'CSV cells:',summary['n_runs']*len(plan['lengths']),'settled USD:',summary['spend']['settled_usd'])
+PY" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+PASS: complete Cartesian run coverage, zero open jobs, frozen registration unchanged, only result marker updated, summary and rendered table reproduce
+Runs: 144 CSV cells: 432 settled USD: 23.862331
+
+exec
+/bin/zsh -lc 'nice -n 19 git diff --check' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+exec
+/bin/zsh -lc 'nice -n 19 git add research/remember/REMEMBER2.md research/remember/rf_report.py research/remember/rf_selftest.py research/remember/results_fair/modal_ledger.json research/remember/results_fair/summary.json research/remember/results_fair/eval-fair-qwen3-1.7b-s3-r1 research/remember/results_fair/eval-fair-qwen3-4b-s1 research/remember/results_fair/eval-fair-qwen3-4b-s2 research/remember/results_fair/eval-fair-qwen3-4b-s3' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+exec
+/bin/zsh -lc 'nice -n 19 git diff --cached --stat' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+ research/remember/REMEMBER2.md                     |  165 +-
+ .../eval-fair-qwen3-1.7b-s3-r1/job.log.json        |    1 +
+ .../eval-fair-qwen3-1.7b-s3-r1/runs.csv            |   73 +
+ .../eval-fair-qwen3-1.7b-s3-r1/runs.json           | 9269 ++++++++++++++++++++
+ .../eval-fair-qwen3-4b-s1/job.log.json             |    1 +
+ .../results_fair/eval-fair-qwen3-4b-s1/runs.csv    |   73 +
+ .../results_fair/eval-fair-qwen3-4b-s1/runs.json   | 9158 +++++++++++++++++++
+ .../eval-fair-qwen3-4b-s2/job.log.json             |    1 +
+ .../results_fair/eval-fair-qwen3-4b-s2/runs.csv    |   73 +
+ .../results_fair/eval-fair-qwen3-4b-s2/runs.json   | 9147 +++++++++++++++++++
+ .../eval-fair-qwen3-4b-s3/job.log.json             |    1 +
+ .../results_fair/eval-fair-qwen3-4b-s3/runs.csv    |   73 +
+ .../results_fair/eval-fair-qwen3-4b-s3/runs.json   | 8860 +++++++++++++++++++
+ research/remember/results_fair/modal_ledger.json   |   48 +-
+ research/remember/results_fair/summary.json        | 1951 ++++
+ research/remember/rf_report.py                     |   13 +-
+ research/remember/rf_selftest.py                   |   16 +
+ 17 files changed, 38914 insertions(+), 9 deletions(-)
+
+exec
+/bin/zsh -lc "nice -n 19 git commit -m 'Complete the unaudited REMEMBER fair test and settle every Modal call' -m 'Collect the existing Qwen3-4B calls and the registered carry retry without relaunching. Write all 144 runs under the frozen registration, including first errors, bitwise counts, prediction scores, and the "'$23.862331 settled estimate.'"' -m 'Preserve executed ticks in the JSON recount for policies without row certificates and include the original retry host. Self-test passes; all 432 CSV cells agree; registration is unchanged and no jobs remain open.'" in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+[remember 45fba394] Complete the unaudited REMEMBER fair test and settle every Modal call
+ 17 files changed, 38914 insertions(+), 9 deletions(-)
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-1.7b-s3-r1/job.log.json
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-1.7b-s3-r1/runs.csv
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-1.7b-s3-r1/runs.json
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s1/job.log.json
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s1/runs.csv
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s1/runs.json
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s2/job.log.json
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s2/runs.csv
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s2/runs.json
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s3/job.log.json
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s3/runs.csv
+ create mode 100644 research/remember/results_fair/eval-fair-qwen3-4b-s3/runs.json
+ create mode 100644 research/remember/results_fair/summary.json
+
+exec
+/bin/zsh -lc 'nice -n 19 git status --short' in /Users/neo/repos/polyformer-wt/remember
+ succeeded in 0ms:
+codex
+Committed as `45fba394`. All jobs settled; working tree clean.
+
+Unaudited fair-test results, exact runs out of 9 per cell:
+
+| Model | Arm | Policy | 256 | 1024 | 4096 |
+|---|---|---|---|---|---|
+| Qwen3-1.7B | pin | pin | 9/9 | 9/9 | 9/9 |
+| | pin | remember | 0/9 | 0/9 | 0/9 |
+| | pin | tok | 9/9 | 9/9 | 9/9 |
+| | pin | adv | 5/9 | 3/9 | 0/9 |
+| | history | pin | 9/9 | 9/9 | 9/9 |
+| | history | remember | 9/9 | 9/9 | 8/9 |
+| | history | tok | 9/9 | 9/9 | 9/9 |
+| | history | adv | 7/9 | 6/9 | 1/9 |
+| Qwen3-4B | pin | pin | 9/9 | 9/9 | 9/9 |
+| | pin | remember | 0/9 | 0/9 | 0/9 |
+| | pin | tok | 9/9 | 9/9 | 9/9 |
+| | pin | adv | 4/9 | 2/9 | 0/9 |
+| | history | pin | 9/9 | 9/9 | 9/9 |
+| | history | remember | 8/9 | 6/9 | 5/9 |
+| | history | tok | 9/9 | 9/9 | 9/9 |
+| | history | adv | 9/9 | 9/9 | 4/9 |
+
+History is learnable under this recipe; exclusive pin learnability is unsupported. All 432 JSON/CSV cells agree.
+
+Settled estimated spend: **$23.862331 / $35**, including smoke, timeout, and retry.
+
+[Full report, first errors, and bitwise counts](/Users/neo/repos/polyformer-wt/remember/research/remember/REMEMBER2.md:342).
+tokens used
+99,466
+Committed as `45fba394`. All jobs settled; working tree clean.
+
+Unaudited fair-test results, exact runs out of 9 per cell:
+
+| Model | Arm | Policy | 256 | 1024 | 4096 |
+|---|---|---|---|---|---|
+| Qwen3-1.7B | pin | pin | 9/9 | 9/9 | 9/9 |
+| | pin | remember | 0/9 | 0/9 | 0/9 |
+| | pin | tok | 9/9 | 9/9 | 9/9 |
+| | pin | adv | 5/9 | 3/9 | 0/9 |
+| | history | pin | 9/9 | 9/9 | 9/9 |
+| | history | remember | 9/9 | 9/9 | 8/9 |
+| | history | tok | 9/9 | 9/9 | 9/9 |
+| | history | adv | 7/9 | 6/9 | 1/9 |
+| Qwen3-4B | pin | pin | 9/9 | 9/9 | 9/9 |
+| | pin | remember | 0/9 | 0/9 | 0/9 |
+| | pin | tok | 9/9 | 9/9 | 9/9 |
+| | pin | adv | 4/9 | 2/9 | 0/9 |
+| | history | pin | 9/9 | 9/9 | 9/9 |
+| | history | remember | 8/9 | 6/9 | 5/9 |
+| | history | tok | 9/9 | 9/9 | 9/9 |
+| | history | adv | 9/9 | 9/9 | 4/9 |
+
+History is learnable under this recipe; exclusive pin learnability is unsupported. All 432 JSON/CSV cells agree.
+
+Settled estimated spend: **$23.862331 / $35**, including smoke, timeout, and retry.
+
+[Full report, first errors, and bitwise counts](/Users/neo/repos/polyformer-wt/remember/research/remember/REMEMBER2.md:342).
