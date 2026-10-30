@@ -138,4 +138,20 @@ describe('wave accounting and round-two boundaries', () => {
 			checkRoot(new Arithmetic(new RefCalc(), 'strong'), s.equations[0], root, new Map(), wrongRow)
 		).rejects.toThrow('typed equation');
 	});
+	it('keeps the six selected demo beats below twelve modeled seconds in both modes', async () => {
+		for (const mode of ['light', 'strong'] as const)
+			for (const source of [
+				'123456 * 654321',
+				'solve 3(x-2)+5=2x+14',
+				'solve 7x+13=2026-4x',
+				'solve 2x+3y=7,x-y=1',
+				'solve (2x-3)(x+5)=x^2+1-16',
+				'solve x^2-x-6=0'
+			]) {
+				const c = new RefCalc(),
+					result = await run(source, c, { checkMode: mode });
+				expect(result.results[0].status, source).toBe('ok');
+				expect(c.total.seconds, `${mode}: ${source}`).toBeLessThan(12);
+			}
+	});
 });

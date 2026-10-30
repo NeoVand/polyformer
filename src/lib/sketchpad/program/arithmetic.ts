@@ -186,9 +186,10 @@ export class Arithmetic {
 			if (e.kind === 'binary' && e.op === '^') {
 				const exp = exponent(e.right),
 					p = power(left, Math.abs(exp));
-				return register(key, [p], () =>
-					exp < 0 ? this.div(integer(1n), value(p)) : Promise.resolve(value(p))
-				);
+				// A positive power already names the computed node. An alias must not
+				// insert a scheduling barrier that delays independent consumers.
+				if (exp >= 0) return p;
+				return register(key, [p], () => this.div(integer(1n), value(p)));
 			}
 			const right = build(e.right);
 			return register(key, [left, right], async () => {

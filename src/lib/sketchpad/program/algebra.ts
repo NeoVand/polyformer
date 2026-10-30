@@ -301,6 +301,26 @@ async function lowDegree(
 		return result;
 	}
 	const [constant, b, leading] = c;
+	// A sheet-produced zero constant proves 0 is a candidate; the other root is linear.
+	// Both still pass the selected root check. No discriminant digits are needed here.
+	if (constant === 0n) {
+		const other = await a.fraction(flip(b), leading),
+			zero = integer(constant);
+		const roots =
+			other.n === 0n ? [zero] : other.n < 0n === leading > 0n ? [other, zero] : [zero, other];
+		const checked = await a.calc.wave(
+			roots.map((root) => async () => ({
+				root,
+				check: await checkRoot(a, eq, root, env, c),
+				text: await a.rootText(root)
+			}))
+		);
+		result.roots = checked.map((v) => v.root);
+		result.checks = checked.map((v) => v.check);
+		result.text = `x = ${checked.map((v) => v.text).join(', ')}`;
+		return result;
+	}
+
 	const den = await a.calc.add(leading, leading);
 	const [square, product] = await a.calc.wave([
 		() => a.calc.mul(b, b),
