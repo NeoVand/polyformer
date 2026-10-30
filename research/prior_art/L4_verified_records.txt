@@ -1,0 +1,156 @@
+# L4 verification record, generated 2026-10-28T17:37Z
+# arXiv API (export.arxiv.org/api/query?id_list=...): id | title | authors | first version | comment | journal_ref
+1902.10297v1 | Representing Formal Languages: A Comparison Between Finite Automata and Recurrent Neural Networks | Joshua J. Michalenko, Ameesh Shah, Abhinav Verma, Richard G. Baraniuk, Swarat Chaudhuri, Ankit B. Patel | 2019-02-27 | c:15 Pages, 13 Figures, Accepted to ICLR 2019 | j:
+2006.14123v1 | On Lyapunov Exponents for RNNs: Understanding Information Propagation Using Dynamical Systems Tools | Ryan Vogt, Maximilian Puelma Touzel, Eli Shlizerman, Guillaume Lajoie | 2020-06-25 | c:Associated github repository: https://github.com/shlizee/lyapunov-hyperopt | j:
+1910.00292v2 | Generalization in Generation: A closer look at Exposure Bias | Florian Schmidt | 2019-10-01 | c:wngt2019 camera ready | j:
+1908.02729v1 | Robust Learning with Jacobian Regularization | Judy Hoffman, Daniel A. Roberts, Sho Yaida | 2019-08-07 | c:21 pages, 10 figures | j:
+2104.05942v3 | Recurrent Equilibrium Networks: Flexible Dynamic Models with Guaranteed Stability and Robustness | Max Revay, Ruigang Wang, Ian R. Manchester | 2021-04-13 | c:To appear in IEEE Transactions on Automatic Control | j:
+2102.09161v3 | On the Sample Complexity of Stability Constrained Imitation Learning | Stephen Tu, Alexander Robey, Tingnan Zhang, Nikolai Matni | 2021-02-18 | c: | j:
+1802.08760v3 | Sensitivity and Generalization in Neural Networks: an Empirical Study | Roman Novak, Yasaman Bahri, Daniel A. Abolafia, Jeffrey Pennington, Jascha Sohl-Dickstein | 2018-02-23 | c:Published as a conference paper at ICLR 2018 | j:
+1704.06611v1 | Making Neural Programming Architectures Generalize via Recursion | Jonathon Cai, Richard Shin, Dawn Song | 2017-04-21 | c:Published in ICLR 2017 | j:
+1511.06279v4 | Neural Programmer-Interpreters | Scott Reed, Nando de Freitas | 2015-11-19 | c:ICLR 2016 conference submission | j:
+1511.06732v7 | Sequence Level Training with Recurrent Neural Networks | Marc'Aurelio Ranzato, Sumit Chopra, Michael Auli, Wojciech Zaremba | 2015-11-20 | c: | j:
+1703.09327v2 | DART: Noise Injection for Robust Imitation Learning | Michael Laskey, Jonathan Lee, Roy Fox, Anca Dragan, Ken Goldberg | 2017-03-27 | c: | j:1st Conference on Robot Learning (CoRL 2017)
+2004.02462v2 | Verifying Recurrent Neural Networks using Invariant Inference | Yuval Jacoby, Clark Barrett, Guy Katz | 2020-04-06 | c:This is the extended version of a paper with the same title that appeared at ATVA 2020 | j:
+2008.05952v2 | Learning Stability Certificates from Data | Nicholas M. Boffi, Stephen Tu, Nikolai Matni, Jean-Jacques E. Slotine, Vikas Sindhwani | 2020-08-13 | c:Fixes an error in the statement and proof of Theorem 5.1, Theorem 5.2, and Proposition D.1 | j:
+2001.06116v1 | Learning Stable Deep Dynamics Models | Gaurav Manek, J. Zico Kolter | 2020-01-17 | c:NeurIPS 2019 | j:
+2002.06622v2 | Robustness Verification for Transformers | Zhouxing Shi, Huan Zhang, Kai-Wei Chang, Minlie Huang, Cho-Jui Hsieh | 2020-02-16 | c:ICLR 2020 | j:
+1906.06755v2 | Theoretical Limitations of Self-Attention in Neural Sequence Models | Michael Hahn | 2019-06-16 | c:Accepted by: Transactions of the Association for Computational Linguistics | j:
+1810.12715v4 | On the Effectiveness of Interval Bound Propagation for Training Verifiably Robust Models | Sven Gowal, Krishnamurthy Dvijotham, Robert Stanforth, Rudy Bunel, Chongli Qin, Jonathan Uesato et al.(9) | 2018-10-30 | c:[v2] Best paper at NeurIPS SECML 2018 Workshop [v4] Accepted at ICCV 2019 under the title "Scalable Verified T | j:
+1211.5063v2 | On the difficulty of training Recurrent Neural Networks | Razvan Pascanu, Tomas Mikolov, Yoshua Bengio | 2012-11-21 | c:Improved description of the exploding gradient problem and description and analysis of the vanishing gradient  | j:
+1410.4615v3 | Learning to Execute | Wojciech Zaremba, Ilya Sutskever | 2014-10-17 | c: | j:
+1811.00866v1 | Efficient Neural Network Robustness Certification with General Activation Functions | Huan Zhang, Tsui-Wei Weng, Pin-Yu Chen, Cho-Jui Hsieh, Luca Daniel | 2018-11-02 | c:Accepted by NIPS 2018. Huan Zhang and Tsui-Wei Weng contributed equally | j:
+2205.14812v2 | TaSIL: Taylor Series Imitation Learning | Daniel Pfrommer, Thomas T. C. K. Zhang, Stephen Tu, Nikolai Matni | 2022-05-30 | c:Appeared at NeurIPS 2022. V2: added to related work, updated notation, fixed small errors in appendix | j:
+1709.03582v2 | Art of singular vectors and universal adversarial perturbations | Valentin Khrulkov, Ivan Oseledets | 2017-09-11 | c:Submitted to CVPR 2018 | j:
+1711.09576v4 | Extracting Automata from Recurrent Neural Networks Using Queries and Counterexamples | Gail Weiss, Yoav Goldberg, Eran Yahav | 2017-11-27 | c:Accepted in ICML 2018, (Feb 2020: added link to code, at https://github.com/tech-srl/lstar_extraction ) | j:ICML 2018
+2006.08084v3 | Neural Execution Engines: Learning to Execute Subroutines | Yujun Yan, Kevin Swersky, Danai Koutra, Parthasarathy Ranganathan, Milad Hashemi | 2020-06-15 | c:Accepted at 34th Conference on Neural Information Processing Systems (NeurIPS 2020) | j:
+1011.0686v3 | A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning | Stephane Ross, Geoffrey J. Gordon, J. Andrew Bagnell | 2010-11-02 | c:Appearing in the 14th International Conference on Artificial Intelligence and Statistics (AISTATS 2011) | j:
+1905.07387v1 | POPQORN: Quantifying Robustness of Recurrent Neural Networks | Ching-Yun Ko, Zhaoyang Lyu, Tsui-Wei Weng, Luca Daniel, Ngai Wong, Dahua Lin | 2019-05-17 | c:10 pages, Ching-Yun Ko and Zhaoyang Lyu contributed equally, accepted to ICML 2019. Please see arXiv source co | j:
+2009.10610v1 | Property-Directed Verification of Recurrent Neural Networks | Igor Khmelnitsky, Daniel Neider, Rajarshi Roy, Benoît Barbot, Benedikt Bollig, Alain Finkel et al.(9) | 2020-09-22 | c: | j:
+1905.10617v10 | Exposure Bias versus Self-Recovery: Are Distortions Really Incremental for Autoregressive Text Generation? | Tianxing He, Jingzhao Zhang, Zhiming Zhou, James Glass | 2019-05-25 | c: | j:EMNLP 2021
+2007.07368v6 | Explicit Regularisation in Gaussian Noise Injections | Alexander Camuto, Matthew Willetts, Umut Şimşekli, Stephen Roberts, Chris Holmes | 2020-07-14 | c: | j:Advances in Neural Information Processing Systems 34 (2020)
+1706.04859v3 | Sobolev Training for Neural Networks | Wojciech Marian Czarnecki, Simon Osindero, Max Jaderberg, Grzegorz Świrszcz, Razvan Pascanu | 2017-06-15 | c: | j:
+1705.03341v3 | Stable Architectures for Deep Neural Networks | Eldad Haber, Lars Ruthotto | 2017-05-09 | c:23 pages, 7 figures | j:Inverse Problems, Volume 34, Number 1 Inverse Problems, Volume 34, Number 1, 2017
+1610.09038v1 | Professor Forcing: A New Algorithm for Training Recurrent Networks | Alex Lamb, Anirudh Goyal, Ying Zhang, Saizheng Zhang, Aaron Courville, Yoshua Bengio | 2016-10-27 | c:NIPS 2016 Accepted Paper | j:
+2204.01171v3 | Why Exposure Bias Matters: An Imitation Learning Perspective of Error Accumulation in Language Generation | Kushal Arora, Layla El Asri, Hareesh Bahuleyan, Jackie Chi Kit Cheung | 2022-04-03 | c:Accepted in Findings of ACL 2022. v2: Equation 7 updated, typo fixes | j:
+2009.06398v1 | On Computability, Learnability and Extractability of Finite State Machines from Recurrent Neural Networks | Reda Marzouk | 2020-09-10 | c:Master's thesis | j:
+1805.10369v4 | Stable Recurrent Models | John Miller, Moritz Hardt | 2018-05-25 | c:To appear in ICLR 2019. This paper was previously titled "When Recurrent Models Don't Need to Be Recurrent." T | j:
+1902.09689v1 | AntisymmetricRNN: A Dynamical System View on Recurrent Neural Networks | Bo Chang, Minmin Chen, Eldad Haber, Ed H. Chi | 2019-02-26 | c:Published as a conference paper at ICLR 2019 | j:
+2102.04877v3 | Noisy Recurrent Neural Networks | Soon Hoe Lim, N. Benjamin Erichson, Liam Hodgkinson, Michael W. Mahoney | 2021-02-09 | c:38 pages | j:NeurIPS 2021 (https://proceedings.neurips.cc/paper/2021/hash/29301521774ff3cbd26652b2d5c95
+1706.08605v1 | Developing Bug-Free Machine Learning Systems With Formal Mathematics | Daniel Selsam, Percy Liang, David L. Dill | 2017-06-26 | c:To appear at the Thirty-fourth International Conference on Machine Learning (ICML) 2017 | j:
+1506.03099v3 | Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks | Samy Bengio, Oriol Vinyals, Navdeep Jaitly, Noam Shazeer | 2015-06-09 | c: | j:
+2110.07238v3 | On the difficulty of learning chaotic dynamics with RNNs | Jonas M. Mikhaeil, Zahra Monfared, Daniel Durstewitz | 2021-10-14 | c: | j:
+2311.16173v2 | Conditions for Length Generalization in Learning Reasoning Skills | Changnan Xiao, Bing Liu | 2023-11-22 | c: | j:
+2312.17306v1 | Gradient Flossing: Improving Gradient Descent through Dynamic Control of Jacobians | Rainer Engelken | 2023-12-28 | c:28 pages, 16 figures, accepted at NeurIPS 2023 | j:
+2307.14619v5 | Provable Guarantees for Generative Behavior Cloning: Bridging Low-Level Stability and High-Level Behavior | Adam Block, Ali Jadbabaie, Daniel Pfrommer, Max Simchowitz, Russ Tedrake | 2023-07-27 | c:updated figures, minor notational change for readability | j:
+2310.16028v1 | What Algorithms can Transformers Learn? A Study in Length Generalization | Hattie Zhou, Arwen Bradley, Etai Littwin, Noam Razin, Omid Saremi, Josh Susskind et al.(8) | 2023-10-24 | c:Preprint | j:
+2309.17453v4 | Efficient Streaming Language Models with Attention Sinks | Guangxuan Xiao, Yuandong Tian, Beidi Chen, Song Han, Mike Lewis | 2023-09-29 | c:ICLR 2024 | j:
+2310.07923v5 | The Expressive Power of Transformers with Chain of Thought | William Merrill, Ashish Sabharwal | 2023-10-11 | c:9-page preprint. ICLR camera ready posted April 11 | j:
+2411.01035v1 | Provable Length Generalization in Sequence Prediction via Spectral Filtering | Annie Marsden, Evan Dogariu, Naman Agarwal, Xinyi Chen, Daniel Suo, Elad Hazan | 2024-11-01 | c:34 pages, 9 figures | j:
+2407.15007v2 | Is Behavior Cloning All You Need? Understanding Horizon in Imitation Learning | Dylan J. Foster, Adam Block, Dipendra Misra | 2024-07-20 | c:NeurIPS 2024 | j:
+2505.24187v2 | Beyond Exponential Decay: Rethinking Error Accumulation in Large Language Models | Mikhail L. Arbuzov, Sisong Bei, Ziwei Dong, Dmitri Kalaev, Alexey A. Shvets | 2025-05-30 | c: | j:
+2502.16792v1 | The Role of Sparsity for Length Generalization in Transformers | Noah Golowich, Samy Jelassi, David Brandfonbrener, Sham M. Kakade, Eran Malach | 2025-02-24 | c: | j:
+2311.00208v3 | What Formal Languages Can Transformers Express? A Survey | Lena Strobl, William Merrill, Gail Weiss, David Chiang, Dana Angluin | 2023-11-01 | c:One minor correction in §5.1 | j:Transactions of the Association for Computational Linguistics, 12:543-561, 2024
+2410.19405v2 | New Fault Domains for Conformance Testing of Finite State Machines | Frits Vaandrager, Ivo Melse | 2024-10-25 | c:30 pages, 11 figures, to appear in proceedings CONCUR 2025 | j:
+2311.14648v3 | Calibrated Language Models Must Hallucinate | Adam Tauman Kalai, Santosh S. Vempala | 2023-11-24 | c:In Proceedings of the 56th Annual ACM Symposium on Theory of Computing (STOC) 2024 | j:
+2402.12875v4 | Chain of Thought Empowers Transformers to Solve Inherently Serial Problems | Zhiyuan Li, Hong Liu, Denny Zhou, Tengyu Ma | 2024-02-20 | c:38 pages, 10 figures. Accepted by ICLR 2024 | j:
+2312.09048v2 | On The Expressivity of Recurrent Neural Cascades | Nadezda Alexandrovna Knorozova, Alessandro Ronca | 2023-12-14 | c:Full version with appendix of a paper with the same title that appears in the proceedings of AAAI 2024 | j:
+2406.06467v3 | How Far Can Transformers Reason? The Globality Barrier and Inductive Scratchpad | Emmanuel Abbe, Samy Bengio, Aryo Lotfi, Colin Sandon, Omid Saremi | 2024-06-10 | c:To appear in NeurIPS 2024 | j:
+2301.13105v3 | Generalization on the Unseen, Logic Reasoning and Degree Curriculum | Emmanuel Abbe, Samy Bengio, Aryo Lotfi, Kevin Rizk | 2023-01-30 | c:extended JMLR version of the original ICML 2023 paper | j:
+2411.01992v3 | Ask, and it shall be given: On the Turing completeness of prompting | Ruizhong Qiu, Zhe Xu, Wenxuan Bao, Hanghang Tong | 2024-11-04 | c:ICLR 2025 | j:
+2506.03085v2 | Non-Asymptotic Length Generalization | Thomas Chen, Tengyu Ma, Zhiyuan Li | 2025-06-03 | c: | j:
+2502.12465v1 | Computational-Statistical Tradeoffs at the Next-Token Prediction Barrier: Autoregressive and Imitation Learning under Misspecification | Dhruv Rohatgi, Adam Block, Audrey Huang, Akshay Krishnamurthy, Dylan J. Foster | 2025-02-18 | c:75 pages | j:
+2410.02140v3 | A Formal Framework for Understanding Length Generalization in Transformers | Xinting Huang, Andy Yang, Satwik Bhattamishra, Yash Sarrof, Andreas Krebs, Hattie Zhou et al.(8) | 2024-10-03 | c:85 pages, 9 figures, 11 tables. Accepted for publication at ICLR 2025 | j:
+2301.13196v1 | Looped Transformers as Programmable Computers | Angeliki Giannou, Shashank Rajput, Jy-yong Sohn, Kangwook Lee, Jason D. Lee, Dimitris Papailiopoulos | 2023-01-30 | c: | j:
+2305.13534v1 | How Language Model Hallucinations Can Snowball | Muru Zhang, Ofir Press, William Merrill, Alisa Liu, Noah A. Smith | 2023-05-22 | c: | j:
+2402.09963v4 | Why are Sensitive Functions Hard for Transformers? | Michael Hahn, Mark Rofin | 2024-02-15 | c:ACL 2024 | j:
+2402.15814v2 | On Efficiently Representing Regular Languages as RNNs | Anej Svete, Robin Shing Moon Chan, Ryan Cotterell | 2024-02-24 | c: | j:
+2309.06979v3 | Auto-Regressive Next-Token Predictors are Universal Learners | Eran Malach | 2023-09-13 | c: | j:
+2410.03170v1 | Autoregressive Large Language Models are Computationally Universal | Dale Schuurmans, Hanjun Dai, Francesco Zanini | 2024-10-04 | c:32 pages | j:
+2403.06963v3 | The pitfalls of next-token prediction | Gregor Bachmann, Vaishnavh Nagarajan | 2024-03-11 | c:ICML 2024 | j:
+2503.09722v4 | The Pitfalls of Imitation Learning when Actions are Continuous | Max Simchowitz, Daniel Pfrommer, Ali Jadbabaie | 2025-03-12 | c:98 pages, 2 figures, updated proof sketch | j:
+2305.18654v3 | Faith and Fate: Limits of Transformers on Compositionality | Nouha Dziri, Ximing Lu, Melanie Sclar, Xiang Lorraine Li, Liwei Jiang, Bill Yuchen Lin et al.(16) | 2023-05-29 | c:10 pages + appendix (40 pages) | j:
+2301.05062v5 | Tracr: Compiled Transformers as a Laboratory for Interpretability | David Lindner, János Kramár, Sebastian Farquhar, Matthew Rahtz, Thomas McGrath, Vladimir Mikulik | 2023-01-12 | c:Presented at NeurIPS 2023 (Spotlight) | j:
+2305.15408v5 | Towards Revealing the Mystery behind Chain of Thought: A Theoretical Perspective | Guhao Feng, Bohang Zhang, Yuntian Gu, Haotian Ye, Di He, Liwei Wang | 2023-05-24 | c:42 pages; Camera-ready version for NeurIPS 2023 (Oral Presentation) | j:
+2505.11694v2 | Neural Networks as Universal Finite-State Machines: A Constructive Deterministic Finite Automaton Theory | Sahil Rajesh Dhayalkar | 2025-05-16 | c:15 pages, 1 figure | j:
+2402.04875v6 | On Provable Length and Compositional Generalization | Kartik Ahuja, Amin Mansouri | 2024-02-07 | c: | j:
+2306.04406v2 | Generalized Teacher Forcing for Learning Chaotic Dynamics | Florian Hess, Zahra Monfared, Manuel Brenner, Daniel Durstewitz | 2023-06-07 | c:Published in the Proceedings of the 40th International Conference on Machine Learning (ICML 2023) | j:PMLR 202:13017-13049, 2023
+2310.11428v1 | Butterfly Effects of SGD Noise: Error Amplification in Behavior Cloning and Autoregression | Adam Block, Dylan J. Foster, Akshay Krishnamurthy, Max Simchowitz, Cyril Zhang | 2023-10-17 | c: | j:
+2405.11657v2 | On the Expressivity of Recurrent Neural Cascades with Identity | Nadezda Alexandrovna Knorozova, Alessandro Ronca | 2024-05-19 | c:Full version with appendix of a paper with the same title that will appear in the proceedings of KR 2024 | j:
+2410.01104v3 | Softmax is not Enough (for Sharp Size Generalisation) | Petar Veličković, Christos Perivolaropoulos, Federico Barbero, Razvan Pascanu | 2024-10-01 | c:To appear at ICML 2025. 22 pages, 9 figures | j:
+2406.04267v2 | Transformers need glasses! Information over-squashing in language tasks | Federico Barbero, Andrea Banino, Steven Kapturowski, Dharshan Kumaran, João G. M. Araújo, Alex Vitvitskyi et al.(8) | 2024-06-06 | c: | j:
+2405.18634v2 | A Theoretical Understanding of Self-Correction through In-context Alignment | Yifei Wang, Yuyang Wu, Zeming Wei, Stefanie Jegelka, Yisen Wang | 2024-05-28 | c:Accepted at NeurIPS 2024 | j:
+2509.22489v2 | Passive Learning of Lattice Automata from Recurrent Neural Networks | Jaouhar Slimi, Tristan Le Gall, Augustin Lemesle | 2025-09-26 | c:Corrected version of the work published in OVERLAY 2025, 7th International Workshop on Artificial Intelligence | j:
+2510.27015v1 | Quantitative Bounds for Length Generalization in Transformers | Zachary Izzo, Eshaan Nichani, Jason D. Lee | 2025-10-30 | c:Equal contribution, order determined by coin flip | j:
+2603.02238v2 | Length Generalization Bounds for Transformers | Andy Yang, Pascal Bergsträßer, Georg Zetzsche, David Chiang, Anthony W. Lin | 2026-02-13 | c:22 pages | j:
+2607.10362v1 | A Control Theory of Predictability in Latent World Models | Hanzhe You, Yonggang Zhang, Maohao Ran, Zhiqin Yang, Zhenyuan Zhang, Wei Xue et al.(9) | 2026-07-11 | c:Preprint about latent world models, Koopman operator and control theory, 33 pages, 1 figure. Main text about 1 | j:
+2609.18966v1 | The Automaton Underneath: The Additive Input Pathway Is a Parasitic Attractor for State Tracking in Householder Linear RNN | Gunner Levi Howe | 2026-07-16 | c: | j:
+2609.20973v1 | Complex Problem Solving in Large Language Models: A Statistical Control Survey and Diagnostic Framework | Jiazhang Cai, Tao Wang, Ruidong Zhang, Siyuan Li, Terry Ma, Luyang Fang et al.(38) | 2026-09-17 | c:82 pages, 7 figures. Submitted to Artificial Intelligence Review | j:
+2609.32447v1 | Length-Independent State Tracking Under a Parallel Scan | Julien Brandoit, Arthur Fyon, Thomas Braipson, Tom Clara, Florent De Geeter, Pierre Sacré et al.(8) | 2026-09-26 | c:https://julienbrandoit.github.io/length-independent-state-tracking/ | j:
+2605.07755v2 | Rethinking State Tracking in Recurrent Models Through Error Control Dynamics | Jiwan Chung, Heechan Choi, Seon Joo Kim | 2026-05-08 | c:NeurIPS 2026. Project page: https://jiwanchung.github.io/rethinking-state-tracking/ | j:NeurIPS 2026
+2506.09501v2 | Understanding and Mitigating Numerical Sources of Nondeterminism in LLM Inference | Jiayi Yuan, Hao Li, Xinheng Ding, Wenya Xie, Yu-Jhe Li, Wentian Zhao et al.(10) | 2025-06-11 | c: | j:
+2509.04664v1 | Why Language Models Hallucinate | Adam Tauman Kalai, Ofir Nachum, Santosh S. Vempala, Edwin Zhang | 2025-09-04 | c: | j:
+2601.08061v2 | Universal computation is intrinsic to language model decoding | Alex Lewandowski, Marlos C. Machado, Dale Schuurmans | 2026-01-12 | c:Minor formatting corrections | j:
+2509.09677v3 | The Illusion of Diminishing Returns: Measuring Long Horizon Execution in LLMs | Akshit Sinha, Arvindh Arun, Shashwat Goel, Steffen Staab, Jonas Geiping | 2025-09-11 | c:Published at ICLR 2026 | j:
+2602.19281v2 | Limited Reasoning Space: The cage of long-horizon reasoning in LLMs | Zhenyu Li, Guanlin Wu, Cheems Wang, Yongqiang Zhao | 2026-02-22 | c: | j:
+2604.15238v2 | A Nonlinear Separation Principle via Contraction Theory: Applications to Neural Networks, Control, and Learning | Anand Gokhale, Anton V. Proskurnikov, Yu Kawano, Francesco Bullo | 2026-04-16 | c:arXiv admin note: text overlap with arXiv:2604.00119 | j:
+2605.12316v1 | Autoregressive Learning in Joint KL: Sharp Oracle Bounds and Lower Bounds | Yunbei Xu, Yuzhe Yuan, Ruohan Zhan | 2026-05-12 | c: | j:
+2605.11855v2 | Improving the Performance and Learning Stability of Parallelizable RNNs Designed for Ultra-Low Power Applications | Julien Brandoit, Arthur Fyon, Damien Ernst, Guillaume Drion | 2026-05-12 | c:Accepted as a spotlight at ICML2026. This work has been the subject of patent applications under numbers EP261 | j:
+2606.24898v1 | Dense Supervision Is Not Enough: The Readout Blind Spot in Looped Language Models | Rituraj Sharma, Tu Vu | 2026-06-12 | c: | j:
+2604.00119v1 | Contracting Neural Networks: Sharp LMI Conditions with Applications to Integral Control and Deep Learning | Anand Gokhale, Anton V. Proskurnikov, Yu Kawano, Francesco Bullo | 2026-03-31 | c:Submitted to CDC 2026 | j:
+2605.21260v1 | On the Cost and Benefit of Chain of Thought: A Learning-Theoretic Perspective | Yue Zhang, Zhiyi Dong, Tommaso Cesari, Yongyi Mao | 2026-05-20 | c: | j:
+2605.22964v1 | Certification from Examples is Hard for Circuits and Transformers under Minimal Overparametrization | Artur Back de Luca, Kimon Fountoulakis | 2026-05-21 | c:38 pages, 5 figures | j:
+2605.12206v2 | Train Short, Act Long: Multistability and the Horizon Independence of Recurrent Policies | Asad Bakija, Florent De Geeter, Julien Brandoit, Pierre Sacré, Guillaume Drion | 2026-05-12 | c:38 pages, 9 figures | j:
+2609.08851v1 | Length Generalization for Transformers via Compression | Georg Zetzsche, Hongjian Jiang, Andy Yang, Pascal Bergsträßer, Marco Sälzer, David Chiang et al.(7) | 2026-09-08 | c: | j:
+
+# Crossref API (api.crossref.org/works/DOI): doi | title | authors | container volume(issue) pages | year
+10.1007/978-3-030-59152-6_3 | Verifying Recurrent Neural Networks Using Invariant Inference | Yuval Jacoby; Clark Barrett; Guy Katz | Lecture Notes in Computer Science () 57-74 | 2020
+10.1007/978-3-319-99740-7_25 | Regular Inference on Artificial Neural Networks | Franz Mayr; Sergio Yovine | Lecture Notes in Computer Science () 350-369 | 2018
+10.1007/BF00625279 | Two notions of correctness and their relation to testing | Timothy A. Budd; Dana Angluin | Acta Informatica 18(1) 31-45 | 1982
+10.1007/BF01068590 | Failure diagnosis of automata | M. P. Vasilevskii | Cybernetics 9(4) 653-665 | 1975
+10.1007/BFb0054170 | Translation validation | A. Pnueli; M. Siegel; E. Singerman | Lecture Notes in Computer Science () 151-166 | 1998
+10.1016/S0005-1098(98)00019-3 | On Contraction Analysis for Non-linear Systems | WINFRIED LOHMILLER; JEAN-JACQUES E. SLOTINE | Automatica 34(6) 683-696 | 1998
+10.1016/S0166-218X(98)00014-6 | Vapnik-Chervonenkis dimension of recurrent neural networks | Pascal Koiran; Eduardo D. Sontag | Discrete Applied Mathematics 86(1) 63-79 | 1998
+10.1073/pnas.79.8.2554 | Neural networks and physical systems with emergent collective computational abilities. | J J Hopfield | Proceedings of the National Academy of Sciences 79(8) 2554-2558 | 1982
+10.1109/5.533956 | (Crossref rate-limited on this regeneration; the same DOI resolved earlier on 28 Oct 2026 to the title cited in L4_theory.md)
+10.1109/72.279181 | Learning long-term dependencies with gradient descent is difficult | Y. Bengio; P. Simard; P. Frasconi | IEEE Transactions on Neural Networks 5(2) 157-166 | 1994
+10.1109/SWCT.1964.8 | Fault detecting experiments for sequential circuits | F. C. Hennine | 1964 Proceedings of the Fifth Annual Symposium on Switching Circuit Theory and Logical Design () 95-110 | 1964
+10.1109/TNN.2003.820839 | Markovian Architectural Bias of Recurrent Neural Networks | P. Tino; M. Cernansky; L. Benuskova | IEEE Transactions on Neural Networks 15(1) 6-15 | 2004
+10.1109/TSE.1975.6312836 | Toward a theory of test data selection | John B. Goodenough; Susan L. Gerhart | IEEE Transactions on Software Engineering SE-1(2) 156-173 | 1975
+10.1109/TSE.1978.231496 | Testing Software Design Modeled by Finite-State Machines | T.S. Chow | IEEE Transactions on Software Engineering SE-4(3) 178-187 | 1978
+10.1145/235809.235811 | Constructing deterministic finite-state automata in recurrent neural networks | Christian W. Omlin; C. Lee Giles | Journal of the ACM 43(6) 937-972 | 1996
+10.1145/69575.357231 | Assessing Test Data Adequacy through Program Inference | Elaine J. Weyuker | ACM Transactions on Programming Languages and Systems 5(4) 641-655 | 1983
+10.1162/089976600300015097 | Stable Encoding of Finite-State Machines in Discrete-Time Recurrent Neural Nets with Sigmoid Units | Rafael C. Carrasco; Mikel L. Forcada; M. Ángeles Valdés-Muñoz; Ramón P. Ñeco | Neural Computation 12(9) 2129-2174 | 2000
+10.1162/089976698300017052 | Analog Versus Digital: Extrapolating from Electronics to Neurobiology | Rahul Sarpeshkar | Neural Computation 10(7) 1601-1638 | 1998
+10.1162/089976698300017359 | On the Effect of Analog Noise in Discrete-Time Analog Computations | Wolfgang Maass; Pekka Orponen | Neural Computation 10(5) 1071-1095 | 1998
+10.1162/NECO_a_00409 | Opening the Black Box: Low-Dimensional Dynamics in High-Dimensional Recurrent Neural Networks | David Sussillo; Omri Barak | Neural Computation 25(3) 626-649 | 2013
+10.1162/neco.1996.8.4.675 | Stable Encoding of Large Finite-State Automata in Recurrent Neural Networks with Sigmoid Discriminants | Christian W. Omlin; C. Lee Giles | Neural Computation 8(4) 675-696 | 1996
+10.1162/neco.1996.8.6.1135 | The Dynamics of Discrete-Time Computation, with Application to Recurrent Neural Networks and Finite State Machine Extraction | Mike Casey | Neural Computation 8(6) 1135-1178 | 1996
+10.1175/1520-0469(1995)052<1434:TSVSOT>2.0.CO;2 | The Singular-Vector Structure of the Atmospheric Global Circulation | R. Buizza; T. N. Palmer | Journal of the Atmospheric Sciences 52(9) 1434-1456 | 1995
+10.1175/1520-0493(1997)125<3297:EFANAT>2.0.CO;2 | Ensemble Forecasting at NCEP and the Breeding Method | Zoltan Toth; Eugenia Kalnay | Monthly Weather Review 125(12) 3297-3319 | 1997
+10.1515/9781400882618-006 | Gedanken-Experiments on Sequential Machines | Edward F. Moore | Automata Studies. (AM-34) () 129-154 | 1956
+10.1609/aaai.v29i1.9590 | Improving Multi-Step Prediction of Learned Time Series Models | Arun Venkatraman; Martial Hebert; J.. Bagnell | Proceedings of the AAAI Conference on Artificial Intelligence 29(1)  | 2015
+10.1609/aaai.v33i01.33012662 | Certifying the True Error: Machine Learning in Coq with Verified Generalization Guarantees | Alexander Bagnall; Gordon Stewart | Proceedings of the AAAI Conference on Artificial Intelligence 33(01) 2662-2669 | 2019
+
+# Venue and listing pages fetched live with WebFetch on 28 Oct 2026 (what each page confirmed)
+https://proceedings.mlr.press/v291/simchowitz25a.html | The Pitfalls of Imitation Learning when Actions are Continuous | Simchowitz, Pfrommer, Jadbabaie | COLT 2025, PMLR 291:5248-5351
+https://proceedings.mlr.press/v291/rohatgi25a.html | Computational-Statistical Tradeoffs at the Next-Token Prediction Barrier (extended abstract) | Rohatgi, Block, Huang, Krishnamurthy, Foster | COLT 2025, PMLR 291:4831-4837
+https://proceedings.mlr.press/v267/chen25ar.html | Non-Asymptotic Length Generalization | Chen, Ma, Li | ICML 2025, PMLR 267:8621-8682
+https://proceedings.mlr.press/v9/ross10a.html | Efficient Reductions for Imitation Learning | Ross, Bagnell | AISTATS 2010, PMLR 9:661-668
+https://icml.cc/virtual/2026/poster/63411 | Length Generalization Bounds for Transformers | Yang, Bergstraesser, Zetzsche, Chiang, Lin | ICML 2026 poster
+https://icml.cc/virtual/2026/82548 | Which Regular Languages Admit Provably Correct RNN Implementations? A Lattice-Theoretic Characterisation via Forward-Invariant Sets | Bugaud | ICML 2026 workshop poster, 3rd AI for Math Workshop; only link: openreview.net/forum?id=L4kh17ZuSa (bot check)
+https://icml.cc/virtual/2026/68270 | Combining Theory and Benchmarks for Length Generalisation: Formal Certificates Meet Large-Scale Evaluation | Bugaud | ICML 2026 workshop poster, "Combining Theory and Benchmarks"; only link: openreview.net/forum?id=shPakbYAoQ (bot check)
+https://neurips.cc/virtual/2026/poster/151921 | Stability in Multi-Step Reasoning via Jacobian-based Error Accumulation Analysis | Li, Duan, Zhang, Zhang | NeurIPS 2026 poster
+https://neurips.cc/virtual/2026/157626 | Formally Verified Autoresearch for Analyzing the Expressivity of Multi-Head Attention | Viswanathan, Dimitrov, Rocca, Sirikonda | NeurIPS 2026 workshop oral (Autonomous ML Research)
+https://mlanthology.org/neco/1996/casey1996neco-dynamics | Casey 1996 abstract (Neural Computation 8(6):1135-1178)
+https://projects.csail.mit.edu/jacm/Abstracts/omling96.ltx | Omlin & Giles 1996 JACM abstract
+https://www.cs.utexas.edu/~EWD/transcriptions/EWD03xx/EWD340.html | Dijkstra, The Humble Programmer (EWD340), 1972
+https://cs.nyu.edu/~yann/2006s-G22-3033-013/diglib/ayse_mkg_bengio_recurrent.pdf | course slides presenting Bengio, Simard, Frasconi 1994 (secondary source for the robust-latching definition)
+
+# Full texts read (beyond abstracts)
+2503.09722 Simchowitz et al. (PDF: Thms 1-5, Defs 3.3-3.5); 2609.32447 Brandoit et al. (HTML: Def 2.2, Thms 3.1-3.3, 4.1); 1704.06611 Cai et al. (PDF: s3.3, App A.6);
+2506.03085 Chen-Ma-Li (HTML: Def 3.9, Prop 3.10, Lemma 4.5, Prop 4.6, Thm 5.5); 2603.02238 Yang et al. (HTML: Def 2.5, Prop 2.6, Thm 3.1, Cor 3.6, Thms 4.7, 5.1, 5.2);
+2502.12465 Rohatgi et al. (HTML s4); 2605.07755 Chung et al. (HTML: Thm 1, Cor 1); 2607.10362 You et al. (HTML: Lemmas 1-2); 2410.02140 Huang et al. (HTML: Def 6, Thm 7);
+2410.19405 Vaandrager & Melse (HTML s1); 2204.01171 Arora et al. (ar5iv: Eqs 14-15, 19-20); JACM 43(6) Omlin & Giles (PDF: s5, Thms 5.7.2, 5.10.2);
+2601.08061 Lewandowski et al. (HTML: Thm 1, Cor 2, App F induction, s5-6); 2605.22964 Back de Luca & Fountoulakis (HTML first 100k chars: certificate definition, Thms 4.1-4.2, Prop 4.2, Lemma A.1);
+2406.06467 Abbe et al. (HTML: inductive scratchpad section); 2606.24898 Sharma & Vu (HTML: Lemmas 1-2, Eqs 3-4); 2609.18966 Howe (HTML: abstract, s5 arm E3)

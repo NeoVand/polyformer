@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Canvas Adder</title>
+<style>
+  :root { --ink: #111; --muted: #6b6b6b; --line: #d9d9d9; --cobalt: #1f3fbf; --rose: #c2185b; --bg: #fff; }
+  body { font: 14px/1.45 ui-monospace, Menlo, monospace; background: var(--bg); color: var(--ink); margin: 16px; max-width: 1100px; }
+  h1 { font-size: 16px; font-weight: 600; margin: 0 0 4px; }
+  .muted { color: var(--muted); }
+  #cert { display: grid; grid-template-columns: repeat(22, 14px); gap: 2px; margin: 8px 0; }
+  #cert div { width: 14px; height: 14px; background: #eee; }
+  #cert div.ok { background: var(--cobalt); } #cert div.bad { background: var(--rose); }
+  #board { image-rendering: pixelated; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); cursor: pointer; max-width: 100%; }
+  input { font: inherit; width: 100%; max-width: 640px; }
+  button { font: inherit; padding: 4px 10px; }
+  pre { white-space: pre-wrap; font-size: 12px; }
+</style>
+</head>
+<body>
+<h1>Canvas adder: Qwen3.5-0.8B adds on its own sketchpad</h1>
+<div class="muted">Every tick the model sees only a 3-cell crop of the canvas (carry, top, bottom) through its own vision
+tower and writes the sum digit and the carry. The canvas is the only memory. Click a digit the model has not reached
+yet to change it.</div>
+<p id="status">loading…</p>
+<div><b>Certificate</b> <span id="certsum" class="muted">(all 242 possible columns, checked on this device)</span></div>
+<div id="cert"></div>
+<p><input id="a" /><br /><input id="b" /><br /><button id="run" disabled>Add on the canvas</button> <span id="res"></span></p>
+<canvas id="board"></canvas>
+<pre id="log"></pre>
+<script type="module">
+import { AutoProcessor, Qwen3_5ForConditionalGeneration, RawImage, env } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+
+// serve the local folder as if it were the hub: <host>/models/<id>/<file>
+env.allowLocalModels = false;
+env.allowRemoteModels = true;
+env.remoteHost = new URL("./models/", location.href).href;
+env.remotePathTemplate = "{model}/";
+env.useBrowserCache = false;
+const FAST = new URLSearchParams(location.search).has("fast");
+const ID = FAST ? "qwen35-canvas-fast" : "qwen35-canvas";
+const FAST_PROMPT = "ADD<|vision_start|><|image_pad|><|vision_end|>=";
+const CODES = "abcdefghij"; // fast format: digit 0-9 = no carry, a-j = digit with carry, H = halt
+const INSTR = "Column addition. The image shows one column: the carry (blank or 1), the top digit, the bottom digit. " +
+  "Write the sum digit and the carry, or H if the column and the carry are blank.";
+const CELL = 32, GLYPHS = " 0123456789";
+const $ = (id) => document.getElementById(id);
+const log = (s) => ($("log").textContent += s + "\n");
+const E3 = (window.E3 = { cert: [], runs: [] });
+
+const sprites = await new Promise((ok) => { const i = new Image(); i.onload = () => ok(i); i.src = "sprites.png"; });
+const fovea = document.createElement("canvas"); fovea.width = CELL; fovea.height = 3 * CELL;
+function cropImage(cells) {
+  const ctx = fovea.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, CELL, 3 * CELL);
+  cells.forEach((g, k) => { const gi = GLYPHS.indexOf(g); ctx.drawImage(sprites, gi * CELL, k * CELL, CELL, CELL, 0, k * CELL, CELL, CELL); });
+  return RawImage.fromCanvas(fovea);
+}
+function rule(c, t, b) {
+  if (c === " " && t === " " && b === " ") return "H";
+  const s = [c, t, b].filter((g) => g !== " ").reduce((x, g) => x + +g, 0);
+  return `${s % 10}${Math.floor(s / 10)}`;
+}
+
+const t0 = performance.now();
+const processor = await AutoProcessor.from_pretrained(ID);
+const model = await Qwen3_5ForConditionalGeneration.from_pretrained(ID, {
+  dtype: { embed_tokens: "q4", vision_encoder: "fp16", decoder_model_merged: "q4" }, device: "webgpu",
+});
+const tok = processor.tokenizer;
+const prompt = processor.apply_chat_template(
+  [{ role: "user", content: [{ type: "image" }, { type: "text", text: INSTR }] }],
+  { add_generation_prompt: true, tokenizer_kwargs: { enable_thinking: false } });
+$("status").textContent = `loaded in ${((performance.now() - t0) / 1000).toFixed(1)} s`;
+window.dbg = { processor, model, cropImage, prompt, tok };
+if (new URLSearchParams(location.search).has("nocert")) await new Promise(() => {});
+
+const fastCode = (r) => (r === "H" ? "H" : r[1] === "0" ? r[0] : CODES[+r[0]]);
+const fastDecode = (t) => (t === "H" ? "H" : /\d/.test(t) ? `${t}0` : `${CODES.indexOf(t)}1`);
+
+// fast format: one forward over "ADD<image>=", the last position's logits give the single output token
+async function lastLogits(cells) {
+  const out = await model(await processor(FAST_PROMPT, [cropImage(cells)]));
+  const [, S, V] = out.logits.dims;
+  return out.logits.data.subarray((S - 1) * V, S * V);
+}
+
+// teacher-forced: logits at the answer positions; margin = true logit minus best other
+async function score(cells, answer) {
+  if (FAST) {
+    const row = await lastLogits(cells), t = tok.encode(fastCode(answer), { add_special_tokens: false })[0];
+    let best = -Infinity, arg = -1;
+    for (let v = 0; v < row.length; v++) if (v !== t && row[v] > best) { best = row[v]; arg = v; }
+    const m = row[t] - best;
+    return { ok: m > 0, margin: m, got: m > 0 ? answer : fastDecode(tok.decode([arg])) };
+  }
+  const inputs = await processor(prompt + answer, [cropImage(cells)]);
+  const ans = tok.encode(answer, { add_special_tokens: false });
+  const out = await model(inputs);
+  const [, S, V] = out.logits.dims;
+  const data = out.logits.data;
+  let ok = true, margin = Infinity, got = "";
+  ans.forEach((t, j) => {
+    const row = data.subarray((S - ans.length - 1 + j) * V, (S - ans.length + j) * V);
+    let best = -Infinity, arg = -1;
+    for (let v = 0; v < V; v++) if (v !== t && row[v] > best) { best = row[v]; arg = v; }
+    const m = row[t] - best;
+    margin = Math.min(margin, m);
+    got += m > 0 ? tok.decode([t]) : tok.decode([arg]);
+    ok &&= m > 0;
+  });
+  return { ok, margin, got };
+}
+
+// greedy next tokens (2 at most) for a live tick
+async function tick(cells) {
+  if (FAST) {
+    const row = await lastLogits(cells);
+    let arg = 0;
+    for (let v = 1; v < row.length; v++) if (row[v] > row[arg]) arg = v;
+    return fastDecode(tok.decode([arg]));
+  }
+  const inputs = await processor(prompt, [cropImage(cells)]);
+  const out = await model.generate({ ...inputs, do_sample: false, max_new_tokens: 2 });
+  const n = inputs.input_ids.dims[1];
+  return tok.decode(Array.from(out.data.slice(n)).map(Number), { skip_special_tokens: true });
+}
+
+// ---- certificate -----------------------------------------------------------------------------------------------
+const domain = [];
+for (const c of [" ", "1"]) for (const t of GLYPHS) for (const b of GLYPHS) domain.push([c, t, b]);
+const grid = $("cert");
+for (let i = 0; i < domain.length; i++) grid.appendChild(document.createElement("div"));
+let pass = 0, minM = Infinity;
+const tc = performance.now();
+const skipCert = new URLSearchParams(location.search).has("skipcert");
+for (let i = 0; i < (skipCert ? 0 : domain.length); i++) {
+  const r = await score(domain[i], rule(...domain[i]));
+  grid.children[i].className = r.ok ? "ok" : "bad";
+  pass += r.ok; minM = Math.min(minM, r.margin);
+  E3.cert.push({ col: domain[i].join("").replaceAll(" ", "_"), want: rule(...domain[i]), got: r.got, margin: r.margin });
+  $("certsum").textContent = `${pass}/${i + 1} pass, lowest margin ${minM.toFixed(2)}`;
+}
+E3.certSummary = { pass, rows: domain.length, minMargin: minM, seconds: (performance.now() - tc) / 1000 };
+$("certsum").textContent = `${pass}/242 columns certified on this device, lowest margin ${minM.toFixed(2)} (${E3.certSummary.seconds.toFixed(0)} s)`;
+log(JSON.stringify(E3.certSummary));
+
+// ---- live canvas ---------------------------------------------------------------------------------------------
+const board = $("board"), D = 2; // display scale
+let state = null, busy = false;
+function draw(pointer) {
+  const n = state.top.length, ctx = board.getContext("2d");
+  board.width = n * CELL; board.height = 4 * CELL + 8;
+  board.style.width = `${Math.min(n * CELL * D / 2, 1100)}px`;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, board.width, board.height);
+  const rows = [state.carry, state.top, state.bottom];
+  for (let i = 0; i < n; i++) {
+    rows.forEach((r, k) => { const gi = GLYPHS.indexOf(r[i]); ctx.drawImage(sprites, gi * CELL, k * CELL, CELL, CELL, i * CELL, k * CELL, CELL, CELL); });
+    const gi = GLYPHS.indexOf(state.sum[i]);
+    ctx.drawImage(sprites, gi * CELL, CELL, CELL, CELL, i * CELL, 3 * CELL + 8, CELL, CELL);
+  }
+  ctx.fillStyle = "#111"; ctx.fillRect(0, 3 * CELL + 3, n * CELL, 2);
+  if (pointer >= 0) { ctx.strokeStyle = "#1f3fbf"; ctx.lineWidth = 3; ctx.strokeRect(pointer * CELL + 1.5, 1.5, CELL - 3, 3 * CELL - 3); }
+}
+board.addEventListener("click", (e) => {
+  if (!state) return;
+  const r = board.getBoundingClientRect();
+  const i = Math.floor(((e.clientX - r.left) / r.width) * state.top.length);
+  const k = Math.floor(((e.clientY - r.top) / r.height) * (4 * CELL + 8) / CELL);
+  if ((k === 1 || k === 2) && i < state.pointer) {
+    const row = k === 1 ? state.top : state.bottom;
+    row[i] = String((+(row[i] === " " ? -1 : row[i]) + 1) % 10);
+    state.edits.push({ col: i, row: k === 1 ? "top" : "bottom", digit: row[i] });
+    draw(state.pointer);
+  }
+});
+async function run(a, b) {
+  const n = Math.max(a.length, b.length) + 1;
+  state = { top: [...a.padStart(n)], bottom: [...b.padStart(n)], carry: Array(n).fill(" "), sum: Array(n).fill(" "), pointer: n, edits: [] };
+  const ts = performance.now(); let ticks = 0;
+  for (let i = n - 1; i >= 0; i--) {
+    state.pointer = i; draw(i);
+    const w = await tick([state.carry[i], state.top[i], state.bottom[i]]);
+    ticks++;
+    if (w.startsWith("H")) break;
+    state.sum[i] = w[0];
+    if (i > 0) state.carry[i - 1] = w[1] === "1" ? "1" : " ";
+  }
+  state.pointer = -1; draw(-1);
+  const got = state.sum.join("").trim();
+  const A = state.top.join("").trim(), B = state.bottom.join("").trim();
+  const want = (BigInt(A) + BigInt(B)).toString();
+  const r = { digits: Math.max(a.length, b.length), ok: got === want, ticks, msPerTick: (performance.now() - ts) / ticks, edits: state.edits.length };
+  E3.runs.push(r); log(JSON.stringify(r));
+  $("res").textContent = r.ok ? `exact (${r.ticks} ticks, ${r.msPerTick.toFixed(0)} ms/tick)` : `WRONG: got ${got}`;
+}
+const rnd = (n) => Array.from({ length: n }, (_, i) => (i === 0 ? 1 + Math.floor(Math.random() * 9) : Math.floor(Math.random() * 10))).join("");
+$("a").value = rnd(40); $("b").value = rnd(40);
+$("run").disabled = false;
+$("run").onclick = async () => { if (busy) return; busy = true; $("run").disabled = true; await run($("a").value.trim(), $("b").value.trim()); busy = false; $("run").disabled = false; };
+window.runAdd = run;
+window.canvasState = () => state;
+</script>
+</body>
+</html>

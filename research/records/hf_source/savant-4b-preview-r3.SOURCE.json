@@ -1,0 +1,256 @@
+{
+ "name": "Savant-4B preview r3 (savant-4b-preview-r3)",
+ "status": "experimental research preview for the Polyformer demo page, hosted at huggingface.co/mohsenvand/savant-4b-preview",
+ "base_model": {
+  "repo": "Qwen/Qwen3-4B",
+  "revision": "1cfa9a7208912126459214e8b04321603b3df60c",
+  "license": "Apache-2.0"
+ },
+ "adapter": {
+  "path": "polyformer-arith-results:arith-s1r2/adapter_step500",
+  "adapter_model.safetensors_sha256": "7877074f778b1374dc3fc2bc218e683f87caeaeab8f0b642043cbb7287a2ed60",
+  "peft": {
+   "peft_type": "LORA",
+   "r": 64,
+   "lora_alpha": 128,
+   "target_modules": [
+    "gate_proj",
+    "v_proj",
+    "o_proj",
+    "k_proj",
+    "up_proj",
+    "down_proj",
+    "q_proj"
+   ],
+   "peft_version": "0.21.2",
+   "base_model_name_or_path": "Qwen/Qwen3-4B"
+  },
+  "what": "ARITH stage arith, seed 1, run r2, step 500: the rank-64 LoRA continued from PROMPTBOX's final adapter rlg-ours/adapter_iter60 (arith_train.py --init_adapter /pbvol/rlg-ours/adapter_iter60; manifest train_r2.json), a LoRA on the base model",
+  "branch": "arith",
+  "commit": "dfe03ee54ca1055408f25812c07c51ca372c6c66",
+  "format": {
+   "spec": "research/arith/ARITH_FORMAT.md (as amended 28 Oct: forward 2 re-feeds [s,a,b,t] on Π's cache)",
+   "reference": {
+    "arith_core.py": "ccf623d85b45d9f33399556c2f111c13203954d88c0c38396bd91d18ba372127",
+    "fixtures/reference.json": "1f26f5d59131bf291c358e946080d8fccf71b2a6ed01c59ddb8e4e4085f639ed"
+   }
+  }
+ },
+ "merge": {
+  "how": "pb_eval.merge_adapter: AutoModelForCausalLM.from_pretrained(base, dtype=bfloat16) on the CPU; PeftModel.from_pretrained(base, adapter).merge_and_unload() on the CPU; save_pretrained(max_shard_size='2GB'); config.json/generation_config.json/tokenizer files copied from the base snapshot",
+  "method": "pb_eval.merge_adapter (as arith_loop and pb_loop score it), merged fresh in a new container",
+  "gpu_merge_comparison": {
+   "tensors_differing": 0,
+   "elements_differing": 0,
+   "max_abs_diff": 0.0,
+   "elements_total": 4411424256
+  },
+  "tensors_changed": 252,
+  "tensors_total": 399,
+  "embedding_unchanged": true,
+  "versions": {
+   "torch": "2.13.0+cu130",
+   "transformers": "5.19.0",
+   "peft": "0.21.2"
+  },
+  "host": {
+   "gpu": "NVIDIA H100 80GB HBM3",
+   "gpu_count": 1,
+   "cpu": "unknown",
+   "cpu_vendor_family_model": "GenuineIntel 6 143 unknown",
+   "avx512f": true,
+   "cpu_count": 24,
+   "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36"
+  },
+  "merged_files_sha256": {
+   "model-00001-of-00005.safetensors": "f0775fb665aeafe2ce42a72d0bcdd0097b425993a1d6ec3f81db57e8351a1776",
+   "model-00002-of-00005.safetensors": "95b04ac51d84594cb5c36496557e9e45ab9128ddc891fc60ed7df6d270cae045",
+   "model-00003-of-00005.safetensors": "824e66a68e3d0247bb46f76ac24ab8be2ba06bef718cbf11674dc8f1f3f3d745",
+   "model-00004-of-00005.safetensors": "0e53106bb0601f20136ec75befe7d2173a0e12dd3f4e87303b26741f824d78fd",
+   "model-00005-of-00005.safetensors": "64b15406b4236ccbb34ddd1ee93f1ab8de68725161e709e0fe84defaea604137"
+  }
+ },
+ "export": {
+  "builder_cmd": "onnxruntime_genai/models/builder.py -i /vol/merged-r2 -o /tmp/wx_work/builder_fp16 -p fp16 -e webgpu -c /tmp/wx_work/cache",
+  "builder": "onnxruntime-genai 0.9.0 model builder, run as a script (-p fp16 -e webgpu)",
+  "postprocess": [
+   "LM head tied to the embedding: MatMul(hidden, Transpose(model.embed_tokens.weight)) (the builder's separate lm_head weight, verified bit-identical to the transposed embedding, removed)",
+   "logits: fp16 MatMul output renamed logits_fp16, Cast to float32 `logits`",
+   "added scalar int64 input num_logits_to_keep: Slice(hidden, starts=[-k], ends=[INT64_MAX], axes=[1]) before the LM head (0 = all positions)"
+  ],
+  "versions": {
+   "onnx": "1.19.1",
+   "onnxruntime": "1.30.0",
+   "onnxruntime_genai_builder": "0.9.0",
+   "transformers": "4.53.3",
+   "torch": "2.8.0+cpu"
+  },
+  "host": {
+   "gpu": "none",
+   "gpu_count": 0,
+   "cpu": "unknown",
+   "cpu_vendor_family_model": "AuthenticAMD 25 1 unknown",
+   "avx512f": false,
+   "cpu_count": 32,
+   "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36"
+  }
+ },
+ "quantization": {
+  "variant": "mixed_vd8",
+  "tool": "onnxruntime.quantization.matmul_nbits_quantizer.MatMulNBitsQuantizer (onnxruntime 1.30.0), two passes",
+  "passes": [
+   "bits=8, block_size=32, is_symmetric=True, accuracy_level=None, QOperator, on every /attn/v_proj/MatMul and /mlp/down_proj/MatMul (72 nodes)",
+   "bits=4, block_size=32, is_symmetric=True, accuracy_level=None, QOperator, on every other weight MatMul (180 nodes); the LM head (a Transpose output) stays fp16"
+  ],
+  "why": "the same recipe as r2 (WEBEXPORT.md, r2): 4-bit with v_proj and down_proj at 8 bits",
+  "census": {
+   "ai.onnx:Cast": 3,
+   "ai.onnx:Concat": 1,
+   "ai.onnx:Constant": 7,
+   "ai.onnx:Gather": 3,
+   "ai.onnx:MatMul": 1,
+   "ai.onnx:Mul": 72,
+   "ai.onnx:Neg": 1,
+   "ai.onnx:ReduceSum": 1,
+   "ai.onnx:Reshape": 145,
+   "ai.onnx:Shape": 2,
+   "ai.onnx:Sigmoid": 36,
+   "ai.onnx:SimplifiedLayerNormalization": 73,
+   "ai.onnx:Slice": 1,
+   "ai.onnx:Sub": 1,
+   "ai.onnx:Transpose": 1,
+   "ai.onnx:Unsqueeze": 2,
+   "com.microsoft:GroupQueryAttention": 36,
+   "com.microsoft:MatMulNBits": 252,
+   "com.microsoft:RotaryEmbedding": 72,
+   "com.microsoft:SkipSimplifiedLayerNormalization": 72
+  },
+  "host": {
+   "gpu": "none",
+   "gpu_count": 0,
+   "cpu": "unknown",
+   "cpu_vendor_family_model": "AuthenticAMD 25 1 unknown",
+   "avx512f": false,
+   "cpu_count": 32,
+   "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36"
+  },
+  "code": "research/webexport/wx_export.py::quantize_q4(variant='mixed_vd8'), wx_modal.py::requant"
+ },
+ "layout_reference": {
+  "repo": "onnx-community/Qwen3-4B-ONNX",
+  "commit": "ca652ef636e8b121ff4a1607c37ab578cb866987",
+  "differences": [
+   "opset 21 / IR 10 (reference: opset 14 / IR 7)",
+   "extra input num_logits_to_keep",
+   "v_proj and down_proj MatMulNBits are 8-bit (the file keeps the q4f16 name so transformers.js loads it with dtype 'q4f16')",
+   "chunk limit 2,000,000,000 bytes",
+   "generation_config.json is greedy",
+   "tokenizer.json, tokenizer_config.json, vocab.json, merges.txt are Qwen/Qwen3-4B's own"
+  ]
+ },
+ "transformers_js": {
+  "version": "4.3.1",
+  "load_call": "AutoModelForCausalLM.from_pretrained('<id>', { dtype: 'q4f16', device: 'webgpu' })",
+  "checked": {
+   "node_cpu": {
+    "node": "v22.23.4",
+    "onnxruntime_node": "1.30.0",
+    "host": {
+     "gpu": "none",
+     "gpu_count": 0,
+     "cpu": "unknown",
+     "cpu_vendor_family_model": "AuthenticAMD 25 1 unknown",
+     "avx512f": false,
+     "cpu_count": 32,
+     "platform": "Linux-4.19.0-gvisor-x86_64-with-glibc2.36"
+    },
+    "result": "prompt and 6 tick logits bitwise equal to onnxruntime-python 1.30.0 CPU; 64 greedy tokens identical; tokenizer 21/21"
+   },
+   "node_webgpu_local": {
+    "node": "v24.13.0",
+    "onnxruntime_node": "1.30.0",
+    "host": {
+     "cpu": "Apple M4",
+     "gpu": "Apple M4 (10-core GPU, Metal 4)",
+     "os": "macOS 26.3",
+     "avx512f": false
+    },
+    "result": "adder 200/200 rows certified through both forwards (smallest margin 8.58), 200/200 repeated ticks bitwise equal, the four fixture runs' carries and sums equal (224/224 ticks bitwise equal), about 310 ms per tick"
+   }
+  }
+ },
+ "validation": "research/webexport/WEBEXPORT.md, section r3 (branch webexport)",
+ "dtype": [
+  "q4f16"
+ ],
+ "files": {
+  "LICENSE": {
+   "bytes": 1735,
+   "sha256": "0245553260ab64381e38f9057c2e1630e5a7162b430ead71f74799411ae3a50f"
+  },
+  "LICENSE-Qwen3": {
+   "bytes": 11343,
+   "sha256": "832dd9e00a68dd83b3c3fb9f5588dad7dcf337a0db50f7d9483f310cd292e92e"
+  },
+  "NOTICE": {
+   "bytes": 1187,
+   "sha256": "b1e3dc7dc6d73caea46a88c742b67a5caf66869925182eb4d4672dfb99a8d1bb"
+  },
+  "README.md": {
+   "bytes": 8484,
+   "sha256": "3e6df921a23d174130a6737d155b10a32c92168b36ad8b0d4501bd5319708022"
+  },
+  "added_tokens.json": {
+   "bytes": 707,
+   "sha256": "c0284b582e14987fbd3d5a2cb2bd139084371ed9acbae488829a1c900833c680"
+  },
+  "chat_template.jinja": {
+   "bytes": 4168,
+   "sha256": "a55ee1b1660128b7098723e0abcd92caa0788061051c62d51cbe87d9cf1974d8"
+  },
+  "config.json": {
+   "bytes": 1728,
+   "sha256": "ebc71d6f5762cfa5721a80d9f8b16bc81a1e911c11015d4f0d38e4e0b133c2c5"
+  },
+  "generation_config.json": {
+   "bytes": 125,
+   "sha256": "7f872713a34457bac5384e892e79d6158f5638554a698e33dd390a2f52faed38"
+  },
+  "merges.txt": {
+   "bytes": 1671853,
+   "sha256": "8831e4f1a044471340f7c0a83d7bd71306a5b867e95fd870f74d0c5308a904d5"
+  },
+  "onnx/model_q4f16.onnx": {
+   "bytes": 59786005,
+   "sha256": "30574daea559b5ff6862ca9a726e5ed0dc808a82f565c6f924924c4c373dd564"
+  },
+  "onnx/model_q4f16.onnx_data": {
+   "bytes": 1999831040,
+   "sha256": "36e6b337bbf7a34aace560e7f4fcb1fb241319e7ac0ed8db3bbd1d038eae1c38"
+  },
+  "onnx/model_q4f16.onnx_data_1": {
+   "bytes": 1268776960,
+   "sha256": "0c14362d932dc4f584faaa1c12406707e80742fe3a65e4019cde8659d6a9ee42"
+  },
+  "special_tokens_map.json": {
+   "bytes": 613,
+   "sha256": "76862e765266b85aa9459767e33cbaf13970f327a0e88d1c65846c2ddd3a1ecd"
+  },
+  "tokenizer.json": {
+   "bytes": 11422654,
+   "sha256": "aeb13307a71acd8fe81861d94ad54ab689df773318809eed3cbe794b4492dae4"
+  },
+  "tokenizer_config.json": {
+   "bytes": 9732,
+   "sha256": "d5d09f07b48c3086c508b30d1c9114bd1189145b74e982a265350c923acd8101"
+  },
+  "vocab.json": {
+   "bytes": 2776833,
+   "sha256": "ca10d7e9fb3ed18575dd1e277a2579c16d108e32f27439684afa0e10b1440910"
+  }
+ },
+ "delivered_by": {
+  "host": "macOS-26.3-arm64-arm-64bit-Mach-O",
+  "script": "research/webexport/wx_deliver.py"
+ }
+}

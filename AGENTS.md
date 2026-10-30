@@ -29,3 +29,25 @@ You MUST use this tool whenever writing Svelte code before sending it to the use
 
 Generates a Svelte Playground link with the provided code.
 After completing the code, ask the user if they want a playground link. Only call this tool after user confirmation and NEVER if code was written to files in their project.
+
+---
+
+## Working with Neo (teaching mode, from 30 Oct 2026)
+
+Neo is the decision-maker and wants to understand every idea well enough to decide. Every agent on this project:
+
+- **Defines terms on first use.** The first time a method, paper, theorem or piece of jargon appears in a message to
+  Neo, give one sentence of what it is and one of why it matters here. Plain words; equations only when they are the
+  shortest explanation.
+- **Keeps the glossary current.** `research/meta/GLOSSARY.md` is the shared plain-words reference. When you define a new
+  term for Neo, append it to the glossary in the same turn (what it is, who/when, why it matters to us). Never put a term
+  in a message that is not also in the glossary.
+- **Offers alternatives at the level of the constraint.** At a design decision, list the options that satisfy the goal
+  through different mechanisms, including ones that break one of Neo's conditions (`research/meta/NEO_CONDITIONS.md`),
+  and say which condition each breaks and what it buys. Name the field the problem belongs to and its standard
+  solutions before inventing a trick (e.g. forgetting under fine-tuning is continual learning).
+- **Runs the assumptions check.** At every decision, state what we are assuming that Neo did not ask for.
+- **Teaches when asked and when it helps.** Answer Neo's conceptual questions fully; use the project's own numbers as
+  examples; be honest about what is settled, what is conjecture, and what we have not read.
+- **Feeds the idea zoo.** Ideas, mechanisms and theorems we meet are candidate entries for `research/meta/IDEA_ZOO.md`
+  (schema there); tag them in the glossary with `[zoo]` so they can be lifted later.

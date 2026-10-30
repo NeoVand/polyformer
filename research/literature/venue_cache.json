@@ -1,0 +1,157 @@
+{
+ "Neural Networks and the Chomsky Hierarchy": {
+  "venues": [
+   "ICLR 2023",
+   "ICLR 2023 notable top 25%"
+  ],
+  "complete": true
+ },
+ "Transformers Learn Shortcuts to Automata": {
+  "venues": [
+   "ICLR 2023",
+   "ICLR 2023 notable top 5%"
+  ],
+  "complete": true
+ },
+ "Structured Sparse Transition Matrices to Enable State Tracking in State-Space Models": {
+  "venues": [
+   "NeurIPS 2025 spotlight"
+  ],
+  "complete": true
+ },
+ "Exploring Length Generalization in Large Language Models": {
+  "venues": [
+   "NeurIPS 2022 Accept"
+  ],
+  "complete": true
+ },
+ "The Illusion of State in State-Space Models": {
+  "venues": [
+   "ICML 2024",
+   "ICML 2024 Poster"
+  ],
+  "complete": true
+ },
+ "Transformers Can Do Arithmetic with the Right Embeddings": {
+  "venues": [
+   "ICML 2024 Workshop on LLMs and Cognition Poster",
+   "MATH-AI 24",
+   "NeurIPS 2024",
+   "NeurIPS 2024 poster"
+  ],
+  "complete": true
+ },
+ "Transformers Can Achieve Length Generalization But Not Robustly": {
+  "venues": [
+   "ME-FoMo 2024 Poster"
+  ],
+  "complete": true
+ },
+ "Teaching Arithmetic to Small Transformers": {
+  "venues": [
+   "ICLR 2024",
+   "ICLR 2024 poster",
+   "MATH-AI 23 Poster"
+  ],
+  "complete": true
+ },
+ "Self-Improving Transformers Overcome Easy-to-Hard and Length Generalization Challenges": {
+  "venues": [
+   "ICML 2025 poster",
+   "SSI-FM Oral"
+  ],
+  "complete": true
+ },
+ "Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task": {
+  "venues": [
+   "ICLR 2023"
+  ],
+  "complete": true
+ },
+ "Emergent Linear Representations in World Models of Self-Supervised Sequence Models": {
+  "venues": [
+   "BlackboxNLP@EMNLP 2023"
+  ],
+  "complete": true
+ },
+ "A Spectral Algorithm for Learning Hidden Markov Models": {
+  "venues": [
+   "J. Comput. Syst. Sci. 2012"
+  ],
+  "complete": true
+ },
+ "Predictive State Representations: A New Theory for Modeling Dynamical Systems": {
+  "venues": [],
+  "complete": true
+ },
+ "Approximate information state for approximate planning and reinforcement learning in partially observed systems": {
+  "venues": [
+   "J. Mach. Learn. Res. 2022"
+  ],
+  "complete": true
+ },
+ "Training Large Language Models to Reason in a Continuous Latent Space": {
+  "venues": [
+   "COLM 2025",
+   "Reasoning and Planning for LLMs @ ICLR2025"
+  ],
+  "complete": true
+ },
+ "The Markovian Thinker": {
+  "venues": [],
+  "complete": true
+ },
+ "Next-Latent Prediction Transformers Learn Compact World Models": {
+  "venues": [
+   "PLAN-FM Bridge @ AAAI 2026"
+  ],
+  "complete": true
+ },
+ "Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach": {
+  "venues": [
+   "ES-FoMo III Spotlight",
+   "NeurIPS 2025 spotlight"
+  ],
+  "complete": true
+ },
+ "A General Language Assistant as a Laboratory for Alignment": {
+  "venues": [],
+  "complete": true
+ },
+ "Learning by Distilling Context": {
+  "venues": [],
+  "complete": true
+ },
+ "Neural Algorithmic Reasoning with Causal Regularisation": {
+  "venues": [
+   "ICML 2023 Poster"
+  ],
+  "complete": true
+ },
+ "Learning to Simulate Complex Physics with Graph Networks": {
+  "venues": [
+   "ICML 2020"
+  ],
+  "complete": true
+ },
+ "ACE: A fast, skillful learned global atmospheric model for climate prediction": {
+  "venues": [],
+  "complete": true
+ },
+ "Memory Augmented Large Language Models are Computationally Universal": {
+  "venues": [],
+  "complete": true
+ },
+ "Universal Length Generalization with Turing Programs": {
+  "venues": [
+   "ICML 2025 poster"
+  ],
+  "complete": true
+ },
+ "Relating transformers to models and neural representations of the hippocampal formation": {
+  "venues": [
+   "ICLR 2022 Poster"
+  ],
+  "complete": true
+ }
+}

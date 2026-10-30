@@ -1,0 +1,35 @@
+The audit is finished and the list is written. One thing to know first: the registered scorer turned out to be wrong in both directions, so the report shows three accuracy columns instead of one.
+
+When I took over, all three Modal jobs (r4, Loom, base) were already finished and settled in the ledger, so nothing needed waiting on or relaunching. The previous agent's only uncommitted change was the ledger update, and it was correct. I kept it and added the results in two commits on `r5audit` (`1a1e8a11` and `299ee303`). Nothing was pushed and no other worktree was touched.
+
+**Scorer problem:** reading the transcripts showed the registered rule marks right answers wrong ("Paris." with a period, `\boxed{}` answers, "H₂O") and accepts answers that were never given (it read the last row of an unfinished program as the answer). Rather than change the registered rule, I kept its column and added two more:
+- a corrected rule with four mechanical fixes;
+- human reads (`results/daudit_reads.json`), each with a reason.
+
+Every item that moved is listed. Re-running the registered rule reproduces every stored verdict.
+
+| | registered rule | read |
+| --- | --- | --- |
+| r4 | 0.52 | 0.60 |
+| Loom | 0.45 | 0.54 |
+| base (70 items) | 0.47 | 0.73 |
+
+On the 70 items all three models answered, the read scores are r4 53, base 51, Loom 46.
+
+**Top ten disappointments:**
+1. **Wrong answer with a passing certificate** (r4 7, Loom 3). Multiplication goes through the adder, a sign gets dropped, or one number is read twice ("a couple of dozen + 10 = 20").
+2. **Confident answer after the program failed**, with no warning (r4 42 items, 23 of them wrong; Loom 22, 18 wrong). None of r4's right answers on brackets and nesting is certified.
+3. **State tables don't compile.** The first program fails in about two-thirds of state, stack and composite items. The usual error is "a destination or the start is not a state".
+4. **No answer at all** (r4 24, Loom 38). Loom repeats the same failing program until it hits the 11-call limit; r4 repeats itself until it hits the token cap.
+5. **Big arithmetic outside the library is made up**: 2^200, 50! and multiplication are 0/8 on both models.
+6. **Long inputs are slow.** 1,000-digit addition and subtraction take 53s. On the 4,096-digit items, the right certified value appears after about 185s, but the answer sentence never does before the 150s per-prompt deadline stops the reply.
+7. **Reading the numbers out of the question breaks** on typos ("Waht is"), rephrasings and comma-separated lists.
+8. **"Show me the certificate" fails** (0/2 on both). r4 says it can't show certificates; otherwise both models re-run the program.
+9. **Programs for trivial prompts.** Loom writes the 200-row adder program for "2 + 2".
+10. **Nesting is weak, and the right answers are guesses.** Loom answers "no" on all five balanced bracket strings; none of the stack answers on either model is certified.
+
+Items 11–12 (answers in the wrong form, flat jokes and haiku) are in the report. Each disappointment is mapped to the R5 plan items in [DAUDIT.md](file:///Users/neo/repos/polyformer-wt/r5audit/research/r5audit/DAUDIT.md).
+
+**Spend:** $8.51 of the $20 cap, all on H100 (r4 $3.57, Loom $3.71, base $1.23), with no retries. This is the ledger's upper-rate estimate, not an invoice.
+
+Separately, a startup message said the Data Agent Kit plugin isn't configured. I didn't need it for this task, so I left it alone.

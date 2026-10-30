@@ -1,0 +1,57 @@
+root agent idle; waiting up to 30m0s for 1 background task(s)
+I have inspected the worktree (`git log -8` and `git status`), verified that Step A and the `P2-v2 registration` commit ([`1504bf63`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/PREDICT.md#L246-L266)) are in place, and checked the running Modal job `p2v2-savant-r3` (`fc-01M632KZRDVH2GB4W9E6ZB1HY0`) recorded in [`modal_ledger.json`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/results/modal_ledger.json).
+
+39 of 40 cells in `p2v2-savant-r3` have completed on the Modal volume (`trained` draws 0–2 complete, `trained` draw 3 teacher-forced and corruption tests complete, and 4 of 5 free-running cells complete; `bare` dropped at the delay-16 gate with 0 of 16 passing draws). The final cell (`trained|3|free|10196`) is currently executing (~15 minutes remaining). I have set a 5-minute timer to check status and will collect, settle, score, update [`PREDICT.md`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/PREDICT.md), regenerate figures, and commit once it finishes.
+`p2v2-savant-r3` is still running its final cell (`trained|3|free|10196`, past step 3,072 of 10,201 at the latest volume commit; ~9.5 minutes remaining). I have scheduled the next 5-minute status check.
+`p2v2-savant-r3` is past step 5,888 of 10,201 on its final cell (`trained|3|free|10196`, ~4.5 minutes remaining). I have scheduled a 4.5-minute timer to check completion.
+### Summary of Results and Spend
+
+#### 1. Audit Corrections ([`PREDICT.md`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/PREDICT.md#L227-L245))
+
+| Claim | Old | New | Reason |
+| --- | --- | --- | --- |
+| P1 `savant-r3` shape | fails | fails | Exponential SSE (`2.995`) still beats power (`3.574`); margin at $n=256$ is $+9.0$. |
+| P1 `qwen3-4b` lookup decay | holds | sensitivity | Margin at $n=256$ is $-0.8125$ and negative at every $n$; $\Delta$ measures logit sensitivity to a table edit, not lookup decay. |
+| P1 `bloom-1b1` decay | holds | fails | Exponential slope on distance is $+0.000369$ (rising, not decay); margin at $n=256$ is $-10.71$. |
+| P2 swap direction | fails | fails | Follow-history drops from $1.0$ at distance $64$ to $1/6$ at distance $8192$; follow-table at $8192$ is $0/6$ (falsifier does not fire). |
+| P2 first use | holds | untested | Only $3$ delayed probes reached the held row at step $\ge 2048$, with $0/3$ errors (draw $0$ at delay $2048$ never reached it; $16/23$ planned-delay first uses were before step $10$). |
+| P2 persistence | holds | descriptive | $5117/5117$ post-error errors ($5115$ from draw $0$ repeating a local failure), descriptive rather than history-caused persistence. |
+| P3 `qwen3-4b` temperature | holds | untested | Baseline $n^*$ at $\tau \in \{0.5, 1.0\}$ is left-censored (fails at shortest $n$); no shift reported. |
+| P3 `qwen3-4b` overall | fails | fails | Sharp-vs-dull contrast fails. |
+| P3 `savant-r3` temperature | holds | fails | Observed $\ln n^*$ shift at $\tau=0.5$ is $0.0$ (not negative). |
+| P3 `savant-r3` overall | fails | fails | Both temperature shift and sharp-vs-dull fail. |
+
+Key recount numbers (`json` and `csv` via [`pr_recount.py`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/pr_recount.py)): `k1 = -1.0780643103841048`, `k2 = 0.0003691972342835972`, `k3 = 1 of 6`.
+
+---
+
+#### 2. P2-v2 Results — **Unaudited** ([`PREDICT.md`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/PREDICT.md#L268-L370), [`runs.json`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/results/p2v2-savant-r3/runs.json), [`p2v2.png`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/figs/p2v2.png))
+
+- **Job:** `p2v2-savant-r3` (`fc-01M632KZRDVH2GB4W9E6ZB1HY0`), seed `20261028`, host `c5803a6e4daa`, GPU `NVIDIA A10`, CPU `GenuineIntel | 6 | 106 | unknown | avx512f=True`, wall `8624.427s`, `complete: true`.
+- **Short-context competence gate (delay 16):**
+  - **Trained plain format** ([`br_core.py`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/br_core.py), [`pb_lit.py`](file:///Users/neo/repos/polyformer-wt/predict/research/promptbox/pb_lit.py)): passed on the first $4$ draws `k = [0, 1, 2, 3]` (and all $16/16$ tested draws `k = 0..15`, `pin_wrong = 0`, `run_wrong = 0`).
+  - **Bare table format:** passed $0/16$ draws (`pin_wrong = 0` on all $16$, `run_wrong` $\in \{1, 2, 3\}$ on all $16$). Reported out of distribution at delay $16$ and dropped from long-delay analysis.
+- **First-use margin across $\tau$ (trained format):**
+  - Teacher-forced medians across passing draws $[0,1,2,3]$:
+    - $\tau = 16$: `15.0625` ($n=4$: `16.25, 14.875, 15.25, 12.5`)
+    - $\tau = 256$: `12.8125` ($n=4$: `13.5, 12.125, 15.0, 11.5`)
+    - $\tau = 2048$: `13.625` ($n=4$: `15.0, 13.125, 14.125, 12.125`)
+    - $\tau = 8192$: `11.0625` ($n=4$: `13.375, 11.125, 8.3125, 11.0`)
+    - $\tau_{\max}$: `10.5625` at $\tau=10196$ ($n=2$: `10.375, 10.75`), `13.0` at $\tau=10190$ ($n=1$, draw $2$), or `10.75` pooling the $3$ non-OOM $\tau_{\max}$ draws (draw $0$ OOMed on full-sequence `tf|10202`).
+  - Free-running medians: `15.0625` ($\tau=16$, $n=4$), `12.875` ($\tau=256$, $n=4$), `13.5625` ($\tau=2048$, $n=4$), `11.0625` ($\tau=8192$, $n=4$), and `10.75` at $\tau_{\max}$ ($n=3$: `12.0` at $10202$, `10.375` at $10196$, `10.75` at $10196$; draw $2$ diverged at step $10186$ before $\tau=10190$).
+  - **Verdict:** **fails** (strict monotone falsifier fires because median rises from `12.8125` at $\tau=256$ to `13.625` at $\tau=2048$, even though overall margin falls from `15.0625` at $\tau=16$ to `11.0625` at $\tau=8192$ and `10.75` at $\tau_{\max}$).
+- **Corruption test (trained format, $16$ probes across $4$ draws $\times$ $4$ distances):**
+  - Distances `65`, `513`, `4097`, and $\max \in \{20383, 20399, 20409\}$: `follow_h = 0/4` and `follow_t = 4/4`, uncorrupted `control_ok = 4/4` at every distance ($0/16$ copied overall).
+  - Median true-destination margin shifts from `15.0625 -> 8.1875` (distance $65$), `13.625 -> 8.6875` (distance $513$), `12.9375 -> 8.125` (distance $4097$), `10.75 -> 6.9375` (max distance), never crossing zero.
+  - **Verdict:** **fails** (copy rate $0/4$ is not above control error rate $0/4$ at shortest distance $65$; corruption falsifier fires since `follow_h = 0` at every distance).
+- **Pinned twin on full-history errors:**
+  - Across all $40$ cells, $3$ full-history errors occurred (`trained|0|tf|8192` step $8196$, `trained|2|tf|10190` step $10186$, `trained|2|free|10190` step $10186$).
+  - Pinned twin errors: **`0 of 3`** (correct on all $3$).
+  - **Verdict:** **holds** (falsifier does not fire).
+
+---
+
+#### 3. Spend ([`modal_ledger.json`](file:///Users/neo/repos/polyformer-wt/predict/research/predict/results/modal_ledger.json))
+
+- **`p2v2-savant-r3`:** reserved `$14.999818` ($\le \$15.00$ sub-cap), settled **`$4.587924`** (`8624.427s` wall on `NVIDIA A10`).
+- **Cumulative ledger total (all 9 jobs):** **`$6.4571`** settled against the `$25.00` total cap (`0` open jobs).

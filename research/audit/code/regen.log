@@ -1,0 +1,350 @@
+seed 0 done at 6s
+seed 1 done at 10s
+seed 2 done at 14s
+{
+ "test_sets_identical_old_vs_new": {
+  "16": true,
+  "64": true,
+  "256": true,
+  "1024": true
+ },
+ "val_identical_old_vs_new": true,
+ "floor_programs_identical_old_vs_new": true,
+ "floor_table_identical_old_vs_new": true,
+ "floor_recomputed": {
+  "16": [
+   0.505859375,
+   0.892822265625
+  ],
+  "64": [
+   0.453125,
+   0.87890625
+  ],
+  "256": [
+   0.447265625,
+   0.879638671875
+  ],
+  "1024": [
+   0.423828125,
+   0.874267578125
+  ]
+ },
+ "records_floor_and_n_match_regenerated_test_sets": {
+  "R_s0.json": true,
+  "R_s1.json": true,
+  "R_s2.json": true,
+  "Rr_s0_fact.json": true,
+  "Rr_s1_fact.json": true,
+  "Rr_s2_fact.json": true,
+  "RNLr_s0_fact.json": true,
+  "RNLr_s1_fact.json": true,
+  "RNLr_s2_fact.json": true,
+  "RIr_s0_fact.json": true,
+  "RIr_s1_fact.json": true,
+  "RIr_s2_fact.json": true,
+  "RNLIr_s0_modal.json": true,
+  "RNLIr_s1_modal.json": true,
+  "RNLIr_s2_modal.json": true,
+  "RNLI_s0.json": true,
+  "RNLI_s1.json": true,
+  "RNLI_s2.json": true
+ },
+ "within_set_duplicates": {
+  "test_16": 0,
+  "test_64": 0,
+  "test_256": 0,
+  "test_1024": 0,
+  "val": 0
+ },
+ "val_vs_test16_overlap": 0,
+ "floorfit_vs_test16_overlap": 0,
+ "floorfit_vs_val_overlap": 0,
+ "train_seed0": {
+  "n_train_programs": 1024000,
+  "distinct_train_programs": 1024000,
+  "train_len16_programs": 78733,
+  "train_stream_identical_old_vs_new_first200steps": true,
+  "test_exact_overlap": {
+   "16": 0,
+   "64": 0,
+   "256": 0,
+   "1024": 0
+  },
+  "val_exact_overlap": 0,
+  "test_prefix_overlap_programs_any_k4to16": {
+   "16": 0,
+   "64": 0,
+   "256": 0,
+   "1024": 0
+  },
+  "test_prefix_overlap_by_k": {
+   "16": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "64": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "256": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "1024": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   }
+  },
+  "val_prefix_overlap_by_k": {
+   "4": 0,
+   "5": 0,
+   "6": 0,
+   "7": 0,
+   "8": 0,
+   "9": 0,
+   "10": 0,
+   "11": 0,
+   "12": 0,
+   "13": 0,
+   "14": 0,
+   "15": 0,
+   "16": 0
+  }
+ },
+ "train_seed1": {
+  "n_train_programs": 1024000,
+  "distinct_train_programs": 1024000,
+  "train_len16_programs": 78874,
+  "train_stream_identical_old_vs_new_first200steps": true,
+  "test_exact_overlap": {
+   "16": 0,
+   "64": 0,
+   "256": 0,
+   "1024": 0
+  },
+  "val_exact_overlap": 0,
+  "test_prefix_overlap_programs_any_k4to16": {
+   "16": 0,
+   "64": 0,
+   "256": 0,
+   "1024": 0
+  },
+  "test_prefix_overlap_by_k": {
+   "16": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "64": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "256": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "1024": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   }
+  },
+  "val_prefix_overlap_by_k": {
+   "4": 0,
+   "5": 0,
+   "6": 0,
+   "7": 0,
+   "8": 0,
+   "9": 0,
+   "10": 0,
+   "11": 0,
+   "12": 0,
+   "13": 0,
+   "14": 0,
+   "15": 0,
+   "16": 0
+  }
+ },
+ "train_seed2": {
+  "n_train_programs": 1024000,
+  "distinct_train_programs": 1024000,
+  "train_len16_programs": 78669,
+  "train_stream_identical_old_vs_new_first200steps": true,
+  "test_exact_overlap": {
+   "16": 0,
+   "64": 0,
+   "256": 0,
+   "1024": 0
+  },
+  "val_exact_overlap": 0,
+  "test_prefix_overlap_programs_any_k4to16": {
+   "16": 0,
+   "64": 0,
+   "256": 0,
+   "1024": 0
+  },
+  "test_prefix_overlap_by_k": {
+   "16": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "64": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "256": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   },
+   "1024": {
+    "4": 0,
+    "5": 0,
+    "6": 0,
+    "7": 0,
+    "8": 0,
+    "9": 0,
+    "10": 0,
+    "11": 0,
+    "12": 0,
+    "13": 0,
+    "14": 0,
+    "15": 0,
+    "16": 0
+   }
+  },
+  "val_prefix_overlap_by_k": {
+   "4": 0,
+   "5": 0,
+   "6": 0,
+   "7": 0,
+   "8": 0,
+   "9": 0,
+   "10": 0,
+   "11": 0,
+   "12": 0,
+   "13": 0,
+   "14": 0,
+   "15": 0,
+   "16": 0
+  }
+ }
+}

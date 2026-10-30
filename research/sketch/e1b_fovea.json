@@ -1,0 +1,62 @@
+[
+ {
+  "native": true,
+  "cells": 1,
+  "vertical": false,
+  "vision_tokens": 1.0,
+  "exact": 1.0,
+  "min_margin": 0.9020538330078125,
+  "p05_margin": 0.9020538330078125,
+  "median_margin": 3.545705795288086
+ },
+ {
+  "native": true,
+  "cells": 3,
+  "vertical": false,
+  "vision_tokens": 3.0,
+  "exact": 0.82,
+  "min_margin": -1.932504653930664,
+  "p05_margin": -0.7064342498779297,
+  "median_margin": 0.5742206573486328
+ },
+ {
+  "native": true,
+  "cells": 3,
+  "vertical": true,
+  "vision_tokens": 3.0,
+  "exact": 0.91,
+  "min_margin": -1.2943058013916016,
+  "p05_margin": -0.09074974060058594,
+  "median_margin": 0.5314884185791016
+ },
+ {
+  "native": false,
+  "cells": 1,
+  "vertical": false,
+  "vision_tokens": 64.0,
+  "exact": 1.0,
+  "min_margin": 3.470355987548828,
+  "p05_margin": 3.470355987548828,
+  "median_margin": 6.34001350402832
+ },
+ {
+  "native": false,
+  "cells": 3,
+  "vertical": false,
+  "vision_tokens": 70.0,
+  "exact": 0.94,
+  "min_margin": -0.2786235809326172,
+  "p05_margin": -0.06499862670898438,
+  "median_margin": 0.7304935455322266
+ },
+ {
+  "native": false,
+  "cells": 3,
+  "vertical": true,
+  "vision_tokens": 70.0,
+  "exact": 1.0,
+  "min_margin": 0.6660652160644531,
+  "p05_margin": 1.1261177062988281,
+  "median_margin": 1.8580665588378906
+ }
+]

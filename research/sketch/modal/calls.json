@@ -1,0 +1,379 @@
+{
+ "smoke": {
+  "call_id": "fc-01M64KDM4XNFM59PSNAV0TWVNR",
+  "cmds": [
+   "smoke"
+  ],
+  "spawned": "2026-10-29 14:50:33 CDT"
+ },
+ "e4_s2_800_kl1.0": {
+  "call_id": "fc-01M64KFQ8V26F53DF13QW4MJ9E",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "800",
+    "2",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s2"
+   ]
+  ],
+  "spawned": "2026-10-29 14:51:42 CDT"
+ },
+ "e4_s3_800_kl1.0": {
+  "call_id": "fc-01M64KFQXS3H5YGAZ2Z5589AXZ",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "800",
+    "3",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s3"
+   ]
+  ],
+  "spawned": "2026-10-29 14:51:42 CDT"
+ },
+ "e4_s2_1500_kl1.0": {
+  "call_id": "fc-01M64KHAWV8F63JMWY6FP5K8WH",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "1500",
+    "2",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s2"
+   ]
+  ],
+  "spawned": "2026-10-29 14:52:35 CDT"
+ },
+ "e4_s3_1500_kl1.0": {
+  "call_id": "fc-01M64KHBK29HV4Z0CWVYZZA6FF",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "1500",
+    "3",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s3"
+   ]
+  ],
+  "spawned": "2026-10-29 14:52:35 CDT"
+ },
+ "e4_s1_1500_kl1.0": {
+  "call_id": "fc-01M64KHHT5BK7T8MJ2N2QD44ZX",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "1500",
+    "1",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s1"
+   ]
+  ],
+  "spawned": "2026-10-29 14:52:42 CDT"
+ },
+ "e4_s1_1500_kl1.0_h4.0": {
+  "call_id": "fc-01M64PQAPQXFCN7EMC5ANNYA2M",
+  "cmds": [
+   [
+    "python",
+    "-c",
+    "import e4_train; e4_train.train(steps=1500, seed=1, kl=1.0, hinge=4.0)"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s1"
+   ]
+  ],
+  "spawned": "2026-10-29 15:48:17 CDT"
+ },
+ "smoke_fast": {
+  "call_id": "fc-01M64Q49KM4S6ECMD7D4W498NQ",
+  "cmds": [
+   "smoke_fast"
+  ],
+  "spawned": "2026-10-29 15:55:22 CDT"
+ },
+ "e4_s1_1500_kl1.0_fast": {
+  "call_id": "fc-01M64Q87082CTP6D6E4TZQK495",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "1500",
+    "1",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s1"
+   ]
+  ],
+  "spawned": "2026-10-29 15:57:30 CDT"
+ },
+ "e4_s2_1500_kl1.0_fast": {
+  "call_id": "fc-01M64Q87PJYA2JYC726RBD99KA",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "1500",
+    "2",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s2"
+   ]
+  ],
+  "spawned": "2026-10-29 15:57:31 CDT"
+ },
+ "e4_s3_1500_kl1.0_fast": {
+  "call_id": "fc-01M64Q88CV4F6Z0DKGS4TG21ZV",
+  "cmds": [
+   [
+    "python",
+    "e4_train.py",
+    "train",
+    "1500",
+    "3",
+    "1.0"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s3"
+   ]
+  ],
+  "spawned": "2026-10-29 15:57:31 CDT"
+ },
+ "e4_s1_1500_kl1.0_h4.0_fast": {
+  "call_id": "fc-01M64Q893BX42WW5YK3Q418N5B",
+  "cmds": [
+   [
+    "python",
+    "-c",
+    "import e4_train; e4_train.train(steps=1500, seed=1, kl=1.0, hinge=4.0)"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s1"
+   ]
+  ],
+  "spawned": "2026-10-29 15:57:32 CDT"
+ },
+ "e4_s2_1500_kl1.0_h4.0_fast": {
+  "call_id": "fc-01M64Q89TBTMK76S1YN1BM6572",
+  "cmds": [
+   [
+    "python",
+    "-c",
+    "import e4_train; e4_train.train(steps=1500, seed=2, kl=1.0, hinge=4.0)"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s2"
+   ]
+  ],
+  "spawned": "2026-10-29 15:57:33 CDT"
+ },
+ "e4_s3_1500_kl1.0_h4.0_fast": {
+  "call_id": "fc-01M64Q8AGMWH3GMNVRQPB51RYT",
+  "cmds": [
+   [
+    "python",
+    "-c",
+    "import e4_train; e4_train.train(steps=1500, seed=3, kl=1.0, hinge=4.0)"
+   ],
+   [
+    "python",
+    "e4_train.py",
+    "eval",
+    "e4_adapter_s3"
+   ]
+  ],
+  "spawned": "2026-10-29 15:57:34 CDT"
+ },
+ "e5_s1_2000_h4.0_fast": {
+  "call_id": "fc-01M650QDXBEGVHQWF37ZA96WX5",
+  "cmds": [
+   [
+    "python",
+    "e5_union.py",
+    "train",
+    "2000",
+    "1",
+    "4.0"
+   ]
+  ],
+  "spawned": "2026-10-29 18:43:06 CDT"
+ },
+ "e5_s2_2000_h4.0_fast": {
+  "call_id": "fc-01M650QEJN0XV1XEJXEHQ35971",
+  "cmds": [
+   [
+    "python",
+    "e5_union.py",
+    "train",
+    "2000",
+    "2",
+    "4.0"
+   ]
+  ],
+  "spawned": "2026-10-29 18:43:06 CDT"
+ },
+ "e5_s3_2000_h4.0_fast": {
+  "call_id": "fc-01M650QF6RZ2JCCRMXX8JY5SFM",
+  "cmds": [
+   [
+    "python",
+    "e5_union.py",
+    "train",
+    "2000",
+    "3",
+    "4.0"
+   ]
+  ],
+  "spawned": "2026-10-29 18:43:07 CDT"
+ },
+ "e5v2_s2_4000_h4.0_stop3.0_cont_fast": {
+  "call_id": "fc-01M652N651KFXVRFEBB3QSBBT6",
+  "cmds": [
+   [
+    "python",
+    "e5_union.py",
+    "train2",
+    "4000",
+    "2",
+    "4.0",
+    "3.0",
+    "/vol/runs/e5_s2_2000_h4.0_fast/files/e5_adapter_s2_h4"
+   ]
+  ],
+  "spawned": "2026-10-29 19:16:49 CDT"
+ },
+ "e5v2_s1_4000_h4.0_stop3.0_fast": {
+  "call_id": "fc-01M652N6SPK4HM7SS064TKHDRE",
+  "cmds": [
+   [
+    "python",
+    "e5_union.py",
+    "train2",
+    "4000",
+    "1",
+    "4.0",
+    "3.0"
+   ]
+  ],
+  "spawned": "2026-10-29 19:16:50 CDT"
+ },
+ "e5v2_s3_4000_h4.0_stop3.0_fast": {
+  "call_id": "fc-01M652N7EESHFHXCZKG1A89RZA",
+  "cmds": [
+   [
+    "python",
+    "e5_union.py",
+    "train2",
+    "4000",
+    "3",
+    "4.0",
+    "3.0"
+   ]
+  ],
+  "spawned": "2026-10-29 19:16:51 CDT"
+ },
+ "e5v2_s4_4000_h4.0_stop3.0_fast": {
+  "call_id": "fc-01M652N84059DQCWQ3N89CCHYD",
+  "cmds": [
+   [
+    "python",
+    "e5_union.py",
+    "train2",
+    "4000",
+    "4",
+    "4.0",
+    "3.0"
+   ]
+  ],
+  "spawned": "2026-10-29 19:16:51 CDT"
+ },
+ "e6_s1_3000_h4.0_stop3.0_fast": {
+  "call_id": "fc-01M6617NKEPQVCMV2219QXM0W4",
+  "cmds": [
+   [
+    "python",
+    "e6_slots.py",
+    "train",
+    "3000",
+    "1",
+    "4.0",
+    "3.0",
+    "/vol/runs/e5v2_s1_4000_h4.0_stop3.0_fast/files/e5_adapter_s1_h4_v2"
+   ]
+  ],
+  "spawned": "2026-10-30 04:11:12 CDT"
+ },
+ "e6_s3_3000_h4.0_stop3.0_fast": {
+  "call_id": "fc-01M6617SHDB7NAAHN0MHEZSSK2",
+  "cmds": [
+   [
+    "python",
+    "e6_slots.py",
+    "train",
+    "3000",
+    "3",
+    "4.0",
+    "3.0",
+    "/vol/runs/e5v2_s3_4000_h4.0_stop3.0_fast/files/e5_adapter_s3_h4_v2"
+   ]
+  ],
+  "spawned": "2026-10-30 04:11:16 CDT"
+ }
+}

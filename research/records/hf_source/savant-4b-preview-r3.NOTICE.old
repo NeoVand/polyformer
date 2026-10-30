@@ -1,0 +1,18 @@
+Savant-4B preview r3
+Copyright (c) 2026 the Polyformer authors.
+
+This model is a modified derivative of Qwen3-4B (https://huggingface.co/Qwen/Qwen3-4B, revision
+1cfa9a7208912126459214e8b04321603b3df60c) by the Qwen team, Alibaba Cloud. Qwen3-4B is
+Copyright 2024 Alibaba Cloud and licensed under the Apache License, Version 2.0; a copy of that license is included
+in this repository as LICENSE-Qwen3.
+
+The weights were modified as follows:
+  - fine-tuned with a LoRA adapter (rank 64, alpha 128, on the q, k, v, o, gate, up and down projections of every
+    layer) trained by the Polyformer authors: PROMPTBOX's final adapter (stage 2g, the stage 2r language repair and
+    60 iterations of reinforcement learning), continued for 500 steps on certified addition (ARITH, seed 1);
+  - the adapter was merged into the base weights in bfloat16;
+  - the merged model was converted to ONNX and its projection weights were quantised (MatMulNBits, block size 32,
+    symmetric): 4 bits for the q, k, o, gate and up projections, 8 bits for the v and down projections; activations,
+    the embedding and the output head are in float16.
+
+The tokenizer files are the Qwen3-4B tokenizer, unmodified.

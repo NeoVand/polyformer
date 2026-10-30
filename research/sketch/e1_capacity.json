@@ -1,0 +1,35 @@
+[
+ {
+  "grid": "8x8",
+  "px_per_cell": 32,
+  "vision_tokens": 64.0,
+  "cells_per_token": 1.0,
+  "per_cell": 0.978125,
+  "grid_exact": 0.0,
+  "fovea_exact": 0.5,
+  "median_min_margin_cell": -1.7818164825439453,
+  "median_min_margin_fovea": 0.07045173645019531
+ },
+ {
+  "grid": "16x16",
+  "px_per_cell": 16,
+  "vision_tokens": 64.0,
+  "cells_per_token": 4.0,
+  "per_cell": 0.73515625,
+  "grid_exact": 0.0,
+  "fovea_exact": 0.05,
+  "median_min_margin_cell": -6.069295883178711,
+  "median_min_margin_fovea": -1.3354530334472656
+ },
+ {
+  "grid": "32x32",
+  "px_per_cell": 8,
+  "vision_tokens": 64.0,
+  "cells_per_token": 16.0,
+  "per_cell": 0.102197265625,
+  "grid_exact": 0.0,
+  "fovea_exact": 0.0,
+  "median_min_margin_cell": -4.205900192260742,
+  "median_min_margin_fovea": -1.3065414428710938
+ }
+]

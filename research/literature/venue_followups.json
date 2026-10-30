@@ -1,0 +1,229 @@
+{
+ "littman2002psr": [
+  [
+   "NIPS 2001",
+   [
+    "Michael L. Littman",
+    "Richard S. Sutton",
+    "Satinder P. Singh"
+   ]
+  ]
+ ],
+ "mitrovic2021relic": [
+  [
+   "CoRR 2020",
+   [
+    "Jovana Mitrovic",
+    "Brian McWilliams",
+    "Jacob C. Walker",
+    "Lars Buesing",
+    "Charles Blundell"
+   ]
+  ],
+  [
+   "ICLR 2021 Poster",
+   [
+    "Jovana Mitrovic",
+    "Brian McWilliams",
+    "Jacob C Walker",
+    "Lars Holger Buesing",
+    "Charles Blundell"
+   ]
+  ]
+ ],
+ "kaiser2016neuralgpu": [
+  [
+   "ICLR (Poster) 2016",
+   [
+    "Lukasz Kaiser",
+    "Ilya Sutskever"
+   ]
+  ]
+ ],
+ "deng2024stepwise": [
+  [
+   "Submitted to ICLR 2025",
+   [
+    "Yuntian Deng",
+    "Yejin Choi",
+    "Stuart Shieber"
+   ]
+  ],
+  [
+   "CoRR 2024",
+   [
+    "Yuntian Deng",
+    "Yejin Choi",
+    "Stuart M. Shieber"
+   ]
+  ]
+ ],
+ "schuurmans2024autoregressive": [
+  [
+   "CoRR 2024",
+   [
+    "Dale Schuurmans",
+    "Hanjun Dai",
+    "Francesco Zanini"
+   ]
+  ]
+ ],
+ "10.1515/9781400882618-003": {
+  "title": "Probabilistic Logics and the Synthesis of Reliable Organisms From Unreliable Components",
+  "authors": [
+   "J. von Neumann"
+  ],
+  "container": "Automata Studies. (AM-34)",
+  "year": 1956,
+  "volume": null,
+  "issue": null,
+  "page": "43-98",
+  "publisher": "Princeton University Press",
+  "type": "book-chapter"
+ },
+ "10.1038/s41586-025-08744-2": {
+  "title": "Mastering diverse control tasks through world models",
+  "authors": [
+   "Danijar Hafner",
+   "Jurgis Pasukonis",
+   "Jimmy Ba",
+   "Timothy Lillicrap"
+  ],
+  "container": "Nature",
+  "year": 2025,
+  "volume": "640",
+  "issue": "8059",
+  "page": "647-653",
+  "publisher": "Springer Science and Business Media LLC",
+  "type": "journal-article"
+ },
+ "littman_s2": {
+  "total": 8,
+  "offset": 0,
+  "next": 5,
+  "data": [
+   {
+    "paperId": "4a7de0669fd835b2efcab97c7d3dc28ea7a1e6a3",
+    "externalIds": {
+     "MAG": "2158282517",
+     "DBLP": "conf/nips/LittmanSS01",
+     "CorpusId": 7307228
+    },
+    "title": "Predictive Representations of State",
+    "venue": "Neural Information Processing Systems",
+    "year": 2001,
+    "authors": [
+     {
+      "authorId": "144885169",
+      "name": "Michael L. Littman"
+     },
+     {
+      "authorId": "1699645",
+      "name": "R. Sutton"
+     },
+     {
+      "authorId": "1699868",
+      "name": "Satinder Singh"
+     }
+    ]
+   },
+   {
+    "paperId": "b0bb9a5a8acd36692c13992151dfd812df24da81",
+    "externalIds": {
+     "DBLP": "conf/ijcai/IzadiP03",
+     "MAG": "2111680853",
+     "CorpusId": 123075704
+    },
+    "title": "A Planning Algorithm for Predictive State Representations",
+    "venue": "International Joint Conference on Artificial Intelligence",
+    "year": 2003,
+    "authors": [
+     {
+      "authorId": "38209549",
+      "name": "Masoumeh T. Izadi"
+     },
+     {
+      "authorId": "144368601",
+      "name": "Doina Precup"
+     }
+    ]
+   },
+   {
+    "paperId": "e3cedb92e4a02ede6e6201d32b5def6dedd32ec8",
+    "externalIds": {
+     "MAG": "2123542217",
+     "DBLP": "conf/icml/SinghLJPS03",
+     "CorpusId": 2624439
+    },
+    "title": "Learning Predictive State Representations",
+    "venue": "International Conference on Machine Learning",
+    "year": 2003,
+    "authors": [
+     {
+      "authorId": "1699868",
+      "name": "Satinder Singh"
+     },
+     {
+      "authorId": "144885169",
+      "name": "Michael L. Littman"
+     },
+     {
+      "authorId": "1745716",
+      "name": "Nicholas K. Jong"
+     },
+     {
+      "authorId": "2256008",
+      "name": "David Pardoe"
+     },
+     {
+      "authorId": "144848112",
+      "name": "P. Stone"
+     }
+    ]
+   },
+   {
+    "paperId": "8b8de3492d4927f3bb330502471695403212635b",
+    "externalIds": {
+     "DBLP": "conf/icmla/JamesSL04",
+     "MAG": "1497506444",
+     "DOI": "10.1109/ICMLA.2004.1383528",
+     "CorpusId": 16237079
+    },
+    "title": "Planning with predictive state representations",
+    "venue": "2004 International Conference on Machine Learning and Applications, 2004. Proceedings.",
+    "year": 2004,
+    "authors": [
+     {
+      "authorId": "71542506",
+      "name": "Michael R. James"
+     },
+     {
+      "authorId": "1699868",
+      "name": "Satinder Singh"
+     },
+     {
+      "authorId": "144885169",
+      "name": "Michael L. Littman"
+     }
+    ]
+   },
+   {
+    "paperId": "38170c31740636c8970c472c01917a3aea25394a",
+    "externalIds": {
+     "MAG": "2898155524",
+     "DOI": "10.7939/R3FF3M75H",
+     "CorpusId": 70119668
+    },
+    "title": "DEVELOPING A PREDICTIVE APPROACH TO KNOWLEDGE",
+    "venue": "",
+    "year": 2015,
+    "authors": [
+     {
+      "authorId": "35367799",
+      "name": "A. White"
+     }
+    ]
+   }
+  ]
+ }
+}

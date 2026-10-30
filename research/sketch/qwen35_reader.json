@@ -1,0 +1,118 @@
+[
+ {
+  "digits": 8,
+  "font_px": 16,
+  "vision_tokens": 70.0,
+  "tokens_per_digit": 4.375,
+  "read_exact": 1.0,
+  "read_digit": 1.0,
+  "sum_exact": 0.0,
+  "text_read_exact": 1.0,
+  "text_sum_exact": 0.05
+ },
+ {
+  "digits": 8,
+  "font_px": 24,
+  "vision_tokens": 70.0,
+  "tokens_per_digit": 4.375,
+  "read_exact": 1.0,
+  "read_digit": 1.0,
+  "sum_exact": 0.0
+ },
+ {
+  "digits": 8,
+  "font_px": 32,
+  "vision_tokens": 70.0,
+  "tokens_per_digit": 4.375,
+  "read_exact": 1.0,
+  "read_digit": 1.0,
+  "sum_exact": 0.0
+ },
+ {
+  "digits": 16,
+  "font_px": 16,
+  "vision_tokens": 78.0,
+  "tokens_per_digit": 2.4375,
+  "read_exact": 0.8,
+  "read_digit": 0.9939393997192383,
+  "sum_exact": 0.0,
+  "text_read_exact": 0.9,
+  "text_sum_exact": 0.0
+ },
+ {
+  "digits": 16,
+  "font_px": 24,
+  "vision_tokens": 72.0,
+  "tokens_per_digit": 2.25,
+  "read_exact": 0.9,
+  "read_digit": 0.9969696998596191,
+  "sum_exact": 0.0
+ },
+ {
+  "digits": 16,
+  "font_px": 32,
+  "vision_tokens": 78.0,
+  "tokens_per_digit": 2.4375,
+  "read_exact": 0.9,
+  "read_digit": 0.9969696998596191,
+  "sum_exact": 0.0
+ },
+ {
+  "digits": 32,
+  "font_px": 16,
+  "vision_tokens": 68.0,
+  "tokens_per_digit": 1.0625,
+  "read_exact": 0.05,
+  "read_digit": 0.9838461548089981,
+  "sum_exact": 0.0,
+  "text_read_exact": 0.7,
+  "text_sum_exact": 0.0
+ },
+ {
+  "digits": 32,
+  "font_px": 24,
+  "vision_tokens": 64.0,
+  "tokens_per_digit": 1.0,
+  "read_exact": 0.15,
+  "read_digit": 0.9861538469791412,
+  "sum_exact": 0.0
+ },
+ {
+  "digits": 32,
+  "font_px": 32,
+  "vision_tokens": 132.0,
+  "tokens_per_digit": 2.0625,
+  "read_exact": 0.0,
+  "read_digit": 0.9807692319154739,
+  "sum_exact": 0.0
+ },
+ {
+  "digits": 64,
+  "font_px": 16,
+  "vision_tokens": 66.0,
+  "tokens_per_digit": 0.515625,
+  "read_exact": 0.0,
+  "read_digit": 0.9868216991424561,
+  "sum_exact": 0.0,
+  "text_read_exact": 0.6,
+  "text_sum_exact": 0.0
+ },
+ {
+  "digits": 64,
+  "font_px": 24,
+  "vision_tokens": 120.0,
+  "tokens_per_digit": 0.9375,
+  "read_exact": 0.0,
+  "read_digit": 0.9910852670669555,
+  "sum_exact": 0.0
+ },
+ {
+  "digits": 64,
+  "font_px": 32,
+  "vision_tokens": 246.0,
+  "tokens_per_digit": 1.921875,
+  "read_exact": 0.0,
+  "read_digit": 0.9899224758148193,
+  "sum_exact": 0.0
+ }
+]

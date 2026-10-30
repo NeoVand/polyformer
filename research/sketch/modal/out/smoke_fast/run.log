@@ -1,0 +1,11 @@
+job smoke_fast; start 2026-10-29 20:55:25; cmds [['python', '-c', "import time, e2_column as e2, json; m=e2.load_base().eval(); t=time.time(); ok,mn,_=e2.certify(m); print(json.dumps({'untouched_e2_rows_ok': ok, 'min_margin': mn, 'ppl': e2.text_ppl(m), 'certify_242_seconds': round(time.time()-t,1)}))"]]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python -c import time, e2_column as e2, json; m=e2.load_base().eval(); t=time.time(); ok,mn,_=e2.certify(m); print(json.dumps({'untouched_e2_rows_ok': ok, 'min_margin': mn, 'ppl': e2.text_ppl(m), 'certify_242_seconds': round(time.time()-t,1)}))
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<06:12,  1.27it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 588.71it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+{"untouched_e2_rows_ok": 0, "min_margin": -12.081995964050293, "ppl": 18.463935674928077, "certify_242_seconds": 70.6}
+
+returncode 0; wall so far 88.7s

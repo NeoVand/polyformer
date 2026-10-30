@@ -1,0 +1,383 @@
+**No hypothesis passes unchanged. G2 is false as stated; G1, G3, G4 and G5 have narrower surviving forms.** The strongest research targets are a sound certificate for actual trained non-absorbing trackers and a certified explanation of steering failure.
+
+I treat your Lean results and experiments as supplied premises, not independently audited results. Literature checked live through **29 October 2026**. **STATES** means explicit overlap with the indicated component; **IMPLIES** means a direct consequence; **PARTIAL** means related work with a material gap; **UNRELATED** means it does not support that component.
+
+**G1 — Training sees Lyapunov exponents, not the JSR**
+
+**(1) Prior art**
+
+| Source and date | Short verbatim quote | Assessment |
+|---|---|---|
+| [Berger–Wang, *Bounded semigroups of matrices*, 15 March 1992](https://www.sciencedirect.com/science/article/pii/002437959290267E) | “equality of two differently defined joint spectral radii” | **STATES** the classical norm/spectral-radius equality underlying periodic-product approximation. |
+| [Dai, *A Gel’fand-type spectral radius formula…*, 1 March 2012](https://www.sciencedirect.com/science/article/pii/S0024379511005416) | “This generalizes the Berger–Wang formula.” | **STATES** the constrained-switching extension; ordinary Berger–Wang alone is insufficient for your constrained formulation. |
+| [Philippe, Essick, Dullerud & Jungers, October 2016](https://research.dial.uclouvain.be/entities/publication/890c5a27-eb2a-4546-b406-4fbf2e07808a) | “one quadratic form per state of the automaton” | **STATES** the multinorm/multiple-Lyapunov framework proposed in G1(b). |
+| [Parrilo–Jadbabaie, 2007 preprint; May 2008 journal](https://arxiv.org/abs/0712.2887) | “approximation of the joint spectral radius … using sum of squares” | **STATES** the proposed SOS machinery. |
+| [Vogt et al., 2 March 2022](https://www.frontiersin.org/journals/applied-mathematics-and-statistics/articles/10.3389/fams.2022.818799/full) | “a robust readout of training stability across hyperparameters” | **PARTIAL**: Lyapunov spectra as RNN diagnostics, not a theorem that random-word training enforces contraction. |
+| [Engelken, Wolf & Abbott, 16 October 2023](https://journals.aps.org/prresearch/abstract/10.1103/PhysRevResearch.5.043044) | “quantifies error propagation and stability achieved by different learning algorithms” | **PARTIAL**: directly anticipates the trained-RNN stability analysis. |
+| [Bugaud, *Combining Theory and Benchmarks…*, CTB@ICML 2026](https://openreview.net/pdf?id=shPakbYAoQ) | “non-absorbing DFAs defeat the recipe” | **PARTIAL**: already connects trained RNN certification, switched dynamics, invariance and classification margins. |
+| [Chung, Choi & Kim, 8 May 2026; revised 27 October 2026](https://arxiv.org/abs/2605.07755) | “cannot correct errors along state-separating subspaces once they preserve state representations” | **PARTIAL, close**: group tracking, error accumulation, state separation and return-map diagnostics. |
+| [Brandoit et al., 12 May 2026](https://arxiv.org/abs/2605.11855) | “quantized states with hysteresis provide persistent memory” | **PARTIAL** for robust recurrent memory; does not establish your JSR certificate or periodic-failure criterion. |
+
+JSR-based neural-network stability is older still: [Araghi–Setoudeh’s fuzzy Elman-network paper, March 2009](https://citeseerx.ist.psu.edu/document?doi=130bc2bf094177544fec1494b4c3f68abf79f5cc&repid=rep1&type=pdf), explicitly studies a “common quadratic Lyapunov function.” **PARTIAL**: it defeats a broad “first use of JSR for RNN stability” claim.
+
+**(2) Triviality and correctness**
+
+The underlying distinction is classical: **almost-sure/random-product stability versus uniform stability under switching**. The proposed explanation nevertheless contains three invalid implications.
+
+- **Low prediction loss does not imply a negative top Lyapunov exponent.** Training constrains outputs on its distribution. Expanding hidden directions can be invisible to the readout; neutral dynamics can track perfectly. Furstenberg–Kesten supplies an asymptotic growth-rate theorem under appropriate stationarity/integrability assumptions, not a theorem about what cross-entropy optimization guarantees. For state-dependent Jacobians, those assumptions concern the induced cocycle, not merely i.i.d. input letters.
+- **Exact symbolic tracking does not require JSR below one.** Exact permutations of separated state representations can have neutral Jacobians and remain correct indefinitely. Even robust correctness can follow from invariant decoding regions without contraction inside them.
+- **Periodic input does not automatically yield periodic Jacobians.** Repeating a word may cause hidden-state drift. A monodromy matrix describes a genuine periodic hidden orbit, or a justified local approximation to one. A product evaluated at empirical centroids is not automatically such a matrix.
+
+Berger–Wang gives asymptotic approximation by periodic products in the appropriate linear setting. It does **not** promise a short maximizing word, an attained maximum, or realizability of every product assembled from independently bounded nonlinear Jacobians.
+
+For **(c)**, \(\rho(M)>1\) is a local instability signal, not an exact failure classifier. An expanding direction may never cross a decoding boundary. Conversely, \(\rho(M)<1\) can coexist with incorrect outputs because of transition bias, an incorrect attractor, transient amplification or failure before completing the cycle.
+
+A sound certificate must include all of:
+
+\[
+h_0\in C_{q_0},\qquad
+f_a(C_q)\subseteq C_{\delta(q,a)},\qquad
+C_q\subseteq\{\text{correct readout for }q\}.
+\]
+
+For ellipsoidal neighborhoods, a useful sufficient check is
+
+\[
+\underbrace{\|f_a(c_q)-c_{q'}\|_{q'}}_{\text{centre residual}}
++
+\underbrace{\gamma_{q,a}R_q}_{\text{bounded neighborhood propagation}}
+\le R_{q'},
+\]
+
+with the derivative bound valid throughout the neighborhood. CJSR/multinorm methods can help establish these bounds. Centre Jacobians alone cannot.
+
+The Bugaud formulation also needs care. **Every dynamical system has a forward-invariant full state space.** The absorbing restriction must concern an invariant set with a fixed accepting readout and particular reachability conditions. A state-indexed family \(C_q\), whose members transition into one another, is a different certificate. The primary text of the cited lattice-characterisation paper was blocked during retrieval; I could verify the separate CTB paper, but not the exact advertised lattice theorem or its CQLF assumptions.
+
+Finally, replace “exact on random words” with “zero observed errors on the sampled random words.” Exactness with probability one over a distribution assigning positive probability to every finite word would already imply exactness on every finite word.
+
+**(3) Verdict: NARROW.**
+
+Surviving form:
+
+> Construct and soundly verify state-indexed invariant neighborhoods for actual trained \(S_5\) trackers, using constrained multinorms plus residual and readout-margin bounds. Test whether periodic-orbit instability predicts observed failures beyond simpler drift-and-margin diagnostics.
+
+The certificate application could be substantive. The Lyapunov-versus-JSR slogan and periodic approximation are established mathematics; the claimed explanation remains an empirical hypothesis.
+
+---
+
+**G2 — Faithful-rank theorem**
+
+**(1) Prior art**
+
+| Source and date | Short verbatim quote | Assessment |
+|---|---|---|
+| [Eckart–Young, September 1936](https://www.cambridge.org/core/journals/psychometrika/article/approximation-of-one-matrix-by-another-of-lower-rank/B29672E1EDD0FA1B7611D4DFAFC321B3) | “approximating one matrix by another of lower rank” | **IMPLIES** an appropriate one-step singular-value obstruction; supplies no group-specific composition theorem. |
+| [Wang et al., PAR, 20 October 2026](https://arxiv.org/abs/2610.27628) | “rescales recurrent states to their first-iteration norms” | **STATES** the normalization operation. It does not claim an all-length certificate. |
+| [Chung et al., revised 27 October 2026, Appendix E.1](https://arxiv.org/html/2605.07755v2#A5.SS1) | “this is an intuition rather than a formal lemma” | **PARTIAL, very close**: explicitly discusses normalization Jacobians and symbolic directions, while qualifying the proposed obstruction. |
+
+**(2) Triviality and correctness**
+
+**The theorem is false without major additional assumptions.**
+
+A valid elementary statement is:
+
+> If \(A\) is noncontracting on every vector of a \(d\)-dimensional subspace \(U\), and \(\operatorname{rank}E<d\), then \(A+E\) cannot strictly contract every vector of \(U\) in that norm.
+
+Proof: \(U\cap\ker E\neq\{0\}\). On a nonzero vector in that intersection, the perturbation changes nothing. In Euclidean operator norm, the related low-rank approximation bound is
+
+\[
+\|A+E\|_2\ge \sigma_{r+1}(A).
+\]
+
+This is **rank-nullity/Eckart–Young-type mathematics**, not a faithful-representation theorem. You have not established that the unmodified Jacobian is noncontracting on four relevant directions.
+
+There are four additional failures.
+
+**First, faithful representation dimension does not automatically describe learned tangent dynamics.** The value \(d_{\mathrm{faithful},\mathbb R}(S_5)=4\) concerns faithful **linear group representations**. A nonlinear tracker can implement the group’s transitions on finitely many centres without its local Jacobians forming a faithful representation. If the group relations instead hold as exact maps on neighborhoods, identity words act identically there and cannot be strictly contracting.
+
+**Second, composition defeats the proposed per-step rank barrier.** Here is an explicit four-dimensional counterexample to that inference. Let \(Q\) cyclically permute four orthonormal coordinates, and set
+
+\[
+B=(I-\alpha e_1e_1^\top)Q,\qquad 0<\alpha<1.
+\]
+
+Then
+
+\[
+\operatorname{rank}(B-Q)=1,\qquad B^4=(1-\alpha)I.
+\]
+
+Each step changes the original Jacobian by rank one. Four steps strictly contract **all four directions**. This does not construct a complete \(S_5\) tracker, but it decisively invalidates the claimed composition argument.
+
+More generally, for an \(m\)-step word,
+
+\[
+\operatorname{rank}\!\left(B_m\cdots B_1-A_m\cdots A_1\right)
+\le \sum_{i=1}^{m}\operatorname{rank}(B_i-A_i)
+\le mr.
+\]
+
+The cumulative correction need not have rank \(r\).
+
+**Third, radial rescaling is not generally a rank-one change from the original Jacobian.** For \(R(x)=c\,x/\|x\|\),
+
+\[
+DR(x)=\frac{c}{\|x\|}(I-\hat x\hat x^\top).
+\]
+
+Consequently,
+
+\[
+DR(x)-I=
+\left(\frac{c}{\|x\|}-1\right)I
+-\frac{c}{\|x\|}\hat x\hat x^\top.
+\]
+
+This is generally full rank. It becomes a rank-one difference at \(\|x\|=c\); after composition with the recurrent map, rotating correction directions still matter.
+
+**Fourth, \(120^\circ\) rotation alone proves nothing about contraction.** Expansion and contraction magnitudes matter. For adjacent transpositions, \(s_1s_2\) is a 3-cycle; in the standard four-dimensional representation of \(S_5\), it rotates a two-dimensional plane and fixes a two-dimensional subspace. The rotation story therefore does not by itself cover all four directions.
+
+“Rank four is sharp” and “PAR cannot certify \(S_5\)” are unsupported.
+
+**(3) Verdict: KILL.**
+
+The surviving one-step lemma is classical. A possible replacement would concern the **span of correction directions transported around a particular return word**, with explicit assumptions on the baseline dynamics. That is a different theorem.
+
+---
+
+**G3 — Exact semantic entropy and a length-uniform guarantee**
+
+**(1) Prior art**
+
+| Source and date | Short verbatim quote | Assessment |
+|---|---|---|
+| [Farquhar et al., 19 June 2024](https://www.nature.com/articles/s41586-024-07421-0) | “computing uncertainty at the level of meaning” | **STATES** semantic quotienting. Decidable machine equivalence improves the equivalence oracle, not the entropy definition. |
+| [Angluin, November 1987](https://www.sciencedirect.com/science/article/pii/0890540187900526) | “correctly learns any regular set from any minimally adequate Teacher” | **STATES** exact active automata learning with membership and equivalence queries. |
+| [Nowak, December 2011](https://doi.org/10.1109/TIT.2011.2169298) | “a well-known greedy algorithm” | **STATES** generalized binary search; optimal query complexity requires additional conditions. |
+| [Ji et al., PLDI, June 2020](https://pldi20.sigplan.org/details/pldi-2020-papers/65/Question-Selection-for-Interactive-Program-Synthesis) | “selecting the proper question to minimize the rounds of interactions” | **STATES** the proposed interactive-synthesis objective and sampling-based question selection. |
+| [Muchtar, Shevrin & Maoz, ExReg, July 2026 author listing](https://www.cs.tau.ac.il/~maozs/publications.html) | “Automated Example Generation to Guide Candidate Disambiguation” | **STATES** the central candidate-disambiguation idea; no evidence here of your length-uniform theorem. |
+| [Nguena Timo, Rodriguez & Avellaneda, 31 March 2026](https://arxiv.org/abs/2603.29140) | “an expert-centric approach based on FSM mutation and test generation” | **STATES** LLM-produced FSMs repaired through expert feedback and generated tests. |
+| [Zhong et al., SemRegex, November 2018](https://www.microsoft.com/en-us/research/publication/semregex-a-semantics-based-approach-for-generating-regular-expressions-from-natural-language-specifications-2/?lang=ko-kr) | “maximizing the expected semantic correctness” | **PARTIAL** for the exact marginal likelihood; **STATES** equivalence-aware training using DFA equivalence and distinguishing tests. |
+| [Barnaby et al., SmartLabel, October 2025](https://www.cs.utexas.edu/~isil/smartlabel.pdf) | “we assume a finite set of inputs” | **PARTIAL, close**: active synthesis with conformal semantics; does not supply an all-word guarantee. |
+| [Angelopoulos–Bates, July 2021; revised December 2022](https://arxiv.org/abs/2107.07511) | “sets that are guaranteed to contain the ground truth” | **STATES** the relevant conformal coverage object: a prediction set. |
+
+[TTT, Isberner–Howar–Steffen, 2014](https://mms3.ub.tu-dortmund.de/work/63656), explicitly a “redundancy-free approach to active automata learning,” is **PARTIAL** algorithmic prior art. Your finite sampled committee is a version-space elimination procedure; it does not inherit L*/TTT completeness without their oracle or hypothesis assumptions.
+
+**(2) Triviality and correctness**
+
+**Exact equivalence is not exact entropy.** For deterministic, appropriately specified Mealy/Moore machines, behavioral equivalence and minimization are decidable. But
+
+\[
+p([M]\mid x)=\sum_{T\sim M}p(T\mid x)
+\]
+
+requires summing probability mass over all equivalent syntax.
+
+With a finite, effectively enumerable support and computable probabilities, the entropy is computable to arbitrary precision. With unrestricted program lengths, decidable equivalence alone gives no such conclusion. From \(k\) samples, you obtain an empirical entropy with exact class assignments—not the exact population entropy.
+
+Moreover, the true class may be absent. If its sampling probability is \(p_*\), independent sampling misses it with probability \((1-p_*)^k\). Asking questions cannot recover a missing class unless the candidate-generation procedure can expand.
+
+The distinguishing-word bound is defensible for the specified synchronous deterministic machine model. It follows from **Moore-style partition refinement** on the disjoint union; the precise tight bound depends on whether outputs label states or transitions. It does not establish that the resulting questions are understandable to people or approximately balanced.
+
+**(b): Fano survives; “optimal questioner” does not.**
+
+For finite \(C\), base-two logarithms, at most \(q\) queries, and one answer from \(O\) per query,
+
+\[
+I(C;\text{transcript}\mid x)\le q\log_2|O|
+\]
+
+gives the stated relaxed Fano bound, with \(H\) interpreted as the **true uncertainty about intent**. An arbitrary compiler’s self-reported entropy cannot substitute for that quantity.
+
+If a query returns an entire output trace, its answer alphabet can be much larger than \(O\). Calibration alone implies neither optimal question selection nor an optimal decision tree. Greedy entropy splitting also need not minimize expected total questions.
+
+**(c): The proposed conformal conclusion does not follow from the stated calibration procedure.**
+
+Distinguish:
+
+\[
+\forall L:\quad \Pr(E_L)\le\alpha
+\]
+
+from
+
+\[
+\Pr\!\left(\exists L:E_L\right)\le\alpha.
+\]
+
+The first does not imply the second. Ordinary split conformal also provides neither arbitrary conditional-on-\(x\) coverage nor automatic validity under repeated stopping decisions.
+
+There is, however, a clean surviving construction:
+
+1. Obtain a conformal **machine-class set** \(\Gamma(X)\) satisfying  
+   \(\Pr(C_*\notin\Gamma(X))\le\alpha\).
+2. Use truthful distinguishing answers to prune it without removing the true class when present.
+3. Emit a machine only when one class remains; otherwise continue or abstain.
+4. Certify its executor for every word.
+
+Then, by event inclusion,
+
+\[
+\Pr\!\left(
+\text{emit and }\exists w\in\Sigma^*:
+\operatorname{Exec}(\widehat M,w)\ne M_*(w)
+\right)
+\le \Pr(C_*\notin\Gamma(X))
+\le\alpha.
+\]
+
+That is genuinely simultaneous over lengths and words. It is **unconditional selective error control**, not necessarily error at most \(\alpha\) conditional on emitting. Termination is another obligation.
+
+The \(1/(N+1)\) slack is not intrinsically necessary: standard conservative split-conformal quantiles already give miscoverage at most \(\alpha\) under exchangeability. The familiar granularity term depends on the quantile convention and direction of the bound.
+
+Your history-keeping separation must be restricted to **unrestricted implementations and finite black-box evidence**. Some history-keeping decoders ignore their history or admit structural proofs. Also preserve the impossibility theorem’s quantifiers:
+
+\[
+\forall\text{ finite suites }S,\ \exists D_S
+\]
+
+passing \(S\) and failing elsewhere—not one erroneous decoder passing every finite suite.
+
+**(d): False as a claim about every proof.** An explicit implementation-state bound is needed for particular finite conformance-testing guarantees. Structural induction, simulation proofs and algebraic implementation proofs need not enumerate \(n|\Sigma|\) independent checks.
+
+An \(n|\Sigma|\) lower bound can hold in an adversarial **independent table-entry inspection model**. That is an oracle lower bound, not a universal lower bound on proof size.
+
+**(e): False.** Increasing probability on the correct class can increase predictive entropy. Moving from probabilities
+
+\[
+p(\text{wrong})=.99,\quad p(\text{correct})=.01
+\]
+
+to \((.5,.5)\) improves correct-class likelihood while increasing entropy. Equivalence-marginalized likelihood is a sensible semantic prediction objective, but neither entropy reduction nor equal-step superiority follows.
+
+**(3) Verdict: NARROW, heavily.**
+
+Surviving form:
+
+> Conformal coverage of whole machine-equivalence classes, truth-preserving interactive refinement, and certified execution imply simultaneous correctness of all emitted executions.
+
+The transfer theorem is elementary event inclusion. The research contribution would have to be a practical, nonvacuous machine-level coverage procedure with measured interaction and abstention costs. Drop exact population entropy from samples, calibrated optimal questioning, the universal check lower bound and guaranteed entropy reduction.
+
+---
+
+**G4 — Switching on as conflict resolution**
+
+**(1) Prior art**
+
+| Source and date | Short verbatim quote | Assessment |
+|---|---|---|
+| [Braun et al., 28 May 2025](https://arxiv.org/abs/2505.22637) | “not represented by a coherent direction” | **STATES** the broad geometric explanation for unreliable constant steering. |
+| [Li, Li & Huang, 2 February 2026; revised September 2026](https://arxiv.org/abs/2602.01654) | “the locally effective direction varies with the current activation” | **STATES** the motivation for context-dependent steering. |
+| [Meng et al., ROME, NeurIPS 2022](https://proceedings.neurips.cc/paper_files/paper/2022/hash/6f1d43d5a82a37e89b0665b33bf3a182-Abstract-Conference.html) | “Rank-One Model Editing” | **STATES** targeted rank-one weight intervention; **PARTIAL** for your infeasibility explanation. |
+| [Todd et al., 23 October 2023; ICLR 2024](https://arxiv.org/abs/2310.15213) | “they trigger execution of the task” | **PARTIAL**: activation vectors eliciting latent functions are established. |
+| [Ward, Riechers & Shai, 10 November 2025](https://arxiv.org/abs/2511.06739) | “fire for reasoning-specific behaviors” | **PARTIAL, close**: interpretable input-dependent rank-one LoRA activations. Rank one per adapted matrix is not one global rank-one edit. |
+| [Zhao, Han & Hovy, ICML July 2026](https://proceedings.mlr.press/v306/zhao26o.html) | “initial alignment can matter as much as rank itself” | **PARTIAL**: frozen representation geometry predicts useful rank-one initialization, in a different setting. |
+
+**(2) Triviality and correctness**
+
+The identity
+
+\[
+(W+ab^\top)h=Wh+a(b^\top h)
+\]
+
+is elementary. Rank-one editing supplies a fixed output direction with an input-dependent scalar; this is already implicit in ROME and LoRA.
+
+Your potentially interesting contribution is the **certificate**, but its scope matters.
+
+For linearized row-margin constraints,
+
+\[
+m_i+g_i^\top v\ge \tau,
+\]
+
+constant steering becomes linear feasibility, \(Gv\ge d\). **Farkas’ lemma** gives a certificate of impossibility:
+
+\[
+\lambda\ge0,\qquad \lambda^\top G=0,\qquad \lambda^\top d>0.
+\]
+
+**Helly’s theorem** bounds an infeasible subsystem by \(d_{\text{steer}}+1\) convex constraints in the ambient steering space. That is not automatically a small number of rows in a model with thousands of steering dimensions.
+
+For the rank-one intervention, the first-order effect becomes
+
+\[
+(g_i^\top a)(b^\top h_i).
+\]
+
+Different signs or magnitudes of \(b^\top h_i\) can resolve some conflicting requirements. But there need not exist a linear gate achieving the required pattern. Joint search over \(a,b\) is bilinear and nonconvex.
+
+Most importantly:
+
+- Failure of a tested steering vector does not prove infeasibility of all constant vectors.
+- Infeasibility of a linearization does not prove infeasibility of the nonlinear model.
+- Rank-one success need not be caused by the proposed small conflict set.
+- A gate fitted using frozen features and desired row labels is a meaningful prediction procedure, but is not guaranteed to exist or generalize.
+
+To certify the actual model, bound nonlinear remainders over a stated intervention region, or exploit a setting where the margin constraints are exactly affine.
+
+**(3) Verdict: NARROW.**
+
+Surviving form:
+
+> On a fixed executor and intervention site, produce an exact or remainder-controlled infeasibility witness for constant steering, then construct a rank-one gate from frozen activations and verify every required row.
+
+A prospectively predicted gate plus a sound obstruction certificate could survive. “Input dependence explains why rank one works” is already crowded and too general.
+
+---
+
+**G5 — Canonical frames by cold prefill**
+
+**(1) Prior art**
+
+| Source and date | Short verbatim quote | Assessment |
+|---|---|---|
+| [Gim et al., Prompt Cache, 7 November 2023; MLSys 2024](https://arxiv.org/abs/2311.04934) | “reusable text segments, called prompt modules” | **PARTIAL**: modular precomputed attention states and controlled positions already exist. |
+| [Yao et al., CacheBlend, 26 May 2024; EuroSys 2025](https://arxiv.org/abs/2405.16444) | “ignore the text’s cross-attention with the preceding text” | **STATES** the contextual-dependency issue; **IMPLIES** that later masking cannot undo already-computed dependencies. |
+| [Hu et al., EPIC, October 2024; ICML July 2025](https://proceedings.mlr.press/v267/hu25j.html) | “regardless of token chunk position (or prefix)” | **PARTIAL**: position-independent modular caching, with accuracy-recovery mechanisms rather than exact stack semantics. |
+| [Chen et al., KV Packet, 14 April 2026; revised 25 October 2026](https://arxiv.org/abs/2604.13226) | “standard KV caches are context-dependent” | **STATES** the premise; **PARTIAL** for immutable cached modules, using trained adapters. |
+| [Teng et al., InfoFlow KV, 5 March 2026](https://arxiv.org/abs/2603.05353) | “restore global causal dependencies” | **PARTIAL**: recomputation explicitly repairs cross-chunk information flow. |
+| [Luo et al., *Shadow in the Cache*, August 2025; NDSS 2026](https://arxiv.org/abs/2508.09442) | “reconstruct sensitive user inputs directly from the KV-cache” | **UNRELATED** to your exact claim about read-time ancestor masks; it studies privacy attacks, not stack noninterference. |
+
+**(2) Triviality and correctness**
+
+**The dependency claim is correct, with qualifications.** In an ordinary transformer, first-layer keys and values are computed from token-local representations; ancestor influence enters contextualized representations and therefore later-layer caches. A read-time mask removes direct attention edges to ancestors. It does not erase ancestor information already carried by an accessible descendant’s cache.
+
+Cold construction can establish
+
+\[
+\operatorname{KV}^{(\ell)}(\text{frame})
+=
+\Phi_\ell(\text{fixed program},\text{frame symbol},\text{fixed positions})
+\]
+
+at every layer, by straightforward **induction on the computation graph**, provided every input to that computation is canonical.
+
+However, the finite-certificate conclusion requires more than cold frame caches:
+
+- The program cache must itself be fixed and independent of ancestors.
+- Query/control tokens, masks, positions and positional metadata must also depend only on the certified local configuration.
+- Hidden frames must not affect attention through visibility, multiplicity, positional offsets or other runtime state.
+- Push/pop operations must restore the canonical representation without carrying an uncatalogued residual state.
+
+A cold top frame does not make the executor history-free if its query still contains history.
+
+Also, cold prefill is **sufficient, not necessary**. Write-time isolation at every layer, reuse of precomputed canonical caches, or a finite behavioral quotient can provide the same proof property. A finite certificate needs finitely characterized behavior; it does not inherently require bit-identical caches for every equivalent history.
+
+For an unbounded stack, the whole system is not finite-state. The plausible result is a **finite local certificate lifting to pushdown correctness**, using locality and induction over stack operations. That additional lifting theorem is where the contribution could lie.
+
+**(3) Verdict: NARROW.**
+
+Surviving form:
+
+> Prove a canonical-frame noninterference lemma for the actual multilayer cache implementation, then prove that finitely many local push/pop checks imply correctness at arbitrary stack depth.
+
+The raw “context enters cached KVs” observation and cold modular prefill are established or immediate. The stack-specific correctness reduction may survive.
+
+| Rank | Hypothesis | Verdict | Surviving research contribution | Decisive next gate |
+|---:|---|---|---|---|
+| **1** | **G1** | **NARROW** | Sound invariant-neighborhood certificates for trained non-absorbing group trackers | Certify actual weights, including residuals, intermediate states and readout margins |
+| **2** | **G4** | **NARROW** | Certified constant-steering obstruction plus prospectively constructed rank-one repair | Prove actual-model infeasibility within a stated scope and predict a successful gate before tuning |
+| **3** | **G5** | **NARROW** | Canonical-cache locality lifting finite checks to arbitrary stack depth | Show every observable dependency is local and formalize push/pop preservation |
+| **4** | **G3** | **NARROW, heavily** | Whole-machine coverage transferred to simultaneous correctness of emitted executions | Obtain nonvacuous machine-class coverage without assuming candidate completeness or guaranteed termination |
+| **5** | **G2** | **KILL** | Only a classical one-step rank obstruction remains | Replace faithful-rank reasoning with a valid analysis of transported corrections over complete words |

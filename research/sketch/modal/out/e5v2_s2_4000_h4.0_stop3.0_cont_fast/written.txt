@@ -1,0 +1,5 @@
+e5_adapter_s2_h4_v2_cont/README.md
+e5_adapter_s2_h4_v2_cont/adapter_model.safetensors
+e5_adapter_s2_h4_v2_cont/adapter_config.json
+e5_adapter_s2_h4_v2_cont/train_log.json
+e5_adapter_s2_h4_v2_cont/eval.json

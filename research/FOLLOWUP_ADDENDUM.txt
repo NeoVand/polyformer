@@ -1,0 +1,9 @@
+Also read these in full:
+
+- Köver, Butoi, Svete, Hahn & Cotterell (2026), arXiv:2606.08768. They prove the fixed-margin result for encoders.
+  Does their proof extend to causal masking? If not, exactly where does it break? (Hahn & Rofin 2024 say the
+  decoder case is open.)
+- Li & Cotterell (2026), arXiv:2605.00768. k-local heads recognise exactly the definite languages.
+- Nowak, Cotterell & Boumasmoud (2026), arXiv:2607.26988.
+- Chowdhury (2026), arXiv:2603.10123. The Cesàro construction. This corrects A2 of your first report.
+- Wu, Wang, Jegelka & Jadbabaie (ICML 2025). Positional decay under ALiBi.

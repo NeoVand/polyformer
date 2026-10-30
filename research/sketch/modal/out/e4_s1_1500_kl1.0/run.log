@@ -1,0 +1,31 @@
+job e4_s1_1500_kl1.0; start 2026-10-29 19:52:45; cmds [['python', 'e4_train.py', 'train', '1500', '1', '1.0'], ['python', 'e4_train.py', 'eval', 'e4_adapter_s1']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e4_train.py train 1500 1 1.0
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<03:19,  2.36it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 1080.61it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `chunk_gated_delta_rule` is falling back to its reference PyTorch implementation because `flash-linear-attention` is not installed. This is correct but much slower; install `flash-linear-attention` for the optimized kernel.
+/tmp/work/e4_train.py:96: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tot += float(loss)
+{"step": 100, "loss": 0.8885517919261474, "cert": 961, "by_op": {"MUL": 536, "ADD": 204, "ADZ": 208, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.37, "ADD": -6.37, "ADZ": -4.74, "FLS": 2.98, "NXT": 4.58}, "ppl_ratio": 0.9940646109308268, "fails": ["MUL:_1_", "MUL:_3_", "MUL:_4_", "MUL:_5_", "MUL:_6_", "MUL:_7_", "MUL:_74", "MUL:_8_", "MUL:_9_", "MUL:_92", "MUL:_94", "MUL:_95"]} (322s)
+{"step": 200, "loss": 0.4991812555163051, "cert": 1119, "by_op": {"MUL": 679, "ADD": 210, "ADZ": 217, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -9.33, "ADD": -9.71, "ADZ": -3.91, "FLS": 2.68, "NXT": 4.73}, "ppl_ratio": 0.9844696790335, "fails": ["MUL:_0_", "MUL:_1_", "MUL:_2_", "MUL:_4_", "MUL:_9_", "MUL:03_", "MUL:11_", "MUL:110", "MUL:193", "MUL:218", "MUL:220", "MUL:221"]} (644s)
+{"step": 300, "loss": 0.3949047240694199, "cert": 1212, "by_op": {"MUL": 786, "ADD": 207, "ADZ": 206, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -2.43, "ADD": -6.07, "ADZ": -6.5, "FLS": 6.58, "NXT": 7.56}, "ppl_ratio": 0.9877289282919692, "fails": ["MUL:22_", "MUL:220", "MUL:221", "MUL:222", "MUL:223", "MUL:224", "MUL:226", "MUL:228", "MUL:23_", "MUL:231", "MUL:232", "MUL:234"]} (965s)
+{"step": 400, "loss": 0.4257696029235376, "cert": 1265, "by_op": {"MUL": 820, "ADD": 213, "ADZ": 219, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -6.56, "ADD": -1.22, "ADZ": -0.48, "FLS": 7.48, "NXT": 6.33}, "ppl_ratio": 0.9961901943436093, "fails": ["MUL:110", "MUL:118", "MUL:166", "MUL:220", "MUL:224", "MUL:226", "MUL:227", "MUL:228", "MUL:232", "MUL:234", "MUL:235", "MUL:236"]} (1292s)
+{"step": 500, "loss": 0.12696096339186624, "cert": 1502, "by_op": {"MUL": 1052, "ADD": 219, "ADZ": 218, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -6.07, "ADD": -2.43, "ADZ": -2.48, "FLS": 5.76, "NXT": 8.03}, "ppl_ratio": 0.9911584646484002, "fails": ["MUL:_0_", "MUL:237", "MUL:286", "MUL:296", "MUL:310", "MUL:311", "MUL:327", "MUL:330", "MUL:331", "MUL:332", "MUL:333", "MUL:334"]} (1611s)
+{"step": 600, "loss": 0.0025392880875187984, "cert": 1496, "by_op": {"MUL": 1047, "ADD": 218, "ADZ": 218, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -10.85, "ADD": -4.82, "ADZ": -5.65, "FLS": 6.26, "NXT": 7.5}, "ppl_ratio": 0.9954055321522789, "fails": ["MUL:111", "MUL:113", "MUL:115", "MUL:116", "MUL:118", "MUL:22_", "MUL:222", "MUL:224", "MUL:227", "MUL:228", "MUL:272", "MUL:274"]} (1930s)
+{"step": 700, "loss": 0.10947436049150383, "cert": 1538, "by_op": {"MUL": 1087, "ADD": 219, "ADZ": 219, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -2.58, "ADD": -3.71, "ADZ": -2.75, "FLS": 9.71, "NXT": 8.35}, "ppl_ratio": 0.9924076800792746, "fails": ["MUL:22_", "MUL:221", "MUL:227", "MUL:228", "MUL:237", "MUL:327", "MUL:398", "MUL:667", "MUL:773", "MUL:774", "MUL:776", "MUL:777"]} (2255s)
+{"step": 800, "loss": 0.004710850879746431, "cert": 1519, "by_op": {"MUL": 1079, "ADD": 213, "ADZ": 214, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.71, "ADD": -3.64, "ADZ": -3.44, "FLS": 7.54, "NXT": 9.37}, "ppl_ratio": 0.9928580480802445, "fails": ["MUL:120", "MUL:220", "MUL:283", "MUL:348", "MUL:438", "MUL:555", "MUL:556", "MUL:557", "MUL:558", "MUL:620", "MUL:646", "MUL:670"]} (2573s)
+{"step": 900, "loss": 0.0008497325898702002, "cert": 1530, "by_op": {"MUL": 1089, "ADD": 214, "ADZ": 214, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.83, "ADD": -4.36, "ADZ": -4.32, "FLS": 9.17, "NXT": 9.27}, "ppl_ratio": 0.9979241013287761, "fails": ["MUL:007", "MUL:11_", "MUL:387", "MUL:388", "MUL:488", "MUL:576", "MUL:577", "MUL:578", "MUL:80_", "MUL:837", "MUL:848", "ADD:125"]} (2891s)
+{"step": 1000, "loss": 0.0005882969334436439, "cert": 1553, "by_op": {"MUL": 1100, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": 1.03, "ADD": 2.2, "ADZ": 1.3, "FLS": 9.24, "NXT": 10.38}, "ppl_ratio": 0.9951888796765853, "fails": []} (3216s)
+
+returncode 0; wall so far 3232.1s
+
+$ python e4_train.py eval e4_adapter_s1
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<00:48,  9.71it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 2374.99it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+[transformers] `chunk_gated_delta_rule` is falling back to its reference PyTorch implementation because `flash-linear-attention` is not installed. This is correct but much slower; install `flash-linear-attention` for the optimized kernel.
+{"cert": 1553, "rows": 1553, "by_op": {"MUL": 1100, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": 1.0254554748535156, "ADD": 2.1999855041503906, "ADZ": 1.2976303100585938, "FLS": 9.239418029785156, "NXT": 10.376047134399414}, "fails": [], "ppl": 18.371931913062728}
+4 20/20

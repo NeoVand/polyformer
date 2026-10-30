@@ -1,0 +1,60 @@
+{
+ "1024": {
+  "n": 512,
+  "seed": 10115,
+  "chain_min": 18,
+  "chain_max": 1023,
+  "final_carry_1": 1.0,
+  "reset0_window_1": 0.0,
+  "reset0_window_2": 0.0,
+  "reset0_window_4": 0.0,
+  "reset0_window_8": 0.0,
+  "reset0_window_16": 0.0,
+  "reset0_window_32": 0.013671875,
+  "reset0_window_64": 0.033203125,
+  "reset1_window_1": 0.005859375,
+  "reset1_window_2": 0.029296875,
+  "reset1_window_4": 0.806640625,
+  "reset1_window_8": 1.0,
+  "reset1_window_16": 1.0,
+  "reset1_window_32": 1.0,
+  "reset1_window_64": 1.0,
+  "stored_rule_matches_reset0": {
+   "1": true,
+   "2": true,
+   "4": true,
+   "8": true,
+   "16": true,
+   "32": true
+  }
+ },
+ "4096": {
+  "n": 512,
+  "seed": 13187,
+  "chain_min": 19,
+  "chain_max": 4093,
+  "final_carry_1": 1.0,
+  "reset0_window_1": 0.0,
+  "reset0_window_2": 0.0,
+  "reset0_window_4": 0.0,
+  "reset0_window_8": 0.0,
+  "reset0_window_16": 0.0,
+  "reset0_window_32": 0.005859375,
+  "reset0_window_64": 0.01171875,
+  "reset1_window_1": 0.001953125,
+  "reset1_window_2": 0.009765625,
+  "reset1_window_4": 0.47265625,
+  "reset1_window_8": 1.0,
+  "reset1_window_16": 1.0,
+  "reset1_window_32": 1.0,
+  "reset1_window_64": 1.0,
+  "stored_rule_matches_reset0": {
+   "1": true,
+   "2": true,
+   "4": true,
+   "8": true,
+   "16": true,
+   "32": true
+  }
+ }
+}

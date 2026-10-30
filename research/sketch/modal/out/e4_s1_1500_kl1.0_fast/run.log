@@ -1,0 +1,36 @@
+job e4_s1_1500_kl1.0_fast; start 2026-10-29 20:57:33; cmds [['python', 'e4_train.py', 'train', '1500', '1', '1.0'], ['python', 'e4_train.py', 'eval', 'e4_adapter_s1']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cuda"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e4_train.py train 1500 1 1.0
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<02:18,  3.41it/s]Loading weights:  99%|█████████▊| 466/473 [00:00<00:00, 1479.87it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 1172.96it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+/tmp/work/e4_train.py:96: UserWarning: Converting a tensor with requires_grad=True to a scalar may lead to unexpected behavior.
+Consider using tensor.detach() first. (Triggered internally at /__w/pytorch/pytorch/torch/csrc/autograd/generated/python_variable_methods.cpp:820.)
+  tot += float(loss)
+{"step": 100, "loss": 1.0093128836451797, "cert": 854, "by_op": {"MUL": 417, "ADD": 209, "ADZ": 215, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.31, "ADD": -3.08, "ADZ": -3.08, "FLS": 4.35, "NXT": 3.48}, "ppl_ratio": 0.9964472135848734, "fails": ["MUL:_1_", "MUL:_3_", "MUL:_4_", "MUL:_5_", "MUL:_6_", "MUL:_7_", "MUL:_8_", "MUL:_9_", "MUL:03_", "MUL:06_", "MUL:07_", "MUL:08_"]} (430s)
+{"step": 200, "loss": 0.3208260406026966, "cert": 1144, "by_op": {"MUL": 699, "ADD": 216, "ADZ": 216, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -8.37, "ADD": -1.31, "ADZ": -1.24, "FLS": 5.38, "NXT": 4.96}, "ppl_ratio": 1.0019309065272584, "fails": ["MUL:007", "MUL:128", "MUL:148", "MUL:168", "MUL:171", "MUL:175", "MUL:176", "MUL:178", "MUL:198", "MUL:218", "MUL:220", "MUL:221"]} (738s)
+{"step": 300, "loss": 0.4068383687017558, "cert": 1241, "by_op": {"MUL": 807, "ADD": 208, "ADZ": 213, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.08, "ADD": -2.69, "ADZ": -1.71, "FLS": 7.45, "NXT": 5.26}, "ppl_ratio": 0.9959332413967655, "fails": ["MUL:08_", "MUL:11_", "MUL:110", "MUL:128", "MUL:158", "MUL:18_", "MUL:22_", "MUL:220", "MUL:221", "MUL:223", "MUL:224", "MUL:225"]} (1046s)
+{"step": 400, "loss": 0.1676562602779086, "cert": 1368, "by_op": {"MUL": 916, "ADD": 220, "ADZ": 219, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.12, "ADD": 0.05, "ADZ": -1.81, "FLS": 6.86, "NXT": 7.47}, "ppl_ratio": 1.0121404218038748, "fails": ["MUL:22_", "MUL:220", "MUL:221", "MUL:222", "MUL:223", "MUL:224", "MUL:225", "MUL:226", "MUL:227", "MUL:228", "MUL:231", "MUL:234"]} (1356s)
+{"step": 500, "loss": 0.24442086728595314, "cert": 1438, "by_op": {"MUL": 1004, "ADD": 210, "ADZ": 211, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.47, "ADD": -8.65, "ADZ": -9.77, "FLS": 2.05, "NXT": 3.4}, "ppl_ratio": 1.0004256677345051, "fails": ["MUL:22_", "MUL:222", "MUL:223", "MUL:225", "MUL:226", "MUL:238", "MUL:272", "MUL:273", "MUL:274", "MUL:277", "MUL:278", "MUL:281"]} (1667s)
+{"step": 600, "loss": 0.025276560722431896, "cert": 1531, "by_op": {"MUL": 1080, "ADD": 218, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -5.31, "ADD": -0.95, "ADZ": 1.26, "FLS": 6.89, "NXT": 1.24}, "ppl_ratio": 1.0098283914403345, "fails": ["MUL:223", "MUL:272", "MUL:273", "MUL:332", "MUL:333", "MUL:337", "MUL:575", "MUL:577", "MUL:722", "MUL:723", "MUL:773", "MUL:777"]} (1975s)
+{"step": 700, "loss": 0.0016233084271561893, "cert": 1551, "by_op": {"MUL": 1098, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -4.57, "ADD": 2.57, "ADZ": 2.03, "FLS": 8.32, "NXT": 6.17}, "ppl_ratio": 1.002404954459174, "fails": ["MUL:670", "MUL:771"]} (2284s)
+{"step": 800, "loss": 0.7694459887197809, "cert": 1379, "by_op": {"MUL": 1089, "ADD": 136, "ADZ": 141, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -2.93, "ADD": -6.47, "ADZ": -6.02, "FLS": 6.93, "NXT": 4.79}, "ppl_ratio": 0.9936234084057807, "fails": ["MUL:_22", "MUL:227", "MUL:228", "MUL:236", "MUL:326", "MUL:393", "MUL:66_", "MUL:660", "MUL:886", "MUL:933", "MUL:990", "ADD:_17"]} (2589s)
+{"step": 900, "loss": 0.020905608958855737, "cert": 1537, "by_op": {"MUL": 1084, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -3.0, "ADD": 0.01, "ADZ": 0.27, "FLS": 7.58, "NXT": 5.54}, "ppl_ratio": 1.018518793961812, "fails": ["MUL:348", "MUL:355", "MUL:370", "MUL:371", "MUL:373", "MUL:374", "MUL:472", "MUL:666", "MUL:730", "MUL:731", "MUL:734", "MUL:742"]} (2857s)
+{"step": 1000, "loss": 0.008916056129692151, "cert": 1529, "by_op": {"MUL": 1099, "ADD": 209, "ADZ": 208, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -0.18, "ADD": -6.57, "ADZ": -5.6, "FLS": 9.46, "NXT": 7.67}, "ppl_ratio": 0.9995213700730299, "fails": ["MUL:647", "ADD:_54", "ADD:100", "ADD:130", "ADD:135", "ADD:136", "ADD:139", "ADD:150", "ADD:182", "ADD:184", "ADD:185", "ADD:198"]} (3085s)
+{"step": 1100, "loss": 0.0012274468600708133, "cert": 1545, "by_op": {"MUL": 1095, "ADD": 218, "ADZ": 219, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -3.7, "ADD": -4.13, "ADZ": -3.6, "FLS": 9.01, "NXT": 6.98}, "ppl_ratio": 0.9966097257613264, "fails": ["MUL:11_", "MUL:15_", "MUL:232", "MUL:254", "MUL:737", "ADD:_37", "ADD:151", "ADZ:_37"]} (3311s)
+{"step": 1200, "loss": 0.000693210681902201, "cert": 1552, "by_op": {"MUL": 1099, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": -0.48, "ADD": 2.55, "ADZ": 4.31, "FLS": 9.06, "NXT": 5.23}, "ppl_ratio": 0.9962348472714563, "fails": ["MUL:00_"]} (3575s)
+{"step": 1300, "loss": 0.0003003502777687572, "cert": 1553, "by_op": {"MUL": 1100, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": 2.24, "ADD": 4.5, "ADZ": 5.55, "FLS": 10.1, "NXT": 8.6}, "ppl_ratio": 0.9974398063377314, "fails": []} (3822s)
+
+returncode 0; wall so far 3896.3s
+
+$ python e4_train.py eval e4_adapter_s1
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<00:50,  9.32it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 2879.38it/s]
+[transformers] `causal_conv1d_fn` is falling back to its reference PyTorch implementation because `causal_conv1d` is not installed. This is correct but much slower; install `causal_conv1d` for the optimized kernel.
+{"cert": 1553, "rows": 1553, "by_op": {"MUL": 1100, "ADD": 220, "ADZ": 220, "FLS": 2, "NXT": 11}, "min_margin": {"MUL": 2.236268997192383, "ADD": 4.499897003173828, "ADZ": 5.548532485961914, "FLS": 10.096748352050781, "NXT": 8.597824096679688}, "fails": [], "ppl": 18.416664423832593}
+4 20/20
+6 10/10
+10 5/5
+
+returncode 0; wall so far 4359.8s

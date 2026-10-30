@@ -1,0 +1,695 @@
+OpenAI Codex v0.165.0-alpha.1.2
+--------
+workdir: /Users/neo/repos/polyformer/research/audit/sketchpad_gate
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a188bb-956f-7fb3-bbe1-315dee70917b
+--------
+user
+# Live prior-art gate 4: a visuospatial sketchpad for a language model (29 Oct 2026)
+
+Skeptical auditor with live web search; today is 29 Oct 2026. Open pages; link and date everything; "not located" is
+not "absent". Earlier gates in ../leap2_gate and ../leap3_gate (read their tables; do not repeat them).
+
+## Thesis to audit
+Neo: "my brain thinks in pictures and uses some kind of visuospatial sketchpad when I do calculations or think about
+algebra." Proposed direction ("grown, not built"): a pretrained vision-language model (target Qwen3.5-0.8B/2B, native
+image+video, runs in the browser) is trained to keep its working memory as a 2D canvas that it OVERWRITES each step
+(constant-size Markov state, not an appended chain of images or text) and re-reads with its own vision encoder, or keeps
+as a latent grid snapped to a glyph codebook. Claims to test:
+S1 Rendering is restoration: writing the canvas as discrete glyphs/cells each step is the nonaffine "snap" that
+   finite-precision exact state tracking needs (Brandoit et al. 2609.32447); exactness then reduces to a finite check of
+   the reader on cell patterns.
+S2 Locality gives size generalisation: a local, translation-equivariant canvas update learned once (column addition,
+   long multiplication grid, mental abacus) is correct on any canvas size and any number of steps, certified by
+   enumerating the finite neighbourhood table.
+S3 Optical compression (DeepSeek-OCR, Glyph): vision tokens are a denser working memory than text tokens; there is a
+   measurable capacity trade-off between tokens per cell and exact-decode margin.
+S4 Physics link: the same canvas machinery is a world model; integer lattice-gas style rules give EXACT conservation
+   laws; one next-canvas objective trains arithmetic, algorithms and physics.
+S5 Demos: mental abacus / long multiplication drawn live; a ball or fluid "imagined" frame by frame with exact
+   conservation; poke the sketchpad mid-computation; photo of a handwritten sum -> sketchpad -> exact answer.
+
+## Search at least
+Visual Sketchpad (Hu et al. 2024); Multimodal Visualization-of-Thought MVoT (2025); Latent Sketchpad (2025); Mirage /
+machine mental imagery (2025); Visual planning "think only with images" (2025); Thinking with generated images (2025);
+"thinking with images" surveys 2025-26; DeepSeek-OCR (Oct 2025) and any DeepSeek-OCR 2 / follow-ups; Glyph (Zhipu 2025);
+"text as pixels" / PIXEL / pixel language models; vision-centric token compression; Neural GPU (Kaiser & Sutskever 2016),
+Extended Neural GPU; neural cellular automata for arithmetic; VLM arithmetic on rendered digits / "visual arithmetic";
+mental abacus in AI and cognitive science (Frank & Barner 2012); 2D/abacus positional embeddings for arithmetic length
+generalisation; video world models as reasoners (Veo 3 zero-shot reasoners, Genie 3, V-JEPA 2, Cosmos); learned
+simulators with exact conservation (lattice gas, conservative neural PDE solvers); any 2026 "visual working memory" or
+"canvas" architecture for LLMs; any certified/exact visual reasoning.
+
+## Questions
+Q1 For S1-S5, verdict KILLED / NARROW / OPEN with the closest work (link, date) and what remains open.
+Q2 What exactly does DeepSeek-OCR (and successors) report: compression ratios vs precision, tokens per page, the
+   "optical forgetting" idea; any use of optical context as working memory for reasoning rather than for documents?
+Q3 Strongest 2025-26 results where a model reasons by drawing or imagining images: tasks, accuracy, model size, whether
+   the image is overwritten (Markov) or appended, whether anything is exact or length-generalising.
+Q4 Has anyone combined a pretrained VLM with an internal 2D canvas for exact arithmetic at hundreds of digits, or with
+   certified local rules? Has anyone shown a learned world model with exact conservation laws?
+Q5 Which open small VLMs (<=4B) run in the browser (transformers.js / WebGPU / ONNX) with image input, and at what
+   per-image token cost and latency, as of Oct 2026?
+
+## Output
+Write out.md: top table (S1-S5 verdicts), then Q1-Q5 evidence. Under 2,500 words. Blunt.
+
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+codex
+I’ll read the earlier gate tables, check the closest work against live sources, and draft the audit with evidence dates. The workspace is read-only, so I can research and prepare the text, but can’t save `out.md` under the current permissions.
+exec
+/bin/zsh -lc 'pwd && rg --files ../leap2_gate ../leap3_gate | head -60' in /Users/neo/repos/polyformer/research/audit/sketchpad_gate
+ succeeded in 0ms:
+/Users/neo/repos/polyformer/research/audit/sketchpad_gate
+../leap2_gate/out.md
+../leap3_gate/out.md
+../leap2_gate/brief.md
+../leap2_gate/argon_log.txt
+../leap2_gate/log.txt
+../leap2_gate/run.sh
+../leap2_gate/argon_out.md
+../leap3_gate/log.txt
+../leap3_gate/run.sh
+../leap3_gate/brief.md
+
+web search: 
+exec
+/bin/zsh -lc 'cat ../leap2_gate/out.md ../leap3_gate/out.md' in /Users/neo/repos/polyformer/research/audit/sketchpad_gate
+ succeeded in 0ms:
+| Candidate | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **C1 Crystallized loop** | **NARROW** | [STARS](https://arxiv.org/abs/2605.26733), 26 May 2026; [Shapiro retrofit](https://arxiv.org/abs/2608.11233), 31 July 2026 | A learned general executor inside a pretrained LM, with a sound all-length certificate and measured language retention. |
+| **C2 Programs as weights** | **NARROW** | [Text-to-LoRA](https://arxiv.org/abs/2506.06105), 6 June 2025; [Drag-and-Drop LLMs](https://arxiv.org/abs/2506.16406), 19 June 2025 | Certified instruction semantics and compositional correctness of generated weight programs. |
+| **C3 Homomorphism loss** | **NARROW** | [MLP-LDRU](https://arxiv.org/abs/2605.26035), 25 May 2026; [Log-Depth Recurrent Language Modeling](https://arxiv.org/abs/2609.28212), 23 September 2026 | Exact, certified finite-monoid composition; associative training and logarithmic depth are already established. |
+| **C4 Compile then dissolve** | **NARROW** | [InterpBench](https://arxiv.org/abs/2407.14494), 19 July 2024; [ALTA](https://arxiv.org/abs/2410.18077), 23 October 2024 | Removing the teacher while certifying the pretrained student’s recurrent executor and retaining language capability. |
+| **C5 Base-model choice** | **KILLED as novelty** | [Huginn](https://arxiv.org/abs/2502.05171), 7 February 2025; [Ouro](https://ouro-llm.github.io/), 29 October 2025 | An engineering selection, not independently a new model concept. |
+
+**Audit cutoff: 29 October 2026.** Primary pages were opened across arXiv, repositories, Hugging Face and company sites; several OpenReview URLs returned verification challenges. Negative findings mean “not located,” not proof of absence. Results below are reported evidence, not independently reproduced.
+
+**`out.md` could not be written because this session’s filesystem is read-only. The complete report follows.**
+
+**C1 — The conjunction survives; the components do not.**
+
+STARS already combines recurrent-dynamics analysis, Jacobian spectral-radius regularization and randomized loop counts. Its synthetic addition model reaches reported 100% accuracy; its pretrained Ouro experiment improves depth robustness. Neither establishes an exact universal executor or exhaustive transition certificate. [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1).
+
+Shapiro already installs a reusable, stepwise latent procedure in pretrained Qwen while testing capability retention. Thus “learned computation installed inside an intact LM” is insufficient differentiation. [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233).
+
+The certificate strategy also has close antecedents: finite local checking supports universal computation through extended language-model decoding. That execution uses autoregressive symbols, so it does not establish your latent-loop conjunction. [Lewandowski–Machado–Schuurmans, revised 10 February 2026](https://arxiv.org/html/2601.08061v2).
+
+**Auditor’s mathematical objections, 29 October 2026:**
+
+- Contractivity does **not** imply exact history independence. It can shrink historical differences without eliminating them.
+- For code states \(q\), prove regions \(B_q\) satisfy \(F_a(B_q)\subseteq B_{\delta(q,a)}\), with correct decoding throughout. Checking centres alone is insufficient unless execution actually resets to them.
+- A globally finite machine supports unbounded run duration, not unrestricted universal storage. Specify extensible memory, finite local access, addressing and initialization.
+- “Every length” means correct finite execution prefixes; it cannot mean every program halts.
+- Certify the **merged, deployed numerical implementation**, including quantization, routing, caches and halting. KL training is not a retention certificate.
+- “No host clock” should mean no host-supplied algorithmic schedule. Some runtime must still iterate the block.
+
+Related theory explicitly distinguishes semantics-preserving correction within predictive equivalence classes from destructive contraction between distinguishable states. [*What Can a Recurrent State Safely Forget?*, 20 September 2026](https://arxiv.org/abs/2609.23366).
+
+**C2 — Generated weights are old; certified executable weights remain distinguishable.**
+
+Text-to-LoRA generates adapters from task descriptions; Drag-and-Drop maps prompt batches to LoRA matrices. Sakana’s later demonstration turns documents into adapters. These kill “language generates useful weights,” but do not establish program-counter semantics or exact instruction execution. [T2L, 6 June 2025](https://arxiv.org/abs/2506.06105); [DnD, 19 June 2025](https://arxiv.org/abs/2506.16406); [Sakana, February 2026](https://pub.sakana.ai/doc-to-lora/).
+
+Fast-weight programmers already use networks to modify another network’s effective weights. TTT makes the recurrent state a learned model; Titans updates neural memory at inference. None of these sources supplies the proposed finite certified instruction-delta library. [Irie–Gershman, December 2025](https://gershmanlab.com/pubs/IrieGershman26.pdf); [TTT, 5 July 2024](https://arxiv.org/abs/2407.04620); [Titans, 31 December 2024](https://arxiv.org/abs/2501.00663).
+
+**Deduction:** certificates for individual deltas do not certify their sums, orderings or interactions with base weights. Prove composition, instruction selection and shared-state invariants. Otherwise C2 is adapter generation with a programming metaphor.
+
+**C3 — The proposed loss has a particularly close 2026 predecessor.**
+
+MLP-LDRU performs parallel reduction with a learned composition operator. Appendix G explicitly penalizes disagreement between \((a\circ b)\circ c\) and \(a\circ(b\circ c)\). It reports 100% sampled OOD accuracy on 18/21 regular-language tasks, with evaluation through length 500. September’s follow-up computes all prefix representations for autoregressive language modeling. [MLP-LDRU, 25 May 2026](https://arxiv.org/html/2605.26035v1); [follow-up, 23 September 2026](https://arxiv.org/abs/2609.28212).
+
+Transformation-semigroup composition and \(O(\log N)\)-depth automaton simulation already underpin Liu et al. [ICLR 2023](https://clarabing.github.io/shortcut_automata/). Negative-eigenvalue RNNs and DeltaProduct supply adjacent representational results, rather than certificates for arbitrary trained checkpoints. [Grazzi et al., 19 November 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 February 2025; revised 22 October](https://arxiv.org/abs/2502.10297).
+
+Bisimulation losses concern behavioral similarity; convergence of a metric does not establish exact finite-monoid execution. [Zhang et al., 24 July 2025](https://arxiv.org/abs/2507.18519).
+
+**Deduction:** checking generators suffices only after establishing the representation’s extension law. For an arbitrary learned binary operation, verify closure, identity, associativity and task correspondence—or establish them structurally. A sampled homomorphism penalty proves none of these.
+
+**C4 — “Compile, supervise internals, discard teacher” is substantially anticipated.**
+
+ALTA supports loops, compiled universal transformers and trace-supervised learning. InterpBench uses Strict Interchange Intervention Training to train networks whose internal computation preserves Tracr circuits while suppressing alternative computational paths. Together they strongly anticipate your training mechanism. [ALTA, 23 October 2024; revised 19 June 2025](https://arxiv.org/html/2410.18077v2); [InterpBench, 19 July 2024](https://arxiv.org/abs/2407.14494).
+
+A further neighbor verifies a calibrated GPT-2-scale artifact over 1,280 prompts after architectural changes and program-head substitution. Its authors explicitly restrict claims to declared bounded domains. [*Towards Verifiable Transformers*, 21 May 2026; revised 29 July](https://arxiv.org/abs/2605.24033).
+
+The surviving contribution is **certified transfer into a pretrained recurrent student**, not hidden-state distillation itself. A learned linear alignment does not automatically establish a simulation relation.
+
+**C5 — Select by execution interface.**
+
+Depth recurrence, token recurrence and matrix-valued memory provide different interfaces. RWKV’s state-tracking expressivity is useful, but it does not make a released language checkpoint an exact VM. Its theorem and its language-model experiments must remain separate. [RWKV-7, 18 March 2025](https://arxiv.org/abs/2503.14456).
+
+The code-state bridge is already being studied: linear RNNs learn permutation tracking from Python REPL traces, with limitations under partially observable actions. This is not a latent general interpreter certificate. [Siems et al., 16 February 2026; revised 25 June](https://arxiv.org/abs/2602.14814).
+
+**Q1 — Exact latent program execution over hundreds/thousands of steps?**
+
+**No matching pretrained-LM result located.** The closest verified numerical reports are narrower:
+
+| Work, date | Reported result | Boundary |
+|---|---|---|
+| [Shapiro, 31 July 2026](https://arxiv.org/abs/2608.11233) | Adapter 83.8% overall; approximately 70% through depth 18 | Learned latent procedure; neither exact nor thousands of steps |
+| [STARS, 26 May 2026](https://arxiv.org/html/2605.26733v1) | 100% on synthetic four-digit addition across its reported loop sweep; loop sampling during training spans 1–100 | Small task-trained model; repeated refinement of one answer, not 100 executed instructions |
+| [ALTA, revised 19 June 2025](https://arxiv.org/html/2410.18077v2) | Trace-supervised relative-position parity: 100%, trained through length 20, tested through 40 | Specialized task; compiled arithmetic and SUBLEQ are separate evidence |
+| [Fan et al., 24 September 2024](https://arxiv.org/html/2409.15647v1) | Parity above 95% at 100 digits after training through 20 | Empirical generalization, not exactness |
+| [Howe, 16 July 2026](https://arxiv.org/abs/2609.18966) | Removing additive injection yields median accuracy 1.00 through length 512 on specified automata | Small token-recurrent state tracker, not pretrained latent VM |
+
+Do not combine the strongest number from one system with the architectural properties of another.
+
+**Q2 — Finite verification implying unbounded correctness?**
+
+**Yes, broadly; no matching C1 implementation located.**
+
+- **Decisive older antecedent:** recursive Neural Programmer-Interpreters reduce verification to base cases and reduction rules. Addition’s verification set contains **20,181 problems** under stated input assumptions. Recursion resets local recurrent computation and external structured memory supplies scale. This kills a broad “first trained neural program certified by finite checking” claim. [Cai–Shin–Song, ICLR 2017, Appendix A.6](https://people.eecs.berkeley.edu/~dawnsong/papers/iclr_2017_recursion.pdf).
+- **Within the requested window:** trained RNN-controlled systems receive sound unbounded temporal-property verification through constraint solving and invariants. This proves specified agent/environment properties, not arbitrary program interpretation. [Hosseini–Lomuscio, AAMAS May–June 2023](https://aamas.csc.liv.ac.uk/Proceedings/aamas2023/pdfs/p2382.pdf); [full-LTL extension, 4 March 2025](https://arxiv.org/abs/2503.02512).
+- **Naughton requires careful reading.** *Certified Grokking* certifies 12,769 modular-addition inputs under exact-real semantics. *Verified Circuits* proves the **symbolic circuit** correct at all lengths, but circuit–network agreement only on declared finite domains, including 65,536 strings at length 16. Neither establishes unbounded correctness of the trained network. [Grokking](https://github.com/brian-naughton/certified-grokking), [Verified Circuits](https://github.com/brian-naughton/verified-circuits), both inspected 29 October 2026.
+- Automata extraction is not automatically certified equivalence: sampled agreement requires a sound abstraction/equivalence argument before transferring all-word properties. [Lattice-automata extraction, 26 September 2025; corrected 10 February 2026](https://arxiv.org/abs/2509.22489).
+
+**Q3 — A new loss making latent reasoning a finite exact machine?**
+
+**Discrete representations and stability losses: yes. The complete guarantee: not located.**
+
+Codebook Features already quantizes internal activations, including finite-state experiments and language models up to 410M parameters. [26 October 2023](https://arxiv.org/abs/2310.17230). Token Assorted mixes VQ latent codes with text; DLR converts rendered reasoning traces into discrete latent tokens. [5 February 2025](https://arxiv.org/abs/2502.03275); [29 June 2026](https://arxiv.org/abs/2606.29712).
+
+These compress or discretize reasoning; they do not certify the complete recurrent state-transition system. A finite token vocabulary is insufficient when continuous caches or growing histories remain.
+
+**Q4 — Strongest striking latent-reasoning evidence by October 2026?**
+
+“Shocked researchers” is not measurable. Strong relevant demonstrations include:
+
+- **HRM/TRM:** small puzzle specialists, not retained pretrained LMs. TRM reports approximately **45% ARC-AGI-1 / 8% ARC-AGI-2** with 7M parameters. [HRM, 26 June 2025](https://arxiv.org/abs/2506.21734); [TRM, 6 October 2025](https://arxiv.org/abs/2510.04871).
+- **URM:** **53.8% / 16.0% pass@1**, explicitly scoped to its small-model comparison setting. [16 December 2025](https://arxiv.org/abs/2512.14693).
+- **Looped Flows:** **58.8% / 12.2% pass@2**, using recurrent denoising/flow computation. Different metric from URM; not a language-preservation demonstration. [10 September 2026, Table 1](https://arxiv.org/html/2609.11801v1).
+- **BDH-CQ:** company-reported **29.5% ARC-AGI-1 pass@2**, 150M parameters, $0.00070/task; latent computation with candidate-answer decoding. The announcement places general language/math extensions in future work. [Pathway, 11 August 2026](https://pathway.com/research/introducing-bdh-cq).
+
+Huginn/Ouro are language models with recurrent computation; Shapiro directly tests retrofit retention. None of these sources supplies C1’s all-program exactness.
+
+**Q5 — No fifth question was supplied; interpreted as the practical base choice.**
+
+My recommendation is **Ouro-1.4B for native C1/C4**, **recurrent TinyLlama for cheaper experimentation**, and **RWKV-7 for C3 state-tracking experiments**. Treat C2 as a separate compositional-semantics project. Browser deployment and quantization require their own validation.
+
+**Base-model table**
+
+Model-card facts below were checked **29 October 2026**; dates identify paper/release provenance where available. “No certificate located” applies to every row.
+
+| HF ID / provenance date | Size; licence | Test-time recurrence | Extrapolation and exactness evidence |
+|---|---|---|---|
+| [ByteDance/Ouro-1.4B](https://huggingface.co/ByteDance/Ouro-1.4B), [Ouro-2.6B](https://huggingface.co/ByteDance/Ouro-2.6B); 29 Oct 2025 | 1.4B / 2.6B; Apache-2.0 | Configurable `total_ut_steps`, default 4; adaptive exit | Native depth loops. More loops can degrade performance; STARS improves robustness. No certified latent arithmetic in released bases located. |
+| [tomg-group-umd/huginn-0125](https://huggingface.co/tomg-group-umd/huginn-0125); 7 Feb 2025 paper | 3.5B; Apache-2.0 | Arbitrary `num_steps`; fewer than 4 discouraged | Card reports improvement to roughly 64 steps, generally plateauing thereafter. Heavy browser compute; no exact executor report located. |
+| [smcleish/Recurrent-TinyLlama-3T-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-TinyLlama-3T-train-recurrence-32); Nov 2025 | ~0.8B; Apache-2.0 | Configurable `num_steps`; 4/8/16/32-trained variants | Small released retrofit; no certified long-depth algorithmic extrapolation located. |
+| [smcleish/Recurrent-OLMo-2-0425-train-recurrence-32](https://huggingface.co/smcleish/Recurrent-OLMo-2-0425-train-recurrence-32); Nov 2025 | ~1B; Apache-2.0 | Configurable `num_steps`; Huginn-derived runtime | Useful open retrofit; raw-text model, not instruction-tuned. No exact arithmetic report located. |
+| [Qwen/Qwen2.5-0.5B-Instruct](https://huggingface.co/Qwen/Qwen2.5-0.5B-Instruct); Shapiro experiment July 2026 | 0.49B; Apache-2.0 | **Base has no native depth loop** | Shapiro’s procedure extrapolates imperfectly to depth 18. I did not verify a public retrofit checkpoint ID. |
+| [RWKV/RWKV7-1.5B-20260805](https://huggingface.co/RWKV/RWKV7-1.5B-20260805); checkpoint 5 Aug 2026 | 1.5B; Apache-2.0 | Matrix-state recurrence per token; no native repeated-depth knob | Constant recurrent state. Architecture has regular-language expressivity; checkpoint correctness does not follow. |
+| [linear-moe-hub/Gated-Deltanet-1.3B](https://huggingface.co/linear-moe-hub/Gated-Deltanet-1.3B); available March 2025 | 1.3B; Apache-2.0 | Token-recurrent matrix state | Research base; negative-eigenvalue/DeltaProduct results cannot automatically be transferred to these weights. |
+| [Qwen/Qwen3.5-0.8B-Base](https://huggingface.co/Qwen/Qwen3.5-0.8B-Base), [4B-Base](https://huggingface.co/Qwen/Qwen3.5-4B-Base); cards checked 29 Oct 2026 | 0.8B / 4B; Apache-2.0 | Gated DeltaNet–attention hybrids; no native depth-loop knob | Relevant matrix-state substrates. Long-context support is not an exact state-tracking guarantee. |
+
+**Browser feasibility is an estimate:** raw four-bit weights require approximately \(0.5P\) GB for \(P\) billion parameters, before scales, buffers, activations and caches. Small parameter count does not establish browser kernel support or practical latency.
+
+**Defensible contribution claim:** “A learned executor in a pretrained depth-recurrent LM, with a checked invariant reducing arbitrary-duration execution to finite local verification, under explicit memory and numerical assumptions, with program-synthesis accuracy and language retention evaluated separately.”| Item | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **F** | **NARROW** | [Qwenputer](https://divagr.com/blog/qwenputer), 22 Oct 2026; [Schlag et al.](https://arxiv.org/abs/2102.11174), 22 Feb 2021 | LoRA-only learned register execution, without execution-trace tokens, with a sound deployed-numerics certificate. |
+| **M1** | **NARROW** | [How Linear Attention Remembers](https://arxiv.org/abs/2609.33093), 27 Sep 2026 | A live, semantically meaningful paint/edit/resume interface for pretrained matrix memory. |
+| **M2** | **NARROW** | [A Path to Universal NCA](https://arxiv.org/abs/2505.13058), 19 May 2025 | A certified discrete local executor integrated into a multimodal LM. |
+| **M3** | **NARROW** | [Gilpin](https://arxiv.org/abs/1809.02942), 9 Sep 2018; [CellARC](https://arxiv.org/abs/2511.07908), 11 Nov 2025 | Perception-to-rule identification plus certified execution within an explicitly restricted process class. |
+| **M4** | **NARROW** | [FlowVQA](https://arxiv.org/abs/2406.19237), 27 Jun 2024; [Flow2Code](https://arxiv.org/abs/2506.02073), 2 Jun 2025 | Verified image-to-state compilation and internal execution without textual reasoning. |
+
+**Audit cutoff: 29 October 2026.** Previous gate’s table read; not reproduced. Negative findings mean **“not located.”** Results are author-reported, not independently reproduced. Mathematical objections below are this audit’s deductions, dated today.
+
+**`out.md` could not be written: this session’s filesystem is read-only.**
+
+**F — “The register is the state” has a direct predecessor.**
+
+Qwenputer explicitly stores **code, data, registers and program counter in Gated DeltaNet state**. One-hot keys overwrite individual rows; one-hot queries read them; α and β are fixed to 1 for RAM. Its RISC-V implementation adds eleven compiled layers before Qwen’s layers. This kills novelty in “a computer’s addressable registers live inside Qwen3.5’s delta state.” [Announcement, 22 Oct 2026](https://divagr.com/blog/qwenputer); [repository, inspected 29 Oct](https://github.com/divagr18/qwenputer).
+
+The distinction matters: these weights are compiled, not learned through projection-only LoRA; execution produces special trace tokens. The RISC-V driver loads firmware into state and excludes chip tokens from Qwen’s layers. The accelerated path executes the circuit’s intermediate representation. **It does not establish F’s full conjunction.** [Implementation notes, inspected 29 Oct 2026](https://raw.githubusercontent.com/divagr18/qwenputer/main/experimental/riscv/docs/rv32.md).
+
+Schlag already presents delta updates as elementary fast-weight programming instructions. Independent erase/write control also has explicit successors: Gated DeltaNet-2 and Erase-then-Delta Attention. Renaming addresses “registers” supplies no mechanism novelty. [Schlag, 22 Feb 2021](https://arxiv.org/abs/2102.11174); [GDN-2, 21 May 2026](https://arxiv.org/abs/2605.22791); [EDA, 25 Jun 2026](https://arxiv.org/abs/2606.26560).
+
+A particularly relevant new experiment fine-tunes hybrids on answer-only parity. Qwen3.5-4B reaches mean **0.55 at 128 flips**, versus **0.89 for OLMo-Hybrid**, after training through 64; capping OLMo’s β at 1 destroys extrapolation. This is a small, author-run experiment, but directly challenges “stock Qwen’s recurrence makes learning exact tracking straightforward.” [Agrawal, 22 Oct 2026; raw results](https://github.com/divagr18/hidden-reasoning).
+
+The requested theoretical neighbors establish different things: negative-eigenvalue expressivity, Householder-product expressivity, REPL-trained variable tracking, and an optimization intervention. None supplies F’s certificate for a pretrained Qwen checkpoint. [Grazzi, 19 Nov 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 Feb 2025](https://arxiv.org/abs/2502.10297); [Siems, 16 Feb 2026, revised 25 Jun](https://arxiv.org/abs/2602.14814); [Howe, 16 Jul 2026](https://arxiv.org/abs/2609.18966).
+
+**The locality calculation is elementary; closing it indefinitely is the contribution.** For fixed update coefficients, unit register keys and \(G_{ij}=k_i^\top k_j\),
+
+\[
+(S'-S)k_j=(\alpha-1)Sk_j+
+\beta(v-\alpha Sk_i)G_{ij}.
+\]
+
+Orthogonality eliminates write interference, **not global decay**. Small Gram entries provide one-step bounds, not arbitrary-duration correctness. You need bounded write residuals, numerical-error bounds and invariant basins for the complete transition—including control and other memory channels.
+
+**Reject the architectural “iff” as stated.** Fixed-dimensional real state is not automatically finite; recurrent state is history-dependent. What helps is a sound finite abstraction of all behaviorally relevant state. Finite inductive proofs are not generally restricted to finite-state systems. A transformer that ignores its historical cache can be certifiable without a host. A Qwen hybrid still has attention caches, convolution state and positional machinery; pinning/windowing is an additional execution policy. Merrill’s result concerns specified SSM expressivity, not this proposed certifiability classification. [Merrill et al., ICML, 21–27 Jul 2024](https://proceedings.mlr.press/v235/merrill24a.html).
+
+Also, Kimi’s channel-wise KDA and RWKV-7’s generalized delta dynamics require separate proofs; they are not interchangeable instances of the displayed scalar-gated equation. [Kimi Linear, 30 Oct 2025](https://arxiv.org/abs/2510.26692); [RWKV-7, 18 Mar 2025](https://arxiv.org/abs/2503.14456).
+
+**M1 — Useful interface; weak standalone research novelty.**
+
+The dimensions check out: Qwen3.5-0.8B has **18 recurrent layers, 16 state heads per layer, and 128×128 states**. It has 24 text layers total, correcting LEAP2’s pilot reference to “all 24 DeltaNet layers.” [Official configuration, inspected 29 Oct 2026](https://huggingface.co/Qwen/Qwen3.5-0.8B/raw/main/config.json).
+
+Visual inspection of recurrent hidden states predates this by a decade. More decisively, September 2026 work already performs targeted edits and causal interventions on pretrained GDN memory; another paper swaps Qwen3.5 recurrent states between contexts and continues generation. [LSTMVis, 23 Jun 2016](https://arxiv.org/abs/1606.07461); [Lee et al., 27 Sep 2026](https://arxiv.org/html/2609.33093v1); [Afendulev et al., 3 Sep 2026](https://arxiv.org/abs/2609.04434).
+
+**Not located:** the exact live matrix-painting interface proposed here. Its meaningful novelty would be reliable semantic edits with measured collateral effects. A heatmap alone is instrumentation. Rank-one updates need not look like localized strokes; arbitrary basis coordinates need not correspond to human concepts. With decay, the total state change includes a generally full-rank term.
+
+**M2 — Drawn computation and learned local computation are established.**
+
+Growing NCA already offers interactive damage-and-resume behavior. Springer–Kenyon studies CNNs learning Life. *A Path to Universal NCA* learns local computation over a fixed heterogeneous “hardware” scaffold, including matrix multiplication, transposition and neural-network emulation—particularly close to drawn systolic machinery. Its emulation is approximate, not certified. [Mordvintsev et al., 11 Feb 2020](https://distill.pub/2020/growing-ca/); [Springer–Kenyon, 3 Sep 2020](https://arxiv.org/abs/2009.01398); [Béna et al., 19 May 2025](https://arxiv.org/html/2505.13058v2).
+
+ARC and broader reasoning are also occupied: task-trained NCA for ARC, and later local asynchronous NCA solving mazes, Sudoku and ARC with empirical size/rollout generalization. Training LMs on elementary-CA sequences is likewise established. [Xu–Miikkulainen, 18 Jun 2025](https://arxiv.org/abs/2506.15746); [Etcheverry et al., 28 Sep 2026](https://arxiv.org/abs/2609.36126); [Edge of Chaos, 3 Oct 2024](https://arxiv.org/abs/2410.02536).
+
+**The certificate works only after enforcing its premises.** For a deterministic binary radius-one Moore rule, 512 neighborhoods suffice to establish local equivalence; global equivalence follows by induction, given matching boundaries and synchronous updates. Continuous hidden channels, global attention, stochastic updates or unverified image decoding invalidate that simple enumeration.
+
+**Not located:** a multimodal LM containing the complete certified executor described here. Wireworld’s authors’ site returned HTTP 403; it was not treated as opened evidence.
+
+**M3 — Learning rules from video is old; finite observations do not certify arbitrary processes.**
+
+Gilpin explicitly learns CA dynamics from videos and constructs CNN representations of arbitrary finite CA rule tables. CellARC tests few-shot induction of hidden multicolor CA rules and explicitly controls neighborhood coverage. These are closer than generic video-generation demonstrations. [Gilpin, 9 Sep 2018](https://arxiv.org/html/1809.02942v2); [CellARC, 11 Nov 2025](https://arxiv.org/abs/2511.07908).
+
+Veo 3 demonstrates zero-shot visual tasks and early reasoning, not certified million-step execution. Image-based intermediate reasoning and physical-law discovery from distorted video also predate M3. [Wiedemer et al., 24 Sep 2025](https://arxiv.org/abs/2509.20328); [Thinking with Generated Images, 28 May 2025](https://arxiv.org/abs/2505.22525); [Symbolic Pregression, 19 May 2020](https://arxiv.org/abs/2005.11212).
+
+**Coverage is sufficient only within a known hypothesis class:** fixed alphabet, neighborhood, timing, boundaries and fully observed state. Two rules can agree on every observed frame and differ on an unseen neighborhood. Unknown hidden state or neighborhood radius makes “every neighborhood observed” itself unverified.
+
+With those premises and exact local-rule verification, a million steps follows by induction; the number is not the breakthrough. **Not located:** one system delivering the proposed end-to-end guarantee across CA, sorting, arithmetic and cube videos.
+
+**M4 — Image input is not the leap.**
+
+FlowVQA already evaluates logical progression and decisions from flowchart images, including a zero-shot condition without explicit CoT prompting. Flow2Code evaluates executable-code generation from flowcharts across fifteen languages. Neither demonstrates verified compilation into recurrent state or trace-free internal interpretation. [FlowVQA, 27 Jun 2024](https://flowvqa.github.io/); [Flow2Code, 2 Jun 2025](https://arxiv.org/abs/2506.02073).
+
+**Not located:** the complete image→internal program→certified execution pipeline. Answer-only output does not establish that pipeline. The surviving contribution requires a compiler correctness relation: the state must implement the pictured program, including arrows, operands and branch conditions.
+
+**Qwen3.5 numerics — a serious obstruction, not a demonstrated universal kill.**
+
+Implementation inspection dated **29 Oct 2026**:
+
+- **HF:** \(g=-\exp(A_{\log})\,\mathrm{softplus}(a+dt_{\mathrm{bias}})\), \(\alpha=\exp(g)\), and \(\beta=\sigma(b)\). For finite real parameters, \(0<\alpha,\beta<1\); floating-point saturation can reach endpoints. The inspected fallback computes recurrent updates in fp32. Its gated RMSNorm includes epsilon, so read normalization is not perfectly scale-invariant. [HF source](https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/models/qwen3_5/modeling_qwen3_5.py).
+- **FLA:** the inspected fused recurrent kernel accumulates in fp32 and allocates the returned state in fp32, even with lower-precision inputs. Output activations are cast back. [FLA source](https://raw.githubusercontent.com/fla-org/flash-linear-attention/main/fla/ops/gated_delta_rule/fused_recurrent.py).
+- **Transformers.js/browser:** do not infer recurrent precision from weight precision or `kv_cache_dtype`. The inspected export lists fp16 KV caches for fp16/q4f16 and separately `mamba_ssm_dtype: float32`; that metadata does not establish every exported intermediate. Available WebGPU linear-attention kernels support fp16 or fp32 states. **Exact recurrent-state precision across the relevant shipped JS graph/kernel combinations was not established.** [Export configuration](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX/blob/3ce256c28db23722eef89191c5910de829c02398/config.json); [kernel contract](https://huggingface.co/kernels/webgpu-kernels/ai.onnx.LinearAttention).
+
+**Deduction:** an untouched orthogonal register retains amplitude \(\prod_t\alpha_t\). At constant α=0.999, \(10^5\) steps leave approximately \(3.5\times10^{-44}\), already below fp32’s normal range. Keeping half its amplitude requires geometric-mean α≥0.9999931. Readout can fail much earlier through interference, casting and epsilon.
+
+**Checkpoint-specific α distributions were not located.** Therefore neither “fp32 is fine” nor “bf16 dies around 1,000 steps” is supported. bf16 and fp32 share the normal exponent range; rounding behavior differs substantially. Persistent exact storage needs a proved invariant, exact retention, or refresh—not a favorable dtype label.
+web search: "Visual Sketchpad" Hu 2024 ...
+exec
+/bin/zsh -lc 'cat ../leap3_gate/out.md' in /Users/neo/repos/polyformer/research/audit/sketchpad_gate
+ succeeded in 0ms:
+| Item | Verdict | Closest work, date | What remains open |
+|---|---|---|---|
+| **F** | **NARROW** | [Qwenputer](https://divagr.com/blog/qwenputer), 22 Oct 2026; [Schlag et al.](https://arxiv.org/abs/2102.11174), 22 Feb 2021 | LoRA-only learned register execution, without execution-trace tokens, with a sound deployed-numerics certificate. |
+| **M1** | **NARROW** | [How Linear Attention Remembers](https://arxiv.org/abs/2609.33093), 27 Sep 2026 | A live, semantically meaningful paint/edit/resume interface for pretrained matrix memory. |
+| **M2** | **NARROW** | [A Path to Universal NCA](https://arxiv.org/abs/2505.13058), 19 May 2025 | A certified discrete local executor integrated into a multimodal LM. |
+| **M3** | **NARROW** | [Gilpin](https://arxiv.org/abs/1809.02942), 9 Sep 2018; [CellARC](https://arxiv.org/abs/2511.07908), 11 Nov 2025 | Perception-to-rule identification plus certified execution within an explicitly restricted process class. |
+| **M4** | **NARROW** | [FlowVQA](https://arxiv.org/abs/2406.19237), 27 Jun 2024; [Flow2Code](https://arxiv.org/abs/2506.02073), 2 Jun 2025 | Verified image-to-state compilation and internal execution without textual reasoning. |
+
+**Audit cutoff: 29 October 2026.** Previous gate’s table read; not reproduced. Negative findings mean **“not located.”** Results are author-reported, not independently reproduced. Mathematical objections below are this audit’s deductions, dated today.
+
+**`out.md` could not be written: this session’s filesystem is read-only.**
+
+**F — “The register is the state” has a direct predecessor.**
+
+Qwenputer explicitly stores **code, data, registers and program counter in Gated DeltaNet state**. One-hot keys overwrite individual rows; one-hot queries read them; α and β are fixed to 1 for RAM. Its RISC-V implementation adds eleven compiled layers before Qwen’s layers. This kills novelty in “a computer’s addressable registers live inside Qwen3.5’s delta state.” [Announcement, 22 Oct 2026](https://divagr.com/blog/qwenputer); [repository, inspected 29 Oct](https://github.com/divagr18/qwenputer).
+
+The distinction matters: these weights are compiled, not learned through projection-only LoRA; execution produces special trace tokens. The RISC-V driver loads firmware into state and excludes chip tokens from Qwen’s layers. The accelerated path executes the circuit’s intermediate representation. **It does not establish F’s full conjunction.** [Implementation notes, inspected 29 Oct 2026](https://raw.githubusercontent.com/divagr18/qwenputer/main/experimental/riscv/docs/rv32.md).
+
+Schlag already presents delta updates as elementary fast-weight programming instructions. Independent erase/write control also has explicit successors: Gated DeltaNet-2 and Erase-then-Delta Attention. Renaming addresses “registers” supplies no mechanism novelty. [Schlag, 22 Feb 2021](https://arxiv.org/abs/2102.11174); [GDN-2, 21 May 2026](https://arxiv.org/abs/2605.22791); [EDA, 25 Jun 2026](https://arxiv.org/abs/2606.26560).
+
+A particularly relevant new experiment fine-tunes hybrids on answer-only parity. Qwen3.5-4B reaches mean **0.55 at 128 flips**, versus **0.89 for OLMo-Hybrid**, after training through 64; capping OLMo’s β at 1 destroys extrapolation. This is a small, author-run experiment, but directly challenges “stock Qwen’s recurrence makes learning exact tracking straightforward.” [Agrawal, 22 Oct 2026; raw results](https://github.com/divagr18/hidden-reasoning).
+
+The requested theoretical neighbors establish different things: negative-eigenvalue expressivity, Householder-product expressivity, REPL-trained variable tracking, and an optimization intervention. None supplies F’s certificate for a pretrained Qwen checkpoint. [Grazzi, 19 Nov 2024](https://arxiv.org/abs/2411.12537); [DeltaProduct, 14 Feb 2025](https://arxiv.org/abs/2502.10297); [Siems, 16 Feb 2026, revised 25 Jun](https://arxiv.org/abs/2602.14814); [Howe, 16 Jul 2026](https://arxiv.org/abs/2609.18966).
+
+**The locality calculation is elementary; closing it indefinitely is the contribution.** For fixed update coefficients, unit register keys and \(G_{ij}=k_i^\top k_j\),
+
+\[
+(S'-S)k_j=(\alpha-1)Sk_j+
+\beta(v-\alpha Sk_i)G_{ij}.
+\]
+
+Orthogonality eliminates write interference, **not global decay**. Small Gram entries provide one-step bounds, not arbitrary-duration correctness. You need bounded write residuals, numerical-error bounds and invariant basins for the complete transition—including control and other memory channels.
+
+**Reject the architectural “iff” as stated.** Fixed-dimensional real state is not automatically finite; recurrent state is history-dependent. What helps is a sound finite abstraction of all behaviorally relevant state. Finite inductive proofs are not generally restricted to finite-state systems. A transformer that ignores its historical cache can be certifiable without a host. A Qwen hybrid still has attention caches, convolution state and positional machinery; pinning/windowing is an additional execution policy. Merrill’s result concerns specified SSM expressivity, not this proposed certifiability classification. [Merrill et al., ICML, 21–27 Jul 2024](https://proceedings.mlr.press/v235/merrill24a.html).
+
+Also, Kimi’s channel-wise KDA and RWKV-7’s generalized delta dynamics require separate proofs; they are not interchangeable instances of the displayed scalar-gated equation. [Kimi Linear, 30 Oct 2025](https://arxiv.org/abs/2510.26692); [RWKV-7, 18 Mar 2025](https://arxiv.org/abs/2503.14456).
+
+**M1 — Useful interface; weak standalone research novelty.**
+
+The dimensions check out: Qwen3.5-0.8B has **18 recurrent layers, 16 state heads per layer, and 128×128 states**. It has 24 text layers total, correcting LEAP2’s pilot reference to “all 24 DeltaNet layers.” [Official configuration, inspected 29 Oct 2026](https://huggingface.co/Qwen/Qwen3.5-0.8B/raw/main/config.json).
+
+Visual inspection of recurrent hidden states predates this by a decade. More decisively, September 2026 work already performs targeted edits and causal interventions on pretrained GDN memory; another paper swaps Qwen3.5 recurrent states between contexts and continues generation. [LSTMVis, 23 Jun 2016](https://arxiv.org/abs/1606.07461); [Lee et al., 27 Sep 2026](https://arxiv.org/html/2609.33093v1); [Afendulev et al., 3 Sep 2026](https://arxiv.org/abs/2609.04434).
+
+**Not located:** the exact live matrix-painting interface proposed here. Its meaningful novelty would be reliable semantic edits with measured collateral effects. A heatmap alone is instrumentation. Rank-one updates need not look like localized strokes; arbitrary basis coordinates need not correspond to human concepts. With decay, the total state change includes a generally full-rank term.
+
+**M2 — Drawn computation and learned local computation are established.**
+
+Growing NCA already offers interactive damage-and-resume behavior. Springer–Kenyon studies CNNs learning Life. *A Path to Universal NCA* learns local computation over a fixed heterogeneous “hardware” scaffold, including matrix multiplication, transposition and neural-network emulation—particularly close to drawn systolic machinery. Its emulation is approximate, not certified. [Mordvintsev et al., 11 Feb 2020](https://distill.pub/2020/growing-ca/); [Springer–Kenyon, 3 Sep 2020](https://arxiv.org/abs/2009.01398); [Béna et al., 19 May 2025](https://arxiv.org/html/2505.13058v2).
+
+ARC and broader reasoning are also occupied: task-trained NCA for ARC, and later local asynchronous NCA solving mazes, Sudoku and ARC with empirical size/rollout generalization. Training LMs on elementary-CA sequences is likewise established. [Xu–Miikkulainen, 18 Jun 2025](https://arxiv.org/abs/2506.15746); [Etcheverry et al., 28 Sep 2026](https://arxiv.org/abs/2609.36126); [Edge of Chaos, 3 Oct 2024](https://arxiv.org/abs/2410.02536).
+
+**The certificate works only after enforcing its premises.** For a deterministic binary radius-one Moore rule, 512 neighborhoods suffice to establish local equivalence; global equivalence follows by induction, given matching boundaries and synchronous updates. Continuous hidden channels, global attention, stochastic updates or unverified image decoding invalidate that simple enumeration.
+
+**Not located:** a multimodal LM containing the complete certified executor described here. Wireworld’s authors’ site returned HTTP 403; it was not treated as opened evidence.
+
+**M3 — Learning rules from video is old; finite observations do not certify arbitrary processes.**
+
+Gilpin explicitly learns CA dynamics from videos and constructs CNN representations of arbitrary finite CA rule tables. CellARC tests few-shot induction of hidden multicolor CA rules and explicitly controls neighborhood coverage. These are closer than generic video-generation demonstrations. [Gilpin, 9 Sep 2018](https://arxiv.org/html/1809.02942v2); [CellARC, 11 Nov 2025](https://arxiv.org/abs/2511.07908).
+
+Veo 3 demonstrates zero-shot visual tasks and early reasoning, not certified million-step execution. Image-based intermediate reasoning and physical-law discovery from distorted video also predate M3. [Wiedemer et al., 24 Sep 2025](https://arxiv.org/abs/2509.20328); [Thinking with Generated Images, 28 May 2025](https://arxiv.org/abs/2505.22525); [Symbolic Pregression, 19 May 2020](https://arxiv.org/abs/2005.11212).
+
+**Coverage is sufficient only within a known hypothesis class:** fixed alphabet, neighborhood, timing, boundaries and fully observed state. Two rules can agree on every observed frame and differ on an unseen neighborhood. Unknown hidden state or neighborhood radius makes “every neighborhood observed” itself unverified.
+
+With those premises and exact local-rule verification, a million steps follows by induction; the number is not the breakthrough. **Not located:** one system delivering the proposed end-to-end guarantee across CA, sorting, arithmetic and cube videos.
+
+**M4 — Image input is not the leap.**
+
+FlowVQA already evaluates logical progression and decisions from flowchart images, including a zero-shot condition without explicit CoT prompting. Flow2Code evaluates executable-code generation from flowcharts across fifteen languages. Neither demonstrates verified compilation into recurrent state or trace-free internal interpretation. [FlowVQA, 27 Jun 2024](https://flowvqa.github.io/); [Flow2Code, 2 Jun 2025](https://arxiv.org/abs/2506.02073).
+
+**Not located:** the complete image→internal program→certified execution pipeline. Answer-only output does not establish that pipeline. The surviving contribution requires a compiler correctness relation: the state must implement the pictured program, including arrows, operands and branch conditions.
+
+**Qwen3.5 numerics — a serious obstruction, not a demonstrated universal kill.**
+
+Implementation inspection dated **29 Oct 2026**:
+
+- **HF:** \(g=-\exp(A_{\log})\,\mathrm{softplus}(a+dt_{\mathrm{bias}})\), \(\alpha=\exp(g)\), and \(\beta=\sigma(b)\). For finite real parameters, \(0<\alpha,\beta<1\); floating-point saturation can reach endpoints. The inspected fallback computes recurrent updates in fp32. Its gated RMSNorm includes epsilon, so read normalization is not perfectly scale-invariant. [HF source](https://raw.githubusercontent.com/huggingface/transformers/main/src/transformers/models/qwen3_5/modeling_qwen3_5.py).
+- **FLA:** the inspected fused recurrent kernel accumulates in fp32 and allocates the returned state in fp32, even with lower-precision inputs. Output activations are cast back. [FLA source](https://raw.githubusercontent.com/fla-org/flash-linear-attention/main/fla/ops/gated_delta_rule/fused_recurrent.py).
+- **Transformers.js/browser:** do not infer recurrent precision from weight precision or `kv_cache_dtype`. The inspected export lists fp16 KV caches for fp16/q4f16 and separately `mamba_ssm_dtype: float32`; that metadata does not establish every exported intermediate. Available WebGPU linear-attention kernels support fp16 or fp32 states. **Exact recurrent-state precision across the relevant shipped JS graph/kernel combinations was not established.** [Export configuration](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX/blob/3ce256c28db23722eef89191c5910de829c02398/config.json); [kernel contract](https://huggingface.co/kernels/webgpu-kernels/ai.onnx.LinearAttention).
+
+**Deduction:** an untouched orthogonal register retains amplitude \(\prod_t\alpha_t\). At constant α=0.999, \(10^5\) steps leave approximately \(3.5\times10^{-44}\), already below fp32’s normal range. Keeping half its amplitude requires geometric-mean α≥0.9999931. Readout can fail much earlier through interference, casting and epsilon.
+
+**Checkpoint-specific α distributions were not located.** Therefore neither “fp32 is fine” nor “bf16 dies around 1,000 steps” is supported. bf16 and fp32 share the normal exponent range; rounding behavior differs substantially. Persistent exact storage needs a proved invariant, exact retention, or refresh—not a favorable dtype label.
+web search: 
+web search: "DeepSeek-OCR" "optical" compression 2025 ...
+web search: 
+web search: https://arxiv.org/abs/2609.32447
+web search: 
+web search: "Visual planning" "think only with images" ...
+codex
+The broad “visual sketchpad” idea has close predecessors. The distinction to test is whether the canvas is the complete overwritten state and whether its update is certifiable. DeepSeek’s compression results measure OCR recovery; they do not establish exact working memory.
+web search: 
+web search: "Neural GPU" "Extended Neural GPU" arithmetic ...
+web search: 
+web search: Neural GPU Kaiser Sutskever 2015 arxiv ...
+web search: 
+web search: neural networks exact conservation laws learned simulator FINN clawpack FluxGNN ...
+web search: 
+web search: "FluxGNN" conservation ...
+web search: 
+web search: https://sead-nca.github.io/paper-mirage-multiplication/
+web search: 
+web search: https://arxiv.org/html/2601.22069v1
+web search: 
+web search: "Qwen3.5" "WebGPU" image tokens latency ...
+codex
+Two close 2026 results sharpen the audit: VTC-R1 feeds rendered reasoning traces back as “optical memory,” and a 321-parameter cellular automaton reports multiplication up to 4,096 digits on a 2D grid. I’m checking whether either has the proposed overwrite semantics or a finite certificate.
+web search: 
+web search: "Visual Sketchpad" arxiv Hu ...
+web search: 
+web search: https://arxiv.org/html/2603.29069v1
+web search: 
+web search: https://arxiv.org/html/2603.29069v1
+web search: 
+web search: 'Table 1'
+web search: 
+web search: https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX
+web search: 
+web search: site:huggingface.co onnx-community "Gemma-3" "WebGPU" ...
+web search: 
+web search: Veo 3 video models zero shot reasoners September 2025 paper ...
+web search: 
+web search: https://arxiv.org/abs/2603.29069
+web search: 
+web search: https://langcog.stanford.edu/papers/FB-jepg2011.pdf
+web search: 
+web search: 'Table 1'
+web search: 
+web search: '4096'
+web search: 
+web search: 
+web search: 
+web search: 
+codex
+The multiplication paper specifies **4,096-bit operands**, despite the project page’s broader “digits” wording. It also rounds and clamps the grid after every update—a close predecessor to the proposed snap. Its reported perfect accuracy comes from sampled tests, not a located exhaustive certificate. VTC-R1 explicitly accumulates images, so it does not match the constant-size canvas.
+web search: 
+web search: 
+web search: 
+web search: "certified" "visual reasoning" arithmetic canvas ...
+web search: 
+web search: vision language models arithmetic "digits" "rendered" benchmark ...
+web search: 
+web search: https://arxiv.org/abs/2602.01651
+web search: 
+web search: https://machinelearning.apple.com/research/fast-vision-language-models
+web search: 
+web search: "FastVLM" "browser" "tokens" "second" ...
+web search: 
+web search: https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/preprocessor_config.json
+web search: 
+web search: https://github.com/ai-ecoverse/decision-vision-bench
+web search: 
+web search: 'patch_size'
+web search: 
+web search: https://arxiv.org/html/2601.21468v5
+web search: 
+web search: 'update'
+web search: 
+web search: https://huggingface.co/onnx-community/FastVLM-0.5B-ONNX/blob/main/preprocessor_config.json
+context compacted
+web search: 
+web search: https://huggingface.co/onnx-community/FastVLM-0.5B-ONNX/blob/main/config.json
+codex
+The closest arithmetic result already combines a learned local grid update with rounding at every step and tests multiplication on 4,096-bit operands. It does not establish the proposed pretrained-VLM system or an exhaustive certificate. For browser models, usable image-input demos exist; comparable per-image latency measurements are much harder to substantiate than ONNX availability.
+
+web search: 
+web search: FastVLM 1024 256 visual tokens 2025 Apple ...
+web search: 
+web search: "thinking with images" survey 2026 2025 arxiv
+web search: 
+web search: https://arxiv.org/html/2412.13303v2
+web search: 
+web search: https://huggingface.co/onnx-community/Qwen3.5-2B-ONNX-OPT
+web search: 
+web search: https://huggingface.co/HuggingFaceTB/SmolVLM-Instruct
+codex
+| Claim | Verdict | Closest work, dated | What remains open |
+|---|---|---|---|
+| **S1: rendering restores exact state** | **NARROW** | [Brandoit et al., 26 Sep 2026](https://arxiv.org/abs/2609.32447); [Wei’s quantized arithmetic grid, 30 Mar 2026](https://arxiv.org/abs/2603.29069) | A certified perceptual–computational loop. Rendering alone provides neither correct symbol selection nor correct transitions. |
+| **S2: local updates generalize indefinitely** | **NARROW** | [Neural GPU, 25 Nov 2015 / ICLR 2016](https://arxiv.org/abs/1511.08228); [Wei, revised 5 Apr 2026](https://arxiv.org/abs/2603.29069) | Exhaustive certification of a learned rule, including boundaries, initialization and termination, connected to a pretrained VLM. |
+| **S3: optical memory is denser** | **KILLED as broad novelty** | [DeepSeek-OCR, 21 Oct 2025](https://arxiv.org/abs/2510.18234); [Glyph, 20 Oct 2025](https://arxiv.org/abs/2510.17800) | Worst-case exact cell capacity and certified decoding margins, rather than average document recovery. |
+| **S4: shared arithmetic/physics canvas** | **NARROW** | [FHP lattice gas, 7 Apr 1986](https://doi.org/10.1103/PhysRevLett.56.1505); [FluxGNN, ICML Jul 2024](https://proceedings.mlr.press/v235/horie24a.html) | One learned, certified transition system spanning arithmetic and conservative dynamics. Neither conservation nor grid simulation is new. |
+| **S5: visible, editable mental workspace demos** | **NARROW** | [Visual Sketchpad, 13 Jun 2024](https://arxiv.org/abs/2406.09403); [Latent Sketchpad, 28 Oct 2025](https://arxiv.org/abs/2510.24514) | The integrated browser demonstration with genuinely bounded state, causal interventions and exact computation. |
+
+**Audit date: 29 October 2026.** Earlier gate tables were read; their general arguments are not repeated. “OPEN” below means **not located in this search**, not absent. Verdicts distinguish novelty from feasibility.
+
+**Q1 — What survives S1–S5?**
+
+**S1:** Brandoit’s result concerns particular finite-precision state-tracking architectures and perturbation assumptions. It does not establish that rasterization makes a VLM exact. A hard glyph decision followed by canonical rendering can remove within-symbol analog variation; it can also preserve a confidently wrong symbol forever.
+
+The necessary certificate covers **reader → transition → symbol selection → renderer**, plus control state. Checking isolated glyphs cannot certify a globally attentive vision encoder whose outputs depend on neighboring content, resizing and positions. Quantizing a latent codebook can provide the same discontinuous reset without pixels.
+
+**S2:** Locality and shared weights make an inductive proof possible; they do not supply one. Exhaustive enumeration works when the alphabet and neighborhood are finite, the deployed update truly depends only on that neighborhood, and every allowed pattern implements the intended rule. Reachability restrictions require their own proof. Carry propagation, boundaries and halting also matter.
+
+“Constant size” must mean constant **during one computation**. Arbitrarily long inputs require a family of larger canvases. Also, retained text, KV caches or recurrent hidden states invalidate a claim that the canvas alone is the Markov state.
+
+**S3:** Fewer sequence positions is not automatically greater reliable information capacity, fewer bytes or less computation. Vision tokens are continuous vectors, and recovering plausible prose tolerates errors that arithmetic cannot. The useful experiment measures tokens/cell against worst-case symbol margin and whole-computation failure, with fixed typography, quantization and perturbation bounds.
+
+**S4:** Integer storage does not itself conserve anything. Each collision/update must preserve specified invariants; streaming and boundaries must preserve their totals; overflow must be excluded. A rendered ball position omits velocity, so it is not generally a complete Markov state. One next-canvas loss is a shared training format, not evidence that arithmetic and physics share a learned algorithm.
+
+**S5:** Make the intervention consequential: replace a carry, bead or velocity while clearing every other persistent state; require the continuation predicted from the edited state. Blank/shuffled-image controls are necessary. [Wang et al., 6 Aug 2026, revised 8 Sep](https://arxiv.org/abs/2608.06270) found visual tool outputs often lacked causal influence despite apparent reasoning gains. Handwriting recognition remains a separate fallible interface: exact arithmetic conditional on transcription is not exact interpretation of arbitrary photographs.
+
+**Q2 — Optical compression: actual numbers and actual memory**
+
+[DeepSeek-OCR, 21 Oct 2025](https://arxiv.org/html/2510.18234v1) reports approximately **97% OCR precision below 10× text/vision-token compression**, falling toward **60% at 20×**. Its English Fox experiment contains 100 pages with 600–1,300 text tokens. Examples:
+
+| Text tokens/page | Vision tokens | Compression | OCR precision |
+|---|---:|---:|---:|
+| 600–700 | 100 | 6.7× | 98.5% |
+| 900–1,000 | 100 | 9.7× | 96.8% |
+| 1,200–1,300 | 64 | 19.7× | 59.1% |
+
+These are not exact-page success rates. Fixed modes use **64/100/256/400 tokens** at **512/640/1024/1280 square pixels**; cropping changes totals. Its OmniDocBench comparison uses under 800 tokens against MinerU’s 6,000-plus.
+
+“Optical forgetting” proposes rendering history and progressively reducing resolution/token allocation. The paper explicitly leaves validation beyond OCR to future work; it does not demonstrate exact recurrent working memory.
+
+[DeepSeek-OCR 2, 28 Jan 2026](https://arxiv.org/html/2601.20552v1) adds semantic visual-token ordering. OmniDocBench 1.5 rises **87.36→91.09**, with maximum visual tokens **1,156→1,120** in the reported comparison. This is document parsing, not an exact-memory capacity curve.
+
+Other relevant evidence:
+
+- [Glyph, 20 Oct 2025](https://arxiv.org/abs/2510.17800): typically **3–4×** text-context compression with comparable downstream performance. Optical context is already established prior art.
+- [PIXEL, 14 Jul 2022](https://arxiv.org/abs/2207.06991): text represented as rendered pixels. [VIST, 2 Feb 2025, revised 11 Dec](https://arxiv.org/abs/2502.00791): vision-centric distant-context compression, reporting **2.3×** fewer tokens at comparable performance.
+- **[VTC-R1, 29 Jan 2026](https://arxiv.org/html/2601.22069v1)** directly renders reasoning segments and rereads them. With Qwen3-VL-8B, MATH500 rises **85.4→90.0**, but AIME25 falls **32.71→30.00**. Crucially, its algorithm **accumulates images**: it is not an overwritten Markov canvas.
+- **[MemOCR, 29 Jan 2026; revised 18 May](https://arxiv.org/html/2601.21468v5)** maintains bounded, updated rich-text memory and renders it for visual access. Qwen2.5-VL-7B reports **74.6% versus 67.8%** for its strongest baseline in the specified 10K-context/1,024-token setting. This is closer to replacement memory, but not certified canvas-only arithmetic.
+- [Optical Reasoning, 8 Jun 2026](https://arxiv.org/abs/2606.09585) also studies visually rendered reasoning rationales.
+
+**Answer: yes, optical context has already been used for reasoning and working memory, beyond document OCR.**
+
+**Q3 — Strong image/imagery reasoning results**
+
+Selected primary-paper results, not a cross-benchmark ranking. “Appended” refers to the model’s conditioning history, even when each image depicts a current state.
+
+| Work/date | Model and reported result | State semantics; limitation |
+|---|---|---|
+| [Visual Sketchpad, 13 Jun 2024](https://arxiv.org/abs/2406.09403) | GPT-4o, undisclosed size; average mathematical-task gain **12.7 points** | External drawing/tools; growing multimodal transcript. |
+| [MVoT, 13 Jan 2025](https://arxiv.org/html/2501.07542v1) | Anole-7B; Maze **92.95%**, MiniBehavior **95.14%**, FrozenLake **85.60%** | Appended interleaved text/images; answer accuracy, not universal transition correctness. |
+| [Visual Planning/VPRL, 16 May 2025, v1](https://arxiv.org/html/2505.11409v1) | 3B visual language model; trajectory exact-match **91.6/74.5/75.8%** on FrozenLake/Maze/MiniBehavior | Image-only autoregressive trajectories; extrapolation deteriorates. |
+| [Thinking with Generated Images, 28 May 2025](https://arxiv.org/html/2505.22525v1) | Anole-7B; GenEval two-object score **0.38→0.57** | Appended generated imagery; composition benchmark, not arithmetic. |
+| [Mirage, 20 Jun 2025](https://arxiv.org/html/2506.17218v1) | Qwen2.5-VL-7B; VSP spatial/planning **89/60**, versus text-CoT+GRPO **85/51** | Generated latent imagery tokens within reasoning; no certified overwritten grid. |
+| [Latent Sketchpad, 28 Oct 2025](https://arxiv.org/html/2510.24514v1) | Gemma-3-12B, also Qwen2.5-VL-7B; Gemma maze success **70→72.2%**, larger OOD maze **8→10%** | Visual latent sketches appended after actions; weak size extrapolation. |
+| [HyLaR, 22 Apr 2026](https://arxiv.org/html/2604.20328v1) | Qwen2.5-VL-7B; V* **76.44→83.77%** | “Canvas-in-Latents” representations within hybrid reasoning; no exhaustive arithmetic certificate. |
+
+None of these results establishes exact arithmetic for arbitrary lengths or steps. Benchmark “exact match” means that sampled outputs matched, not that the algorithm is proven exact.
+
+The broad territory is already surveyed in [Su et al., 30 Jun 2025](https://arxiv.org/abs/2506.23918) and [Dong et al., ACL 2026](https://aclanthology.org/2026.acl-long.2087/). A generic “visuospatial sketchpad for language models” novelty claim is untenable.
+
+**Q4 — Hundreds of digits, certification and conservation**
+
+**The complete conjunction was not located:** pretrained VLM + sole overwritten 2D working state + exact hundreds-of-decimal-digits arithmetic + certified local rules.
+
+But the closest arithmetic result is uncomfortably close. [Wei, 30 Mar 2026, revised 5 Apr](https://arxiv.org/pdf/2603.29069) uses a **321-parameter** neural cellular update, trained on **2–6-bit** multiplication traces, with **rounding and nonnegative clamping every step**. It reports **100% sampled accuracy through 4,096-bit operands**, about 1,233 decimal digits per operand.
+
+Caveats matter: the input uses a structured binary outer-product construction; training uses rule traces; only 50 pairs are tested per longer length. An exhaustive deployed-rule certificate was not located. The project webpage’s “digits” wording should not override the paper’s **bits**. This already combines local learned arithmetic, overwriting and discrete restoration.
+
+Earlier arithmetic anchors further narrow the claim:
+
+- [Extended Neural GPU, 2 Nov 2016](https://arxiv.org/abs/1611.00736): strong decimal length extrapolation, but conspicuous structured failures.
+- [Abacus embeddings, 27 May 2024](https://arxiv.org/abs/2405.17399): training through 20 digits, up to **99%** on 100-digit addition; positional structure rather than visual perception.
+- [Multidimensional Position Coupling, 21 Oct 2024; revised 17 Apr 2025](https://arxiv.org/abs/2410.15787): structured positions support arithmetic extrapolation without an image canvas.
+- [Virtual-abacus RL, 17 Jan 2023](https://arxiv.org/abs/2301.06870): OOD addition/subtraction with under 1% error, not exactness.
+- [Frank and Barner, online Jul 2011 / journal Feb 2012](https://langcog.stanford.edu/papers/FB-jepg2011.pdf): human mental-abacus evidence supports visually organized numerical representations; it does not establish a machine architecture.
+
+**Learned conservation already exists.** [FluxGNN, ICML Jul 2024](https://proceedings.mlr.press/v235/horie24a.html) builds conservation into learned numerical fluxes. [DYNAMI-CAL GraphNet, 15 Jan 2026](https://www.nature.com/articles/s41467-025-67802-5) enforces linear/angular momentum structure in learned interaction dynamics. Algebraic conservation must be distinguished from bit-for-bit floating-point conservation; inelastic systems need not conserve kinetic energy.
+
+For integer lattice gas, invariant-preserving collisions plus streaming on a closed/periodic lattice can provide exact discrete conservation. That is classical [FHP, 7 Apr 1986](https://doi.org/10.1103/PhysRevLett.56.1505), not a newly discovered consequence of visual memory.
+
+[Video Models Are Zero-shot Reasoners/Veo 3, 24 Sep 2025](https://arxiv.org/abs/2509.20328), [Genie 3, 5 Aug 2025](https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/), [V-JEPA 2, 11 Jun 2025](https://ai.meta.com/research/publications/v-jepa-2-self-supervised-video-models-enable-understanding-prediction-and-planning/), and [Cosmos, inspected 29 Oct 2026](https://research.nvidia.com/labs/cosmos-lab/) establish powerful prediction/planning capabilities. An exact-conservation certificate for their learned rollouts was not located.
+
+**Q5 — Small browser VLMs**
+
+Availability below was checked **29 Oct 2026**. These are open-weight models; licenses differ. Browser demos/source establish implementation evidence, not independently reproduced performance.
+
+| Model | Browser evidence | Visual-token cost |
+|---|---|---|
+| **Qwen3.5-0.8B / 2B** | [0.8B optimized ONNX with Transformers.js/WebGPU image example](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX-OPT); [2B export and linked WebGPU demos](https://huggingface.co/onnx-community/Qwen3.5-2B-ONNX) | From [processor configuration](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/preprocessor_config.json): inferred still-image cost \(H'W'/1024\), after resizing; **256 at 512²**, **1,024 at 1024²**. |
+| **SmolVLM-256M / 500M** | [Official release, 23 Jan 2025](https://huggingface.co/blog/smolervlm), including browser support | **64 per 512² crop**; splitting increases total. |
+| **FastVLM-0.5B** | [ONNX/WebGPU implementation](https://huggingface.co/onnx-community/FastVLM-0.5B-ONNX); [Apple browser announcement, updated 22 Sep 2025](https://machinelearning.apple.com/research/fast-vision-language-models) | [Architecture, revised 15 May 2025](https://arxiv.org/html/2412.13303v2): **256 at 1024²**. |
+| **LFM2.5-VL-450M / 1.6B / 3B** | [Official collection with all three WebGPU demos](https://huggingface.co/collections/LiquidAI/lfm25-vl) | [450M](https://huggingface.co/LiquidAI/LFM2.5-VL-450M): configured **32–256**; [1.6B](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B): **64–256**, with tiling increasing totals. [3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B): dynamic tiles; verified fixed per-image count not located. |
+
+**Latency:** a comparable, hardware-specified browser per-image benchmark for these stock checkpoints was not located. Native MLX latency, server throughput and text decoding tokens/second cannot fill that column.
+
+One scoped browser measurement exists: [decision-vision-bench, inspected 29 Oct 2026](https://github.com/ai-ecoverse/decision-vision-bench) reports **0.14–0.38 seconds** for a Qwen3.5-derived Kev-0.8B image-decision model, Chrome WebGPU, q8f32, Apple M-series GPU. It uses a specialized decision head; the exact chip is unspecified. It does **not** establish stock Qwen canvas-generation latency.
+
+Qwen’s native image/video **input** also does not supply a native canvas-writing head. The unresolved experiment is a certified, bounded transition loop with measured full-step latency—including rendering, vision encoding and output—not simply loading a VLM in Chrome.
+
+*`out.md` was not saved: this session’s filesystem is read-only. The complete report is provided above.*
+tokens used
+286,086
+| Claim | Verdict | Closest work, dated | What remains open |
+|---|---|---|---|
+| **S1: rendering restores exact state** | **NARROW** | [Brandoit et al., 26 Sep 2026](https://arxiv.org/abs/2609.32447); [Wei’s quantized arithmetic grid, 30 Mar 2026](https://arxiv.org/abs/2603.29069) | A certified perceptual–computational loop. Rendering alone provides neither correct symbol selection nor correct transitions. |
+| **S2: local updates generalize indefinitely** | **NARROW** | [Neural GPU, 25 Nov 2015 / ICLR 2016](https://arxiv.org/abs/1511.08228); [Wei, revised 5 Apr 2026](https://arxiv.org/abs/2603.29069) | Exhaustive certification of a learned rule, including boundaries, initialization and termination, connected to a pretrained VLM. |
+| **S3: optical memory is denser** | **KILLED as broad novelty** | [DeepSeek-OCR, 21 Oct 2025](https://arxiv.org/abs/2510.18234); [Glyph, 20 Oct 2025](https://arxiv.org/abs/2510.17800) | Worst-case exact cell capacity and certified decoding margins, rather than average document recovery. |
+| **S4: shared arithmetic/physics canvas** | **NARROW** | [FHP lattice gas, 7 Apr 1986](https://doi.org/10.1103/PhysRevLett.56.1505); [FluxGNN, ICML Jul 2024](https://proceedings.mlr.press/v235/horie24a.html) | One learned, certified transition system spanning arithmetic and conservative dynamics. Neither conservation nor grid simulation is new. |
+| **S5: visible, editable mental workspace demos** | **NARROW** | [Visual Sketchpad, 13 Jun 2024](https://arxiv.org/abs/2406.09403); [Latent Sketchpad, 28 Oct 2025](https://arxiv.org/abs/2510.24514) | The integrated browser demonstration with genuinely bounded state, causal interventions and exact computation. |
+
+**Audit date: 29 October 2026.** Earlier gate tables were read; their general arguments are not repeated. “OPEN” below means **not located in this search**, not absent. Verdicts distinguish novelty from feasibility.
+
+**Q1 — What survives S1–S5?**
+
+**S1:** Brandoit’s result concerns particular finite-precision state-tracking architectures and perturbation assumptions. It does not establish that rasterization makes a VLM exact. A hard glyph decision followed by canonical rendering can remove within-symbol analog variation; it can also preserve a confidently wrong symbol forever.
+
+The necessary certificate covers **reader → transition → symbol selection → renderer**, plus control state. Checking isolated glyphs cannot certify a globally attentive vision encoder whose outputs depend on neighboring content, resizing and positions. Quantizing a latent codebook can provide the same discontinuous reset without pixels.
+
+**S2:** Locality and shared weights make an inductive proof possible; they do not supply one. Exhaustive enumeration works when the alphabet and neighborhood are finite, the deployed update truly depends only on that neighborhood, and every allowed pattern implements the intended rule. Reachability restrictions require their own proof. Carry propagation, boundaries and halting also matter.
+
+“Constant size” must mean constant **during one computation**. Arbitrarily long inputs require a family of larger canvases. Also, retained text, KV caches or recurrent hidden states invalidate a claim that the canvas alone is the Markov state.
+
+**S3:** Fewer sequence positions is not automatically greater reliable information capacity, fewer bytes or less computation. Vision tokens are continuous vectors, and recovering plausible prose tolerates errors that arithmetic cannot. The useful experiment measures tokens/cell against worst-case symbol margin and whole-computation failure, with fixed typography, quantization and perturbation bounds.
+
+**S4:** Integer storage does not itself conserve anything. Each collision/update must preserve specified invariants; streaming and boundaries must preserve their totals; overflow must be excluded. A rendered ball position omits velocity, so it is not generally a complete Markov state. One next-canvas loss is a shared training format, not evidence that arithmetic and physics share a learned algorithm.
+
+**S5:** Make the intervention consequential: replace a carry, bead or velocity while clearing every other persistent state; require the continuation predicted from the edited state. Blank/shuffled-image controls are necessary. [Wang et al., 6 Aug 2026, revised 8 Sep](https://arxiv.org/abs/2608.06270) found visual tool outputs often lacked causal influence despite apparent reasoning gains. Handwriting recognition remains a separate fallible interface: exact arithmetic conditional on transcription is not exact interpretation of arbitrary photographs.
+
+**Q2 — Optical compression: actual numbers and actual memory**
+
+[DeepSeek-OCR, 21 Oct 2025](https://arxiv.org/html/2510.18234v1) reports approximately **97% OCR precision below 10× text/vision-token compression**, falling toward **60% at 20×**. Its English Fox experiment contains 100 pages with 600–1,300 text tokens. Examples:
+
+| Text tokens/page | Vision tokens | Compression | OCR precision |
+|---|---:|---:|---:|
+| 600–700 | 100 | 6.7× | 98.5% |
+| 900–1,000 | 100 | 9.7× | 96.8% |
+| 1,200–1,300 | 64 | 19.7× | 59.1% |
+
+These are not exact-page success rates. Fixed modes use **64/100/256/400 tokens** at **512/640/1024/1280 square pixels**; cropping changes totals. Its OmniDocBench comparison uses under 800 tokens against MinerU’s 6,000-plus.
+
+“Optical forgetting” proposes rendering history and progressively reducing resolution/token allocation. The paper explicitly leaves validation beyond OCR to future work; it does not demonstrate exact recurrent working memory.
+
+[DeepSeek-OCR 2, 28 Jan 2026](https://arxiv.org/html/2601.20552v1) adds semantic visual-token ordering. OmniDocBench 1.5 rises **87.36→91.09**, with maximum visual tokens **1,156→1,120** in the reported comparison. This is document parsing, not an exact-memory capacity curve.
+
+Other relevant evidence:
+
+- [Glyph, 20 Oct 2025](https://arxiv.org/abs/2510.17800): typically **3–4×** text-context compression with comparable downstream performance. Optical context is already established prior art.
+- [PIXEL, 14 Jul 2022](https://arxiv.org/abs/2207.06991): text represented as rendered pixels. [VIST, 2 Feb 2025, revised 11 Dec](https://arxiv.org/abs/2502.00791): vision-centric distant-context compression, reporting **2.3×** fewer tokens at comparable performance.
+- **[VTC-R1, 29 Jan 2026](https://arxiv.org/html/2601.22069v1)** directly renders reasoning segments and rereads them. With Qwen3-VL-8B, MATH500 rises **85.4→90.0**, but AIME25 falls **32.71→30.00**. Crucially, its algorithm **accumulates images**: it is not an overwritten Markov canvas.
+- **[MemOCR, 29 Jan 2026; revised 18 May](https://arxiv.org/html/2601.21468v5)** maintains bounded, updated rich-text memory and renders it for visual access. Qwen2.5-VL-7B reports **74.6% versus 67.8%** for its strongest baseline in the specified 10K-context/1,024-token setting. This is closer to replacement memory, but not certified canvas-only arithmetic.
+- [Optical Reasoning, 8 Jun 2026](https://arxiv.org/abs/2606.09585) also studies visually rendered reasoning rationales.
+
+**Answer: yes, optical context has already been used for reasoning and working memory, beyond document OCR.**
+
+**Q3 — Strong image/imagery reasoning results**
+
+Selected primary-paper results, not a cross-benchmark ranking. “Appended” refers to the model’s conditioning history, even when each image depicts a current state.
+
+| Work/date | Model and reported result | State semantics; limitation |
+|---|---|---|
+| [Visual Sketchpad, 13 Jun 2024](https://arxiv.org/abs/2406.09403) | GPT-4o, undisclosed size; average mathematical-task gain **12.7 points** | External drawing/tools; growing multimodal transcript. |
+| [MVoT, 13 Jan 2025](https://arxiv.org/html/2501.07542v1) | Anole-7B; Maze **92.95%**, MiniBehavior **95.14%**, FrozenLake **85.60%** | Appended interleaved text/images; answer accuracy, not universal transition correctness. |
+| [Visual Planning/VPRL, 16 May 2025, v1](https://arxiv.org/html/2505.11409v1) | 3B visual language model; trajectory exact-match **91.6/74.5/75.8%** on FrozenLake/Maze/MiniBehavior | Image-only autoregressive trajectories; extrapolation deteriorates. |
+| [Thinking with Generated Images, 28 May 2025](https://arxiv.org/html/2505.22525v1) | Anole-7B; GenEval two-object score **0.38→0.57** | Appended generated imagery; composition benchmark, not arithmetic. |
+| [Mirage, 20 Jun 2025](https://arxiv.org/html/2506.17218v1) | Qwen2.5-VL-7B; VSP spatial/planning **89/60**, versus text-CoT+GRPO **85/51** | Generated latent imagery tokens within reasoning; no certified overwritten grid. |
+| [Latent Sketchpad, 28 Oct 2025](https://arxiv.org/html/2510.24514v1) | Gemma-3-12B, also Qwen2.5-VL-7B; Gemma maze success **70→72.2%**, larger OOD maze **8→10%** | Visual latent sketches appended after actions; weak size extrapolation. |
+| [HyLaR, 22 Apr 2026](https://arxiv.org/html/2604.20328v1) | Qwen2.5-VL-7B; V* **76.44→83.77%** | “Canvas-in-Latents” representations within hybrid reasoning; no exhaustive arithmetic certificate. |
+
+None of these results establishes exact arithmetic for arbitrary lengths or steps. Benchmark “exact match” means that sampled outputs matched, not that the algorithm is proven exact.
+
+The broad territory is already surveyed in [Su et al., 30 Jun 2025](https://arxiv.org/abs/2506.23918) and [Dong et al., ACL 2026](https://aclanthology.org/2026.acl-long.2087/). A generic “visuospatial sketchpad for language models” novelty claim is untenable.
+
+**Q4 — Hundreds of digits, certification and conservation**
+
+**The complete conjunction was not located:** pretrained VLM + sole overwritten 2D working state + exact hundreds-of-decimal-digits arithmetic + certified local rules.
+
+But the closest arithmetic result is uncomfortably close. [Wei, 30 Mar 2026, revised 5 Apr](https://arxiv.org/pdf/2603.29069) uses a **321-parameter** neural cellular update, trained on **2–6-bit** multiplication traces, with **rounding and nonnegative clamping every step**. It reports **100% sampled accuracy through 4,096-bit operands**, about 1,233 decimal digits per operand.
+
+Caveats matter: the input uses a structured binary outer-product construction; training uses rule traces; only 50 pairs are tested per longer length. An exhaustive deployed-rule certificate was not located. The project webpage’s “digits” wording should not override the paper’s **bits**. This already combines local learned arithmetic, overwriting and discrete restoration.
+
+Earlier arithmetic anchors further narrow the claim:
+
+- [Extended Neural GPU, 2 Nov 2016](https://arxiv.org/abs/1611.00736): strong decimal length extrapolation, but conspicuous structured failures.
+- [Abacus embeddings, 27 May 2024](https://arxiv.org/abs/2405.17399): training through 20 digits, up to **99%** on 100-digit addition; positional structure rather than visual perception.
+- [Multidimensional Position Coupling, 21 Oct 2024; revised 17 Apr 2025](https://arxiv.org/abs/2410.15787): structured positions support arithmetic extrapolation without an image canvas.
+- [Virtual-abacus RL, 17 Jan 2023](https://arxiv.org/abs/2301.06870): OOD addition/subtraction with under 1% error, not exactness.
+- [Frank and Barner, online Jul 2011 / journal Feb 2012](https://langcog.stanford.edu/papers/FB-jepg2011.pdf): human mental-abacus evidence supports visually organized numerical representations; it does not establish a machine architecture.
+
+**Learned conservation already exists.** [FluxGNN, ICML Jul 2024](https://proceedings.mlr.press/v235/horie24a.html) builds conservation into learned numerical fluxes. [DYNAMI-CAL GraphNet, 15 Jan 2026](https://www.nature.com/articles/s41467-025-67802-5) enforces linear/angular momentum structure in learned interaction dynamics. Algebraic conservation must be distinguished from bit-for-bit floating-point conservation; inelastic systems need not conserve kinetic energy.
+
+For integer lattice gas, invariant-preserving collisions plus streaming on a closed/periodic lattice can provide exact discrete conservation. That is classical [FHP, 7 Apr 1986](https://doi.org/10.1103/PhysRevLett.56.1505), not a newly discovered consequence of visual memory.
+
+[Video Models Are Zero-shot Reasoners/Veo 3, 24 Sep 2025](https://arxiv.org/abs/2509.20328), [Genie 3, 5 Aug 2025](https://deepmind.google/blog/genie-3-a-new-frontier-for-world-models/), [V-JEPA 2, 11 Jun 2025](https://ai.meta.com/research/publications/v-jepa-2-self-supervised-video-models-enable-understanding-prediction-and-planning/), and [Cosmos, inspected 29 Oct 2026](https://research.nvidia.com/labs/cosmos-lab/) establish powerful prediction/planning capabilities. An exact-conservation certificate for their learned rollouts was not located.
+
+**Q5 — Small browser VLMs**
+
+Availability below was checked **29 Oct 2026**. These are open-weight models; licenses differ. Browser demos/source establish implementation evidence, not independently reproduced performance.
+
+| Model | Browser evidence | Visual-token cost |
+|---|---|---|
+| **Qwen3.5-0.8B / 2B** | [0.8B optimized ONNX with Transformers.js/WebGPU image example](https://huggingface.co/onnx-community/Qwen3.5-0.8B-ONNX-OPT); [2B export and linked WebGPU demos](https://huggingface.co/onnx-community/Qwen3.5-2B-ONNX) | From [processor configuration](https://huggingface.co/Qwen/Qwen3.5-0.8B/blob/main/preprocessor_config.json): inferred still-image cost \(H'W'/1024\), after resizing; **256 at 512²**, **1,024 at 1024²**. |
+| **SmolVLM-256M / 500M** | [Official release, 23 Jan 2025](https://huggingface.co/blog/smolervlm), including browser support | **64 per 512² crop**; splitting increases total. |
+| **FastVLM-0.5B** | [ONNX/WebGPU implementation](https://huggingface.co/onnx-community/FastVLM-0.5B-ONNX); [Apple browser announcement, updated 22 Sep 2025](https://machinelearning.apple.com/research/fast-vision-language-models) | [Architecture, revised 15 May 2025](https://arxiv.org/html/2412.13303v2): **256 at 1024²**. |
+| **LFM2.5-VL-450M / 1.6B / 3B** | [Official collection with all three WebGPU demos](https://huggingface.co/collections/LiquidAI/lfm25-vl) | [450M](https://huggingface.co/LiquidAI/LFM2.5-VL-450M): configured **32–256**; [1.6B](https://huggingface.co/LiquidAI/LFM2.5-VL-1.6B): **64–256**, with tiling increasing totals. [3B](https://huggingface.co/LiquidAI/LFM2.5-VL-3B): dynamic tiles; verified fixed per-image count not located. |
+
+**Latency:** a comparable, hardware-specified browser per-image benchmark for these stock checkpoints was not located. Native MLX latency, server throughput and text decoding tokens/second cannot fill that column.
+
+One scoped browser measurement exists: [decision-vision-bench, inspected 29 Oct 2026](https://github.com/ai-ecoverse/decision-vision-bench) reports **0.14–0.38 seconds** for a Qwen3.5-derived Kev-0.8B image-decision model, Chrome WebGPU, q8f32, Apple M-series GPU. It uses a specialized decision head; the exact chip is unspecified. It does **not** establish stock Qwen canvas-generation latency.
+
+Qwen’s native image/video **input** also does not supply a native canvas-writing head. The unresolved experiment is a certified, bounded transition loop with measured full-step latency—including rendering, vision encoding and output—not simply loading a VLM in Chrome.
+
+*`out.md` was not saved: this session’s filesystem is read-only. The complete report is provided above.*

@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>E0 sketchpad timing</title>
+<style>
+  body { font: 14px/1.4 ui-monospace, Menlo, monospace; background: #fff; color: #111; margin: 16px; }
+  canvas { border: 1px solid #ccc; image-rendering: pixelated; }
+  pre { white-space: pre-wrap; }
+</style>
+</head>
+<body>
+<h1>E0: Qwen3.5-0.8B per-frame cost on this GPU</h1>
+<canvas id="c" width="256" height="256"></canvas>
+<pre id="log">loading…</pre>
+<script type="module">
+import { AutoProcessor, Qwen3_5ForConditionalGeneration, RawImage } from "https://cdn.jsdelivr.net/npm/@huggingface/transformers@4.2.0";
+
+const MODEL_ID = "onnx-community/Qwen3.5-0.8B-ONNX-OPT";
+const out = document.getElementById("log");
+const results = { model: MODEL_ID, runs: [] };
+const log = (s) => { out.textContent += "\n" + s; };
+out.textContent = "";
+
+function drawGrid(n, seed) {
+  const c = document.getElementById("c");
+  const ctx = c.getContext("2d");
+  const cell = 256 / n;
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, 256, 256);
+  ctx.fillStyle = "#000"; ctx.font = `${Math.round(cell * 0.85)}px Menlo, monospace`;
+  ctx.textAlign = "center"; ctx.textBaseline = "middle";
+  let x = seed; const rows = [];
+  for (let r = 0; r < n; r++) {
+    let row = "";
+    for (let k = 0; k < n; k++) { x = (x * 1103515245 + 12345) % 2147483648; const d = x % 10; row += d; ctx.fillText(String(d), k * cell + cell / 2, r * cell + cell / 2 + 1); }
+    rows.push(row);
+  }
+  return { img: RawImage.fromCanvas(c), rows };
+}
+
+const t0 = performance.now();
+const processor = await AutoProcessor.from_pretrained(MODEL_ID);
+const model = await Qwen3_5ForConditionalGeneration.from_pretrained(MODEL_ID, {
+  dtype: { embed_tokens: "q4", vision_encoder: "fp16", decoder_model_merged: "q4" },
+  device: "webgpu",
+});
+results.load_s = (performance.now() - t0) / 1000;
+log(`loaded in ${results.load_s.toFixed(1)} s`);
+
+async function frame(n, seed, maxNew, question) {
+  const { img, rows } = drawGrid(n, seed);
+  const messages = [{ role: "user", content: [{ type: "image" }, { type: "text", text: question }] }];
+  const text = processor.apply_chat_template(messages, { add_generation_prompt: true, tokenizer_kwargs: { enable_thinking: false } });
+  const a = performance.now();
+  const inputs = await processor(text, [img]);
+  const b = performance.now();
+  let first = null; const stamps = [];
+  const out = await model.generate({
+    ...inputs, do_sample: false, max_new_tokens: maxNew,
+    streamer: { put: () => { const t = performance.now(); if (first === null) first = t; stamps.push(t); }, end: () => {} },
+  });
+  const e = performance.now();
+  const promptLen = inputs.input_ids.dims[1];
+  const gen = processor.batch_decode(out.slice(null, [promptLen, null]), { skip_special_tokens: true })[0];
+  const decodeN = Math.max(1, stamps.length - 2);
+  const r = {
+    grid: `${n}x${n}`, prompt_tokens: promptLen, preprocess_ms: b - a,
+    first_token_ms: (stamps.length > 1 ? stamps[1] : e) - b,
+    decode_ms_per_token: stamps.length > 2 ? (stamps[stamps.length - 1] - stamps[1]) / decodeN : null,
+    total_ms: e - a, new_tokens: maxNew, output: gen.slice(0, 80), first_row_true: rows[0],
+  };
+  results.runs.push(r);
+  log(JSON.stringify(r));
+}
+
+const Q = "Transcribe the first row of digits in the grid. Reply with the digits only.";
+await frame(8, 1, 12, Q);           // warm-up
+for (const [n, s] of [[8, 2], [8, 3], [16, 4], [16, 5]]) await frame(n, s, 12, Q);
+for (const s of [6, 7]) await frame(8, s, 40, Q);
+window.E0 = results;
+log("DONE");
+</script>
+</body>
+</html>

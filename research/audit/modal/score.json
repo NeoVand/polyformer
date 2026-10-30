@@ -1,0 +1,171 @@
+{
+ "code_O_s0": {
+  "record": 0.029296875,
+  "rerun": 0.029296875,
+  "n": 512,
+  "length": "1024",
+  "selected_step": [
+   16000,
+   16000
+  ],
+  "steps_done": [
+   null,
+   null
+  ],
+  "step1": [
+   1.04076,
+   1.04076
+  ],
+  "first_curve_diff_step": null,
+  "floor_fingerprint": [
+   0.423828125,
+   0.423828125
+  ],
+  "pass": true
+ },
+ "code_FULLN_s0": {
+  "record": 1.0,
+  "rerun": 1.0,
+  "n": 512,
+  "length": "1024",
+  "selected_step": [
+   16000,
+   16000
+  ],
+  "steps_done": [
+   null,
+   null
+  ],
+  "step1": [
+   1.08094,
+   1.08094
+  ],
+  "first_curve_diff_step": null,
+  "floor_fingerprint": [
+   0.423828125,
+   0.423828125
+  ],
+  "pass": true
+ },
+ "add_O_s0": {
+  "record": 0.0,
+  "rerun": 0.0,
+  "n": 128,
+  "length": "4096",
+  "selected_step": [
+   500,
+   500
+  ],
+  "steps_done": [
+   3000,
+   3000
+  ],
+  "step1": [
+   2.85156,
+   2.85156
+  ],
+  "first_curve_diff_step": 100,
+  "pass": true
+ },
+ "add_FULLN_s0": {
+  "record": 1.0,
+  "rerun": 1.0,
+  "n": 128,
+  "length": "4096",
+  "selected_step": [
+   1000,
+   1000
+  ],
+  "steps_done": [
+   3000,
+   3000
+  ],
+  "step1": [
+   2.89553,
+   2.89553
+  ],
+  "first_curve_diff_step": null,
+  "pass": true
+ },
+ "count_O_s0": {
+  "record": 0.09375,
+  "rerun": 0.09375,
+  "n": 128,
+  "length": "4096",
+  "selected_step": [
+   250,
+   250
+  ],
+  "steps_done": [
+   3000,
+   3000
+  ],
+  "step1": [
+   2.66546,
+   2.66546
+  ],
+  "first_curve_diff_step": null,
+  "count_of_128": 12,
+  "pass": true
+ },
+ "count_FULLN_s3": {
+  "record": 1.0,
+  "rerun": 1.0,
+  "n": 128,
+  "length": "4096",
+  "selected_step": [
+   750,
+   750
+  ],
+  "steps_done": [
+   3000,
+   3000
+  ],
+  "step1": [
+   2.8501,
+   2.8501
+  ],
+  "first_curve_diff_step": null,
+  "pass": true
+ },
+ "stories_O_s10": {
+  "record": 0.0,
+  "rerun": 0.0,
+  "n": 128,
+  "length": "1024",
+  "selected_step": [
+   null,
+   null
+  ],
+  "steps_done": [
+   4000,
+   4000
+  ],
+  "step1": [
+   null,
+   null
+  ],
+  "first_curve_diff_step": null,
+  "pass": true
+ },
+ "stories_FULLN_s10": {
+  "record": 1.0,
+  "rerun": 1.0,
+  "n": 128,
+  "length": "1024",
+  "selected_step": [
+   null,
+   null
+  ],
+  "steps_done": [
+   4000,
+   4000
+  ],
+  "step1": [
+   null,
+   null
+  ],
+  "first_curve_diff_step": null,
+  "pass": true
+ }
+}

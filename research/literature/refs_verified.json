@@ -1,0 +1,7190 @@
+[
+ {
+  "key": "deletang2023",
+  "theme": "state",
+  "expected_title": "Neural Networks and the Chomsky Hierarchy",
+  "arxiv_id": "2207.02098",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Neural Networks and the Chomsky Hierarchy",
+   "authors": [
+    "Grégoire Delétang",
+    "Anian Ruoss",
+    "Jordi Grau-Moya",
+    "Tim Genewein",
+    "Li Kevin Wenliang",
+    "Elliot Catt",
+    "Chris Cundy",
+    "Marcus Hutter",
+    "Shane Legg",
+    "Joel Veness",
+    "Pedro A. Ortega"
+   ],
+   "first_version": "2022-07-05",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "c6d38add1b7bbc10f0da37a90e3f1b51ee5fb617",
+   "externalIds": {
+    "ArXiv": "2207.02098",
+    "DBLP": "journals/corr/abs-2207-02098",
+    "DOI": "10.48550/arXiv.2207.02098",
+    "CorpusId": 250280065
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Neural Networks and the Chomsky Hierarchy",
+   "venue": "International Conference on Learning Representations",
+   "year": 2022,
+   "publicationDate": "2022-07-05",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2207.02098"
+   },
+   "authors": [
+    {
+     "authorId": "2133452357",
+     "name": "Gr'egoire Del'etang"
+    },
+    {
+     "authorId": "150920166",
+     "name": "Anian Ruoss"
+    },
+    {
+     "authorId": "1399315491",
+     "name": "Jordi Grau-Moya"
+    },
+    {
+     "authorId": "3081854",
+     "name": "Tim Genewein"
+    },
+    {
+     "authorId": "49432923",
+     "name": "Li Kevin Wenliang"
+    },
+    {
+     "authorId": "22574075",
+     "name": "Elliot Catt"
+    },
+    {
+     "authorId": "24769718",
+     "name": "Chris Cundy"
+    },
+    {
+     "authorId": "144154444",
+     "name": "Marcus Hutter"
+    },
+    {
+     "authorId": "34313265",
+     "name": "S. Legg"
+    },
+    {
+     "authorId": "144056327",
+     "name": "J. Veness"
+    },
+    {
+     "authorId": "145981974",
+     "name": "Pedro A. Ortega"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "ICLR 2023",
+    "ICLR 2023 notable top 25%"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "liu2023shortcuts",
+  "theme": "state",
+  "expected_title": "Transformers Learn Shortcuts to Automata",
+  "arxiv_id": "2210.10749",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Transformers Learn Shortcuts to Automata",
+   "authors": [
+    "Bingbin Liu",
+    "Jordan T. Ash",
+    "Surbhi Goel",
+    "Akshay Krishnamurthy",
+    "Cyril Zhang"
+   ],
+   "first_version": "2022-10-19",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "e82e3f4347674b75c432cb80604d38ee630d4bf6",
+   "externalIds": {
+    "ArXiv": "2210.10749",
+    "DBLP": "journals/corr/abs-2210-10749",
+    "DOI": "10.48550/arXiv.2210.10749",
+    "CorpusId": 252992725
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Transformers Learn Shortcuts to Automata",
+   "venue": "International Conference on Learning Representations",
+   "year": 2022,
+   "publicationDate": "2022-10-19",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2210.10749"
+   },
+   "authors": [
+    {
+     "authorId": "51033208",
+     "name": "Bingbin Liu"
+    },
+    {
+     "authorId": "40401847",
+     "name": "Jordan T. Ash"
+    },
+    {
+     "authorId": "9935792",
+     "name": "Surbhi Goel"
+    },
+    {
+     "authorId": "37019006",
+     "name": "A. Krishnamurthy"
+    },
+    {
+     "authorId": "15943185",
+     "name": "Cyril Zhang"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "ICLR 2023",
+    "ICLR 2023 notable top 5%"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "merrill2024illusion",
+  "theme": "state",
+  "expected_title": "The Illusion of State in State-Space Models",
+  "arxiv_id": "2404.08819",
+  "doi_given": null,
+  "arxiv": {
+   "title": "The Illusion of State in State-Space Models",
+   "authors": [
+    "William Merrill",
+    "Jackson Petty",
+    "Ashish Sabharwal"
+   ],
+   "first_version": "2024-04-12",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "917479a7a72ee7c1fb320c14d770e30ef322ef28",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2404-08819",
+    "ArXiv": "2404.08819",
+    "DOI": "10.48550/arXiv.2404.08819",
+    "CorpusId": 269149086
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "The Illusion of State in State-Space Models",
+   "venue": "International Conference on Machine Learning",
+   "year": 2024,
+   "publicationDate": "2024-04-12",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2404.08819"
+   },
+   "authors": [
+    {
+     "authorId": "2257349351",
+     "name": "William Merrill"
+    },
+    {
+     "authorId": "2320306632",
+     "name": "Jackson Petty"
+    },
+    {
+     "authorId": "2257349398",
+     "name": "Ashish Sabharwal"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "To appear at ICML 2024. 9 pages + appendices",
+  "openreview": {
+   "venues": [
+    "ICML 2024",
+    "ICML 2024 Poster"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "grazzi2025negative",
+  "theme": "state",
+  "expected_title": "Unlocking State-Tracking in Linear RNNs Through Negative Eigenvalues",
+  "arxiv_id": "2411.12537",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Unlocking State-Tracking in Linear RNNs Through Negative Eigenvalues",
+   "authors": [
+    "Riccardo Grazzi",
+    "Julien Siems",
+    "Arber Zela",
+    "Jörg K. H. Franke",
+    "Frank Hutter",
+    "Massimiliano Pontil"
+   ],
+   "first_version": "2024-11-19",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "9d0152fd0d992fa52280d2f83d6aa41490ad95aa",
+   "externalIds": {
+    "DBLP": "conf/iclr/GrazziSZFHP25",
+    "ArXiv": "2411.12537",
+    "DOI": "10.48550/arXiv.2411.12537",
+    "CorpusId": 274141450
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Unlocking State-Tracking in Linear RNNs Through Negative Eigenvalues",
+   "venue": "International Conference on Learning Representations",
+   "year": 2024,
+   "publicationDate": "2024-11-19",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2411.12537"
+   },
+   "authors": [
+    {
+     "authorId": "51004518",
+     "name": "Riccardo Grazzi"
+    },
+    {
+     "authorId": "81742501",
+     "name": "Julien Siems"
+    },
+    {
+     "authorId": "2240526179",
+     "name": "J. Franke"
+    },
+    {
+     "authorId": "51109984",
+     "name": "Arber Zela"
+    },
+    {
+     "authorId": "2282539872",
+     "name": "Frank Hutter"
+    },
+    {
+     "authorId": "1704699",
+     "name": "M. Pontil"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "V2: Correction to Theorem 1 and 2 and to point 3 of Proposition 1. V3: ICLR Camera Ready, V4: ICLR Camera Ready, added figures to theory section, updated modular arithmetic with brackets results because previous results did not contain multiplication"
+ },
+ {
+  "key": "siems2025deltaproduct",
+  "theme": "state",
+  "expected_title": "DeltaProduct: Improving State-Tracking in Linear RNNs via Householder Products",
+  "arxiv_id": "2502.10297",
+  "doi_given": null,
+  "arxiv": {
+   "title": "DeltaProduct: Improving State-Tracking in Linear RNNs via Householder Products",
+   "authors": [
+    "Julien Siems",
+    "Timur Carstensen",
+    "Arber Zela",
+    "Frank Hutter",
+    "Massimiliano Pontil",
+    "Riccardo Grazzi"
+   ],
+   "first_version": "2025-02-14",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "ffb6b2e221497cae064bb87858fc85f542843d76",
+   "externalIds": {
+    "ArXiv": "2502.10297",
+    "DBLP": "conf/nips/SiemsCZHPG25",
+    "DOI": "10.52202/085713-5141",
+    "CorpusId": 277434955
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "DeltaProduct: Improving State-Tracking in Linear RNNs via Householder Products",
+   "venue": "Neural Information Processing Systems",
+   "year": 2025,
+   "publicationDate": "2025-02-14",
+   "journal": {
+    "name": "Advances in Neural Information Processing Systems 38"
+   },
+   "authors": [
+    {
+     "authorId": "81742501",
+     "name": "Julien Siems"
+    },
+    {
+     "authorId": "2345692748",
+     "name": "Timur Carstensen"
+    },
+    {
+     "authorId": "51109984",
+     "name": "Arber Zela"
+    },
+    {
+     "authorId": "2282539872",
+     "name": "Frank Hutter"
+    },
+    {
+     "authorId": "1704699",
+     "name": "M. Pontil"
+    },
+    {
+     "authorId": "51004518",
+     "name": "Riccardo Grazzi"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "v5: Characterization of DeltaProduct's state-tracking ability. Analysis of hidden state's effective rank. Improved scaling analysis. v6: Added analysis for products of RWKV-7 matrices, v6: Accepted at NeurIPS 2025"
+ },
+ {
+  "key": "terzic2025pdssm",
+  "theme": "state",
+  "expected_title": "Structured Sparse Transition Matrices to Enable State Tracking in State-Space Models",
+  "arxiv_id": "2509.22284",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Structured Sparse Transition Matrices to Enable State Tracking in State-Space Models",
+   "authors": [
+    "Aleksandar Terzić",
+    "Nicolas Menet",
+    "Michael Hersche",
+    "Thomas Hofmann",
+    "Abbas Rahimi"
+   ],
+   "first_version": "2025-09-26",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "ba7d2126093968a055e8de70b623d2d3470c6b49",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2509-22284",
+    "ArXiv": "2509.22284",
+    "DOI": "10.48550/arXiv.2509.22284",
+    "CorpusId": 281659371
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Structured Sparse Transition Matrices to Enable State Tracking in State-Space Models",
+   "venue": "Neural Information Processing Systems",
+   "year": 2025,
+   "publicationDate": "2025-09-26",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2509.22284"
+   },
+   "authors": [
+    {
+     "authorId": "2337691331",
+     "name": "Aleksandar Terzi'c"
+    },
+    {
+     "authorId": "2269732701",
+     "name": "Nicolas Menet"
+    },
+    {
+     "authorId": "50828564",
+     "name": "M. Hersche"
+    },
+    {
+     "authorId": "2275082093",
+     "name": "Thomas Hofmann"
+    },
+    {
+     "authorId": "2259963752",
+     "name": "Abbas Rahimi"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "10 pages, NeurIPS 2025 Spotlight",
+  "openreview": {
+   "venues": [
+    "NeurIPS 2025 spotlight"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "sarrof2024ssm",
+  "theme": "state",
+  "expected_title": "The Expressive Capacity of State Space Models: A Formal Language Perspective",
+  "arxiv_id": "2405.17394",
+  "doi_given": null,
+  "arxiv": {
+   "title": "The Expressive Capacity of State Space Models: A Formal Language Perspective",
+   "authors": [
+    "Yash Sarrof",
+    "Yana Veitsman",
+    "Michael Hahn"
+   ],
+   "first_version": "2024-05-27",
+   "journal_ref": "Advances in Neural Information Processing Systems 37 (2024)",
+   "doi": "10.52202/079017-1304"
+  },
+  "s2": {
+   "paperId": "e7f47e8393c697696a3fccd9ff906dfdb49fe736",
+   "externalIds": {
+    "ArXiv": "2405.17394",
+    "DBLP": "conf/nips/SarrofV024",
+    "DOI": "10.52202/079017-1304",
+    "CorpusId": 270063518
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "The Expressive Capacity of State Space Models: A Formal Language Perspective",
+   "venue": "Neural Information Processing Systems",
+   "year": 2024,
+   "publicationDate": "2024-05-27",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2405.17394"
+   },
+   "authors": [
+    {
+     "authorId": "2303400018",
+     "name": "Yash Sarrof"
+    },
+    {
+     "authorId": "2310342357",
+     "name": "Yana Veitsman"
+    },
+    {
+     "authorId": "2303405797",
+     "name": "Michael Hahn"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Published in NeurIPS 2024"
+ },
+ {
+  "key": "anil2022length",
+  "theme": "state",
+  "expected_title": "Exploring Length Generalization in Large Language Models",
+  "arxiv_id": "2207.04901",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Exploring Length Generalization in Large Language Models",
+   "authors": [
+    "Cem Anil",
+    "Yuhuai Wu",
+    "Anders Andreassen",
+    "Aitor Lewkowycz",
+    "Vedant Misra",
+    "Vinay Ramasesh",
+    "Ambrose Slone",
+    "Guy Gur-Ari",
+    "Ethan Dyer",
+    "Behnam Neyshabur"
+   ],
+   "first_version": "2022-07-11",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "f843233f76a5dff07bfa93a71a1cf13d8aa6a94a",
+   "externalIds": {
+    "ArXiv": "2207.04901",
+    "DBLP": "journals/corr/abs-2207-04901",
+    "DOI": "10.48550/arXiv.2207.04901",
+    "CorpusId": 250425737
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Exploring Length Generalization in Large Language Models",
+   "venue": "Neural Information Processing Systems",
+   "year": 2022,
+   "publicationDate": "2022-07-11",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2207.04901"
+   },
+   "authors": [
+    {
+     "authorId": "48314480",
+     "name": "Cem Anil"
+    },
+    {
+     "authorId": "3374063",
+     "name": "Yu-Huai Wu"
+    },
+    {
+     "authorId": "39552848",
+     "name": "Anders Andreassen"
+    },
+    {
+     "authorId": "102549875",
+     "name": "Aitor Lewkowycz"
+    },
+    {
+     "authorId": "40055795",
+     "name": "Vedant Misra"
+    },
+    {
+     "authorId": "96641652",
+     "name": "V. Ramasesh"
+    },
+    {
+     "authorId": "133666998",
+     "name": "Ambrose Slone"
+    },
+    {
+     "authorId": "2284681044",
+     "name": "Guy Gur-Ari"
+    },
+    {
+     "authorId": "52136425",
+     "name": "Ethan Dyer"
+    },
+    {
+     "authorId": "3007442",
+     "name": "Behnam Neyshabur"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "NeurIPS 2022 Accept"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "kazemnejad2023nope",
+  "theme": "state",
+  "expected_title": "The Impact of Positional Encoding on Length Generalization in Transformers",
+  "arxiv_id": "2305.19466",
+  "doi_given": null,
+  "arxiv": {
+   "title": "The Impact of Positional Encoding on Length Generalization in Transformers",
+   "authors": [
+    "Amirhossein Kazemnejad",
+    "Inkit Padhi",
+    "Karthikeyan Natesan Ramamurthy",
+    "Payel Das",
+    "Siva Reddy"
+   ],
+   "first_version": "2023-05-31",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "6f6e2e0311589a9af045f6acd00b7dee6d19fce4",
+   "externalIds": {
+    "ArXiv": "2305.19466",
+    "DBLP": "conf/nips/KazemnejadPRDR23",
+    "DOI": "10.48550/arXiv.2305.19466",
+    "CorpusId": 258987259
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "The Impact of Positional Encoding on Length Generalization in Transformers",
+   "venue": "Neural Information Processing Systems",
+   "year": 2023,
+   "publicationDate": "2023-05-31",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2305.19466"
+   },
+   "authors": [
+    {
+     "authorId": "1754452702",
+     "name": "Amirhossein Kazemnejad"
+    },
+    {
+     "authorId": "8350409",
+     "name": "Inkit Padhi"
+    },
+    {
+     "authorId": "1704263",
+     "name": "K. Ramamurthy"
+    },
+    {
+     "authorId": "1730372",
+     "name": "Payel Das"
+    },
+    {
+     "authorId": "145732771",
+     "name": "Siva Reddy"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Accepted at NeurIPS 2023; 15 pages and 22 pages Appendix"
+ },
+ {
+  "key": "mcleish2024abacus",
+  "theme": "arith",
+  "expected_title": "Transformers Can Do Arithmetic with the Right Embeddings",
+  "arxiv_id": "2405.17399",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Transformers Can Do Arithmetic with the Right Embeddings",
+   "authors": [
+    "Sean McLeish",
+    "Arpit Bansal",
+    "Alex Stein",
+    "Neel Jain",
+    "John Kirchenbauer",
+    "Brian R. Bartoldson",
+    "Bhavya Kailkhura",
+    "Abhinav Bhatele",
+    "Jonas Geiping",
+    "Avi Schwarzschild",
+    "Tom Goldstein"
+   ],
+   "first_version": "2024-05-27",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "59cf4f0391430523cff7d7ca1819389476ff87a6",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2405-17399",
+    "ArXiv": "2405.17399",
+    "DOI": "10.48550/arXiv.2405.17399",
+    "CorpusId": 270062339
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Transformers Can Do Arithmetic with the Right Embeddings",
+   "venue": "Neural Information Processing Systems",
+   "year": 2024,
+   "publicationDate": "2024-05-27",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2405.17399"
+   },
+   "authors": [
+    {
+     "authorId": "2294875611",
+     "name": "Sean McLeish"
+    },
+    {
+     "authorId": "7364835",
+     "name": "Arpit Bansal"
+    },
+    {
+     "authorId": "2284863998",
+     "name": "Alex Stein"
+    },
+    {
+     "authorId": "2204647912",
+     "name": "Neel Jain"
+    },
+    {
+     "authorId": "2237425585",
+     "name": "John Kirchenbauer"
+    },
+    {
+     "authorId": "41053241",
+     "name": "B. Bartoldson"
+    },
+    {
+     "authorId": "1749353",
+     "name": "B. Kailkhura"
+    },
+    {
+     "authorId": "1823585",
+     "name": "A. Bhatele"
+    },
+    {
+     "authorId": "2344089874",
+     "name": "Jonas Geiping"
+    },
+    {
+     "authorId": "102604362",
+     "name": "Avi Schwarzschild"
+    },
+    {
+     "authorId": "2294872863",
+     "name": "Tom Goldstein"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "ICML 2024 Workshop on LLMs and Cognition Poster",
+    "MATH-AI 24",
+    "NeurIPS 2024",
+    "NeurIPS 2024 poster"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "cho2024coupling",
+  "theme": "arith",
+  "expected_title": "Position Coupling: Improving Length Generalization of Arithmetic Transformers Using Task Structure",
+  "arxiv_id": "2405.20671",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Position Coupling: Improving Length Generalization of Arithmetic Transformers Using Task Structure",
+   "authors": [
+    "Hanseul Cho",
+    "Jaeyoung Cha",
+    "Pranjal Awasthi",
+    "Srinadh Bhojanapalli",
+    "Anupam Gupta",
+    "Chulhee Yun"
+   ],
+   "first_version": "2024-05-31",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "2403122c4ad323e4ef34b2c4370693ecf1011e8b",
+   "externalIds": {
+    "DBLP": "conf/nips/0002CAB0Y24",
+    "ArXiv": "2405.20671",
+    "DOI": "10.52202/079017-0701",
+    "CorpusId": 273695226
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Position Coupling: Improving Length Generalization of Arithmetic Transformers Using Task Structure",
+   "venue": "Neural Information Processing Systems",
+   "year": 2024,
+   "publicationDate": "2024-05-31",
+   "journal": {
+    "name": "Advances in Neural Information Processing Systems 37"
+   },
+   "authors": [
+    {
+     "authorId": "2187666238",
+     "name": "Hanseul Cho"
+    },
+    {
+     "authorId": "2211431793",
+     "name": "Jaeyoung Cha"
+    },
+    {
+     "authorId": "144030228",
+     "name": "Pranjal Awasthi"
+    },
+    {
+     "authorId": "1798880",
+     "name": "Srinadh Bhojanapalli"
+    },
+    {
+     "authorId": "2251843318",
+     "name": "Anupam Gupta"
+    },
+    {
+     "authorId": "2262443997",
+     "name": "Chulhee Yun"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Accepted to NeurIPS 2024. 76 pages. 23 figures. 90 tables"
+ },
+ {
+  "key": "zhou2024robust",
+  "theme": "arith",
+  "expected_title": "Transformers Can Achieve Length Generalization But Not Robustly",
+  "arxiv_id": "2402.09371",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Transformers Can Achieve Length Generalization But Not Robustly",
+   "authors": [
+    "Yongchao Zhou",
+    "Uri Alon",
+    "Xinyun Chen",
+    "Xuezhi Wang",
+    "Rishabh Agarwal",
+    "Denny Zhou"
+   ],
+   "first_version": "2024-02-14",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "8f490b938586d8e1b892304dd5209b2295c93ed7",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2402-09371",
+    "ArXiv": "2402.09371",
+    "DOI": "10.48550/arXiv.2402.09371",
+    "CorpusId": 267658105
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Transformers Can Achieve Length Generalization But Not Robustly",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-02-14",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2402.09371"
+   },
+   "authors": [
+    {
+     "authorId": "2189664830",
+     "name": "Yongchao Zhou"
+    },
+    {
+     "authorId": "2268672727",
+     "name": "Uri Alon"
+    },
+    {
+     "authorId": "2238263119",
+     "name": "Xin-Yun Chen"
+    },
+    {
+     "authorId": "2275277634",
+     "name": "Xue-Zhi Wang"
+    },
+    {
+     "authorId": "2253488622",
+     "name": "Rishabh Agarwal"
+    },
+    {
+     "authorId": "2256313467",
+     "name": "Denny Zhou"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "ME-FoMo 2024 Poster"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "zhou2024raspl",
+  "theme": "arith",
+  "expected_title": "What Algorithms can Transformers Learn? A Study in Length Generalization",
+  "arxiv_id": "2310.16028",
+  "doi_given": null,
+  "arxiv": {
+   "title": "What Algorithms can Transformers Learn? A Study in Length Generalization",
+   "authors": [
+    "Hattie Zhou",
+    "Arwen Bradley",
+    "Etai Littwin",
+    "Noam Razin",
+    "Omid Saremi",
+    "Josh Susskind",
+    "Samy Bengio",
+    "Preetum Nakkiran"
+   ],
+   "first_version": "2023-10-24",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "1ec3a3ff77cb4b424499b3805ecc90182ecd8f8b",
+   "externalIds": {
+    "ArXiv": "2310.16028",
+    "DBLP": "conf/iclr/ZhouBLRSSBN24",
+    "DOI": "10.48550/arXiv.2310.16028",
+    "CorpusId": 264439160
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "What Algorithms can Transformers Learn? A Study in Length Generalization",
+   "venue": "International Conference on Learning Representations",
+   "year": 2023,
+   "publicationDate": "2023-10-24",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2310.16028"
+   },
+   "authors": [
+    {
+     "authorId": "2261393101",
+     "name": "Hattie Zhou"
+    },
+    {
+     "authorId": "153523234",
+     "name": "Arwen Bradley"
+    },
+    {
+     "authorId": "1762320",
+     "name": "Etai Littwin"
+    },
+    {
+     "authorId": "1388726511",
+     "name": "Noam Razin"
+    },
+    {
+     "authorId": "2438203",
+     "name": "O. Saremi"
+    },
+    {
+     "authorId": "2243336902",
+     "name": "Josh M. Susskind"
+    },
+    {
+     "authorId": "1751569",
+     "name": "Samy Bengio"
+    },
+    {
+     "authorId": "2181918",
+     "name": "Preetum Nakkiran"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Preprint"
+ },
+ {
+  "key": "lee2024teaching",
+  "theme": "arith",
+  "expected_title": "Teaching Arithmetic to Small Transformers",
+  "arxiv_id": "2307.03381",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Teaching Arithmetic to Small Transformers",
+   "authors": [
+    "Nayoung Lee",
+    "Kartik Sreenivasan",
+    "Jason D. Lee",
+    "Kangwook Lee",
+    "Dimitris Papailiopoulos"
+   ],
+   "first_version": "2023-07-07",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "0db0af0cd3ceb0531a050a03e6ceb849580ff53b",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2307-03381",
+    "ArXiv": "2307.03381",
+    "DOI": "10.48550/arXiv.2307.03381",
+    "CorpusId": 259375870
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Teaching Arithmetic to Small Transformers",
+   "venue": "arXiv.org",
+   "year": 2023,
+   "publicationDate": "2023-07-07",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2307.03381"
+   },
+   "authors": [
+    {
+     "authorId": "2221365914",
+     "name": "Nayoung Lee"
+    },
+    {
+     "authorId": "34824875",
+     "name": "K. Sreenivasan"
+    },
+    {
+     "authorId": "2108327687",
+     "name": "Jason D. Lee"
+    },
+    {
+     "authorId": "2115495251",
+     "name": "Kangwook Lee"
+    },
+    {
+     "authorId": "1740595",
+     "name": "Dimitris Papailiopoulos"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "ICLR 2024",
+    "ICLR 2024 poster",
+    "MATH-AI 23 Poster"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "lee2025selfimproving",
+  "theme": "arith",
+  "expected_title": "Self-Improving Transformers Overcome Easy-to-Hard and Length Generalization Challenges",
+  "arxiv_id": "2502.01612",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Self-Improving Transformers Overcome Easy-to-Hard and Length Generalization Challenges",
+   "authors": [
+    "Nayoung Lee",
+    "Ziyang Cai",
+    "Avi Schwarzschild",
+    "Kangwook Lee",
+    "Dimitris Papailiopoulos"
+   ],
+   "first_version": "2025-02-03",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "512439b94b682534d8afc3c7c6809fee087a19b1",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2502-01612",
+    "ArXiv": "2502.01612",
+    "DOI": "10.48550/arXiv.2502.01612",
+    "CorpusId": 276107223
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "Self-Improving Transformers Overcome Easy-to-Hard and Length Generalization Challenges",
+   "venue": "International Conference on Machine Learning",
+   "year": 2025,
+   "publicationDate": "2025-02-03",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2502.01612"
+   },
+   "authors": [
+    {
+     "authorId": "2221365914",
+     "name": "Nayoung Lee"
+    },
+    {
+     "authorId": "2326254990",
+     "name": "Zi-Yang Cai"
+    },
+    {
+     "authorId": "102604362",
+     "name": "Avi Schwarzschild"
+    },
+    {
+     "authorId": "2267745065",
+     "name": "Kangwook Lee"
+    },
+    {
+     "authorId": "107579958",
+     "name": "Dimitris Papailiopoulos"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Added references",
+  "openreview": {
+   "venues": [
+    "ICML 2025 poster",
+    "SSI-FM Oral"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "kaiser2016neuralgpu",
+  "theme": "arith",
+  "expected_title": "Neural GPUs Learn Algorithms",
+  "arxiv_id": "1511.08228",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Neural GPUs Learn Algorithms",
+   "authors": [
+    "Łukasz Kaiser",
+    "Ilya Sutskever"
+   ],
+   "first_version": "2015-11-25",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "5e4eb58d5b47ac1c73f4cf189497170e75ae6237",
+   "externalIds": {
+    "MAG": "2173051530",
+    "DBLP": "journals/corr/KaiserS15",
+    "ArXiv": "1511.08228",
+    "CorpusId": 2009318
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Neural GPUs Learn Algorithms",
+   "venue": "International Conference on Learning Representations",
+   "year": 2015,
+   "publicationDate": "2015-11-25",
+   "journal": {
+    "name": "arXiv: Learning",
+    "volume": ""
+   },
+   "authors": [
+    {
+     "authorId": "40527594",
+     "name": "Lukasz Kaiser"
+    },
+    {
+     "authorId": "1701686",
+     "name": "I. Sutskever"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [],
+   "complete": false
+  }
+ },
+ {
+  "key": "bachmann2024pitfalls",
+  "theme": "nexttoken",
+  "expected_title": "The pitfalls of next-token prediction",
+  "arxiv_id": "2403.06963",
+  "doi_given": null,
+  "arxiv": {
+   "title": "The pitfalls of next-token prediction",
+   "authors": [
+    "Gregor Bachmann",
+    "Vaishnavh Nagarajan"
+   ],
+   "first_version": "2024-03-11",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "a01e1138600499f65462ed3d51c3e76af1aad18c",
+   "externalIds": {
+    "ArXiv": "2403.06963",
+    "DBLP": "conf/icml/BachmannN24",
+    "DOI": "10.48550/arXiv.2403.06963",
+    "CorpusId": 268364153
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "The pitfalls of next-token prediction",
+   "venue": "International Conference on Machine Learning",
+   "year": 2024,
+   "publicationDate": "2024-03-11",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2403.06963"
+   },
+   "authors": [
+    {
+     "authorId": "2336089982",
+     "name": "Gregor Bachmann"
+    },
+    {
+     "authorId": "34602162",
+     "name": "Vaishnavh Nagarajan"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "ICML 2024"
+ },
+ {
+  "key": "ross2011dagger",
+  "theme": "nexttoken",
+  "expected_title": "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning",
+  "arxiv_id": "1011.0686",
+  "doi_given": null,
+  "arxiv": {
+   "title": "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning",
+   "authors": [
+    "Stephane Ross",
+    "Geoffrey J. Gordon",
+    "J. Andrew Bagnell"
+   ],
+   "first_version": "2010-11-02",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "79ab3c49903ec8cb339437ccf5cf998607fc313e",
+   "externalIds": {
+    "MAG": "2951204162",
+    "DBLP": "journals/jmlr/RossGB11",
+    "ArXiv": "1011.0686",
+    "CorpusId": 103456
+   },
+   "publicationVenue": {
+    "id": "2d136b11-c2b5-484b-b008-7f4a852fd61e",
+    "name": "International Conference on Artificial Intelligence and Statistics",
+    "type": "conference",
+    "alternate_names": [
+     "AISTATS",
+     "Int Conf Artif Intell Stat"
+    ]
+   },
+   "title": "A Reduction of Imitation Learning and Structured Prediction to No-Regret Online Learning",
+   "venue": "International Conference on Artificial Intelligence and Statistics",
+   "year": 2010,
+   "publicationDate": "2010-11-02",
+   "journal": {
+    "pages": "627-635"
+   },
+   "authors": [
+    {
+     "authorId": "1700433",
+     "name": "S. Ross"
+    },
+    {
+     "authorId": "21889436",
+     "name": "Geoffrey J. Gordon"
+    },
+    {
+     "authorId": "1756566",
+     "name": "J. Bagnell"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Appearing in the 14th International Conference on Artificial Intelligence and Statistics (AISTATS 2011)"
+ },
+ {
+  "key": "bengio2015scheduled",
+  "theme": "nexttoken",
+  "expected_title": "Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks",
+  "arxiv_id": "1506.03099",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks",
+   "authors": [
+    "Samy Bengio",
+    "Oriol Vinyals",
+    "Navdeep Jaitly",
+    "Noam Shazeer"
+   ],
+   "first_version": "2015-06-09",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "df137487e20ba7c6e1e2b9a1e749f2a578b5ad99",
+   "externalIds": {
+    "MAG": "648786980",
+    "DBLP": "conf/nips/BengioVJS15",
+    "ArXiv": "1506.03099",
+    "CorpusId": 1820089
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Scheduled Sampling for Sequence Prediction with Recurrent Neural Networks",
+   "venue": "Neural Information Processing Systems",
+   "year": 2015,
+   "publicationDate": "2015-06-09",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/1506.03099"
+   },
+   "authors": [
+    {
+     "authorId": "1751569",
+     "name": "Samy Bengio"
+    },
+    {
+     "authorId": "1689108",
+     "name": "O. Vinyals"
+    },
+    {
+     "authorId": "3111912",
+     "name": "N. Jaitly"
+    },
+    {
+     "authorId": "1846258",
+     "name": "Noam Shazeer"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "nerode1958",
+  "theme": "worldmodel",
+  "expected_title": "Linear automaton transformations",
+  "arxiv_id": null,
+  "doi_given": "10.1090/S0002-9939-1958-0135681-9",
+  "crossref": {
+   "title": "Linear automaton transformations",
+   "authors": [
+    "A. Nerode"
+   ],
+   "container": "Proceedings of the American Mathematical Society",
+   "year": 1958,
+   "volume": "9",
+   "issue": "4",
+   "page": "541-544",
+   "publisher": "American Mathematical Society (AMS)",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "ed56719962b555b7c37dc9ab3e9920ba9a21397c",
+   "externalIds": {
+    "MAG": "2088432971",
+    "DOI": "10.1090/S0002-9939-1958-0135681-9",
+    "CorpusId": 122862946
+   },
+   "publicationVenue": null,
+   "title": "Linear automaton transformations",
+   "venue": "",
+   "year": 1958,
+   "publicationDate": "1958-04-01",
+   "journal": {
+    "name": "",
+    "pages": "541-544",
+    "volume": "9"
+   },
+   "authors": [
+    {
+     "authorId": "2489016457",
+     "name": "Anil Nerode"
+    }
+   ]
+  },
+  "title_match": 1.0
+ },
+ {
+  "key": "vafa2024worldmodel",
+  "theme": "worldmodel",
+  "expected_title": "Evaluating the World Model Implicit in a Generative Model",
+  "arxiv_id": "2406.03689",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Evaluating the World Model Implicit in a Generative Model",
+   "authors": [
+    "Keyon Vafa",
+    "Justin Y. Chen",
+    "Ashesh Rambachan",
+    "Jon Kleinberg",
+    "Sendhil Mullainathan"
+   ],
+   "first_version": "2024-06-06",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "61e5bafb567b36960a6e1584b3753d9de09b45aa",
+   "externalIds": {
+    "DBLP": "conf/nips/VafaCRKM24",
+    "ArXiv": "2406.03689",
+    "DOI": "10.48550/arXiv.2406.03689",
+    "CorpusId": 270285753
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Evaluating the World Model Implicit in a Generative Model",
+   "venue": "Neural Information Processing Systems",
+   "year": 2024,
+   "publicationDate": "2024-06-06",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2406.03689"
+   },
+   "authors": [
+    {
+     "authorId": "70025184",
+     "name": "Keyon Vafa"
+    },
+    {
+     "authorId": "2244771469",
+     "name": "J. Chen"
+    },
+    {
+     "authorId": "2218834137",
+     "name": "Jon M. Kleinberg"
+    },
+    {
+     "authorId": "2253742235",
+     "name": "S. Mullainathan"
+    },
+    {
+     "authorId": "88738815",
+     "name": "Ashesh Rambachan"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "li2023othello",
+  "theme": "worldmodel",
+  "expected_title": "Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task",
+  "arxiv_id": "2210.13382",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task",
+   "authors": [
+    "Kenneth Li",
+    "Aspen K. Hopkins",
+    "David Bau",
+    "Fernanda Viégas",
+    "Hanspeter Pfister",
+    "Martin Wattenberg"
+   ],
+   "first_version": "2022-10-24",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "d5295f7ddcf281f3d30a7579d5ce482036a8e27c",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2210-13382",
+    "ArXiv": "2210.13382",
+    "DOI": "10.48550/arXiv.2210.13382",
+    "CorpusId": 253098566
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Emergent World Representations: Exploring a Sequence Model Trained on a Synthetic Task",
+   "venue": "International Conference on Learning Representations",
+   "year": 2022,
+   "publicationDate": "2022-10-24",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2210.13382"
+   },
+   "authors": [
+    {
+     "authorId": "2149140708",
+     "name": "Kenneth Li"
+    },
+    {
+     "authorId": "1934459700",
+     "name": "Aspen K. Hopkins"
+    },
+    {
+     "authorId": "144159726",
+     "name": "David Bau"
+    },
+    {
+     "authorId": "2064951472",
+     "name": "Fernanda Vi'egas"
+    },
+    {
+     "authorId": "143758236",
+     "name": "H. Pfister"
+    },
+    {
+     "authorId": "145233583",
+     "name": "M. Wattenberg"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "ICLR 2023 oral (notable-top-5%): https://openreview.net/forum?id=DeG07_TcZvT ; code: https://github.com/likenneth/othello_world",
+  "openreview": {
+   "venues": [
+    "ICLR 2023"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "nanda2023linear",
+  "theme": "worldmodel",
+  "expected_title": "Emergent Linear Representations in World Models of Self-Supervised Sequence Models",
+  "arxiv_id": "2309.00941",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Emergent Linear Representations in World Models of Self-Supervised Sequence Models",
+   "authors": [
+    "Neel Nanda",
+    "Andrew Lee",
+    "Martin Wattenberg"
+   ],
+   "first_version": "2023-09-02",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "bb26227a94ddb2b0088a23e2ec0a170c40bc4d78",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2309-00941",
+    "ArXiv": "2309.00941",
+    "ACL": "2023.blackboxnlp-1.2",
+    "DOI": "10.48550/arXiv.2309.00941",
+    "CorpusId": 261530966
+   },
+   "publicationVenue": {
+    "id": "738626d7-5b8c-497d-9fd6-64bdb6dbf440",
+    "name": "BlackboxNLP Workshop on Analyzing and Interpreting Neural Networks for NLP",
+    "type": "conference",
+    "alternate_names": [
+     "BlackboxNLP",
+     "Blackboxnlp Workshop Anal Interprèt Neural Netw NLP"
+    ],
+    "url": "https://aclanthology.org/venues/blackboxnlp/"
+   },
+   "title": "Emergent Linear Representations in World Models of Self-Supervised Sequence Models",
+   "venue": "BlackboxNLP Workshop on Analyzing and Interpreting Neural Networks for NLP",
+   "year": 2023,
+   "publicationDate": "2023-09-02",
+   "journal": {
+    "pages": "16-30"
+   },
+   "authors": [
+    {
+     "authorId": "2051128902",
+     "name": "Neel Nanda"
+    },
+    {
+     "authorId": "2237957247",
+     "name": "Andrew Lee"
+    },
+    {
+     "authorId": "2237803620",
+     "name": "Martin Wattenberg"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "BlackboxNLP@EMNLP 2023"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "angluin1987",
+  "theme": "automata",
+  "expected_title": "Learning regular sets from queries and counterexamples",
+  "arxiv_id": null,
+  "doi_given": "10.1016/0890-5401(87)90052-6",
+  "crossref": {
+   "title": "Learning regular sets from queries and counterexamples",
+   "authors": [
+    "Dana Angluin"
+   ],
+   "container": "Information and Computation",
+   "year": 1987,
+   "volume": "75",
+   "issue": "2",
+   "page": "87-106",
+   "publisher": "Elsevier BV",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "225331d1700a9544545cc7c54a63c1b485269ce7",
+   "externalIds": {
+    "MAG": "2125407490",
+    "DBLP": "journals/iandc/Angluin87",
+    "DOI": "10.1016/0890-5401(87)90052-6",
+    "CorpusId": 11873053
+   },
+   "publicationVenue": {
+    "id": "d8fc27e3-52dd-4758-bc70-1983b8a26797",
+    "name": "Information and Computation",
+    "type": "journal",
+    "alternate_names": [
+     "Inf Comput",
+     "Information & Computation",
+     "Inf  Comput"
+    ],
+    "issn": "0890-5401",
+    "url": "http://www.elsevier.com/wps/find/journaldescription.cws_home/622844/description#description",
+    "alternate_urls": [
+     "http://www.idealibrary.com/links/toc/inco",
+     "http://iandc.csail.mit.edu/",
+     "http://www.sciencedirect.com/science/journal/08905401",
+     "https://www.journals.elsevier.com/information-and-computation/"
+    ]
+   },
+   "title": "Learning Regular Sets from Queries and Counterexamples",
+   "venue": "Information and Computation",
+   "year": 1987,
+   "publicationDate": "1987-11-01",
+   "journal": {
+    "name": "Inf. Comput.",
+    "pages": "87-106",
+    "volume": "75"
+   },
+   "authors": [
+    {
+     "authorId": "2911738",
+     "name": "D. Angluin"
+    }
+   ]
+  },
+  "title_match": 1.0
+ },
+ {
+  "key": "weiss2018extracting",
+  "theme": "automata",
+  "expected_title": "Extracting Automata from Recurrent Neural Networks Using Queries and Counterexamples",
+  "arxiv_id": "1711.09576",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Extracting Automata from Recurrent Neural Networks Using Queries and Counterexamples",
+   "authors": [
+    "Gail Weiss",
+    "Yoav Goldberg",
+    "Eran Yahav"
+   ],
+   "first_version": "2017-11-27",
+   "journal_ref": "ICML 2018",
+   "doi": null
+  },
+  "s2": {
+   "paperId": "4e4cae6d93a1c2bdc2ac0fa2810a270052378fe2",
+   "externalIds": {
+    "MAG": "2963125544",
+    "DBLP": "conf/icml/WeissGY18",
+    "ArXiv": "1711.09576",
+    "CorpusId": 40079179
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "Extracting Automata from Recurrent Neural Networks Using Queries and Counterexamples",
+   "venue": "International Conference on Machine Learning",
+   "year": 2017,
+   "publicationDate": "2017-11-27",
+   "journal": {
+    "pages": "5244-5253"
+   },
+   "authors": [
+    {
+     "authorId": "145909798",
+     "name": "Gail Weiss"
+    },
+    {
+     "authorId": "2089067",
+     "name": "Yoav Goldberg"
+    },
+    {
+     "authorId": "1743232",
+     "name": "Eran Yahav"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Accepted in ICML 2018, (Feb 2020: added link to code, at https://github.com/tech-srl/lstar_extraction )"
+ },
+ {
+  "key": "hsu2012spectral",
+  "theme": "automata",
+  "expected_title": "A Spectral Algorithm for Learning Hidden Markov Models",
+  "arxiv_id": "0811.4413",
+  "doi_given": null,
+  "arxiv": {
+   "title": "A Spectral Algorithm for Learning Hidden Markov Models",
+   "authors": [
+    "Daniel Hsu",
+    "Sham M. Kakade",
+    "Tong Zhang"
+   ],
+   "first_version": "2008-11-26",
+   "journal_ref": "Journal of Computer and System Sciences, 78(5):1460-1480, 2012",
+   "doi": null
+  },
+  "s2": {
+   "paperId": "16611312448f5897c7a84e2f590617f4fa3847c4",
+   "externalIds": {
+    "MAG": "2569025259",
+    "DBLP": "journals/corr/abs-0811-4413",
+    "ArXiv": "0811.4413",
+    "DOI": "10.1016/J.JCSS.2011.12.025",
+    "CorpusId": 220740158
+   },
+   "publicationVenue": {
+    "id": "fa71f5e5-b029-4311-ae45-2ade36048a5d",
+    "name": "Journal of computer and system sciences (Print)",
+    "type": "journal",
+    "alternate_names": [
+     "Journal of Computer and System Sciences",
+     "J comput syst sci (print",
+     "J Comput Syst Sci"
+    ],
+    "issn": "0022-0000",
+    "url": "http://www.elsevier.com/locate/jcss",
+    "alternate_urls": [
+     "http://www.sciencedirect.com/science/journal/00220000",
+     "http://www.idealibrary.com/"
+    ]
+   },
+   "title": "A spectral algorithm for learning Hidden Markov Models",
+   "venue": "Journal of computer and system sciences (Print)",
+   "year": 2008,
+   "publicationDate": "2008-11-26",
+   "journal": {
+    "name": "J. Comput. Syst. Sci.",
+    "pages": "1460-1480",
+    "volume": "78"
+   },
+   "authors": [
+    {
+     "authorId": "143724861",
+     "name": "Daniel J. Hsu"
+    },
+    {
+     "authorId": "144695232",
+     "name": "S. Kakade"
+    },
+    {
+     "authorId": "49104973",
+     "name": "Tong Zhang"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Published in JCSS Special Issue \"Learning Theory 2009\"",
+  "openreview": {
+   "venues": [
+    "J. Comput. Syst. Sci. 2012"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "balle2014spectral",
+  "theme": "automata",
+  "expected_title": "Spectral learning of weighted automata",
+  "arxiv_id": null,
+  "doi_given": "10.1007/s10994-013-5416-x",
+  "crossref": {
+   "title": "Spectral learning of weighted automata",
+   "authors": [
+    "Borja Balle",
+    "Xavier Carreras",
+    "Franco M. Luque",
+    "Ariadna Quattoni"
+   ],
+   "container": "Machine Learning",
+   "year": 2013,
+   "volume": "96",
+   "issue": "1-2",
+   "page": "33-63",
+   "publisher": "Springer Science and Business Media LLC",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "a7c979d386448912abe39669078e538e1ac5b757",
+   "externalIds": {
+    "DOI": "10.1007/s10994-013-5416-x",
+    "CorpusId": 254740472
+   },
+   "publicationVenue": {
+    "id": "22c9862f-a25e-40cd-9d31-d09e68a293e6",
+    "name": "Machine-mediated learning",
+    "type": "journal",
+    "alternate_names": [
+     "Mach learn",
+     "Machine Learning",
+     "Mach Learn"
+    ],
+    "issn": "0732-6718",
+    "alternate_issns": [
+     "0885-6125"
+    ],
+    "url": "http://www.springer.com/computer/artificial/journal/10994",
+    "alternate_urls": [
+     "https://link.springer.com/journal/10994",
+     "http://www.springer.com/west/home/computer/artificial?SGWID=4-147-70-35726603-0"
+    ]
+   },
+   "title": "Spectral learning of weighted automata",
+   "venue": "Machine-mediated learning",
+   "year": 2013,
+   "publicationDate": "2013-10-03",
+   "journal": {
+    "name": "Machine Learning",
+    "pages": "33 - 63",
+    "volume": "96"
+   },
+   "authors": [
+    {
+     "authorId": "1718064",
+     "name": "Borja Balle"
+    },
+    {
+     "authorId": "1701734",
+     "name": "Xavier Carreras"
+    },
+    {
+     "authorId": "1913710",
+     "name": "Franco M. Luque"
+    },
+    {
+     "authorId": "3171632",
+     "name": "A. Quattoni"
+    }
+   ]
+  },
+  "title_match": 1.0
+ },
+ {
+  "key": "hokalman1966",
+  "theme": "automata",
+  "expected_title": "Effective construction of linear state-variable models from input/output functions",
+  "arxiv_id": null,
+  "doi_given": "10.1524/auto.1966.14.112.545",
+  "crossref": {
+   "title": "Editorial: Effective construction of linear state-variable models from input/output functions",
+   "authors": [
+    "Β. L. HO",
+    "R. E. KALMAN"
+   ],
+   "container": "auto",
+   "year": 1966,
+   "volume": "14",
+   "issue": "1-12",
+   "page": "545-548",
+   "publisher": "Walter de Gruyter GmbH",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "483f1961fa2d5442fe5b9ab53d36dcc4e239c12d",
+   "externalIds": {
+    "MAG": "2319568793",
+    "DOI": "10.1524/auto.1966.14.112.545",
+    "CorpusId": 60950621
+   },
+   "publicationVenue": null,
+   "title": "Editorial: Effective construction of linear state-variable models from input/output functions",
+   "venue": "",
+   "year": 1966,
+   "publicationDate": null,
+   "journal": {
+    "pages": "545 - 548",
+    "volume": "14"
+   },
+   "authors": [
+    {
+     "authorId": "66166471",
+     "name": "B. Ho"
+    },
+    {
+     "authorId": "31211229",
+     "name": "R. Kálmán"
+    }
+   ]
+  },
+  "title_match": 0.9425287356321839
+ },
+ {
+  "key": "crutchfield1989",
+  "theme": "compmech",
+  "expected_title": "Inferring statistical complexity",
+  "arxiv_id": null,
+  "doi_given": "10.1103/PhysRevLett.63.105",
+  "crossref": {
+   "title": "Inferring statistical complexity",
+   "authors": [
+    "James P. Crutchfield",
+    "Karl Young"
+   ],
+   "container": "Physical Review Letters",
+   "year": 1989,
+   "volume": "63",
+   "issue": "2",
+   "page": "105-108",
+   "publisher": "American Physical Society (APS)",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "a1439eca3c95c5104e33a5765eae2641f7811251",
+   "externalIds": {
+    "MAG": "2075694080",
+    "DOI": "10.1103/PHYSREVLETT.63.105",
+    "CorpusId": 37896415,
+    "PubMed": "10040781"
+   },
+   "publicationVenue": {
+    "id": "16c9f9d4-bee1-435d-8c85-22a3deba109d",
+    "name": "Physical Review Letters",
+    "type": "journal",
+    "alternate_names": [
+     "Phys Rev Lett"
+    ],
+    "issn": "0031-9007",
+    "url": "https://journals.aps.org/prl/",
+    "alternate_urls": [
+     "http://journals.aps.org/prl/",
+     "http://prl.aps.org/"
+    ]
+   },
+   "title": "Inferring statistical complexity.",
+   "venue": "Physical Review Letters",
+   "year": 1989,
+   "publicationDate": "1989-07-10",
+   "journal": {
+    "name": "Physical review letters",
+    "pages": "\n          105-108\n        ",
+    "volume": "63 2"
+   },
+   "authors": [
+    {
+     "authorId": "1761373",
+     "name": "J. Crutchfield"
+    },
+    {
+     "authorId": "2065242656",
+     "name": "K. Young"
+    }
+   ]
+  },
+  "title_match": 1.0
+ },
+ {
+  "key": "shalizi2001compmech",
+  "theme": "compmech",
+  "expected_title": "Computational Mechanics: Pattern and Prediction, Structure and Simplicity",
+  "arxiv_id": "cond-mat/9907176",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Computational Mechanics: Pattern and Prediction, Structure and Simplicity",
+   "authors": [
+    "Cosma Rohilla Shalizi",
+    "James P. Crutchfield"
+   ],
+   "first_version": "1999-07-13",
+   "journal_ref": "Journal of Statistical Physics 104 (2001): 816--879",
+   "doi": "10.1023/A:1010388907793"
+  },
+  "s2": {
+   "paperId": "009368accf9d7521a69f04cc3c3227c77622b035",
+   "externalIds": {
+    "DBLP": "journals/corr/cond-mat-9907176",
+    "MAG": "1551871633",
+    "ArXiv": "cond-mat/9907176",
+    "DOI": "10.1023/A:1010388907793",
+    "CorpusId": 6493647
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Computational Mechanics: Pattern and Prediction, Structure and Simplicity",
+   "venue": "arXiv.org",
+   "year": 1999,
+   "publicationDate": "1999-07-01",
+   "journal": {
+    "name": "Journal of Statistical Physics",
+    "pages": "817-879",
+    "volume": "104"
+   },
+   "authors": [
+    {
+     "authorId": "1788415",
+     "name": "C. Shalizi"
+    },
+    {
+     "authorId": "1761373",
+     "name": "J. Crutchfield"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "29 pages, 4 EPS figures, http://www.santafe.edu/projects/CompMech/papers/cmppss.html Revision: Typos fixed, minor tweaks to wording, a few references updated",
+  "openreview": {
+   "venues": [],
+   "complete": false
+  }
+ },
+ {
+  "key": "littman2002psr",
+  "theme": "compmech",
+  "expected_title": "Predictive representations of state",
+  "arxiv_id": null,
+  "doi_given": null,
+  "s2": null,
+  "crossref_search": [
+   {
+    "doi": "10.1145/1143844.1143973",
+    "title": "Predictive state representations with options",
+    "match": 0.725,
+    "container": "Proceedings of the 23rd international conference on Machine learning  - ICML '06",
+    "year": 2006,
+    "authors": [
+     "Britton Wolfe",
+     "Satinder Singh"
+    ]
+   },
+   {
+    "doi": "10.1109/icmla.2004.1383528",
+    "title": "Planning with predictive state representations",
+    "match": 0.642,
+    "container": "2004 International Conference on Machine Learning and Applications, 2004. Proceedings.",
+    "year": null,
+    "authors": [
+     "M.R. James",
+     "S. Singh",
+     "M.L. Littman"
+    ]
+   },
+   {
+    "doi": "10.24963/ijcai.2021/299",
+    "title": "Reconciling Rewards with Predictive State Representations",
+    "match": 0.565,
+    "container": "Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence",
+    "year": 2021,
+    "authors": [
+     "Andrea Baisero",
+     "Christopher Amato"
+    ]
+   },
+   {
+    "doi": "10.15607/rss.2010.vi.036",
+    "title": "Closing the Learning-Planning Loop with Predictive State Representations",
+    "match": 0.486,
+    "container": "Robotics: Science and Systems VI",
+    "year": 2010,
+    "authors": [
+     "B. Boots",
+     "S. Siddiqi",
+     "G. Gordon"
+    ]
+   },
+   {
+    "doi": "10.7551/mitpress/9123.003.0040",
+    "title": "Closing the Learning-Planning Loop with Predictive State Representations",
+    "match": 0.486,
+    "container": "Robotics",
+    "year": 2011,
+    "authors": [
+     "Byron Boots",
+     "Sajid M. Siddiqi",
+     "Geoffrey J. Gordon"
+    ]
+   }
+  ],
+  "s2_search": [],
+  "title_match": 0.0,
+  "crossref_extra": [
+   {
+    "doi": "10.1145/1143844.1143973",
+    "title": "Predictive state representations with options",
+    "match": 0.725,
+    "container": "Proceedings of the 23rd international conference on Machine learning  - ICML '06",
+    "year": 2006,
+    "authors": [
+     "Britton Wolfe",
+     "Satinder Singh"
+    ]
+   },
+   {
+    "doi": "10.1109/icmla.2004.1383528",
+    "title": "Planning with predictive state representations",
+    "match": 0.642,
+    "container": "2004 International Conference on Machine Learning and Applications, 2004. Proceedings.",
+    "year": null,
+    "authors": [
+     "M.R. James",
+     "S. Singh",
+     "M.L. Littman"
+    ]
+   },
+   {
+    "doi": "10.24963/ijcai.2021/299",
+    "title": "Reconciling Rewards with Predictive State Representations",
+    "match": 0.565,
+    "container": "Proceedings of the Thirtieth International Joint Conference on Artificial Intelligence",
+    "year": 2021,
+    "authors": [
+     "Andrea Baisero",
+     "Christopher Amato"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "singh2004psr",
+  "theme": "compmech",
+  "expected_title": "Predictive State Representations: A New Theory for Modeling Dynamical Systems",
+  "arxiv_id": "1207.4167",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Predictive State Representations: A New Theory for Modeling Dynamical Systems",
+   "authors": [
+    "Satinder Singh",
+    "Michael James",
+    "Matthew Rudary"
+   ],
+   "first_version": "2012-07-11",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "532c61a2af5cde64628d0cdd2ba0823800118d0f",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-1207-4167",
+    "MAG": "1540337045",
+    "ArXiv": "1207.4167",
+    "CorpusId": 5159462
+   },
+   "publicationVenue": {
+    "id": "f9af8000-42f8-410d-a622-e8811e41660a",
+    "name": "Conference on Uncertainty in Artificial Intelligence",
+    "type": "conference",
+    "alternate_names": [
+     "Uncertainty in Artificial Intelligence",
+     "UAI",
+     "Conf Uncertain Artif Intell",
+     "Uncertain Artif Intell"
+    ],
+    "url": "http://www.auai.org/"
+   },
+   "title": "Predictive State Representations: A New Theory for Modeling Dynamical Systems",
+   "venue": "Conference on Uncertainty in Artificial Intelligence",
+   "year": 2004,
+   "publicationDate": "2004-07-07",
+   "journal": {
+    "pages": "512-518"
+   },
+   "authors": [
+    {
+     "authorId": "1699868",
+     "name": "Satinder Singh"
+    },
+    {
+     "authorId": "71542506",
+     "name": "Michael R. James"
+    },
+    {
+     "authorId": "1773939",
+     "name": "Matthew R. Rudary"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Appears in Proceedings of the Twentieth Conference on Uncertainty in Artificial Intelligence (UAI2004)",
+  "openreview": {
+   "venues": [],
+   "complete": true
+  }
+ },
+ {
+  "key": "boots2011psr",
+  "theme": "compmech",
+  "expected_title": "Closing the Learning-Planning Loop with Predictive State Representations",
+  "arxiv_id": "0912.2385",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Closing the Learning-Planning Loop with Predictive State Representations",
+   "authors": [
+    "Byron Boots",
+    "Sajid M. Siddiqi",
+    "Geoffrey J. Gordon"
+   ],
+   "first_version": "2009-12-12",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "62ff2180783c79283c281cbdb56aea24f9487013",
+   "externalIds": {
+    "DBLP": "journals/ijrr/BootsSG11",
+    "MAG": "1827128995",
+    "ArXiv": "0912.2385",
+    "DOI": "10.1177/0278364911404092",
+    "CorpusId": 5156281
+   },
+   "publicationVenue": null,
+   "title": "Closing the learning-planning loop with predictive state representations",
+   "venue": "Int. J. Robotics Res.",
+   "year": 2009,
+   "publicationDate": "2009-12-11",
+   "journal": {
+    "name": "The International Journal of Robotics Research",
+    "pages": "954 - 966",
+    "volume": "30"
+   },
+   "authors": [
+    {
+     "authorId": "3288815",
+     "name": "Byron Boots"
+    },
+    {
+     "authorId": "2286485",
+     "name": "S. Siddiqi"
+    },
+    {
+     "authorId": "21889436",
+     "name": "Geoffrey J. Gordon"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "shai2024belief",
+  "theme": "compmech",
+  "expected_title": "Transformers represent belief state geometry in their residual stream",
+  "arxiv_id": "2405.15943",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Transformers represent belief state geometry in their residual stream",
+   "authors": [
+    "Adam S. Shai",
+    "Sarah E. Marzen",
+    "Lucas Teixeira",
+    "Alexander Gietelink Oldenziel",
+    "Paul M. Riechers"
+   ],
+   "first_version": "2024-05-24",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "f481cf18598b8e4c069e6aced38b71b654db5dc3",
+   "externalIds": {
+    "ArXiv": "2405.15943",
+    "DBLP": "conf/nips/ShaiTOMR24",
+    "DOI": "10.48550/arXiv.2405.15943",
+    "CorpusId": 270063773
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Transformers represent belief state geometry in their residual stream",
+   "venue": "Neural Information Processing Systems",
+   "year": 2024,
+   "publicationDate": "2024-05-24",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2405.15943"
+   },
+   "authors": [
+    {
+     "authorId": "3232047",
+     "name": "A. Shai"
+    },
+    {
+     "authorId": "1824509",
+     "name": "Sarah E. Marzen"
+    },
+    {
+     "authorId": "2408794759",
+     "name": "Lucas Teixeira"
+    },
+    {
+     "authorId": "2303403059",
+     "name": "Alexander Gietelink Oldenziel"
+    },
+    {
+     "authorId": "2542784",
+     "name": "P. Riechers"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "givan2003",
+  "theme": "bisim",
+  "expected_title": "Equivalence notions and model minimization in Markov decision processes",
+  "arxiv_id": null,
+  "doi_given": "10.1016/S0004-3702(02)00376-4",
+  "crossref": {
+   "title": "Equivalence notions and model minimization in Markov decision processes",
+   "authors": [
+    "Robert Givan",
+    "Thomas Dean",
+    "Matthew Greig"
+   ],
+   "container": "Artificial Intelligence",
+   "year": 2003,
+   "volume": "147",
+   "issue": "1-2",
+   "page": "163-223",
+   "publisher": "Elsevier BV",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "2020aca3838a0e8a723761e74899b183d6b56f30",
+   "externalIds": {
+    "DBLP": "journals/ai/GivanDG03",
+    "MAG": "2058735307",
+    "DOI": "10.1016/S0004-3702(02)00376-4",
+    "CorpusId": 1203157
+   },
+   "publicationVenue": {
+    "id": "96018464-22dc-4b5c-a172-c2f4a30ce131",
+    "name": "Artificial Intelligence",
+    "type": "journal",
+    "alternate_names": [
+     "Artif Intell"
+    ],
+    "issn": "0004-3702",
+    "alternate_issns": [
+     "2633-1403",
+     "2710-1673",
+     "2710-1681"
+    ],
+    "url": "http://www.elsevier.com/locate/artint",
+    "alternate_urls": [
+     "http://www.sciencedirect.com/science/journal/00043702",
+     "https://www.journals.elsevier.com/artificial-intelligence"
+    ]
+   },
+   "title": "Equivalence notions and model minimization in Markov decision processes",
+   "venue": "Artificial Intelligence",
+   "year": 2003,
+   "publicationDate": "2003-07-01",
+   "journal": {
+    "name": "Artif. Intell.",
+    "pages": "163-223",
+    "volume": "147"
+   },
+   "authors": [
+    {
+     "authorId": "1718146",
+     "name": "R. Givan"
+    },
+    {
+     "authorId": "1680510",
+     "name": "T. Dean"
+    },
+    {
+     "authorId": "32715551",
+     "name": "M. Greig"
+    }
+   ]
+  },
+  "title_match": 1.0
+ },
+ {
+  "key": "ferns2004",
+  "theme": "bisim",
+  "expected_title": "Metrics for Finite Markov Decision Processes",
+  "arxiv_id": "1207.4114",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Metrics for Finite Markov Decision Processes",
+   "authors": [
+    "Norman Ferns",
+    "Prakash Panangaden",
+    "Doina Precup"
+   ],
+   "first_version": "2012-07-11",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "2c85356cd182c16e0a2e5c4a97112efbc1132cdf",
+   "externalIds": {
+    "DBLP": "conf/aaai/FernsPP04",
+    "MAG": "1591992921",
+    "ArXiv": "1207.4114",
+    "CorpusId": 976635
+   },
+   "publicationVenue": {
+    "id": "bdc2e585-4e48-4e36-8af1-6d859763d405",
+    "name": "AAAI Conference on Artificial Intelligence",
+    "type": "conference",
+    "alternate_names": [
+     "National Conference on Artificial Intelligence",
+     "National Conf Artif Intell",
+     "AAAI Conf Artif Intell",
+     "AAAI"
+    ],
+    "url": "http://www.aaai.org/"
+   },
+   "title": "Metrics for Finite Markov Decision Processes",
+   "venue": "AAAI Conference on Artificial Intelligence",
+   "year": 2004,
+   "publicationDate": "2004-07-07",
+   "journal": {
+    "pages": "950-951"
+   },
+   "authors": [
+    {
+     "authorId": "1757489",
+     "name": "N. Ferns"
+    },
+    {
+     "authorId": "1784317",
+     "name": "P. Panangaden"
+    },
+    {
+     "authorId": "144368601",
+     "name": "Doina Precup"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Appears in Proceedings of the Twentieth Conference on Uncertainty in Artificial Intelligence (UAI2004)"
+ },
+ {
+  "key": "gelada2019deepmdp",
+  "theme": "bisim",
+  "expected_title": "DeepMDP: Learning Continuous Latent Space Models for Representation Learning",
+  "arxiv_id": "1906.02736",
+  "doi_given": null,
+  "arxiv": {
+   "title": "DeepMDP: Learning Continuous Latent Space Models for Representation Learning",
+   "authors": [
+    "Carles Gelada",
+    "Saurabh Kumar",
+    "Jacob Buckman",
+    "Ofir Nachum",
+    "Marc G. Bellemare"
+   ],
+   "first_version": "2019-06-06",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "188dac491f04c56e1eb7d7b33ac6aa0b87303232",
+   "externalIds": {
+    "ArXiv": "1906.02736",
+    "DBLP": "conf/icml/GeladaKBNB19",
+    "MAG": "2963521487",
+    "CorpusId": 174800787
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "DeepMDP: Learning Continuous Latent Space Models for Representation Learning",
+   "venue": "International Conference on Machine Learning",
+   "year": 2019,
+   "publicationDate": "2019-05-24",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/1906.02736"
+   },
+   "authors": [
+    {
+     "authorId": "52382152",
+     "name": "Carles Gelada"
+    },
+    {
+     "authorId": "2121434953",
+     "name": "Saurabh Kumar"
+    },
+    {
+     "authorId": "47619311",
+     "name": "Jacob Buckman"
+    },
+    {
+     "authorId": "7624658",
+     "name": "Ofir Nachum"
+    },
+    {
+     "authorId": "1792298",
+     "name": "Marc G. Bellemare"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "13 pages main text, 16 pages appendix. ICML 2019"
+ },
+ {
+  "key": "zhang2021dbc",
+  "theme": "bisim",
+  "expected_title": "Learning Invariant Representations for Reinforcement Learning without Reconstruction",
+  "arxiv_id": "2006.10742",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Learning Invariant Representations for Reinforcement Learning without Reconstruction",
+   "authors": [
+    "Amy Zhang",
+    "Rowan McAllister",
+    "Roberto Calandra",
+    "Yarin Gal",
+    "Sergey Levine"
+   ],
+   "first_version": "2020-06-18",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "518b827e340c26582b5093401283a4f5cff605b9",
+   "externalIds": {
+    "MAG": "3036185205",
+    "DBLP": "conf/iclr/0001MCGL21",
+    "ArXiv": "2006.10742",
+    "CorpusId": 219792420
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Learning Invariant Representations for Reinforcement Learning without Reconstruction",
+   "venue": "International Conference on Learning Representations",
+   "year": 2020,
+   "publicationDate": "2020-06-18",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2006.10742"
+   },
+   "authors": [
+    {
+     "authorId": "2111672235",
+     "name": "Amy Zhang"
+    },
+    {
+     "authorId": "49686609",
+     "name": "R. McAllister"
+    },
+    {
+     "authorId": "35159852",
+     "name": "R. Calandra"
+    },
+    {
+     "authorId": "2681954",
+     "name": "Yarin Gal"
+    },
+    {
+     "authorId": "1736651",
+     "name": "S. Levine"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Accepted as an oral at ICLR 2021"
+ },
+ {
+  "key": "castro2021mico",
+  "theme": "bisim",
+  "expected_title": "MICo: Improved representations via sampling-based state similarity for Markov decision processes",
+  "arxiv_id": "2106.08229",
+  "doi_given": null,
+  "arxiv": {
+   "title": "MICo: Improved representations via sampling-based state similarity for Markov decision processes",
+   "authors": [
+    "Pablo Samuel Castro",
+    "Tyler Kastner",
+    "Prakash Panangaden",
+    "Mark Rowland"
+   ],
+   "first_version": "2021-06-03",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "d32d251a434ea1fdc53822afa6352468536bdebd",
+   "externalIds": {
+    "DBLP": "conf/nips/CastroKPR21",
+    "ArXiv": "2106.08229",
+    "CorpusId": 239050564
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "MICo: Improved representations via sampling-based state similarity for Markov decision processes",
+   "venue": "Neural Information Processing Systems",
+   "year": 2021,
+   "publicationDate": "2021-06-03",
+   "journal": {
+    "pages": "30113-30126"
+   },
+   "authors": [
+    {
+     "authorId": "39163115",
+     "name": "P. S. Castro"
+    },
+    {
+     "authorId": "2112211486",
+     "name": "Tyler Kastner"
+    },
+    {
+     "authorId": "1784317",
+     "name": "P. Panangaden"
+    },
+    {
+     "authorId": "144845456",
+     "name": "Mark Rowland"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Published at NeurIPS 2021"
+ },
+ {
+  "key": "subramanian2022ais",
+  "theme": "bisim",
+  "expected_title": "Approximate information state for approximate planning and reinforcement learning in partially observed systems",
+  "arxiv_id": "2010.08843",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Approximate information state for approximate planning and reinforcement learning in partially observed systems",
+   "authors": [
+    "Jayakumar Subramanian",
+    "Amit Sinha",
+    "Raihan Seraj",
+    "Aditya Mahajan"
+   ],
+   "first_version": "2020-10-17",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "abde7540643e5093cba41a2e4554116bb9241980",
+   "externalIds": {
+    "ArXiv": "2010.08843",
+    "DBLP": "journals/corr/abs-2010-08843",
+    "MAG": "3093458824",
+    "CorpusId": 224704490
+   },
+   "publicationVenue": {
+    "id": "c22e7c36-3bfa-43e1-bb7b-edccdea2a780",
+    "name": "Journal of machine learning research",
+    "type": "journal",
+    "alternate_names": [
+     "Journal of Machine Learning Research",
+     "J mach learn res",
+     "J Mach Learn Res"
+    ],
+    "issn": "1532-4435",
+    "alternate_issns": [
+     "1533-7928"
+    ],
+    "url": "http://www.ai.mit.edu/projects/jmlr/",
+    "alternate_urls": [
+     "http://jmlr.csail.mit.edu/",
+     "http://www.jmlr.org/",
+     "http://portal.acm.org/affiliated/jmlr"
+    ]
+   },
+   "title": "Approximate information state for approximate planning and reinforcement learning in partially observed systems",
+   "venue": "Journal of machine learning research",
+   "year": 2020,
+   "publicationDate": "2020-10-17",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2010.08843"
+   },
+   "authors": [
+    {
+     "authorId": "19234491",
+     "name": "Jayakumar Subramanian"
+    },
+    {
+     "authorId": "2079873493",
+     "name": "Amit Sinha"
+    },
+    {
+     "authorId": "1411436226",
+     "name": "Raihan Seraj"
+    },
+    {
+     "authorId": "144576494",
+     "name": "A. Mahajan"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "83 pages",
+  "openreview": {
+   "venues": [
+    "J. Mach. Learn. Res. 2022"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "schwarzer2021spr",
+  "theme": "bisim",
+  "expected_title": "Data-Efficient Reinforcement Learning with Self-Predictive Representations",
+  "arxiv_id": "2007.05929",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Data-Efficient Reinforcement Learning with Self-Predictive Representations",
+   "authors": [
+    "Max Schwarzer",
+    "Ankesh Anand",
+    "Rishab Goel",
+    "R Devon Hjelm",
+    "Aaron Courville",
+    "Philip Bachman"
+   ],
+   "first_version": "2020-07-12",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "7c4356ec0dca6e6df0af7a882e2cd1571c8bf3dc",
+   "externalIds": {
+    "ArXiv": "2007.05929",
+    "DBLP": "conf/iclr/SchwarzerAGHCB21",
+    "CorpusId": 222163237
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Data-Efficient Reinforcement Learning with Self-Predictive Representations",
+   "venue": "International Conference on Learning Representations",
+   "year": 2020,
+   "publicationDate": "2020-07-12",
+   "journal": null,
+   "authors": [
+    {
+     "authorId": "51881243",
+     "name": "Max Schwarzer"
+    },
+    {
+     "authorId": "12679121",
+     "name": "Ankesh Anand"
+    },
+    {
+     "authorId": "46186660",
+     "name": "Rishab Goel"
+    },
+    {
+     "authorId": "40482726",
+     "name": "R. Devon Hjelm"
+    },
+    {
+     "authorId": "1760871",
+     "name": "Aaron C. Courville"
+    },
+    {
+     "authorId": "143902541",
+     "name": "Philip Bachman"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "The first two authors contributed equally to this work. v4 includes new ablations and reformatting for ICLR camera ready"
+ },
+ {
+  "key": "tang2023selfpredictive",
+  "theme": "bisim",
+  "expected_title": "Understanding Self-Predictive Learning for Reinforcement Learning",
+  "arxiv_id": "2212.03319",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Understanding Self-Predictive Learning for Reinforcement Learning",
+   "authors": [
+    "Yunhao Tang",
+    "Zhaohan Daniel Guo",
+    "Pierre Harvey Richemond",
+    "Bernardo Ávila Pires",
+    "Yash Chandak",
+    "Rémi Munos",
+    "Mark Rowland",
+    "Mohammad Gheshlaghi Azar",
+    "Charline Le Lan",
+    "Clare Lyle",
+    "András György",
+    "Shantanu Thakoor",
+    "Will Dabney",
+    "Bilal Piot",
+    "Daniele Calandriello",
+    "Michal Valko"
+   ],
+   "first_version": "2022-12-06",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "391e3b63c5f265c98b875bb47ae7135fc70fab9e",
+   "externalIds": {
+    "DBLP": "conf/icml/TangGRPCMRALL0T23",
+    "ArXiv": "2212.03319",
+    "DOI": "10.48550/arXiv.2212.03319",
+    "CorpusId": 254366720
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "Understanding Self-Predictive Learning for Reinforcement Learning",
+   "venue": "International Conference on Machine Learning",
+   "year": 2022,
+   "publicationDate": "2022-12-06",
+   "journal": {
+    "pages": "33632-33656"
+   },
+   "authors": [
+    {
+     "authorId": "2505011536",
+     "name": "Yun-Hao Tang"
+    },
+    {
+     "authorId": "3407143",
+     "name": "Z. Guo"
+    },
+    {
+     "authorId": "16326904",
+     "name": "Pierre H. Richemond"
+    },
+    {
+     "authorId": "3429927",
+     "name": "B. '. Pires"
+    },
+    {
+     "authorId": "2232505",
+     "name": "Yash Chandak"
+    },
+    {
+     "authorId": "1708654",
+     "name": "R. Munos"
+    },
+    {
+     "authorId": "144845456",
+     "name": "Mark Rowland"
+    },
+    {
+     "authorId": "37666967",
+     "name": "M. G. Azar"
+    },
+    {
+     "authorId": "153892869",
+     "name": "Charline Le Lan"
+    },
+    {
+     "authorId": "39439114",
+     "name": "Clare Lyle"
+    },
+    {
+     "authorId": "2090601385",
+     "name": "András Gyorgy"
+    },
+    {
+     "authorId": "41037204",
+     "name": "S. Thakoor"
+    },
+    {
+     "authorId": "2605877",
+     "name": "Will Dabney"
+    },
+    {
+     "authorId": "1808897",
+     "name": "Bilal Piot"
+    },
+    {
+     "authorId": "2439765",
+     "name": "Daniele Calandriello"
+    },
+    {
+     "authorId": "1806291",
+     "name": "Michal Valko"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "ni2024bridging",
+  "theme": "bisim",
+  "expected_title": "Bridging State and History Representations: Understanding Self-Predictive RL",
+  "arxiv_id": "2401.08898",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Bridging State and History Representations: Understanding Self-Predictive RL",
+   "authors": [
+    "Tianwei Ni",
+    "Benjamin Eysenbach",
+    "Erfan Seyedsalehi",
+    "Michel Ma",
+    "Clement Gehring",
+    "Aditya Mahajan",
+    "Pierre-Luc Bacon"
+   ],
+   "first_version": "2024-01-17",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "c3eed6435ae609ee800c6e9daee038535af2ef22",
+   "externalIds": {
+    "DBLP": "conf/iclr/NiESMGMB24",
+    "ArXiv": "2401.08898",
+    "DOI": "10.48550/arXiv.2401.08898",
+    "CorpusId": 267027743
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Bridging State and History Representations: Understanding Self-Predictive RL",
+   "venue": "International Conference on Learning Representations",
+   "year": 2024,
+   "publicationDate": "2024-01-17",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2401.08898"
+   },
+   "authors": [
+    {
+     "authorId": "1820793893",
+     "name": "Tianwei Ni"
+    },
+    {
+     "authorId": "8140754",
+     "name": "Benjamin Eysenbach"
+    },
+    {
+     "authorId": "2219860137",
+     "name": "Erfan Seyedsalehi"
+    },
+    {
+     "authorId": "2221642624",
+     "name": "Michel Ma"
+    },
+    {
+     "authorId": "2261387505",
+     "name": "Clement Gehring"
+    },
+    {
+     "authorId": "1811910",
+     "name": "Aditya Mahajan"
+    },
+    {
+     "authorId": "145180695",
+     "name": "Pierre-Luc Bacon"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "ICLR 2024 (Poster). Code is available at https://github.com/twni2016/self-predictive-rl"
+ },
+ {
+  "key": "grimm2020ve",
+  "theme": "bisim",
+  "expected_title": "The Value Equivalence Principle for Model-Based Reinforcement Learning",
+  "arxiv_id": "2011.03506",
+  "doi_given": null,
+  "arxiv": {
+   "title": "The Value Equivalence Principle for Model-Based Reinforcement Learning",
+   "authors": [
+    "Christopher Grimm",
+    "André Barreto",
+    "Satinder Singh",
+    "David Silver"
+   ],
+   "first_version": "2020-11-06",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "5d5805b54cc933f7cef3c9c5e7c3d287234ad601",
+   "externalIds": {
+    "DBLP": "conf/nips/GrimmBSS20",
+    "MAG": "3100810159",
+    "ArXiv": "2011.03506",
+    "CorpusId": 226278317
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "The Value Equivalence Principle for Model-Based Reinforcement Learning",
+   "venue": "Neural Information Processing Systems",
+   "year": 2020,
+   "publicationDate": "2020-11-06",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2011.03506"
+   },
+   "authors": [
+    {
+     "authorId": "21471370",
+     "name": "Christopher Grimm"
+    },
+    {
+     "authorId": "1689289",
+     "name": "A. Barreto"
+    },
+    {
+     "authorId": "2108384183",
+     "name": "Satinder Singh"
+    },
+    {
+     "authorId": "145824029",
+     "name": "David Silver"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "NeurIPS-2020"
+ },
+ {
+  "key": "grimm2021pve",
+  "theme": "bisim",
+  "expected_title": "Proper Value Equivalence",
+  "arxiv_id": "2106.10316",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Proper Value Equivalence",
+   "authors": [
+    "Christopher Grimm",
+    "André Barreto",
+    "Gregory Farquhar",
+    "David Silver",
+    "Satinder Singh"
+   ],
+   "first_version": "2021-06-18",
+   "journal_ref": "NeurIPS 2021",
+   "doi": null
+  },
+  "s2": {
+   "paperId": "c58e62e0b6e1e979eda06bc9aa4176196d17d5c8",
+   "externalIds": {
+    "ArXiv": "2106.10316",
+    "DBLP": "conf/nips/GrimmBFSS21",
+    "CorpusId": 235490339
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Proper Value Equivalence",
+   "venue": "Neural Information Processing Systems",
+   "year": 2021,
+   "publicationDate": "2021-06-18",
+   "journal": {
+    "pages": "7773-7786"
+   },
+   "authors": [
+    {
+     "authorId": "21471370",
+     "name": "Christopher Grimm"
+    },
+    {
+     "authorId": "143999673",
+     "name": "André Barreto"
+    },
+    {
+     "authorId": "38698094",
+     "name": "Gregory Farquhar"
+    },
+    {
+     "authorId": "145824029",
+     "name": "David Silver"
+    },
+    {
+     "authorId": "2108384183",
+     "name": "Satinder Singh"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "schrittwieser2020muzero",
+  "theme": "bisim",
+  "expected_title": "Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model",
+  "arxiv_id": "1911.08265",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Mastering Atari, Go, Chess and Shogi by Planning with a Learned Model",
+   "authors": [
+    "Julian Schrittwieser",
+    "Ioannis Antonoglou",
+    "Thomas Hubert",
+    "Karen Simonyan",
+    "Laurent Sifre",
+    "Simon Schmitt",
+    "Arthur Guez",
+    "Edward Lockhart",
+    "Demis Hassabis",
+    "Thore Graepel",
+    "Timothy Lillicrap",
+    "David Silver"
+   ],
+   "first_version": "2019-11-19",
+   "journal_ref": null,
+   "doi": "10.1038/s41586-020-03051-4"
+  },
+  "s2": {
+   "paperId": "c39fb7a46335c23f7529dd6f9f980462fd38653a",
+   "externalIds": {
+    "DBLP": "journals/nature/SchrittwieserAH20",
+    "ArXiv": "1911.08265",
+    "MAG": "2989847975",
+    "DOI": "10.1038/s41586-020-03051-4",
+    "CorpusId": 208158225,
+    "PubMed": "33361790"
+   },
+   "publicationVenue": {
+    "id": "6c24a0a0-b07d-4d7b-a19b-fd09a3ed453a",
+    "name": "Nature",
+    "type": "journal",
+    "issn": "0028-0836",
+    "url": "https://www.nature.com/",
+    "alternate_urls": [
+     "http://www.nature.com/nature/",
+     "https://www.nature.com/nature/",
+     "http://www.nature.com/nature/archive/index.html"
+    ]
+   },
+   "title": "Mastering Atari, Go, chess and shogi by planning with a learned model",
+   "venue": "Nature",
+   "year": 2019,
+   "publicationDate": "2019-11-19",
+   "journal": {
+    "name": "Nature",
+    "pages": "604 - 609",
+    "volume": "588"
+   },
+   "authors": [
+    {
+     "authorId": "4337102",
+     "name": "J. Schrittwieser"
+    },
+    {
+     "authorId": "2460849",
+     "name": "I. Antonoglou"
+    },
+    {
+     "authorId": "2067208983",
+     "name": "T. Hubert"
+    },
+    {
+     "authorId": "34838386",
+     "name": "K. Simonyan"
+    },
+    {
+     "authorId": "2175946",
+     "name": "L. Sifre"
+    },
+    {
+     "authorId": "152380508",
+     "name": "Simon Schmitt"
+    },
+    {
+     "authorId": "35099444",
+     "name": "A. Guez"
+    },
+    {
+     "authorId": "49860549",
+     "name": "Edward Lockhart"
+    },
+    {
+     "authorId": "48987704",
+     "name": "D. Hassabis"
+    },
+    {
+     "authorId": "1686971",
+     "name": "T. Graepel"
+    },
+    {
+     "authorId": "2542999",
+     "name": "T. Lillicrap"
+    },
+    {
+     "authorId": "145824029",
+     "name": "David Silver"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "hafner2023dreamerv3",
+  "theme": "bisim",
+  "expected_title": "Mastering Diverse Domains through World Models",
+  "arxiv_id": "2301.04104",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Mastering Diverse Domains through World Models",
+   "authors": [
+    "Danijar Hafner",
+    "Jurgis Pasukonis",
+    "Jimmy Ba",
+    "Timothy Lillicrap"
+   ],
+   "first_version": "2023-01-10",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "f2d952a183dfb0a1e031b8a3f535d9f8423d7a6e",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2301-04104",
+    "ArXiv": "2301.04104",
+    "DOI": "10.48550/arXiv.2301.04104",
+    "CorpusId": 255569874
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Mastering Diverse Domains through World Models",
+   "venue": "arXiv.org",
+   "year": 2023,
+   "publicationDate": "2023-01-10",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2301.04104"
+   },
+   "authors": [
+    {
+     "authorId": "35006479",
+     "name": "Danijar Hafner"
+    },
+    {
+     "authorId": "31143488",
+     "name": "J. Pašukonis"
+    },
+    {
+     "authorId": "2503659",
+     "name": "Jimmy Ba"
+    },
+    {
+     "authorId": "2542999",
+     "name": "T. Lillicrap"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Website: https://danijar.com/dreamerv3",
+  "openreview": {
+   "venues": [],
+   "complete": false
+  },
+  "crossref_extra": [
+   {
+    "doi": "10.1038/s41586-025-08744-2",
+    "title": "Mastering diverse control tasks through world models",
+    "match": 1.0,
+    "container": "Nature",
+    "year": 2025,
+    "authors": [
+     "Danijar Hafner",
+     "Jurgis Pasukonis",
+     "Jimmy Ba",
+     "Timothy Lillicrap"
+    ]
+   },
+   {
+    "doi": "10.21203/rs.3.rs-6881567/v1",
+    "title": "FluidZero: Mastering Diverse Tasks in Fluid Systems through a Single Generative Model",
+    "match": 0.574,
+    "container": null,
+    "year": 2025,
+    "authors": [
+     "Haodong Feng",
+     "Haoren Zheng",
+     "Peiyan Hu",
+     "Hongyuan Liu",
+     "Chenglei Yu",
+     "Long Wei",
+     "Ruiqi Feng",
+     "Jinlong Duan",
+     "Dixia Fan",
+     "Tailin Wu"
+    ]
+   },
+   {
+    "doi": "10.21203/rs.3.rs-6881567/v3",
+    "title": "FluidZero: Mastering Diverse Tasks in Fluid Systems through a Single Generative Model",
+    "match": 0.574,
+    "container": null,
+    "year": 2026,
+    "authors": [
+     "Haodong Feng",
+     "Haoren Zheng",
+     "Peiyan Hu",
+     "Hongyuan Liu",
+     "Chenglei Yu",
+     "Long Wei",
+     "Ruiqi Feng",
+     "Jinlong Duan",
+     "Dixia Fan",
+     "Tailin Wu"
+    ]
+   }
+  ]
+ },
+ {
+  "key": "hao2024coconut",
+  "theme": "latent",
+  "expected_title": "Training Large Language Models to Reason in a Continuous Latent Space",
+  "arxiv_id": "2412.06769",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Training Large Language Models to Reason in a Continuous Latent Space",
+   "authors": [
+    "Shibo Hao",
+    "Sainbayar Sukhbaatar",
+    "DiJia Su",
+    "Xian Li",
+    "Zhiting Hu",
+    "Jason Weston",
+    "Yuandong Tian"
+   ],
+   "first_version": "2024-12-09",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "673fbdd957cada770d10dffca5e45b53da43a3c6",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2412-06769",
+    "ArXiv": "2412.06769",
+    "DOI": "10.48550/arXiv.2412.06769",
+    "CorpusId": 274610816
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Training Large Language Models to Reason in a Continuous Latent Space",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-12-09",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2412.06769"
+   },
+   "authors": [
+    {
+     "authorId": "2128965713",
+     "name": "Shibo Hao"
+    },
+    {
+     "authorId": "2265067",
+     "name": "Sainbayar Sukhbaatar"
+    },
+    {
+     "authorId": "2325888815",
+     "name": "Di-Jia Su"
+    },
+    {
+     "authorId": "2315344189",
+     "name": "Xian Li"
+    },
+    {
+     "authorId": "2295863002",
+     "name": "Zhi-Ting Hu"
+    },
+    {
+     "authorId": "2267341626",
+     "name": "Jason E. Weston"
+    },
+    {
+     "authorId": "2285362895",
+     "name": "Yuan-Dong Tian"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Accepted to COLM 2025",
+  "openreview": {
+   "venues": [
+    "COLM 2025",
+    "Reasoning and Planning for LLMs @ ICLR2025"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "aghajohari2025markovian",
+  "theme": "latent",
+  "expected_title": "The Markovian Thinker",
+  "arxiv_id": "2510.06557",
+  "doi_given": null,
+  "arxiv": {
+   "title": "The Markovian Thinker: Architecture-Agnostic Linear Scaling of Reasoning",
+   "authors": [
+    "Milad Aghajohari",
+    "Kamran Chitsaz",
+    "Amirhossein Kazemnejad",
+    "Sarath Chandar",
+    "Alessandro Sordoni",
+    "Aaron Courville",
+    "Siva Reddy"
+   ],
+   "first_version": "2025-10-08",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "6bb4d2b7aa09f5b505ef7d6781e689be56b69627",
+   "externalIds": {
+    "ArXiv": "2510.06557",
+    "DBLP": "journals/corr/abs-2510-06557",
+    "DOI": "10.48550/arXiv.2510.06557",
+    "CorpusId": 281891675
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "The Markovian Thinker",
+   "venue": "arXiv.org",
+   "year": 2025,
+   "publicationDate": "2025-10-08",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2510.06557"
+   },
+   "authors": [
+    {
+     "authorId": "113383974",
+     "name": "Milad Aghajohari"
+    },
+    {
+     "authorId": "1598457720",
+     "name": "Kamran Chitsaz"
+    },
+    {
+     "authorId": "1754452702",
+     "name": "Amirhossein Kazemnejad"
+    },
+    {
+     "authorId": "2486642835",
+     "name": "A. P. Sarath Chandar"
+    },
+    {
+     "authorId": "2041695",
+     "name": "A. Sordoni"
+    },
+    {
+     "authorId": "2285877959",
+     "name": "A. Courville"
+    },
+    {
+     "authorId": "2323901201",
+     "name": "Siva Reddy"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [],
+   "complete": true
+  }
+ },
+ {
+  "key": "teoh2025nextlat",
+  "theme": "latent",
+  "expected_title": "Next-Latent Prediction Transformers Learn Compact World Models",
+  "arxiv_id": "2511.05963",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Next-Latent Prediction Transformers Learn Compact World Models",
+   "authors": [
+    "Jayden Teoh",
+    "Manan Tomar",
+    "Kwangjun Ahn",
+    "Edward S. Hu",
+    "Tim Pearce",
+    "Pratyusha Sharma",
+    "Akshay Krishnamurthy",
+    "Riashat Islam",
+    "Alex Lamb",
+    "John Langford"
+   ],
+   "first_version": "2025-11-08",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "ebeee827801d56af879086a144e1071f3a687b5d",
+   "externalIds": {
+    "ArXiv": "2511.05963",
+    "DBLP": "journals/corr/abs-2511-05963",
+    "DOI": "10.48550/arXiv.2511.05963",
+    "CorpusId": 282912811
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Next-Latent Prediction Transformers Learn Compact World Models",
+   "venue": "arXiv.org",
+   "year": 2025,
+   "publicationDate": "2025-11-08",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2511.05963"
+   },
+   "authors": [
+    {
+     "authorId": "2299533551",
+     "name": "Jayden Teoh"
+    },
+    {
+     "authorId": "119439163",
+     "name": "Manan Tomar"
+    },
+    {
+     "authorId": "2328412632",
+     "name": "Kwangjun Ahn"
+    },
+    {
+     "authorId": "2053787252",
+     "name": "E. Hu"
+    },
+    {
+     "authorId": "2329555537",
+     "name": "Tim Pearce"
+    },
+    {
+     "authorId": "2381235529",
+     "name": "Pratyusha Sharma"
+    },
+    {
+     "authorId": "2280143899",
+     "name": "Akshay Krishnamurthy"
+    },
+    {
+     "authorId": "2313621415",
+     "name": "Riashat Islam"
+    },
+    {
+     "authorId": "2265582069",
+     "name": "Alex Lamb"
+    },
+    {
+     "authorId": "2265581165",
+     "name": "John Langford"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Microsoft Research Preprint",
+  "openreview": {
+   "venues": [
+    "PLAN-FM Bridge @ AAAI 2026"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "deng2024stepwise",
+  "theme": "latent",
+  "expected_title": "From Explicit CoT to Implicit CoT: Learning to Internalize CoT Step by Step",
+  "arxiv_id": "2405.14838",
+  "doi_given": null,
+  "arxiv": {
+   "title": "From Explicit CoT to Implicit CoT: Learning to Internalize CoT Step by Step",
+   "authors": [
+    "Yuntian Deng",
+    "Yejin Choi",
+    "Stuart Shieber"
+   ],
+   "first_version": "2024-05-23",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "ccf6d9d7cec0d4aa9b50c99659765668d6e7c6c2",
+   "externalIds": {
+    "ArXiv": "2405.14838",
+    "DBLP": "journals/corr/abs-2405-14838",
+    "DOI": "10.48550/arXiv.2405.14838",
+    "CorpusId": 269982648
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "From Explicit CoT to Implicit CoT: Learning to Internalize CoT Step by Step",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-05-23",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2405.14838"
+   },
+   "authors": [
+    {
+     "authorId": "2268298457",
+     "name": "Yun-Tian Deng"
+    },
+    {
+     "authorId": "2285939518",
+     "name": "Ye-Jin Choi"
+    },
+    {
+     "authorId": "2264965387",
+     "name": "Stuart M. Shieber"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [],
+   "complete": false
+  }
+ },
+ {
+  "key": "geiping2025recurrent",
+  "theme": "latent",
+  "expected_title": "Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach",
+  "arxiv_id": "2502.05171",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach",
+   "authors": [
+    "Jonas Geiping",
+    "Sean McLeish",
+    "Neel Jain",
+    "John Kirchenbauer",
+    "Siddharth Singh",
+    "Brian R. Bartoldson",
+    "Bhavya Kailkhura",
+    "Abhinav Bhatele",
+    "Tom Goldstein"
+   ],
+   "first_version": "2025-02-07",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "cbc1363d0c55abb60aa9c0e5a7ca0798ce86a752",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2502-05171",
+    "ArXiv": "2502.05171",
+    "DOI": "10.48550/arXiv.2502.05171",
+    "CorpusId": 276235803
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Scaling up Test-Time Compute with Latent Reasoning: A Recurrent Depth Approach",
+   "venue": "Neural Information Processing Systems",
+   "year": 2025,
+   "publicationDate": "2025-02-07",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2502.05171"
+   },
+   "authors": [
+    {
+     "authorId": "2344089874",
+     "name": "Jonas Geiping"
+    },
+    {
+     "authorId": "2294875611",
+     "name": "Sean McLeish"
+    },
+    {
+     "authorId": "2204647912",
+     "name": "Neel Jain"
+    },
+    {
+     "authorId": "2237425585",
+     "name": "John Kirchenbauer"
+    },
+    {
+     "authorId": "2306831007",
+     "name": "Siddharth Singh"
+    },
+    {
+     "authorId": "41053241",
+     "name": "B. Bartoldson"
+    },
+    {
+     "authorId": "1749353",
+     "name": "B. Kailkhura"
+    },
+    {
+     "authorId": "1823585",
+     "name": "A. Bhatele"
+    },
+    {
+     "authorId": "2294872863",
+     "name": "Tom Goldstein"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "The model is available at https://huggingface.co/tomg-group-umd/huginn-0125. Code and data recipe can be found at https://github.com/seal-rg/recurrent-pretraining",
+  "openreview": {
+   "venues": [
+    "ES-FoMo III Spotlight",
+    "NeurIPS 2025 spotlight"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "askell2021lab",
+  "theme": "ctxdist",
+  "expected_title": "A General Language Assistant as a Laboratory for Alignment",
+  "arxiv_id": "2112.00861",
+  "doi_given": null,
+  "arxiv": {
+   "title": "A General Language Assistant as a Laboratory for Alignment",
+   "authors": [
+    "Amanda Askell",
+    "Yuntao Bai",
+    "Anna Chen",
+    "Dawn Drain",
+    "Deep Ganguli",
+    "Tom Henighan",
+    "Andy Jones",
+    "Nicholas Joseph",
+    "Ben Mann",
+    "Nova DasSarma",
+    "Nelson Elhage",
+    "Zac Hatfield-Dodds",
+    "Danny Hernandez",
+    "Jackson Kernion",
+    "Kamal Ndousse",
+    "Catherine Olsson",
+    "Dario Amodei",
+    "Tom Brown",
+    "Jack Clark",
+    "Sam McCandlish",
+    "Chris Olah",
+    "Jared Kaplan"
+   ],
+   "first_version": "2021-12-01",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "3dc7dc1bea9a4f70c02b6759a0bda7aca0005a9e",
+   "externalIds": {
+    "ArXiv": "2112.00861",
+    "DBLP": "journals/corr/abs-2112-00861",
+    "CorpusId": 244799619
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "A General Language Assistant as a Laboratory for Alignment",
+   "venue": "arXiv.org",
+   "year": 2021,
+   "publicationDate": "2021-12-01",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2112.00861"
+   },
+   "authors": [
+    {
+     "authorId": "119609682",
+     "name": "Amanda Askell"
+    },
+    {
+     "authorId": "1486307451",
+     "name": "Yuntao Bai"
+    },
+    {
+     "authorId": "2111073313",
+     "name": "Anna Chen"
+    },
+    {
+     "authorId": "1943097969",
+     "name": "Dawn Drain"
+    },
+    {
+     "authorId": "2081806483",
+     "name": "Deep Ganguli"
+    },
+    {
+     "authorId": "103143311",
+     "name": "T. Henighan"
+    },
+    {
+     "authorId": "2149890773",
+     "name": "Andy Jones"
+    },
+    {
+     "authorId": "2117706920",
+     "name": "Nicholas Joseph"
+    },
+    {
+     "authorId": "2285072384",
+     "name": "B. Mann"
+    },
+    {
+     "authorId": "2142833890",
+     "name": "Nova DasSarma"
+    },
+    {
+     "authorId": "2866708",
+     "name": "Nelson Elhage"
+    },
+    {
+     "authorId": "1573482302",
+     "name": "Zac Hatfield-Dodds"
+    },
+    {
+     "authorId": "39182747",
+     "name": "Danny Hernandez"
+    },
+    {
+     "authorId": "1583434563",
+     "name": "John Kernion"
+    },
+    {
+     "authorId": "1978097132",
+     "name": "Kamal Ndousse"
+    },
+    {
+     "authorId": "2061321863",
+     "name": "Catherine Olsson"
+    },
+    {
+     "authorId": "2698777",
+     "name": "D. Amodei"
+    },
+    {
+     "authorId": "31035595",
+     "name": "Tom B. Brown"
+    },
+    {
+     "authorId": "2115193883",
+     "name": "Jack Clark"
+    },
+    {
+     "authorId": "52238703",
+     "name": "Sam McCandlish"
+    },
+    {
+     "authorId": "2287268442",
+     "name": "Chris Olah"
+    },
+    {
+     "authorId": "2053807409",
+     "name": "J. Kaplan"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "26+19 pages; v2 typos fixed, refs added, figure scale / colors fixed; v3 correct very non-standard TruthfulQA formatting and metric, alignment implications slightly improved",
+  "openreview": {
+   "venues": [],
+   "complete": true
+  }
+ },
+ {
+  "key": "snell2022context",
+  "theme": "ctxdist",
+  "expected_title": "Learning by Distilling Context",
+  "arxiv_id": "2209.15189",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Learning by Distilling Context",
+   "authors": [
+    "Charlie Snell",
+    "Dan Klein",
+    "Ruiqi Zhong"
+   ],
+   "first_version": "2022-09-30",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "8fbd7ddf1ea30c991f3b1152a245df77caa18e16",
+   "externalIds": {
+    "ArXiv": "2209.15189",
+    "DBLP": "journals/corr/abs-2209-15189",
+    "DOI": "10.48550/arXiv.2209.15189",
+    "CorpusId": 252668389
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Learning by Distilling Context",
+   "venue": "arXiv.org",
+   "year": 2022,
+   "publicationDate": "2022-09-30",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2209.15189"
+   },
+   "authors": [
+    {
+     "authorId": "117111135",
+     "name": "Charles Burton Snell"
+    },
+    {
+     "authorId": "38666915",
+     "name": "D. Klein"
+    },
+    {
+     "authorId": "51011000",
+     "name": "Ruiqi Zhong"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [],
+   "complete": true
+  }
+ },
+ {
+  "key": "bevilacqua2023hintrelic",
+  "theme": "contrast",
+  "expected_title": "Neural Algorithmic Reasoning with Causal Regularisation",
+  "arxiv_id": "2302.10258",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Neural Algorithmic Reasoning with Causal Regularisation",
+   "authors": [
+    "Beatrice Bevilacqua",
+    "Kyriacos Nikiforou",
+    "Borja Ibarz",
+    "Ioana Bica",
+    "Michela Paganini",
+    "Charles Blundell",
+    "Jovana Mitrovic",
+    "Petar Veličković"
+   ],
+   "first_version": "2023-02-20",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "bc8fb1f72493ad39f2970b99863fe5fcac78c1fc",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2302-10258",
+    "ArXiv": "2302.10258",
+    "DOI": "10.48550/arXiv.2302.10258",
+    "CorpusId": 257050506
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "Neural Algorithmic Reasoning with Causal Regularisation",
+   "venue": "International Conference on Machine Learning",
+   "year": 2023,
+   "publicationDate": "2023-02-20",
+   "journal": {
+    "pages": "2272-2288"
+   },
+   "authors": [
+    {
+     "authorId": "2397925124",
+     "name": "Beatrice Bevilacqua"
+    },
+    {
+     "authorId": "8305722",
+     "name": "Kyriacos Nikiforou"
+    },
+    {
+     "authorId": "6675568",
+     "name": "Borja Ibarz"
+    },
+    {
+     "authorId": "39965049",
+     "name": "Ioana Bica"
+    },
+    {
+     "authorId": "35550664",
+     "name": "Michela Paganini"
+    },
+    {
+     "authorId": "1723876",
+     "name": "C. Blundell"
+    },
+    {
+     "authorId": "37955812",
+     "name": "Jovana Mitrovic"
+    },
+    {
+     "authorId": "3444569",
+     "name": "Petar Velickovic"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "ICML 2023, Camera Ready; 17 pages, 7 figures",
+  "openreview": {
+   "venues": [
+    "ICML 2023 Poster"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "mitrovic2021relic",
+  "theme": "contrast",
+  "expected_title": "Representation Learning via Invariant Causal Mechanisms",
+  "arxiv_id": "2010.07922",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Representation Learning via Invariant Causal Mechanisms",
+   "authors": [
+    "Jovana Mitrovic",
+    "Brian McWilliams",
+    "Jacob Walker",
+    "Lars Buesing",
+    "Charles Blundell"
+   ],
+   "first_version": "2020-10-15",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "57835c5ad5424f94ee75901c3113730f3900e656",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2010-07922",
+    "ArXiv": "2010.07922",
+    "MAG": "3120542573",
+    "CorpusId": 222378250
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Representation Learning via Invariant Causal Mechanisms",
+   "venue": "International Conference on Learning Representations",
+   "year": 2020,
+   "publicationDate": "2020-10-15",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2010.07922"
+   },
+   "authors": [
+    {
+     "authorId": "37955812",
+     "name": "Jovana Mitrovic"
+    },
+    {
+     "authorId": "2953855",
+     "name": "B. McWilliams"
+    },
+    {
+     "authorId": "1944655894",
+     "name": "Jacob Walker"
+    },
+    {
+     "authorId": "1981334",
+     "name": "L. Buesing"
+    },
+    {
+     "authorId": "1723876",
+     "name": "C. Blundell"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [],
+   "complete": false
+  }
+ },
+ {
+  "key": "jain2021contracode",
+  "theme": "contrast",
+  "expected_title": "Contrastive Code Representation Learning",
+  "arxiv_id": "2007.04973",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Contrastive Code Representation Learning",
+   "authors": [
+    "Paras Jain",
+    "Ajay Jain",
+    "Tianjun Zhang",
+    "Pieter Abbeel",
+    "Joseph E. Gonzalez",
+    "Ion Stoica"
+   ],
+   "first_version": "2020-07-09",
+   "journal_ref": null,
+   "doi": "10.18653/v1/2021.emnlp-main.482"
+  },
+  "s2": {
+   "paperId": "021bbcefc993c389bad6c1daefd8ff92d0fc2441",
+   "externalIds": {
+    "DBLP": "conf/emnlp/0001JZA0S21",
+    "MAG": "3040955294",
+    "ACL": "2021.emnlp-main.482",
+    "ArXiv": "2007.04973",
+    "DOI": "10.18653/v1/2021.emnlp-main.482",
+    "CorpusId": 220425360
+   },
+   "publicationVenue": {
+    "id": "41bf9ed3-85b3-4c90-b015-150e31690253",
+    "name": "Conference on Empirical Methods in Natural Language Processing",
+    "type": "conference",
+    "alternate_names": [
+     "Empir Method Nat Lang Process",
+     "Empirical Methods in Natural Language Processing",
+     "Conf Empir Method Nat Lang Process",
+     "EMNLP"
+    ],
+    "url": "https://www.aclweb.org/portal/emnlp"
+   },
+   "title": "Contrastive Code Representation Learning",
+   "venue": "Conference on Empirical Methods in Natural Language Processing",
+   "year": 2020,
+   "publicationDate": "2020-07-09",
+   "journal": {
+    "pages": "5954-5971"
+   },
+   "authors": [
+    {
+     "authorId": "2066974703",
+     "name": "Paras Jain"
+    },
+    {
+     "authorId": "1623995772",
+     "name": "Ajay Jain"
+    },
+    {
+     "authorId": "1993655237",
+     "name": "Tianjun Zhang"
+    },
+    {
+     "authorId": "1689992",
+     "name": "P. Abbeel"
+    },
+    {
+     "authorId": "49988044",
+     "name": "Joseph E. Gonzalez"
+    },
+    {
+     "authorId": "2055174324",
+     "name": "Ion Stoica"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "In Proceedings of EMNLP 2021. 19 pages, 16 figures, 9 tables. Code available at https://github.com/parasj/contracode"
+ },
+ {
+  "key": "vonneumann1956",
+  "theme": "reliable",
+  "expected_title": "Probabilistic logics and the synthesis of reliable organisms from unreliable components",
+  "arxiv_id": null,
+  "doi_given": null,
+  "s2": null,
+  "crossref_search": [
+   {
+    "doi": "10.1515/9781400882618-003",
+    "title": "Probabilistic Logics and the Synthesis of Reliable Organisms From Unreliable Components",
+    "match": 1.0,
+    "container": "Automata Studies. (AM-34)",
+    "year": 1956,
+    "authors": [
+     "J. von Neumann"
+    ]
+   },
+   {
+    "doi": "10.1090/pspum/050/1067764",
+    "title": "Developments in “The synthesis of reliable organisms from unreliable components”",
+    "match": 0.824,
+    "container": "Proceedings of Symposia in Pure Mathematics",
+    "year": 1990,
+    "authors": [
+     "Nicholas Pippenger"
+    ]
+   },
+   {
+    "doi": "10.1016/0026-2714(63)90226-9",
+    "title": "Reliable networks from unreliable components",
+    "match": 0.595,
+    "container": "Microelectronics Reliability",
+    "year": 1963,
+    "authors": []
+   },
+   {
+    "doi": "10.31234/osf.io/2atqj",
+    "title": "\"Reliable Organisms from Unreliable Components'\" Revisited: The Linear Drift, Linear Infinitesimal Variance Model of Decision Making",
+    "match": 0.421,
+    "container": null,
+    "year": 2022,
+    "authors": [
+     "Philip L. Smith"
+    ]
+   },
+   {
+    "doi": "10.3758/s13423-022-02237-3",
+    "title": "“Reliable organisms from unreliable components” revisited: the linear drift, linear infinitesimal variance model of decision making",
+    "match": 0.421,
+    "container": "Psychonomic Bulletin &amp; Review",
+    "year": 2023,
+    "authors": [
+     "Philip L. Smith"
+    ]
+   }
+  ],
+  "s2_search": [],
+  "title_match": 0.0,
+  "crossref_extra": [
+   {
+    "doi": "10.1515/9781400882618-003",
+    "title": "Probabilistic Logics and the Synthesis of Reliable Organisms From Unreliable Components",
+    "match": 1.0,
+    "container": "Automata Studies. (AM-34)",
+    "year": 1956,
+    "authors": [
+     "J. von Neumann"
+    ]
+   },
+   {
+    "doi": "10.1090/pspum/050/1067764",
+    "title": "Developments in “The synthesis of reliable organisms from unreliable components”",
+    "match": 0.824,
+    "container": "Proceedings of Symposia in Pure Mathematics",
+    "year": 1990,
+    "authors": [
+     "Nicholas Pippenger"
+    ]
+   },
+   {
+    "doi": "10.1016/0026-2714(63)90226-9",
+    "title": "Reliable networks from unreliable components",
+    "match": 0.595,
+    "container": "Microelectronics Reliability",
+    "year": 1963,
+    "authors": []
+   }
+  ]
+ },
+ {
+  "key": "bausch2024alphaqubit",
+  "theme": "reliable",
+  "expected_title": "Learning to Decode the Surface Code with a Recurrent, Transformer-Based Neural Network",
+  "arxiv_id": "2310.05900",
+  "doi_given": "10.1038/s41586-024-08148-8",
+  "arxiv": {
+   "title": "Learning to Decode the Surface Code with a Recurrent, Transformer-Based Neural Network",
+   "authors": [
+    "Johannes Bausch",
+    "Andrew W Senior",
+    "Francisco J H Heras",
+    "Thomas Edlich",
+    "Alex Davies",
+    "Michael Newman",
+    "Cody Jones",
+    "Kevin Satzinger",
+    "Murphy Yuezhen Niu",
+    "Sam Blackwell",
+    "George Holland",
+    "Dvir Kafri",
+    "Juan Atalaya",
+    "Craig Gidney",
+    "Demis Hassabis",
+    "Sergio Boixo",
+    "Hartmut Neven",
+    "Pushmeet Kohli"
+   ],
+   "first_version": "2023-10-09",
+   "journal_ref": "Nature 635, 834-840 (2024)",
+   "doi": "10.1038/s41586-024-08148-8"
+  },
+  "crossref": {
+   "title": "Learning high-accuracy error decoding for quantum processors",
+   "authors": [
+    "Johannes Bausch",
+    "Andrew W. Senior",
+    "Francisco J. H. Heras",
+    "Thomas Edlich",
+    "Alex Davies",
+    "Michael Newman",
+    "Cody Jones",
+    "Kevin Satzinger",
+    "Murphy Yuezhen Niu",
+    "Sam Blackwell",
+    "George Holland",
+    "Dvir Kafri",
+    "Juan Atalaya",
+    "Craig Gidney",
+    "Demis Hassabis",
+    "Sergio Boixo",
+    "Hartmut Neven",
+    "Pushmeet Kohli"
+   ],
+   "container": "Nature",
+   "year": 2024,
+   "volume": "635",
+   "issue": "8040",
+   "page": "834-840",
+   "publisher": "Springer Science and Business Media LLC",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "d8394f8152bc9b0a58a6988e83df940a1b940af6",
+   "externalIds": {
+    "PubMedCentral": "11602728",
+    "ArXiv": "2310.05900",
+    "DBLP": "journals/nature/BauschSHEDNJSNBHKAGHBNK24",
+    "DOI": "10.1038/s41586-024-08148-8",
+    "CorpusId": 263830246,
+    "PubMed": "39567694"
+   },
+   "publicationVenue": {
+    "id": "6c24a0a0-b07d-4d7b-a19b-fd09a3ed453a",
+    "name": "Nature",
+    "type": "journal",
+    "issn": "0028-0836",
+    "url": "https://www.nature.com/",
+    "alternate_urls": [
+     "http://www.nature.com/nature/",
+     "https://www.nature.com/nature/",
+     "http://www.nature.com/nature/archive/index.html"
+    ]
+   },
+   "title": "Learning high-accuracy error decoding for quantum processors",
+   "venue": "Nature",
+   "year": 2023,
+   "publicationDate": "2023-10-09",
+   "journal": {
+    "name": "Nature",
+    "pages": "834 - 840",
+    "volume": "635"
+   },
+   "authors": [
+    {
+     "authorId": "2264215",
+     "name": "Johannes Bausch"
+    },
+    {
+     "authorId": "2256999683",
+     "name": "A. W. Senior"
+    },
+    {
+     "authorId": "2256998651",
+     "name": "F. Heras"
+    },
+    {
+     "authorId": "2256998735",
+     "name": "T. Edlich"
+    },
+    {
+     "authorId": "2257008027",
+     "name": "A. Davies"
+    },
+    {
+     "authorId": "2256999689",
+     "name": "Michael Newman"
+    },
+    {
+     "authorId": "2247042753",
+     "name": "Cody Jones"
+    },
+    {
+     "authorId": "11013775",
+     "name": "K. Satzinger"
+    },
+    {
+     "authorId": "10777296",
+     "name": "M. Niu"
+    },
+    {
+     "authorId": "2256998927",
+     "name": "S. Blackwell"
+    },
+    {
+     "authorId": "2256999012",
+     "name": "George Holland"
+    },
+    {
+     "authorId": "11708285",
+     "name": "D. Kafri"
+    },
+    {
+     "authorId": "48408638",
+     "name": "J. Atalaya"
+    },
+    {
+     "authorId": "40834699",
+     "name": "C. Gidney"
+    },
+    {
+     "authorId": "48987704",
+     "name": "D. Hassabis"
+    },
+    {
+     "authorId": "48703443",
+     "name": "S. Boixo"
+    },
+    {
+     "authorId": "2665814",
+     "name": "H. Neven"
+    },
+    {
+     "authorId": "143967473",
+     "name": "Pushmeet Kohli"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null
+ },
+ {
+  "key": "sanchezgonzalez2020gns",
+  "theme": "simulators",
+  "expected_title": "Learning to Simulate Complex Physics with Graph Networks",
+  "arxiv_id": "2002.09405",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Learning to Simulate Complex Physics with Graph Networks",
+   "authors": [
+    "Alvaro Sanchez-Gonzalez",
+    "Jonathan Godwin",
+    "Tobias Pfaff",
+    "Rex Ying",
+    "Jure Leskovec",
+    "Peter W. Battaglia"
+   ],
+   "first_version": "2020-02-21",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "e732758fc8139e028d413c9921bcb2cb15fb3e9d",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2002-09405",
+    "MAG": "3034655405",
+    "ArXiv": "2002.09405",
+    "CorpusId": 211252550
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "Learning to Simulate Complex Physics with Graph Networks",
+   "venue": "International Conference on Machine Learning",
+   "year": 2020,
+   "publicationDate": "2020-02-21",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2002.09405"
+   },
+   "authors": [
+    {
+     "authorId": "1398105826",
+     "name": "Alvaro Sanchez-Gonzalez"
+    },
+    {
+     "authorId": "2069002234",
+     "name": "Jonathan Godwin"
+    },
+    {
+     "authorId": "2054956",
+     "name": "T. Pfaff"
+    },
+    {
+     "authorId": "83539859",
+     "name": "Rex Ying"
+    },
+    {
+     "authorId": "1702139",
+     "name": "J. Leskovec"
+    },
+    {
+     "authorId": "2019153",
+     "name": "P. Battaglia"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Accepted at ICML 2020",
+  "openreview": {
+   "venues": [
+    "ICML 2020"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "brandstetter2022mpnn",
+  "theme": "simulators",
+  "expected_title": "Message Passing Neural PDE Solvers",
+  "arxiv_id": "2202.03376",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Message Passing Neural PDE Solvers",
+   "authors": [
+    "Johannes Brandstetter",
+    "Daniel Worrall",
+    "Max Welling"
+   ],
+   "first_version": "2022-02-07",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "be8d39424a9010bfc0805385cc91edee383c2e24",
+   "externalIds": {
+    "DBLP": "conf/iclr/BrandstetterWW22",
+    "ArXiv": "2202.03376",
+    "CorpusId": 246634432
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Message Passing Neural PDE Solvers",
+   "venue": "International Conference on Learning Representations",
+   "year": 2022,
+   "publicationDate": "2022-02-07",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2202.03376"
+   },
+   "authors": [
+    {
+     "authorId": "78843496",
+     "name": "J. Brandstetter"
+    },
+    {
+     "authorId": "3471551",
+     "name": "Daniel E. Worrall"
+    },
+    {
+     "authorId": "1678311",
+     "name": "M. Welling"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Published at ICLR 2022 (Spotlight paper), Github: https://github.com/brandstetter-johannes/MP-Neural-PDE-Solvers"
+ },
+ {
+  "key": "lippe2023pderefiner",
+  "theme": "simulators",
+  "expected_title": "PDE-Refiner: Achieving Accurate Long Rollouts with Neural PDE Solvers",
+  "arxiv_id": "2308.05732",
+  "doi_given": null,
+  "arxiv": {
+   "title": "PDE-Refiner: Achieving Accurate Long Rollouts with Neural PDE Solvers",
+   "authors": [
+    "Phillip Lippe",
+    "Bastiaan S. Veeling",
+    "Paris Perdikaris",
+    "Richard E. Turner",
+    "Johannes Brandstetter"
+   ],
+   "first_version": "2023-08-10",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "cee75e291d693e3ee4087f1aa74f0f7e223b3b6f",
+   "externalIds": {
+    "DBLP": "conf/nips/LippeVPTB23",
+    "ArXiv": "2308.05732",
+    "DOI": "10.48550/arXiv.2308.05732",
+    "CorpusId": 260775609
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "PDE-Refiner: Achieving Accurate Long Rollouts with Neural PDE Solvers",
+   "venue": "Neural Information Processing Systems",
+   "year": 2023,
+   "publicationDate": "2023-08-10",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2308.05732"
+   },
+   "authors": [
+    {
+     "authorId": "1751661088",
+     "name": "Phillip Lippe"
+    },
+    {
+     "authorId": "46221215",
+     "name": "Bastiaan S. Veeling"
+    },
+    {
+     "authorId": "3410970",
+     "name": "P. Perdikaris"
+    },
+    {
+     "authorId": "145369890",
+     "name": "Richard E. Turner"
+    },
+    {
+     "authorId": "78843496",
+     "name": "J. Brandstetter"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Project website: https://phlippe.github.io/PDERefiner/"
+ },
+ {
+  "key": "kochkov2024neuralgcm",
+  "theme": "simulators",
+  "expected_title": "Neural General Circulation Models for Weather and Climate",
+  "arxiv_id": "2311.07222",
+  "doi_given": "10.1038/s41586-024-07744-y",
+  "arxiv": {
+   "title": "Neural General Circulation Models for Weather and Climate",
+   "authors": [
+    "Dmitrii Kochkov",
+    "Janni Yuval",
+    "Ian Langmore",
+    "Peter Norgaard",
+    "Jamie Smith",
+    "Griffin Mooers",
+    "Milan Klöwer",
+    "James Lottes",
+    "Stephan Rasp",
+    "Peter Düben",
+    "Sam Hatfield",
+    "Peter Battaglia",
+    "Alvaro Sanchez-Gonzalez",
+    "Matthew Willson",
+    "Michael P. Brenner",
+    "Stephan Hoyer"
+   ],
+   "first_version": "2023-11-13",
+   "journal_ref": null,
+   "doi": "10.1038/s41586-024-07744-y"
+  },
+  "crossref": {
+   "title": "Neural general circulation models for weather and climate",
+   "authors": [
+    "Dmitrii Kochkov",
+    "Janni Yuval",
+    "Ian Langmore",
+    "Peter Norgaard",
+    "Jamie Smith",
+    "Griffin Mooers",
+    "Milan Klöwer",
+    "James Lottes",
+    "Stephan Rasp",
+    "Peter Düben",
+    "Sam Hatfield",
+    "Peter Battaglia",
+    "Alvaro Sanchez-Gonzalez",
+    "Matthew Willson",
+    "Michael P. Brenner",
+    "Stephan Hoyer"
+   ],
+   "container": "Nature",
+   "year": 2024,
+   "volume": "632",
+   "issue": "8027",
+   "page": "1060-1066",
+   "publisher": "Springer Science and Business Media LLC",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": {
+   "paperId": "d035359d8ed1e89db5eb5b2455215a69f276ed94",
+   "externalIds": {
+    "PubMedCentral": "11357988",
+    "DBLP": "journals/nature/KochkovYLNSMKLRDHBSWBH24",
+    "ArXiv": "2311.07222",
+    "DOI": "10.1038/s41586-024-07744-y",
+    "CorpusId": 265150435,
+    "PubMed": "39039241"
+   },
+   "publicationVenue": {
+    "id": "6c24a0a0-b07d-4d7b-a19b-fd09a3ed453a",
+    "name": "Nature",
+    "type": "journal",
+    "issn": "0028-0836",
+    "url": "https://www.nature.com/",
+    "alternate_urls": [
+     "http://www.nature.com/nature/",
+     "https://www.nature.com/nature/",
+     "http://www.nature.com/nature/archive/index.html"
+    ]
+   },
+   "title": "Neural general circulation models for weather and climate",
+   "venue": "Nature",
+   "year": 2023,
+   "publicationDate": "2023-11-13",
+   "journal": {
+    "name": "Nature",
+    "pages": "1060 - 1066",
+    "volume": "632"
+   },
+   "authors": [
+    {
+     "authorId": "40833997",
+     "name": "Dmitrii Kochkov"
+    },
+    {
+     "authorId": "5276672",
+     "name": "J. Yuval"
+    },
+    {
+     "authorId": "2766119",
+     "name": "I. Langmore"
+    },
+    {
+     "authorId": "2266395781",
+     "name": "Peter C. Norgaard"
+    },
+    {
+     "authorId": "2119124568",
+     "name": "Jamie A. Smith"
+    },
+    {
+     "authorId": "113393992",
+     "name": "Griffin Mooers"
+    },
+    {
+     "authorId": "2086970857",
+     "name": "Milan Klöwer"
+    },
+    {
+     "authorId": "2266398107",
+     "name": "James Lottes"
+    },
+    {
+     "authorId": "41151821",
+     "name": "S. Rasp"
+    },
+    {
+     "authorId": "3022017",
+     "name": "P. Düben"
+    },
+    {
+     "authorId": "2288835950",
+     "name": "S. Hatfield"
+    },
+    {
+     "authorId": "2019153",
+     "name": "P. Battaglia"
+    },
+    {
+     "authorId": "2266397148",
+     "name": "Á. Sánchez-González"
+    },
+    {
+     "authorId": "2266396481",
+     "name": "Matthew Willson"
+    },
+    {
+     "authorId": "2225288138",
+     "name": "Michael P. Brenner"
+    },
+    {
+     "authorId": "2257229905",
+     "name": "Stephan Hoyer"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "92 pages, 54 figures. Nature (2024)"
+ },
+ {
+  "key": "wattmeyer2023ace",
+  "theme": "simulators",
+  "expected_title": "ACE: A fast, skillful learned global atmospheric model for climate prediction",
+  "arxiv_id": "2310.02074",
+  "doi_given": null,
+  "arxiv": {
+   "title": "ACE: A fast, skillful learned global atmospheric model for climate prediction",
+   "authors": [
+    "Oliver Watt-Meyer",
+    "Gideon Dresdner",
+    "Jeremy McGibbon",
+    "Spencer K. Clark",
+    "Brian Henn",
+    "James Duncan",
+    "Noah D. Brenowitz",
+    "Karthik Kashinath",
+    "Michael S. Pritchard",
+    "Boris Bonev",
+    "Matthew E. Peters",
+    "Christopher S. Bretherton"
+   ],
+   "first_version": "2023-10-03",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "782d8be5b04f6c665568d9dc9d0ee06c00158624",
+   "externalIds": {
+    "ArXiv": "2310.02074",
+    "DBLP": "journals/corr/abs-2310-02074",
+    "DOI": "10.48550/arXiv.2310.02074",
+    "CorpusId": 263608708
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "ACE: A fast, skillful learned global atmospheric model for climate prediction",
+   "venue": "arXiv.org",
+   "year": 2023,
+   "publicationDate": "2023-10-03",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2310.02074"
+   },
+   "authors": [
+    {
+     "authorId": "1422180330",
+     "name": "Oliver Watt‐Meyer"
+    },
+    {
+     "authorId": "25927447",
+     "name": "G. Dresdner"
+    },
+    {
+     "authorId": "72461070",
+     "name": "J. McGibbon"
+    },
+    {
+     "authorId": "13448026",
+     "name": "Spencer K. Clark"
+    },
+    {
+     "authorId": "2238459243",
+     "name": "B. Henn"
+    },
+    {
+     "authorId": "2253413876",
+     "name": "James P. C. Duncan"
+    },
+    {
+     "authorId": "2138925448",
+     "name": "Noah D. Brenowitz"
+    },
+    {
+     "authorId": "3410191",
+     "name": "K. Kashinath"
+    },
+    {
+     "authorId": "2253468335",
+     "name": "Michael S. Pritchard"
+    },
+    {
+     "authorId": "39690387",
+     "name": "B. Bonev"
+    },
+    {
+     "authorId": "2267244582",
+     "name": "M. Peters"
+    },
+    {
+     "authorId": "2240017193",
+     "name": "C. Bretherton"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Accepted at Tackling Climate Change with Machine Learning: workshop at NeurIPS 2023",
+  "openreview": {
+   "venues": [],
+   "complete": true
+  }
+ },
+ {
+  "key": "greydanus2019hnn",
+  "theme": "simulators",
+  "expected_title": "Hamiltonian Neural Networks",
+  "arxiv_id": "1906.01563",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Hamiltonian Neural Networks",
+   "authors": [
+    "Sam Greydanus",
+    "Misko Dzamba",
+    "Jason Yosinski"
+   ],
+   "first_version": "2019-06-04",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "bb758228488bd5a67a8bc7369bf090b3d2bc4cc3",
+   "externalIds": {
+    "ArXiv": "1906.01563",
+    "DBLP": "conf/nips/GreydanusDY19",
+    "MAG": "2971162686",
+    "CorpusId": 174797937
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Hamiltonian Neural Networks",
+   "venue": "Neural Information Processing Systems",
+   "year": 2019,
+   "publicationDate": "2019-06-04",
+   "journal": {
+    "pages": "15353-15363"
+   },
+   "authors": [
+    {
+     "authorId": "14851288",
+     "name": "S. Greydanus"
+    },
+    {
+     "authorId": "3185224",
+     "name": "Misko Dzamba"
+    },
+    {
+     "authorId": "2965424",
+     "name": "J. Yosinski"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "Conference paper at NeurIPS 2019. Main paper has 8 pages and 5 figures"
+ },
+ {
+  "key": "siegelmann1995",
+  "theme": "turing",
+  "expected_title": "On the computational power of neural nets",
+  "arxiv_id": null,
+  "doi_given": "10.1006/jcss.1995.1013",
+  "crossref": {
+   "title": "On the Computational Power of Neural Nets",
+   "authors": [
+    "H.T. Siegelmann",
+    "E.D. Sontag"
+   ],
+   "container": "Journal of Computer and System Sciences",
+   "year": 1995,
+   "volume": "50",
+   "issue": "1",
+   "page": "132-150",
+   "publisher": "Elsevier BV",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": null,
+  "title_match": 1.0
+ },
+ {
+  "key": "perez2021attention",
+  "theme": "turing",
+  "expected_title": "Attention is Turing-Complete",
+  "arxiv_id": "1901.03429",
+  "doi_given": null,
+  "arxiv": {
+   "title": "On the Turing Completeness of Modern Neural Network Architectures",
+   "authors": [
+    "Jorge Pérez",
+    "Javier Marinković",
+    "Pablo Barceló"
+   ],
+   "first_version": "2019-01-10",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "3694381e74445a8b9f8cb8d373e39626e47191b5",
+   "externalIds": {
+    "MAG": "2949569871",
+    "DBLP": "conf/iclr/PerezMB19",
+    "ArXiv": "1901.03429",
+    "CorpusId": 57825721
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "On the Turing Completeness of Modern Neural Network Architectures",
+   "venue": "International Conference on Learning Representations",
+   "year": 2019,
+   "publicationDate": "2019-01-10",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/1901.03429"
+   },
+   "authors": [
+    {
+     "authorId": "144022533",
+     "name": "Jorge Pérez"
+    },
+    {
+     "authorId": "66941060",
+     "name": "Javier Marinkovic"
+    },
+    {
+     "authorId": "35106192",
+     "name": "P. Barceló"
+    }
+   ]
+  },
+  "title_match": 0.40860215053763443,
+  "arxiv_comment": "ICLR2019 camera ready",
+  "crossref_extra": [
+   {
+    "doi": "10.1021/jacsau.5c01382.s002",
+    "title": "Achieving Operational Universality through a Turing Complete Chemputer",
+    "match": 0.531,
+    "container": null,
+    "year": null,
+    "authors": []
+   },
+   {
+    "doi": "10.1021/jacsau.5c01382.s004",
+    "title": "Achieving Operational Universality through a Turing Complete Chemputer",
+    "match": 0.531,
+    "container": null,
+    "year": null,
+    "authors": []
+   },
+   {
+    "doi": "10.1021/jacsau.5c01382.s001",
+    "title": "Achieving Operational Universality through a Turing Complete Chemputer",
+    "match": 0.531,
+    "container": null,
+    "year": null,
+    "authors": []
+   }
+  ]
+ },
+ {
+  "key": "schuurmans2023memory",
+  "theme": "turing",
+  "expected_title": "Memory Augmented Large Language Models are Computationally Universal",
+  "arxiv_id": "2301.04589",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Memory Augmented Large Language Models are Computationally Universal",
+   "authors": [
+    "Dale Schuurmans"
+   ],
+   "first_version": "2023-01-10",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "7ec58d26c4dddb4bc3b6829fa0654a22cc26fdfe",
+   "externalIds": {
+    "ArXiv": "2301.04589",
+    "DBLP": "journals/corr/abs-2301-04589",
+    "DOI": "10.48550/arXiv.2301.04589",
+    "CorpusId": 255595513
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Memory Augmented Large Language Models are Computationally Universal",
+   "venue": "arXiv.org",
+   "year": 2023,
+   "publicationDate": "2023-01-10",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2301.04589"
+   },
+   "authors": [
+    {
+     "authorId": "1714772",
+     "name": "Dale Schuurmans"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "23 pages, 0 figures",
+  "openreview": {
+   "venues": [],
+   "complete": true
+  }
+ },
+ {
+  "key": "schuurmans2024autoregressive",
+  "theme": "turing",
+  "expected_title": "Autoregressive Large Language Models are Computationally Universal",
+  "arxiv_id": "2410.03170",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Autoregressive Large Language Models are Computationally Universal",
+   "authors": [
+    "Dale Schuurmans",
+    "Hanjun Dai",
+    "Francesco Zanini"
+   ],
+   "first_version": "2024-10-04",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "b72b981bd59ffb1536c7a9e92e43b882f36d3e5c",
+   "externalIds": {
+    "ArXiv": "2410.03170",
+    "DBLP": "journals/corr/abs-2410-03170",
+    "DOI": "10.48550/arXiv.2410.03170",
+    "CorpusId": 273162844
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Autoregressive Large Language Models are Computationally Universal",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-10-04",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2410.03170"
+   },
+   "authors": [
+    {
+     "authorId": "2265994815",
+     "name": "Dale Schuurmans"
+    },
+    {
+     "authorId": "2257041187",
+     "name": "Han-Jun Dai"
+    },
+    {
+     "authorId": "2324586905",
+     "name": "Francesco Zanini"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": "32 pages",
+  "openreview": {
+   "venues": [],
+   "complete": false
+  }
+ },
+ {
+  "key": "hou2024turingprograms",
+  "theme": "turing",
+  "expected_title": "Universal Length Generalization with Turing Programs",
+  "arxiv_id": "2407.03310",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Universal Length Generalization with Turing Programs",
+   "authors": [
+    "Kaiying Hou",
+    "David Brandfonbrener",
+    "Sham Kakade",
+    "Samy Jelassi",
+    "Eran Malach"
+   ],
+   "first_version": "2024-07-03",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "ffb127811ec6843b51b9e5f19f37223de531e3d5",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2407-03310",
+    "ArXiv": "2407.03310",
+    "DOI": "10.48550/arXiv.2407.03310",
+    "CorpusId": 270924396
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Universal Length Generalization with Turing Programs",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-07-03",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2407.03310"
+   },
+   "authors": [
+    {
+     "authorId": "2309480366",
+     "name": "Kaiying Hou"
+    },
+    {
+     "authorId": "35402876",
+     "name": "David Brandfonbrener"
+    },
+    {
+     "authorId": "144695232",
+     "name": "S. Kakade"
+    },
+    {
+     "authorId": "47009988",
+     "name": "Samy Jelassi"
+    },
+    {
+     "authorId": "19201820",
+     "name": "Eran Malach"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "ICML 2025 poster"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "whittington2020tem",
+  "theme": "neuro",
+  "expected_title": "The Tolman-Eichenbaum Machine: Unifying Space and Relational Memory through Generalization in the Hippocampal Formation",
+  "arxiv_id": null,
+  "doi_given": "10.1016/j.cell.2020.10.024",
+  "crossref": {
+   "title": "The Tolman-Eichenbaum Machine: Unifying Space and Relational Memory through Generalization in the Hippocampal Formation",
+   "authors": [
+    "James C.R. Whittington",
+    "Timothy H. Muller",
+    "Shirley Mark",
+    "Guifen Chen",
+    "Caswell Barry",
+    "Neil Burgess",
+    "Timothy E.J. Behrens"
+   ],
+   "container": "Cell",
+   "year": 2020,
+   "volume": "183",
+   "issue": "5",
+   "page": "1249-1263.e23",
+   "publisher": "Elsevier BV",
+   "type": "journal-article",
+   "article_number": null
+  },
+  "s2": null,
+  "title_match": 1.0
+ },
+ {
+  "key": "george2021cscg",
+  "theme": "neuro",
+  "expected_title": "Clone-structured graph representations enable flexible learning and vicarious evaluation of cognitive maps",
+  "arxiv_id": null,
+  "doi_given": "10.1038/s41467-021-22559-5",
+  "crossref": {
+   "title": "Clone-structured graph representations enable flexible learning and vicarious evaluation of cognitive maps",
+   "authors": [
+    "Dileep George",
+    "Rajeev V. Rikhye",
+    "Nishad Gothoskar",
+    "J. Swaroop Guntupalli",
+    "Antoine Dedieu",
+    "Miguel Lázaro-Gredilla"
+   ],
+   "container": "Nature Communications",
+   "year": 2021,
+   "volume": "12",
+   "issue": "1",
+   "page": null,
+   "publisher": "Springer Science and Business Media LLC",
+   "type": "journal-article",
+   "article_number": "2392"
+  },
+  "s2": {
+   "paperId": "ec42cc63367610f76c99b04562bf3222ff069252",
+   "externalIds": {
+    "PubMedCentral": "8062558",
+    "DOI": "10.1038/s41467-021-22559-5",
+    "CorpusId": 233371594,
+    "PubMed": "33888694"
+   },
+   "publicationVenue": {
+    "id": "43b3f0f9-489a-4566-8164-02fafde3cd98",
+    "name": "Nature Communications",
+    "type": "journal",
+    "alternate_names": [
+     "Nat Commun"
+    ],
+    "issn": "2041-1723",
+    "url": "https://www.nature.com/ncomms/",
+    "alternate_urls": [
+     "http://www.nature.com/ncomms/about/index.html",
+     "http://www.nature.com/ncomms/index.html"
+    ]
+   },
+   "title": "Clone-structured graph representations enable flexible learning and vicarious evaluation of cognitive maps",
+   "venue": "Nature Communications",
+   "year": 2021,
+   "publicationDate": "2021-04-22",
+   "journal": {
+    "name": "Nature Communications",
+    "volume": "12"
+   },
+   "authors": [
+    {
+     "authorId": "50021619",
+     "name": "Dileep George"
+    },
+    {
+     "authorId": "4742172",
+     "name": "R. Rikhye"
+    },
+    {
+     "authorId": "26594874",
+     "name": "Nishad Gothoskar"
+    },
+    {
+     "authorId": "2663356",
+     "name": "J. S. Guntupalli"
+    },
+    {
+     "authorId": "36361397",
+     "name": "A. Dedieu"
+    },
+    {
+     "authorId": "1388666962",
+     "name": "Miguel Lázaro-Gredilla"
+    }
+   ]
+  },
+  "title_match": 1.0
+ },
+ {
+  "key": "whittington2022transformers",
+  "theme": "neuro",
+  "expected_title": "Relating transformers to models and neural representations of the hippocampal formation",
+  "arxiv_id": "2112.04035",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Relating transformers to models and neural representations of the hippocampal formation",
+   "authors": [
+    "James C. R. Whittington",
+    "Joseph Warren",
+    "Timothy E. J. Behrens"
+   ],
+   "first_version": "2021-12-07",
+   "journal_ref": null,
+   "doi": null
+  },
+  "s2": {
+   "paperId": "06e40b7a703079c280f8f0886ac2bd984cd318ce",
+   "externalIds": {
+    "ArXiv": "2112.04035",
+    "DBLP": "journals/corr/abs-2112-04035",
+    "CorpusId": 244954585
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Relating transformers to models and neural representations of the hippocampal formation",
+   "venue": "International Conference on Learning Representations",
+   "year": 2021,
+   "publicationDate": "2021-12-07",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2112.04035"
+   },
+   "authors": [
+    {
+     "authorId": "10404398",
+     "name": "James C. R. Whittington"
+    },
+    {
+     "authorId": "2146521483",
+     "name": "Joseph Warren"
+    },
+    {
+     "authorId": "119822830",
+     "name": "T. Behrens"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "arxiv_comment": null,
+  "openreview": {
+   "venues": [
+    "ICLR 2022 Poster"
+   ],
+   "complete": true
+  }
+ },
+ {
+  "key": "buitrago2025length",
+  "theme": "state",
+  "expected_title": "Understanding and Improving Length Generalization in Recurrent Models",
+  "arxiv_id": "2507.02782",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Understanding and Improving Length Generalization in Recurrent Models",
+   "authors": [
+    "Ricardo Buitrago Ruiz",
+    "Albert Gu"
+   ],
+   "first_version": "2025-07-03",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": null,
+  "s2": {
+   "paperId": "93e6a281f02d0269c4d7730595727e821857a767",
+   "externalIds": {
+    "DBLP": "conf/icml/RuizG25",
+    "ArXiv": "2507.02782",
+    "DOI": "10.48550/arXiv.2507.02782",
+    "CorpusId": 280091767
+   },
+   "publicationVenue": {
+    "id": "fc0a208c-acb7-47dc-a0d4-af8190e21d29",
+    "name": "International Conference on Machine Learning",
+    "type": "conference",
+    "alternate_names": [
+     "ICML",
+     "Int Conf Mach Learn"
+    ],
+    "url": "https://icml.cc/"
+   },
+   "title": "Understanding and Improving Length Generalization in Recurrent Models",
+   "venue": "International Conference on Machine Learning",
+   "year": 2025,
+   "publicationDate": "2025-07-03",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2507.02782"
+   },
+   "authors": [
+    {
+     "authorId": "2319601066",
+     "name": "Ricardo Buitrago Ruiz"
+    },
+    {
+     "authorId": "2319601320",
+     "name": "Albert Gu"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "ICML 2025 poster",
+    "venueid": "ICML.cc/2025/Conference",
+    "id": "2OEb20dy7B"
+   }
+  ]
+ },
+ {
+  "key": "damour2022underspec",
+  "theme": "nexttoken",
+  "expected_title": "Underspecification Presents Challenges for Credibility in Modern Machine Learning",
+  "arxiv_id": "2011.03395",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Underspecification Presents Challenges for Credibility in Modern Machine Learning",
+   "authors": [
+    "Alexander D'Amour",
+    "Katherine Heller",
+    "Dan Moldovan",
+    "Ben Adlam",
+    "Babak Alipanahi",
+    "Alex Beutel",
+    "Christina Chen",
+    "Jonathan Deaton",
+    "Jacob Eisenstein",
+    "Matthew D. Hoffman",
+    "Farhad Hormozdiari",
+    "Neil Houlsby",
+    "Shaobo Hou",
+    "Ghassen Jerfel",
+    "Alan Karthikesalingam",
+    "Mario Lucic",
+    "Yian Ma",
+    "Cory McLean",
+    "Diana Mincu",
+    "Akinori Mitani",
+    "Andrea Montanari",
+    "Zachary Nado",
+    "Vivek Natarajan",
+    "Christopher Nielson",
+    "Thomas F. Osborne",
+    "Rajiv Raman",
+    "Kim Ramasamy",
+    "Rory Sayres",
+    "Jessica Schrouff",
+    "Martin Seneviratne",
+    "Shannon Sequeira",
+    "Harini Suresh",
+    "Victor Veitch",
+    "Max Vladymyrov",
+    "Xuezhi Wang",
+    "Kellie Webster",
+    "Steve Yadlowsky",
+    "Taedong Yun",
+    "Xiaohua Zhai",
+    "D. Sculley"
+   ],
+   "first_version": "2020-11-06",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": "Updates: Updated statistical analysis in Section 6; Additional citations",
+  "s2": {
+   "paperId": "71a85e735a3686bef8cce3725ae5ba82e2cabb1b",
+   "externalIds": {
+    "DBLP": "journals/jmlr/DAmourHMAABCDEH22",
+    "MAG": "3100511085",
+    "ArXiv": "2011.03395",
+    "CorpusId": 226278105
+   },
+   "publicationVenue": {
+    "id": "c22e7c36-3bfa-43e1-bb7b-edccdea2a780",
+    "name": "Journal of machine learning research",
+    "type": "journal",
+    "alternate_names": [
+     "Journal of Machine Learning Research",
+     "J mach learn res",
+     "J Mach Learn Res"
+    ],
+    "issn": "1532-4435",
+    "alternate_issns": [
+     "1533-7928"
+    ],
+    "url": "http://www.ai.mit.edu/projects/jmlr/",
+    "alternate_urls": [
+     "http://jmlr.csail.mit.edu/",
+     "http://www.jmlr.org/",
+     "http://portal.acm.org/affiliated/jmlr"
+    ]
+   },
+   "title": "Underspecification Presents Challenges for Credibility in Modern Machine Learning",
+   "venue": "Journal of machine learning research",
+   "year": 2020,
+   "publicationDate": "2020-11-06",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2011.03395"
+   },
+   "authors": [
+    {
+     "authorId": "1396841807",
+     "name": "A. D'Amour"
+    },
+    {
+     "authorId": "145993598",
+     "name": "K. Heller"
+    },
+    {
+     "authorId": "40497400",
+     "name": "D. Moldovan"
+    },
+    {
+     "authorId": "1874006",
+     "name": "Ben Adlam"
+    },
+    {
+     "authorId": "2327021506",
+     "name": "Babak Alipanahi"
+    },
+    {
+     "authorId": "2638246",
+     "name": "Alex Beutel"
+    },
+    {
+     "authorId": "2110195795",
+     "name": "Christina Chen"
+    },
+    {
+     "authorId": "1695378",
+     "name": "Jonathan Deaton"
+    },
+    {
+     "authorId": "144154709",
+     "name": "Jacob Eisenstein"
+    },
+    {
+     "authorId": "28552618",
+     "name": "M. Hoffman"
+    },
+    {
+     "authorId": "2420527",
+     "name": "Farhad Hormozdiari"
+    },
+    {
+     "authorId": "2815290",
+     "name": "N. Houlsby"
+    },
+    {
+     "authorId": "3108448",
+     "name": "Shaobo Hou"
+    },
+    {
+     "authorId": "3451901",
+     "name": "Ghassen Jerfel"
+    },
+    {
+     "authorId": "6413143",
+     "name": "A. Karthikesalingam"
+    },
+    {
+     "authorId": "34302129",
+     "name": "M. Lučić"
+    },
+    {
+     "authorId": "2146275249",
+     "name": "Yi-An Ma"
+    },
+    {
+     "authorId": "6322777",
+     "name": "Cory Y. McLean"
+    },
+    {
+     "authorId": "2007712128",
+     "name": "Diana Mincu"
+    },
+    {
+     "authorId": "4836115",
+     "name": "Akinori Mitani"
+    },
+    {
+     "authorId": "145071265",
+     "name": "A. Montanari"
+    },
+    {
+     "authorId": "81408931",
+     "name": "Zachary Nado"
+    },
+    {
+     "authorId": "144223091",
+     "name": "Vivek Natarajan"
+    },
+    {
+     "authorId": "2065412355",
+     "name": "Christopher Nielson"
+    },
+    {
+     "authorId": "25897803",
+     "name": "Thomas F. Osborne"
+    },
+    {
+     "authorId": "2035210",
+     "name": "R. Raman"
+    },
+    {
+     "authorId": "88478180",
+     "name": "K. Ramasamy"
+    },
+    {
+     "authorId": "144042306",
+     "name": "R. Sayres"
+    },
+    {
+     "authorId": "3212089",
+     "name": "J. Schrouff"
+    },
+    {
+     "authorId": "6454443",
+     "name": "Martin G. Seneviratne"
+    },
+    {
+     "authorId": "2007741250",
+     "name": "Shannon Sequeira"
+    },
+    {
+     "authorId": "46537606",
+     "name": "H. Suresh"
+    },
+    {
+     "authorId": "2974320",
+     "name": "Victor Veitch"
+    },
+    {
+     "authorId": "3316311",
+     "name": "Max Vladymyrov"
+    },
+    {
+     "authorId": "2397434858",
+     "name": "Xuezhi Wang"
+    },
+    {
+     "authorId": "20825661",
+     "name": "Kellie Webster"
+    },
+    {
+     "authorId": "2856607",
+     "name": "Steve Yadlowsky"
+    },
+    {
+     "authorId": "2520251",
+     "name": "Taedong Yun"
+    },
+    {
+     "authorId": "2743563",
+     "name": "Xiao-Hua Zhai"
+    },
+    {
+     "authorId": "1733143",
+     "name": "D. Sculley"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [],
+  "jmlr": {
+   "url": "https://jmlr.org/papers/v23/20-1335.html",
+   "title": "Underspecification Presents Challenges for Credibility in Modern Machine Learning",
+   "journal_title": "Journal of Machine Learning Research",
+   "volume": "23",
+   "issue": "226",
+   "firstpage": "1",
+   "lastpage": "61",
+   "publication_date": "2022"
+  }
+ },
+ {
+  "key": "dziri2023faith",
+  "theme": "llmfail",
+  "expected_title": "Faith and Fate: Limits of Transformers on Compositionality",
+  "arxiv_id": "2305.18654",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Faith and Fate: Limits of Transformers on Compositionality",
+   "authors": [
+    "Nouha Dziri",
+    "Ximing Lu",
+    "Melanie Sclar",
+    "Xiang Lorraine Li",
+    "Liwei Jiang",
+    "Bill Yuchen Lin",
+    "Peter West",
+    "Chandra Bhagavatula",
+    "Ronan Le Bras",
+    "Jena D. Hwang",
+    "Soumya Sanyal",
+    "Sean Welleck",
+    "Xiang Ren",
+    "Allyson Ettinger",
+    "Zaid Harchaoui",
+    "Yejin Choi"
+   ],
+   "first_version": "2023-05-29",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": "10 pages + appendix (40 pages)",
+  "s2": {
+   "paperId": "7d97c17a75beb89f938eaac1d3ca60ac2245fb2e",
+   "externalIds": {
+    "ArXiv": "2305.18654",
+    "DBLP": "journals/corr/abs-2305-18654",
+    "DOI": "10.52202/075280-3081",
+    "CorpusId": 258967391
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Faith and Fate: Limits of Transformers on Compositionality",
+   "venue": "Neural Information Processing Systems",
+   "year": 2023,
+   "publicationDate": "2023-05-29",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2305.18654"
+   },
+   "authors": [
+    {
+     "authorId": "46217681",
+     "name": "Nouha Dziri"
+    },
+    {
+     "authorId": "50085131",
+     "name": "Ximing Lu"
+    },
+    {
+     "authorId": "1947172233",
+     "name": "Melanie Sclar"
+    },
+    {
+     "authorId": "1737850",
+     "name": "Xiang Lorraine Li"
+    },
+    {
+     "authorId": "2112504145",
+     "name": "Liwei Jiang"
+    },
+    {
+     "authorId": "51583409",
+     "name": "Bill Yuchen Lin"
+    },
+    {
+     "authorId": "119659229",
+     "name": "Peter West"
+    },
+    {
+     "authorId": "1857797",
+     "name": "Chandra Bhagavatula"
+    },
+    {
+     "authorId": "39227408",
+     "name": "Ronan Le Bras"
+    },
+    {
+     "authorId": "2012510",
+     "name": "Jena D. Hwang"
+    },
+    {
+     "authorId": "3313909",
+     "name": "Soumya Sanyal"
+    },
+    {
+     "authorId": "2129663",
+     "name": "S. Welleck"
+    },
+    {
+     "authorId": "145201124",
+     "name": "Xiang Ren"
+    },
+    {
+     "authorId": "37907837",
+     "name": "Allyson Ettinger"
+    },
+    {
+     "authorId": "1753355",
+     "name": "Z. Harchaoui"
+    },
+    {
+     "authorId": "1699545",
+     "name": "Yejin Choi"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "NeurIPS 2023",
+    "venueid": "dblp.org/conf/NIPS/2023",
+    "id": "l9JjH9sEOa"
+   },
+   {
+    "venue": "CoRR 2023",
+    "venueid": "dblp.org/journals/CORR/2023",
+    "id": "G8dg0BAKEh"
+   },
+   {
+    "venue": "NeurIPS 2023 spotlight",
+    "venueid": "NeurIPS.cc/2023/Conference",
+    "id": "Fkckkr3ya8"
+   }
+  ]
+ },
+ {
+  "key": "mccoy2024embers",
+  "theme": "llmfail",
+  "expected_title": "Embers of Autoregression: Understanding Large Language Models Through the Problem They are Trained to Solve",
+  "arxiv_id": "2309.13638",
+  "doi_given": "10.1073/pnas.2322420121",
+  "arxiv": {
+   "title": "Embers of Autoregression: Understanding Large Language Models Through the Problem They are Trained to Solve",
+   "authors": [
+    "R. Thomas McCoy",
+    "Shunyu Yao",
+    "Dan Friedman",
+    "Matthew Hardy",
+    "Thomas L. Griffiths"
+   ],
+   "first_version": "2023-09-24",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": "50 pages plus 11 page of references and 23 pages of appendices",
+  "crossref": {
+   "title": "Embers of autoregression show how large language models are shaped by the problem they are trained to solve",
+   "authors": [
+    "R. Thomas McCoy",
+    "Shunyu Yao",
+    "Dan Friedman",
+    "Mathew D. Hardy",
+    "Thomas L. Griffiths"
+   ],
+   "container": "Proceedings of the National Academy of Sciences",
+   "year": 2024,
+   "volume": "121",
+   "issue": "41",
+   "page": null,
+   "publisher": "National Academy of Sciences",
+   "type": "journal-article"
+  },
+  "s2": {
+   "paperId": "73dd6fce2db3e34d1f87f8449b1e8bde78c31547",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2309-13638",
+    "ArXiv": "2309.13638",
+    "DOI": "10.48550/arXiv.2309.13638",
+    "CorpusId": 262464572
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Embers of Autoregression: Understanding Large Language Models Through the Problem They are Trained to Solve",
+   "venue": "arXiv.org",
+   "year": 2023,
+   "publicationDate": "2023-09-24",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2309.13638"
+   },
+   "authors": [
+    {
+     "authorId": "145534175",
+     "name": "R. Thomas McCoy"
+    },
+    {
+     "authorId": "47188964",
+     "name": "Shunyu Yao"
+    },
+    {
+     "authorId": "40297692",
+     "name": "Dan Friedman"
+    },
+    {
+     "authorId": "2072567032",
+     "name": "Matthew Hardy"
+    },
+    {
+     "authorId": "2239948923",
+     "name": "Thomas L. Griffiths"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": []
+ },
+ {
+  "key": "chang2025count",
+  "theme": "llmfail",
+  "expected_title": "Language Models Need Inductive Biases to Count Inductively",
+  "arxiv_id": "2405.20131",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Language Models Need Inductive Biases to Count Inductively",
+   "authors": [
+    "Yingshan Chang",
+    "Yonatan Bisk"
+   ],
+   "first_version": "2024-05-30",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": null,
+  "s2": {
+   "paperId": "4b0b59a5a0a8685661f9f84b3c86f992ebcb8f14",
+   "externalIds": {
+    "DBLP": "conf/iclr/ChangB25",
+    "ArXiv": "2405.20131",
+    "DOI": "10.48550/arXiv.2405.20131",
+    "CorpusId": 270122943
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Language Models Need Inductive Biases to Count Inductively",
+   "venue": "International Conference on Learning Representations",
+   "year": 2024,
+   "publicationDate": "2024-05-30",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2405.20131"
+   },
+   "authors": [
+    {
+     "authorId": "2131636293",
+     "name": "Yingshan Chang"
+    },
+    {
+     "authorId": "3312309",
+     "name": "Yonatan Bisk"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "ICLR 2025",
+    "venueid": "dblp.org/conf/ICLR/2025",
+    "id": "bEh3qypvcO"
+   },
+   {
+    "venue": "ICLR 2025 Poster",
+    "venueid": "ICLR.cc/2025/Conference",
+    "id": "s3IBHTTDYl"
+   }
+  ]
+ },
+ {
+  "key": "yehudai2024count",
+  "theme": "llmfail",
+  "expected_title": "When Can Transformers Count to n?",
+  "arxiv_id": "2407.15160",
+  "doi_given": null,
+  "arxiv": {
+   "title": "When Can Transformers Count to n?",
+   "authors": [
+    "Gilad Yehudai",
+    "Haim Kaplan",
+    "Guy Dar",
+    "Royi Rassin",
+    "Asma Ghandeharioun",
+    "Mor Geva",
+    "Amir Globerson"
+   ],
+   "first_version": "2024-07-21",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": null,
+  "s2": {
+   "paperId": "5aad0d6100779cbe859b7deb2c716016d133fc6d",
+   "externalIds": {
+    "ArXiv": "2407.15160",
+    "DBLP": "journals/corr/abs-2407-15160",
+    "DOI": "10.48550/arXiv.2407.15160",
+    "CorpusId": 271328954
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "When Can Transformers Count to n?",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-07-21",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2407.15160"
+   },
+   "authors": [
+    {
+     "authorId": "90287577",
+     "name": "Gilad Yehudai"
+    },
+    {
+     "authorId": "2288590121",
+     "name": "Haim Kaplan"
+    },
+    {
+     "authorId": "2111880293",
+     "name": "Guy Dar"
+    },
+    {
+     "authorId": "2188241744",
+     "name": "Royi Rassin"
+    },
+    {
+     "authorId": "2270681948",
+     "name": "Asma Ghandeharioun"
+    },
+    {
+     "authorId": "22245981",
+     "name": "Mor Geva"
+    },
+    {
+     "authorId": "2261392157",
+     "name": "Amir Globerson"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "UAI 2026 Poster",
+    "venueid": "auai.org/UAI/2026/Conference",
+    "id": "GO5BDH9Wyd"
+   },
+   {
+    "venue": "Submitted to ICLR 2025",
+    "venueid": "ICLR.cc/2025/Conference/Rejected_Submission",
+    "id": "WULjblaCoc"
+   },
+   {
+    "venue": "CoRR 2024",
+    "venueid": "dblp.org/journals/CORR/2024",
+    "id": "3j5diNQa3f"
+   }
+  ]
+ },
+ {
+  "key": "fu2024letters",
+  "theme": "llmfail",
+  "expected_title": "Why Do Large Language Models (LLMs) Struggle to Count Letters?",
+  "arxiv_id": "2412.18626",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Why Do Large Language Models (LLMs) Struggle to Count Letters?",
+   "authors": [
+    "Tairan Fu",
+    "Raquel Ferrando",
+    "Javier Conde",
+    "Carlos Arriaga",
+    "Pedro Reviriego"
+   ],
+   "first_version": "2024-12-19",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": null,
+  "s2": {
+   "paperId": "93f3efd522afdf22c0c21bf4e2b0dea774a3b541",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2412-18626",
+    "ArXiv": "2412.18626",
+    "DOI": "10.48550/arXiv.2412.18626",
+    "CorpusId": 275118941
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Why Do Large Language Models (LLMs) Struggle to Count Letters?",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-12-19",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2412.18626"
+   },
+   "authors": [
+    {
+     "authorId": "2337690811",
+     "name": "Tairan Fu"
+    },
+    {
+     "authorId": "2293316126",
+     "name": "Raquel Ferrando"
+    },
+    {
+     "authorId": "2230852635",
+     "name": "Javier Conde"
+    },
+    {
+     "authorId": "2320295946",
+     "name": "Carlos Arriaga"
+    },
+    {
+     "authorId": "2243081043",
+     "name": "Pedro Reviriego"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "CoRR 2024",
+    "venueid": "dblp.org/journals/CORR/2024",
+    "id": "NrLfOWNP0D"
+   }
+  ]
+ },
+ {
+  "key": "kim2023entity",
+  "theme": "llmfail",
+  "expected_title": "Entity Tracking in Language Models",
+  "arxiv_id": "2305.02363",
+  "doi_given": "10.18653/v1/2023.acl-long.213",
+  "arxiv": {
+   "title": "Entity Tracking in Language Models",
+   "authors": [
+    "Najoung Kim",
+    "Sebastian Schuster"
+   ],
+   "first_version": "2023-05-03",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": "ACL 2023 Camera-ready",
+  "crossref": {
+   "title": "Entity Tracking in Language Models",
+   "authors": [
+    "Najoung Kim",
+    "Sebastian Schuster"
+   ],
+   "container": "Proceedings of the 61st Annual Meeting of the Association for Computational Linguistics (Volume 1: Long Papers)",
+   "year": 2023,
+   "volume": null,
+   "issue": null,
+   "page": "3835-3855",
+   "publisher": "Association for Computational Linguistics",
+   "type": "proceedings-article"
+  },
+  "s2": {
+   "paperId": "035d7fce7690d61df76d7479d294e697a4319b7a",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2305-02363",
+    "ACL": "2023.acl-long.213",
+    "ArXiv": "2305.02363",
+    "DOI": "10.48550/arXiv.2305.02363",
+    "CorpusId": 258480179
+   },
+   "publicationVenue": {
+    "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+    "name": "Annual Meeting of the Association for Computational Linguistics",
+    "type": "conference",
+    "alternate_names": [
+     "Annu Meet Assoc Comput Linguistics",
+     "Meeting of the Association for Computational Linguistics",
+     "ACL",
+     "Meet Assoc Comput Linguistics"
+    ],
+    "url": "https://www.aclweb.org/anthology/venues/acl/"
+   },
+   "title": "Entity Tracking in Language Models",
+   "venue": "Annual Meeting of the Association for Computational Linguistics",
+   "year": 2023,
+   "publicationDate": "2023-05-03",
+   "journal": {
+    "pages": "3835-3855"
+   },
+   "authors": [
+    {
+     "authorId": "8756748",
+     "name": "Najoung Kim"
+    },
+    {
+     "authorId": "145157639",
+     "name": "Sebastian Schuster"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": []
+ },
+ {
+  "key": "vodrahalli2024michelangelo",
+  "theme": "llmfail",
+  "expected_title": "Michelangelo: Long Context Evaluations Beyond Haystacks via Latent Structure Queries",
+  "arxiv_id": "2409.12640",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Michelangelo: Long Context Evaluations Beyond Haystacks via Latent Structure Queries",
+   "authors": [
+    "Kiran Vodrahalli",
+    "Santiago Ontanon",
+    "Nilesh Tripuraneni",
+    "Kelvin Xu",
+    "Sanil Jain",
+    "Rakesh Shivanna",
+    "Jeffrey Hui",
+    "Nishanth Dikkala",
+    "Mehran Kazemi",
+    "Bahare Fatemi",
+    "Rohan Anil",
+    "Ethan Dyer",
+    "Siamak Shakeri",
+    "Roopali Vij",
+    "Harsh Mehta",
+    "Vinay Ramasesh",
+    "Quoc Le",
+    "Ed Chi",
+    "Yifeng Lu",
+    "Orhan Firat",
+    "Angeliki Lazaridou",
+    "Jean-Baptiste Lespiau",
+    "Nithya Attaluri",
+    "Kate Olszewska"
+   ],
+   "first_version": "2024-09-19",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": null,
+  "s2": {
+   "paperId": "a82c13e00ae74d8fd7fcdbb320dca87bab790fe9",
+   "externalIds": {
+    "DBLP": "journals/corr/abs-2409-12640",
+    "ArXiv": "2409.12640",
+    "DOI": "10.48550/arXiv.2409.12640",
+    "CorpusId": 272753754
+   },
+   "publicationVenue": {
+    "id": "1901e811-ee72-4b20-8f7e-de08cd395a10",
+    "name": "arXiv.org",
+    "alternate_names": [
+     "ArXiv"
+    ],
+    "issn": "2331-8422",
+    "url": "https://arxiv.org"
+   },
+   "title": "Michelangelo: Long Context Evaluations Beyond Haystacks via Latent Structure Queries",
+   "venue": "arXiv.org",
+   "year": 2024,
+   "publicationDate": "2024-09-19",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2409.12640"
+   },
+   "authors": [
+    {
+     "authorId": "4529644",
+     "name": "Kiran Vodrahalli"
+    },
+    {
+     "authorId": "2283314834",
+     "name": "Santiago Ontañón"
+    },
+    {
+     "authorId": "1925801",
+     "name": "Nilesh Tripuraneni"
+    },
+    {
+     "authorId": "2266735761",
+     "name": "Kelvin Xu"
+    },
+    {
+     "authorId": "2321910347",
+     "name": "Sanil Jain"
+    },
+    {
+     "authorId": "2934334",
+     "name": "Rakesh Shivanna"
+    },
+    {
+     "authorId": "2134586809",
+     "name": "Jeffrey Hui"
+    },
+    {
+     "authorId": "2312421",
+     "name": "Nishanth Dikkala"
+    },
+    {
+     "authorId": "2283308055",
+     "name": "Mehran Kazemi"
+    },
+    {
+     "authorId": "3422551",
+     "name": "Bahare Fatemi"
+    },
+    {
+     "authorId": "1508890387",
+     "name": "Rohan Anil"
+    },
+    {
+     "authorId": "2275180676",
+     "name": "Ethan Dyer"
+    },
+    {
+     "authorId": "2944868",
+     "name": "Siamak Shakeri"
+    },
+    {
+     "authorId": "71667257",
+     "name": "Roopali Vij"
+    },
+    {
+     "authorId": "18138802",
+     "name": "Harsh Mehta"
+    },
+    {
+     "authorId": "96641652",
+     "name": "V. Ramasesh"
+    },
+    {
+     "authorId": "1998340269",
+     "name": "Quoc V. Le"
+    },
+    {
+     "authorId": "2253469026",
+     "name": "E. Chi"
+    },
+    {
+     "authorId": "2141538599",
+     "name": "Yifeng Lu"
+    },
+    {
+     "authorId": "2273534960",
+     "name": "Orhan Firat"
+    },
+    {
+     "authorId": "2268870905",
+     "name": "A. Lazaridou"
+    },
+    {
+     "authorId": "143783339",
+     "name": "Jean-Baptiste Lespiau"
+    },
+    {
+     "authorId": "80930649",
+     "name": "Nithya Attaluri"
+    },
+    {
+     "authorId": "2275180557",
+     "name": "Kate Olszewska"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "CoRR 2024",
+    "venueid": "dblp.org/journals/CORR/2024",
+    "id": "jdc57bqY3u"
+   },
+   {
+    "venue": "arxiv",
+    "venueid": "OpenReview.net/Archive",
+    "id": "4JJqVCfOlB"
+   }
+  ]
+ },
+ {
+  "key": "tyen2024mistakes",
+  "theme": "llmfail",
+  "expected_title": "LLMs cannot find reasoning errors, but can correct them given the error location",
+  "arxiv_id": "2311.08516",
+  "doi_given": "10.18653/v1/2024.findings-acl.826",
+  "arxiv": {
+   "title": "LLMs cannot find reasoning errors, but can correct them given the error location",
+   "authors": [
+    "Gladys Tyen",
+    "Hassan Mansoor",
+    "Victor Cărbune",
+    "Peter Chen",
+    "Tony Mak"
+   ],
+   "first_version": "2023-11-14",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": "ACL 2024 Findings",
+  "crossref": {
+   "title": "LLMs cannot find reasoning errors, but can correct them given the error location",
+   "authors": [
+    "Gladys Tyen",
+    "Hassan Mansoor",
+    "Victor Carbune",
+    "Peter Chen",
+    "Tony Mak"
+   ],
+   "container": "Findings of the Association for Computational Linguistics ACL 2024",
+   "year": 2024,
+   "volume": null,
+   "issue": null,
+   "page": "13894-13908",
+   "publisher": "Association for Computational Linguistics",
+   "type": "proceedings-article"
+  },
+  "s2": {
+   "paperId": "2cc5a2e8e5e739dbc22fce6eb0242bda3acd7998",
+   "externalIds": {
+    "ArXiv": "2311.08516",
+    "DBLP": "journals/corr/abs-2311-08516",
+    "DOI": "10.48550/arXiv.2311.08516",
+    "CorpusId": 265213404
+   },
+   "publicationVenue": {
+    "id": "1e33b3be-b2ab-46e9-96e8-d4eb4bad6e44",
+    "name": "Annual Meeting of the Association for Computational Linguistics",
+    "type": "conference",
+    "alternate_names": [
+     "Annu Meet Assoc Comput Linguistics",
+     "Meeting of the Association for Computational Linguistics",
+     "ACL",
+     "Meet Assoc Comput Linguistics"
+    ],
+    "url": "https://www.aclweb.org/anthology/venues/acl/"
+   },
+   "title": "LLMs cannot find reasoning errors, but can correct them!",
+   "venue": "Annual Meeting of the Association for Computational Linguistics",
+   "year": 2023,
+   "publicationDate": "2023-11-14",
+   "journal": {
+    "pages": "13894-13908"
+   },
+   "authors": [
+    {
+     "authorId": "2266751853",
+     "name": "Gladys Tyen"
+    },
+    {
+     "authorId": "2265752172",
+     "name": "H. Mansoor"
+    },
+    {
+     "authorId": "2267040878",
+     "name": "Peter Chen"
+    },
+    {
+     "authorId": "2266752024",
+     "name": "Tony Mak"
+    },
+    {
+     "authorId": "2237423389",
+     "name": "Victor Carbune"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "ACL (Findings) 2024",
+    "venueid": "dblp.org/conf/ACL/2024",
+    "id": "Yw9Kg6ZCDl"
+   }
+  ]
+ },
+ {
+  "key": "huang2024selfcorrect",
+  "theme": "llmfail",
+  "expected_title": "Large Language Models Cannot Self-Correct Reasoning Yet",
+  "arxiv_id": "2310.01798",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Large Language Models Cannot Self-Correct Reasoning Yet",
+   "authors": [
+    "Jie Huang",
+    "Xinyun Chen",
+    "Swaroop Mishra",
+    "Huaixiu Steven Zheng",
+    "Adams Wei Yu",
+    "Xinying Song",
+    "Denny Zhou"
+   ],
+   "first_version": "2023-10-03",
+   "journal_ref": null,
+   "doi": null
+  },
+  "arxiv_comment": "ICLR 2024",
+  "s2": {
+   "paperId": "6d4bacb69923e1e94fb4de468b939ce6db32fb51",
+   "externalIds": {
+    "DBLP": "conf/iclr/0009CMZYSZ24",
+    "ArXiv": "2310.01798",
+    "DOI": "10.48550/arXiv.2310.01798",
+    "CorpusId": 263609132
+   },
+   "publicationVenue": {
+    "id": "939c6e1d-0d17-4d6e-8a82-66d960df0e40",
+    "name": "International Conference on Learning Representations",
+    "type": "conference",
+    "alternate_names": [
+     "Int Conf Learn Represent",
+     "ICLR"
+    ],
+    "url": "https://iclr.cc/"
+   },
+   "title": "Large Language Models Cannot Self-Correct Reasoning Yet",
+   "venue": "International Conference on Learning Representations",
+   "year": 2023,
+   "publicationDate": "2023-10-03",
+   "journal": {
+    "name": "ArXiv",
+    "volume": "abs/2310.01798"
+   },
+   "authors": [
+    {
+     "authorId": "1490651934",
+     "name": "Jie Huang"
+    },
+    {
+     "authorId": "2238263119",
+     "name": "Xin-Yun Chen"
+    },
+    {
+     "authorId": "1817207",
+     "name": "Swaroop Mishra"
+    },
+    {
+     "authorId": "2253804927",
+     "name": "Huaixiu Steven Zheng"
+    },
+    {
+     "authorId": "40625240",
+     "name": "Adams Wei Yu"
+    },
+    {
+     "authorId": "2293658042",
+     "name": "Xinying Song"
+    },
+    {
+     "authorId": "2256313467",
+     "name": "Denny Zhou"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "CoRR 2023",
+    "venueid": "dblp.org/journals/CORR/2023",
+    "id": "wNYfnZGxS2"
+   },
+   {
+    "venue": "ICLR 2024",
+    "venueid": "dblp.org/conf/ICLR/2024",
+    "id": "HWownJEQqn"
+   },
+   {
+    "venue": "ICLR 2024 poster",
+    "venueid": "ICLR.cc/2024/Conference",
+    "id": "IkmD3fKBPQ"
+   }
+  ]
+ },
+ {
+  "key": "kwa2025horizon",
+  "theme": "llmfail",
+  "expected_title": "Measuring AI Ability to Complete Long Software Tasks",
+  "arxiv_id": "2503.14499",
+  "doi_given": null,
+  "arxiv": {
+   "title": "Measuring AI Ability to Complete Long Software Tasks",
+   "authors": [
+    "Thomas Kwa",
+    "Ben West",
+    "Joel Becker",
+    "Amy Deng",
+    "Katharyn Garcia",
+    "Max Hasin",
+    "Sami Jawhar",
+    "Megan Kinniment",
+    "Nate Rush",
+    "Sydney Von Arx",
+    "Ryan Bloom",
+    "Thomas Broadley",
+    "Haoxing Du",
+    "Brian Goodrich",
+    "Nikola Jurkovic",
+    "Luke Harold Miles",
+    "Seraphina Nix",
+    "Tao Lin",
+    "Chris Painter",
+    "Neev Parikh",
+    "David Rein",
+    "Lucas Jun Koba Sato",
+    "Hjalmar Wijk",
+    "Daniel M. Ziegler",
+    "Elizabeth Barnes",
+    "Lawrence Chan"
+   ],
+   "first_version": "2025-03-18",
+   "journal_ref": "NeurIPS 2025",
+   "doi": null
+  },
+  "arxiv_comment": "v4: added Chris Painter as listed author, consistent with listing in the pdf",
+  "s2": {
+   "paperId": "dee7d1a1f04d221e1b49d45ae5b78a544d4ef54a",
+   "externalIds": {
+    "DBLP": "conf/nips/KwaWBDGHJKRABBD25",
+    "ArXiv": "2503.14499",
+    "DOI": "10.52202/085713-3086",
+    "CorpusId": 277104279
+   },
+   "publicationVenue": {
+    "id": "d9720b90-d60b-48bc-9df8-87a30b9a60dd",
+    "name": "Neural Information Processing Systems",
+    "type": "conference",
+    "alternate_names": [
+     "Neural Inf Process Syst",
+     "NeurIPS",
+     "NIPS"
+    ],
+    "url": "http://neurips.cc/"
+   },
+   "title": "Measuring AI Ability to Complete Long Software Tasks",
+   "venue": "Neural Information Processing Systems",
+   "year": 2025,
+   "publicationDate": "2025-03-18",
+   "journal": {
+    "name": "Advances in Neural Information Processing Systems 38"
+   },
+   "authors": [
+    {
+     "authorId": "2306997977",
+     "name": "Thomas Kwa"
+    },
+    {
+     "authorId": "2331856000",
+     "name": "Ben West"
+    },
+    {
+     "authorId": "2331857910",
+     "name": "Joel Becker"
+    },
+    {
+     "authorId": "2350721042",
+     "name": "Amy Deng"
+    },
+    {
+     "authorId": "2331855858",
+     "name": "Katharyn Garcia"
+    },
+    {
+     "authorId": "2225549480",
+     "name": "Max Hasin"
+    },
+    {
+     "authorId": "2331855846",
+     "name": "Sami Jawhar"
+    },
+    {
+     "authorId": "1800253074",
+     "name": "Megan Kinniment"
+    },
+    {
+     "authorId": "2350754555",
+     "name": "Nate Rush"
+    },
+    {
+     "authorId": "1825243321",
+     "name": "Sydney von Arx"
+    },
+    {
+     "authorId": "2350757221",
+     "name": "Ryan Bloom"
+    },
+    {
+     "authorId": "2331855786",
+     "name": "Thomas Broadley"
+    },
+    {
+     "authorId": "23561355",
+     "name": "Haoxing Du"
+    },
+    {
+     "authorId": "2227287541",
+     "name": "Brian Goodrich"
+    },
+    {
+     "authorId": "2331855456",
+     "name": "Nikola Jurkovic"
+    },
+    {
+     "authorId": "46634849",
+     "name": "Luke Harold Miles"
+    },
+    {
+     "authorId": "2164093876",
+     "name": "Seraphina Nix"
+    },
+    {
+     "authorId": "2228084357",
+     "name": "T. Lin"
+    },
+    {
+     "authorId": "2375817941",
+     "name": "C. Painter"
+    },
+    {
+     "authorId": "1380182284",
+     "name": "Neev Parikh"
+    },
+    {
+     "authorId": "2266751602",
+     "name": "David Rein"
+    },
+    {
+     "authorId": "2275156833",
+     "name": "L. Sato"
+    },
+    {
+     "authorId": "2331855692",
+     "name": "Hjalmar Wijk"
+    },
+    {
+     "authorId": "2052152920",
+     "name": "Daniel M. Ziegler"
+    },
+    {
+     "authorId": "2331855799",
+     "name": "Elizabeth Barnes"
+    },
+    {
+     "authorId": "2164095723",
+     "name": "Lawrence Chan"
+    }
+   ]
+  },
+  "title_match": 1.0,
+  "openreview": [
+   {
+    "venue": "NeurIPS 2025 poster",
+    "venueid": "NeurIPS.cc/2025/Conference",
+    "id": "CGNJL6CeV0"
+   }
+  ]
+ }
+]
