@@ -3,7 +3,12 @@ y = MatMulNBits(x, Wq) + scale * (x @ A^T) @ B^T. The 4-bit base weights are unt
 weights ride in the .onnx protobuf as fp32 initializers. Then check the patched graph against PyTorch + adapter on
 plain-text inputs_embeds (cache-free single forward).
 
-usage: patch_onnx_lora.py <adapter_dir> <src_decoder.onnx> <dst_decoder.onnx>
+The gate (SKETCHPAD3 T5, 30 Oct 2026): one graph input `lora_gate`, float16, shape [1], multiplies every LoRA branch's
+output before it is added back, y = MatMul(x, W) + gate * scale * (x @ A^T) @ B^T. Gate 0 adds a zero to every base
+matmul, so the graph computes stock Qwen exactly; gate 1 multiplies by one, so it computes the ungated graph exactly.
+--no-gate builds the ungated graph of before (the page's `arithmetic/` program of 30 Oct).
+
+usage: patch_onnx_lora.py <adapter_dir> <src_decoder.onnx> <dst_decoder.onnx> [--no-gate]
 """
 
 import json
@@ -16,6 +21,7 @@ from onnx import helper, numpy_helper
 from safetensors.numpy import load_file
 
 adapter, src, dst = sys.argv[1:4]
+GATE = "--no-gate" not in sys.argv[4:]
 FP16 = "fp16" in src  # the fp16 graph has plain MatMul nodes with fp16 activations
 SUFFIX = "MatMul" if FP16 else "MatMul_Quant"
 WDT = np.float16 if FP16 else np.float32
@@ -36,6 +42,14 @@ by_name = {n.name: n for n in g.node}
 missing = [k for k in pairs if k not in by_name]
 assert not missing, missing[:5]
 new_nodes = []
+gate_nodes = []
+if GATE:
+    assert "lora_gate" not in {i.name for i in g.input}
+    g.input.append(helper.make_tensor_value_info("lora_gate", onnx.TensorProto.FLOAT16, [1]))
+    gate = "lora_gate"
+    if not FP16:  # the q4 graph's activations are fp32
+        gate = "lora_gate_f32"
+        gate_nodes.append(helper.make_node("Cast", ["lora_gate"], [gate], name="lora_gate_cast", to=onnx.TensorProto.FLOAT))
 for name, ab in pairs.items():
     node = by_name[name]
     x, y = node.input[0], node.output[0]
@@ -48,10 +62,14 @@ for name, ab in pairs.items():
     new_nodes += [
         helper.make_node("MatMul", [x, a_t.name], [stem + "_lora_h"], name=stem + "_lora_A"),
         helper.make_node("MatMul", [stem + "_lora_h", b_t.name], [stem + "_lora_d"], name=stem + "_lora_B"),
-        helper.make_node("Add", [base, stem + "_lora_d"], [y], name=stem + "_lora_add"),
     ]
+    d = stem + "_lora_d"
+    if GATE:
+        new_nodes.append(helper.make_node("Mul", [d, gate], [stem + "_lora_g"], name=stem + "_lora_gate"))
+        d = stem + "_lora_g"
+    new_nodes.append(helper.make_node("Add", [base, d], [y], name=stem + "_lora_add"))
 # keep topological order: append each side path right after its MatMulNBits
-order = []
+order = list(gate_nodes)
 side = {n.name.rsplit("_lora_", 1)[0]: [] for n in new_nodes}
 for n in new_nodes:
     side[n.name.rsplit("_lora_", 1)[0]].append(n)
@@ -63,4 +81,4 @@ for n in g.node:
 del g.node[:]
 g.node.extend(order)
 onnx.save(model, dst)  # external data references (decoder_model_merged_q4.onnx_data) are kept as they were
-print(f"patched {len(pairs)} matmuls, scale {scale}, wrote {dst}")
+print(f"patched {len(pairs)} matmuls, scale {scale}, gate input {'lora_gate float16 [1]' if GATE else 'none'}, wrote {dst}")
