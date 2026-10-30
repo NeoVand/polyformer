@@ -8,6 +8,7 @@
 	import Lens from '#lib/sketchpad/Lens.svelte';
 	import Machine from '#lib/sketchpad/Machine.svelte';
 	import StateSpace from '#lib/sketchpad/StateSpace.svelte';
+	import '#lib/sketchpad/panel.css';
 	import { MODELS, type Kind } from '#lib/sketchpad/models.ts';
 	import { pad } from '#lib/sketchpad/pad.svelte.ts';
 	import type { TickOp } from '#lib/sketchpad/protocol.ts';
@@ -155,8 +156,8 @@
 		<header class="bar">
 			<h1>Sketchpad</h1>
 			<p class="lede">
-				Qwen3.5-0.8B does exact arithmetic on a sheet that is its only memory, reading three cells
-				at a time with its own eyes. <em>Grown, not built.</em>
+				Qwen3.5-0.8B does exact arithmetic on a sheet it reads with its own eyes, three cells at a
+				time. <em>Grown, not built.</em>
 			</p>
 		</header>
 
@@ -247,89 +248,87 @@
 		</div>
 		{#if pad.loadError}<p class="note err">{pad.loadError}</p>{/if}
 
-		<!-- the sheet: the model's only memory -->
-		<div class="sheet-row">
-			<Sheet {source} version={pad.version} {tickMs} sprites={SPRITES} onedit={edit} compact />
-		</div>
-
-		<div class="status num" aria-live="polite">
-			{#if pad.running}
-				<span>tick {fmt(pad.ticks)}</span>
-				<span>{(pad.computeMs / Math.max(1, pad.ticks)).toFixed(0)} ms per tick</span>
-				<span>{progress}</span>
-				{#if pad.sheet && pad.sheet.edits}<span
-						>{pad.sheet.edits} {pad.sheet.edits === 1 ? 'edit' : 'edits'}</span
-					>{/if}
-			{:else if pad.result}
-				{@const r = pad.result}
-				<span class="verdict"
-					><strong>{r.ok ? 'Exact.' : 'Wrong.'}</strong>
-					{#if r.ok}
-						{#if r.got.length <= 44}
-							{r.operands[0]} {pad.op === 'add' ? '+' : '×'} {r.operands[1]} = {r.got}
-						{:else}
-							all {fmt(r.got.length)} digits match
-						{/if}
-					{:else}
-						the sheet says {r.got.length > 40 ? `${r.got.slice(0, 40)}…` : r.got}
-					{/if}</span
-				>
-				<span
-					>{fmt(r.ticks)} ticks · {r.msPerTick.toFixed(0)} ms per tick · {duration(r.seconds)}</span
-				>
-				{#if r.pushes}<span>you pushed {r.pushes} {r.pushes === 1 ? 'tick' : 'ticks'}</span>{/if}
-				{#if r.edits}<span>{r.edits} {r.edits === 1 ? 'digit' : 'digits'} changed mid-run</span
-					>{/if}
-				<span
-					>{#if r.certified && r.certSource === 'shipped'}certified: the shipped table, its weakest
-						views checked here{:else if r.certified}certified: every view checked on this device{:else if r.unchecked === 0}every
-						view it read passed{:else}{r.unchecked} unchecked {r.unchecked === 1
-							? 'view'
-							: 'views'}{/if}</span
-				>
-			{:else if pad.runError}
-				<span>{pad.runError === 'stopped' ? 'Stopped.' : pad.runError}</span>
-			{:else if pad.ready && !certBusy}
-				{#if loadNote}<span>{loadNote}</span>{/if}
-				<span
-					>Press Run. Click a digit the model has not reached to change it mid-run{pad.op === 'add'
-						? ', or a number in the state space to push its next step'
-						: ''}.</span
-				>
-			{/if}
-		</div>
-
-		<!-- the inside of the model, beside the sheet -->
-		<div class="instruments">
-			<div class="col eye">
+		<!-- the sheet, the model's only memory, and what the model reads and writes -->
+		<div class="band">
+			<div class="sheet-col">
+				<Sheet {source} version={pad.version} {tickMs} sprites={SPRITES} onedit={edit} compact />
+				<div class="status num" aria-live="polite">
+					{#if pad.running}
+						<span>tick {fmt(pad.ticks)}</span>
+						<span>{(pad.computeMs / Math.max(1, pad.ticks)).toFixed(0)} ms per tick</span>
+						<span>{progress}</span>
+						{#if pad.sheet && pad.sheet.edits}<span
+								>{pad.sheet.edits} {pad.sheet.edits === 1 ? 'edit' : 'edits'}</span
+							>{/if}
+					{:else if pad.result}
+						{@const r = pad.result}
+						<span class="verdict"
+							><strong>{r.ok ? 'Exact.' : 'Wrong.'}</strong>
+							{#if r.ok}
+								{#if r.got.length <= 44}
+									{r.operands[0]} {pad.op === 'add' ? '+' : '×'} {r.operands[1]} = {r.got}
+								{:else}
+									all {fmt(r.got.length)} digits match
+								{/if}
+							{:else}
+								the sheet says {r.got.length > 40 ? `${r.got.slice(0, 40)}…` : r.got}
+							{/if}</span
+						>
+						<span
+							>{fmt(r.ticks)} ticks · {r.msPerTick.toFixed(0)} ms per tick · {duration(
+								r.seconds
+							)}</span
+						>
+						{#if r.pushes}<span>you pushed {r.pushes} {r.pushes === 1 ? 'tick' : 'ticks'}</span
+							>{/if}
+						{#if r.edits}<span>{r.edits} {r.edits === 1 ? 'digit' : 'digits'} changed mid-run</span
+							>{/if}
+						<span
+							>{#if r.certified && r.certSource === 'shipped'}certified: the shipped table, its
+								weakest views checked here{:else if r.certified}certified: every view checked on
+								this device{:else if r.unchecked === 0}every view it read passed{:else}{r.unchecked} unchecked
+								{r.unchecked === 1 ? 'view' : 'views'}{/if}</span
+						>
+					{:else if pad.runError}
+						<span>{pad.runError === 'stopped' ? 'Stopped.' : pad.runError}</span>
+					{:else if pad.ready && !certBusy}
+						{#if loadNote}<span>{loadNote}</span>{/if}
+						<span
+							>Press Run. Click a digit the model has not reached to change it mid-run{pad.op ===
+							'add'
+								? ', or a number in the state space to push its next step'
+								: ''}.</span
+						>
+					{/if}
+				</div>
+			</div>
+			<div class="eye">
 				<Inset last={pad.last} {next} sprites={SPRITES} />
-				<Machine last={pad.last} kind={pad.op} />
 			</div>
-			<div class="col">
-				<Lens seen={pad.last?.inside ?? null} ready={!!pad.insideMeta} slow={pad.pace > 0} />
-			</div>
-			<div class="col">
-				<StateSpace
-					seen={pad.last?.inside ?? null}
-					wrote={pad.last ? pad.last.out[0] : null}
-					meta={pad.insideMeta}
-					kind={pad.op}
-					runKey={pad.sheet}
-					slow={pad.pace > 0}
-					push={pad.push}
-					canPush={pad.ready && pad.op === 'add' && !!pad.insideMeta}
-					onpush={(c) => (pad.push = c)}
-				/>
-			</div>
-			<div class="col">
-				<Certificate
-					{cert}
-					device={pad.ready ? (pad.lastLoad?.gpu ?? null) : null}
-					canCheck={pad.ready && !pad.running && !certBusy && !spotBusy}
-					oncheck={() => pad.certify()}
-					walk={pad.walk}
-				/>
-			</div>
+		</div>
+
+		<!-- the inside of the model -->
+		<div class="instruments">
+			<Machine last={pad.last} kind={pad.op} />
+			<Lens seen={pad.last?.inside ?? null} ready={!!pad.insideMeta} slow={pad.pace > 0} />
+			<StateSpace
+				seen={pad.last?.inside ?? null}
+				wrote={pad.last ? pad.last.out[0] : null}
+				meta={pad.insideMeta}
+				kind={pad.op}
+				runKey={pad.sheet}
+				slow={pad.pace > 0}
+				push={pad.push}
+				canPush={pad.ready && pad.op === 'add' && !!pad.insideMeta}
+				onpush={(c) => (pad.push = c)}
+			/>
+			<Certificate
+				{cert}
+				device={pad.ready ? (pad.lastLoad?.gpu ?? null) : null}
+				canCheck={pad.ready && !pad.running && !certBusy && !spotBusy}
+				oncheck={() => pad.certify()}
+				walk={pad.walk}
+			/>
 		</div>
 	</section>
 
@@ -439,6 +438,7 @@
 		letter-spacing: -0.01em;
 	}
 	.lede {
+		max-width: none;
 		font-size: var(--text-sm);
 		color: var(--color-ink-3);
 	}
@@ -590,8 +590,22 @@
 		color: var(--color-ink);
 	}
 
-	.sheet-row {
+	.band {
+		display: flex;
+		align-items: flex-start;
+		gap: 48px;
+		margin-top: 4px;
+	}
+	.sheet-col {
+		flex: 0 1 auto;
 		min-width: 0;
+		display: grid;
+		gap: 8px;
+	}
+	.eye {
+		flex: none;
+		width: 300px;
+		padding-top: 6px;
 	}
 	.status {
 		display: flex;
@@ -611,25 +625,18 @@
 		color: var(--color-ink);
 	}
 
-	/* the inside of the model: four instruments in a row */
+	/* the inside of the model: four panels on one grid (panel.css: captions, figures and notes share rows) */
 	.instruments {
 		display: grid;
-		grid-template-columns: minmax(250px, 0.95fr) minmax(300px, 1.15fr) minmax(320px, 1.25fr) minmax(
-				220px,
-				0.8fr
-			);
-		gap: 28px;
-		align-items: start;
-		margin-top: 6px;
-		padding-top: 16px;
+		grid-template-columns:
+			minmax(0, 0.85fr) minmax(0, 1.3fr) minmax(0, 1.9fr)
+			minmax(0, 0.85fr);
+		/* the figures take what the window leaves, so the whole stage fits from 800 px tall screens up */
+		grid-template-rows: auto clamp(220px, calc(100dvh - 555px), 340px) auto;
+		column-gap: 36px;
+		margin-top: 8px;
+		padding-top: 18px;
 		border-top: 1px solid var(--color-edge);
-	}
-	.col {
-		min-width: 0;
-	}
-	.eye {
-		display: grid;
-		gap: 18px;
 	}
 
 	/* below the stage */
@@ -665,6 +672,12 @@
 	@media (max-width: 1279px) {
 		.instruments {
 			grid-template-columns: repeat(2, minmax(0, 1fr));
+			grid-template-rows: auto 320px auto auto 320px auto;
+			row-gap: 24px;
+		}
+		.band {
+			flex-wrap: wrap;
+			gap: 20px;
 		}
 	}
 	@media (max-width: 719px) {
@@ -675,6 +688,10 @@
 		}
 		.instruments {
 			grid-template-columns: minmax(0, 1fr);
+			grid-template-rows: repeat(4, auto 260px auto);
+		}
+		.eye {
+			width: 100%;
 		}
 		.pace {
 			margin-left: 0;

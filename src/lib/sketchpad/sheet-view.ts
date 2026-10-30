@@ -27,6 +27,7 @@ interface Frame {
 
 export interface Metrics {
 	cs: number;
+	padX: number;
 	padY: number;
 	ruleGap: number;
 	rowY: number[];
@@ -150,7 +151,14 @@ export class SheetView {
 			rowY.push(y);
 			y += this.cs;
 		});
-		return { cs: this.cs, padY: this.padY, ruleGap: this.ruleGap, rowY, height: y + this.padY };
+		return {
+			cs: this.cs,
+			padX: this.padX,
+			padY: this.padY,
+			ruleGap: this.ruleGap,
+			rowY,
+			height: y + this.padY
+		};
 	}
 
 	private layout() {

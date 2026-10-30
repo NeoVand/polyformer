@@ -84,148 +84,139 @@
 	}
 </script>
 
-<figure class="machine">
-	<figcaption>The machine <span>state on the sheet, every arrow by the model</span></figcaption>
-	{#if kind === 'add'}
-		<svg viewBox="-4 -4 276 142" role="img" aria-label="The adder as a two-state machine">
-			<defs>
-				<marker
-					id="ma"
-					viewBox="0 0 8 8"
-					refX="7"
-					refY="4"
-					markerWidth="6"
-					markerHeight="6"
-					orient="auto"
-				>
-					<path d="M0,0 L8,4 L0,8 z" class="head" />
-				</marker>
-				<marker
-					id="ma-on"
-					viewBox="0 0 8 8"
-					refX="7"
-					refY="4"
-					markerWidth="6"
-					markerHeight="6"
-					orient="auto"
-				>
-					<path d="M0,0 L8,4 L0,8 z" class="head on" />
-				</marker>
-			</defs>
-			{#each [{ s: 0, x: 60 }, { s: 1, x: 200 }] as n (n.s)}
-				{@const self = on(n.s, n.s)}
+<figure class="sp-panel machine">
+	<figcaption class="sp-cap">
+		<span class="sp-title">The machine</span>
+		<span class="sp-sub">its state is on the sheet; the model takes every arrow</span>
+	</figcaption>
+	<div class="sp-body">
+		{#if kind === 'add'}
+			<svg viewBox="-4 -4 276 142" role="img" aria-label="The adder as a two-state machine">
+				<defs>
+					<marker
+						id="ma"
+						viewBox="0 0 8 8"
+						refX="7"
+						refY="4"
+						markerWidth="6"
+						markerHeight="6"
+						orient="auto"
+					>
+						<path d="M0,0 L8,4 L0,8 z" class="head" />
+					</marker>
+					<marker
+						id="ma-on"
+						viewBox="0 0 8 8"
+						refX="7"
+						refY="4"
+						markerWidth="6"
+						markerHeight="6"
+						orient="auto"
+					>
+						<path d="M0,0 L8,4 L0,8 z" class="head on" />
+					</marker>
+				</defs>
+				{#each [{ s: 0, x: 60 }, { s: 1, x: 200 }] as n (n.s)}
+					{@const self = on(n.s, n.s)}
+					<path
+						class="edge"
+						class:on={self}
+						d="M{n.x - 11},{48} C{n.x - 34},{2} {n.x + 34},{2} {n.x + 11},{48}"
+						marker-end={self ? 'url(#ma-on)' : 'url(#ma)'}
+					/>
+					<text class="elab" class:on={self} x={n.x} y="8" text-anchor="middle"
+						>{n.s === 0 ? 'sum < 10' : 'sum ≥ 10'}</text
+					>
+				{/each}
 				<path
 					class="edge"
-					class:on={self}
-					d="M{n.x - 11},{48} C{n.x - 34},{2} {n.x + 34},{2} {n.x + 11},{48}"
-					marker-end={self ? 'url(#ma-on)' : 'url(#ma)'}
+					class:on={on(0, 1)}
+					d="M80,58 Q130,40 180,58"
+					marker-end={on(0, 1) ? 'url(#ma-on)' : 'url(#ma)'}
 				/>
-				<text class="elab" class:on={self} x={n.x} y="8" text-anchor="middle"
-					>{n.s === 0 ? 'sum < 10' : 'sum ≥ 10'}</text
+				<text class="elab" class:on={on(0, 1)} x="130" y="40" text-anchor="middle">sum ≥ 10</text>
+				<path
+					class="edge"
+					class:on={on(1, 0)}
+					d="M180,80 Q130,98 80,80"
+					marker-end={on(1, 0) ? 'url(#ma-on)' : 'url(#ma)'}
+				/>
+				<text class="elab" class:on={on(1, 0)} x="130" y="106" text-anchor="middle"
+					>sum &lt; 10</text
 				>
-			{/each}
-			<path
-				class="edge"
-				class:on={on(0, 1)}
-				d="M80,58 Q130,40 180,58"
-				marker-end={on(0, 1) ? 'url(#ma-on)' : 'url(#ma)'}
-			/>
-			<text class="elab" class:on={on(0, 1)} x="130" y="40" text-anchor="middle">sum ≥ 10</text>
-			<path
-				class="edge"
-				class:on={on(1, 0)}
-				d="M180,80 Q130,98 80,80"
-				marker-end={on(1, 0) ? 'url(#ma-on)' : 'url(#ma)'}
-			/>
-			<text class="elab" class:on={on(1, 0)} x="130" y="106" text-anchor="middle">sum &lt; 10</text>
-			<path
-				class="edge"
-				class:on={on(0, 'halt')}
-				d="M60,89 L60,114"
-				marker-end={on(0, 'halt') ? 'url(#ma-on)' : 'url(#ma)'}
-			/>
-			<text class="node-t" class:on={on(0, 'halt')} x="60" y="130" text-anchor="middle">halt</text>
-			{#each [{ s: 0, x: 60 }, { s: 1, x: 200 }] as n (n.s)}
-				<circle class="node" class:on={add?.from === n.s} cx={n.x} cy="69" r="19" />
-				<text class="node-t" class:on={add?.from === n.s} x={n.x} y="73" text-anchor="middle"
-					>carry {n.s}</text
+				<path
+					class="edge"
+					class:on={on(0, 'halt')}
+					d="M60,89 L60,114"
+					marker-end={on(0, 'halt') ? 'url(#ma-on)' : 'url(#ma)'}
+				/>
+				<text class="node-t" class:on={on(0, 'halt')} x="60" y="130" text-anchor="middle">halt</text
 				>
-			{/each}
-		</svg>
-		<p class="words num">{addWords || 'Each view the model reads is one arrow.'}</p>
-	{:else}
-		<svg viewBox="0 -4 290 140" role="img" aria-label="The multiplier's steps as a machine">
-			<defs>
-				<marker
-					id="mm"
-					viewBox="0 0 8 8"
-					refX="7"
-					refY="4"
-					markerWidth="6"
-					markerHeight="6"
-					orient="auto"
-				>
-					<path d="M0,0 L8,4 L0,8 z" class="head" />
-				</marker>
-				<marker
-					id="mm-on"
-					viewBox="0 0 8 8"
-					refX="7"
-					refY="4"
-					markerWidth="6"
-					markerHeight="6"
-					orient="auto"
-				>
-					<path d="M0,0 L8,4 L0,8 z" class="head on" />
-				</marker>
-			</defs>
-			{#each EDGES as e (e.from + e.to)}
-				{@const a = NODES[e.from]}
-				{@const b = NODES[e.to]}
-				{@const g = arc(a.x, a.y, b.x, b.y, e.bend)}
-				{@const lit = !!mul && mul.from === e.from && mul.to === e.to}
-				<path class="edge" class:on={lit} d={g.d} marker-end={lit ? 'url(#mm-on)' : 'url(#mm)'} />
-				<text class="elab mono" class:on={lit} x={g.lx} y={g.ly + 3} text-anchor="middle"
-					>{e.letter}</text
-				>
-			{/each}
-			{#each Object.entries(NODES) as [k, n] (k)}
-				<circle class="node" class:on={mul?.from === k} cx={n.x} cy={n.y} r="16" />
-				<text class="node-t" class:on={mul?.from === k} x={n.x} y={n.y + 4} text-anchor="middle"
-					>{n.word}</text
-				>
-			{/each}
-		</svg>
-		<p class="words num">{mulWords || 'The model names its next step with its third token.'}</p>
-	{/if}
+				{#each [{ s: 0, x: 60 }, { s: 1, x: 200 }] as n (n.s)}
+					<circle class="node" class:on={add?.from === n.s} cx={n.x} cy="69" r="19" />
+					<text class="node-t" class:on={add?.from === n.s} x={n.x} y="73" text-anchor="middle"
+						>carry {n.s}</text
+					>
+				{/each}
+			</svg>
+		{:else}
+			<svg viewBox="0 -4 290 140" role="img" aria-label="The multiplier's steps as a machine">
+				<defs>
+					<marker
+						id="mm"
+						viewBox="0 0 8 8"
+						refX="7"
+						refY="4"
+						markerWidth="6"
+						markerHeight="6"
+						orient="auto"
+					>
+						<path d="M0,0 L8,4 L0,8 z" class="head" />
+					</marker>
+					<marker
+						id="mm-on"
+						viewBox="0 0 8 8"
+						refX="7"
+						refY="4"
+						markerWidth="6"
+						markerHeight="6"
+						orient="auto"
+					>
+						<path d="M0,0 L8,4 L0,8 z" class="head on" />
+					</marker>
+				</defs>
+				{#each EDGES as e (e.from + e.to)}
+					{@const a = NODES[e.from]}
+					{@const b = NODES[e.to]}
+					{@const g = arc(a.x, a.y, b.x, b.y, e.bend)}
+					{@const lit = !!mul && mul.from === e.from && mul.to === e.to}
+					<path class="edge" class:on={lit} d={g.d} marker-end={lit ? 'url(#mm-on)' : 'url(#mm)'} />
+					<text class="elab mono" class:on={lit} x={g.lx} y={g.ly + 3} text-anchor="middle"
+						>{e.letter}</text
+					>
+				{/each}
+				{#each Object.entries(NODES) as [k, n] (k)}
+					<circle class="node" class:on={mul?.from === k} cx={n.x} cy={n.y} r="16" />
+					<text class="node-t" class:on={mul?.from === k} x={n.x} y={n.y + 4} text-anchor="middle"
+						>{n.word}</text
+					>
+				{/each}
+			</svg>
+		{/if}
+	</div>
+	<p class="sp-foot num">
+		{#if kind === 'add'}{addWords || 'Each view the model reads is one arrow.'}{:else}{mulWords ||
+				'The model names its next step with its third token.'}{/if}
+	</p>
 </figure>
 
 <style>
-	.machine {
-		margin: 0;
-		min-width: 0;
-	}
-	figcaption {
-		font-size: var(--text-xs);
-		color: var(--color-ink);
-		margin-bottom: 8px;
-	}
-	figcaption span {
-		color: var(--color-ink-3);
-		margin-left: 6px;
-	}
 	svg {
 		display: block;
 		width: 100%;
-		max-width: 300px;
-		height: auto;
+		height: 100%;
+		max-height: 230px;
 		overflow: visible;
-	}
-	.words {
-		margin-top: 6px;
-		font-size: var(--text-xs);
-		color: var(--color-ink-2);
-		min-height: 1.5em;
 	}
 	.mono {
 		font-family: var(--font-mono);

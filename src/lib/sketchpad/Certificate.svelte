@@ -163,127 +163,132 @@
 	});
 </script>
 
-<section class="cert" aria-label="Certificate">
-	<div class="head">
-		<span class="k">Certificate</span>
-		{#if cert.status === 'running'}
-			<span class="state num">checking {fmt(cert.checked)} of {fmt(cert.rows)}</span>
-		{:else if cert.status === 'shipped' && cert.spot?.running}
-			<span class="state num">spot check {fmt(cert.spot.checked)} of {fmt(cert.spot.rows)}</span>
-		{:else if cert.status === 'none'}
-			<span class="state">not checked yet</span>
-		{/if}
-	</div>
-
-	<div class="headline">
-		<span
-			class="big num"
-			class:dim={cert.status !== 'done' && cert.status !== 'cached' && cert.status !== 'shipped'}
+<section class="sp-panel cert" aria-label="Certificate">
+	<div class="sp-cap">
+		<span class="sp-title"
+			>The table
+			{#if cert.status === 'running'}
+				<span class="state num">checking {fmt(cert.checked)} of {fmt(cert.rows)}</span>
+			{:else if cert.status === 'shipped' && cert.spot?.running}
+				<span class="state num">spot check {fmt(cert.spot.checked)} of {fmt(cert.spot.rows)}</span>
+			{:else if cert.status === 'none'}
+				<span class="state">not checked yet</span>
+			{/if}</span
 		>
-			{cert.checked ? fmtMargin(cert.minMargin) : '–'}
-		</span>
-		<span class="cap"
-			>{cert.status === 'running'
-				? 'lowest margin so far'
-				: cert.status === 'shipped'
-					? 'lowest margin'
-					: 'lowest margin on this device'}</span
-		>
+		<span class="sp-sub">every view the model can meet, each one checked</span>
 	</div>
 
-	<div class="grid" {@attach measure}>
-		<canvas
-			{@attach paint}
-			{onpointermove}
-			onpointerleave={() => (hover = null)}
-			aria-label="One cell per table row; filled when it passes, hollow when it fails"
-		></canvas>
-	</div>
-
-	<p class="line num">
-		{#if readout}
-			<span class="mono">{readout.label}</span><br /><span class="dim">{readout.margin}</span>
-		{:else if walk && walk.visited.size}
-			This run has read {fmt(walk.visited.size)} of the {fmt(cert.rows)} views, each one checked.
-		{:else if cert.status === 'none'}
-			{fmt(cert.rows)} views: every strip the model can meet.
-		{:else}
-			{fmt(cert.pass)} of {fmt(cert.status === 'running' ? cert.checked : cert.rows)} pass · {cert.seconds.toFixed(
-				0
-			)} s{#if device}<br /><span class="dim">{device}</span>{/if}
-		{/if}
-	</p>
-
-	{#if cert.status === 'cached'}
-		<p class="note">
-			Every view checked on this device{when ? `, ${when}` : ''}, for these exact files.
-			{#if oncheck}<button class="link" disabled={!canCheck} onclick={oncheck}>Check again</button
-				>{/if}
-		</p>
-	{:else if cert.status === 'shipped' && cert.shippedFrom}
-		{@const sp = cert.spot}
-		<p class="note">
-			Shipped with the model: every view checked on {cert.shippedFrom.device}, {stamp(
-				cert.shippedFrom.when
-			)}.
-			{#if sp && sp.checked}
-				Here, its {fmt(sp.rows)} weakest views {sp.running
-					? `are being checked (${fmt(sp.pass)} of ${fmt(sp.checked)} pass)`
-					: sp.pass === sp.checked
-						? `pass too (lowest ${fmtMargin(sp.min)})`
-						: `: ${fmt(sp.checked - sp.pass)} fail on this device`}.
-			{/if}
-			{#if oncheck}<button class="link" disabled={!canCheck} onclick={oncheck}
-					>Check every view on this device</button
-				>{/if}
-		</p>
-	{/if}
-
-	{#if cert.failures.length}
-		<div class="fails">
-			<p class="k">{cert.failures.length} failing {cert.failures.length === 1 ? 'row' : 'rows'}</p>
-			<ul>
-				{#each cert.failures.slice(0, 12) as f (f.index)}
-					<li
-						class="mono"
-						onpointerenter={() => (hover = f.index)}
-						onpointerleave={() => (hover = null)}
-					>
-						{f.label}<span class="dim">, wrote {spaced(f.got)}</span>
-					</li>
-				{/each}
-			</ul>
-			{#if cert.failures.length > 12}<p class="dim small">
-					and {cert.failures.length - 12} more
-				</p>{/if}
+	<div class="sp-body body">
+		<div class="headline">
+			<span
+				class="big num"
+				class:dim={cert.status !== 'done' && cert.status !== 'cached' && cert.status !== 'shipped'}
+			>
+				{cert.checked ? fmtMargin(cert.minMargin) : '–'}
+			</span>
+			<span class="cap"
+				>{cert.status === 'running'
+					? 'lowest margin so far'
+					: cert.status === 'shipped'
+						? 'lowest margin'
+						: 'lowest margin on this device'}</span
+			>
 		</div>
-	{/if}
+
+		<div class="grid" {@attach measure}>
+			<canvas
+				{@attach paint}
+				{onpointermove}
+				onpointerleave={() => (hover = null)}
+				aria-label="One cell per table row; filled when it passes, hollow when it fails"
+			></canvas>
+		</div>
+
+		<p class="line num">
+			{#if readout}
+				<span class="mono">{readout.label}</span><br /><span class="dim">{readout.margin}</span>
+			{:else if walk && walk.visited.size}
+				This run has read {fmt(walk.visited.size)} of the {fmt(cert.rows)} views.
+			{:else if cert.status === 'none'}
+				{fmt(cert.rows)} views: every strip the model can meet.
+			{:else}
+				{fmt(cert.pass)} of {fmt(cert.status === 'running' ? cert.checked : cert.rows)} pass{#if cert.status !== 'shipped'}
+					· {cert.seconds.toFixed(0)} s{/if}
+			{/if}
+		</p>
+	</div>
+
+	<div class="sp-foot">
+		{#if cert.status === 'cached' || cert.status === 'done'}
+			<p>
+				Every view checked on this device{when ? `, ${when}` : ''}{device ? ` (${device})` : ''}.
+				{#if oncheck}<button class="link" disabled={!canCheck} onclick={oncheck}>Check again</button
+					>{/if}
+			</p>
+		{:else if cert.status === 'shipped' && cert.shippedFrom}
+			{@const sp = cert.spot}
+			<p>
+				Shipped with the model, checked on {cert.shippedFrom.device}, {stamp(
+					cert.shippedFrom.when
+				)}.
+				{#if sp && sp.checked}
+					Its {fmt(sp.rows)} weakest views {sp.running
+						? `are being checked here (${fmt(sp.pass)} of ${fmt(sp.checked)} pass)`
+						: sp.pass === sp.checked
+							? `pass here too (lowest ${fmtMargin(sp.min)})`
+							: `: ${fmt(sp.checked - sp.pass)} fail here`}.
+				{/if}
+				{#if oncheck}<button class="link" disabled={!canCheck} onclick={oncheck}
+						>Check every view here</button
+					>{/if}
+			</p>
+		{/if}
+		{#if cert.failures.length}
+			<div class="fails">
+				<p class="k">
+					{cert.failures.length} failing {cert.failures.length === 1 ? 'row' : 'rows'}
+				</p>
+				<ul>
+					{#each cert.failures.slice(0, 6) as f (f.index)}
+						<li
+							class="mono"
+							onpointerenter={() => (hover = f.index)}
+							onpointerleave={() => (hover = null)}
+						>
+							{f.label}<span class="dim">, wrote {spaced(f.got)}</span>
+						</li>
+					{/each}
+				</ul>
+				{#if cert.failures.length > 6}<p class="dim small">
+						and {cert.failures.length - 6} more
+					</p>{/if}
+			</div>
+		{/if}
+	</div>
 </section>
 
 <style>
-	.cert {
-		font-size: var(--text-sm);
-	}
-	.head {
-		display: flex;
-		justify-content: space-between;
-		gap: 12px;
+	.state {
+		margin-left: 8px;
 		color: var(--color-ink-3);
-		font-size: var(--text-xs);
 	}
-	.k {
-		color: var(--color-ink-2);
+	.body {
+		place-items: start;
+		align-content: start;
+		justify-content: stretch;
+		width: 100%;
 	}
 	.headline {
 		display: flex;
 		align-items: baseline;
 		gap: 10px;
-		margin: 6px 0 12px;
+		margin-bottom: 12px;
 	}
 	.big {
 		font-size: 28px;
 		font-weight: 500;
 		letter-spacing: -0.02em;
+		line-height: 1;
 		color: var(--color-ink);
 		transition: color 250ms ease;
 	}
@@ -302,7 +307,6 @@
 	}
 	.line {
 		margin-top: 10px;
-		min-height: 2.9em;
 		font-size: var(--text-xs);
 		color: var(--color-ink-2);
 	}
@@ -314,10 +318,8 @@
 	.dim {
 		color: var(--color-ink-3);
 	}
-	.note {
-		margin-top: 6px;
-		font-size: var(--text-xs);
-		color: var(--color-ink-3);
+	.k {
+		color: var(--color-ink-2);
 	}
 	.link {
 		border: 0;
@@ -327,7 +329,7 @@
 		font: inherit;
 		text-decoration: underline;
 		text-underline-offset: 3px;
-		text-decoration-color: #444;
+		text-decoration-color: var(--color-rule);
 		cursor: pointer;
 		transition: color 250ms ease;
 	}
@@ -339,7 +341,7 @@
 		cursor: default;
 	}
 	.fails {
-		margin-top: 12px;
+		margin-top: 8px;
 	}
 	.fails ul {
 		margin-top: 4px;

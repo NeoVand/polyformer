@@ -115,7 +115,12 @@
 	}
 </script>
 
-<div class="sheet">
+<div
+	class="sheet"
+	style:width={compact && metrics && source
+		? `calc(var(--margin-w) + var(--gutter) + ${source.cols * metrics.cs + 2 * metrics.padX}px)`
+		: null}
+>
 	<div class="labels" aria-hidden="true">
 		{#if metrics && source}
 			{#each source.rows as row, r (row.key)}
@@ -143,6 +148,7 @@
 
 <style>
 	.sheet {
+		max-width: 100%;
 		display: grid;
 		grid-template-columns: var(--margin-w) minmax(0, 1fr);
 		column-gap: var(--gutter);
