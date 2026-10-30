@@ -316,3 +316,10 @@ then redid the problem from the start. The table counts only completed runs; no 
 - **WebGPU device loss**: the browser can withdraw the GPU from a page (driver reset, background tab, memory); every
   later call fails until the page asks for a new device and loads the model again. Why: it stopped T3 three times with
   the Browser pane hidden, and the page should recover from it by itself.
+
+## Commits on `sketchpad` (CALC stream)
+
+`8217fb02` E7 registration and tables · `ed05b216` the calculator runtime and tests · `da26e7b9` Calculate mode and worker ·
+`4a1f974f` E7 result · `efd750bb` merge of `main` (gate wiring) · `9dc90ca3` waves and the padded prompt form ·
+`4450ea06` E7 build artefacts and logs · `768cb9a2` taller calculator sheet · `d19a41e6` compile baseline and job logs ·
+`27cfbf80` T3 and the report · and this list.
