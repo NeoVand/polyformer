@@ -3,7 +3,7 @@
  * cells a visitor may change. Both runtimes map onto this, so one renderer draws either.
  */
 import { AddSheet } from './adder.ts';
-import { MulSheet, type Row } from './multiplier.ts';
+import { MulSheet, MulWave, type Row } from './multiplier.ts';
 
 export interface SheetRow {
 	key: string;
@@ -20,8 +20,11 @@ export interface SheetSource {
 	rows: SheetRow[];
 	cols: number;
 	glyph(r: number, c: number): string;
-	/** the cells being read, in strip order; null where the strip cell is always blank */
-	fovea(): ({ r: number; c: number } | null)[];
+	/**
+	 * the cells being read, in strip order; null where the strip cell is always blank. Several strips (overlapped passes)
+	 * come one after another, each cell keyed by its pass and place, so each eye glides on its own.
+	 */
+	fovea(): ({ r: number; c: number; key?: string } | null)[];
 	editable(r: number, c: number): boolean;
 	/** the runtime's own name and index for a cell (for pad.bump) */
 	address(r: number, c: number): [string, number];
@@ -71,5 +74,31 @@ export function mulSource(s: MulSheet): SheetSource {
 	};
 }
 
-export const sourceOf = (s: AddSheet | MulSheet) =>
-	s instanceof AddSheet ? addSource(s) : mulSource(s);
+/** The overlapped multiplier: the same sheet, with an eye for every pass under way. */
+export function waveSource(s: MulWave): SheetSource {
+	const x = (c: number) => s.W - 1 - c;
+	return {
+		rows: MUL_ROWS,
+		cols: s.W,
+		glyph: (r, c) => s.rows[MUL_ORDER[r]][x(c)],
+		fovea: () =>
+			s.done
+				? []
+				: s
+						.active()
+						.flatMap((q) =>
+							s
+								.foveaOf(q)
+								.map((cell, k) =>
+									cell
+										? { r: MUL_ORDER.indexOf(cell[0]), c: s.W - 1 - cell[1], key: `${q.j}.${k}` }
+										: null
+								)
+						),
+		editable: (r, c) => s.editable(MUL_ORDER[r], x(c)),
+		address: (r, c) => [MUL_ORDER[r], x(c)]
+	};
+}
+
+export const sourceOf = (s: AddSheet | MulSheet | MulWave) =>
+	s instanceof AddSheet ? addSource(s) : s instanceof MulWave ? waveSource(s) : mulSource(s);

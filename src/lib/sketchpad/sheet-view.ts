@@ -63,7 +63,8 @@ export class SheetView {
 	private manualUntil = 0;
 	private lastFrame = 0;
 
-	private frames: Frame[] = [];
+	/** the eye's frames, by key (a strip cell's place, and its pass when several passes run) */
+	private frames = new Map<string, Frame>();
 	private hover: { r: number; c: number; t0: number } | null = null;
 	private hoverOut: { r: number; c: number; t0: number } | null = null;
 	private edited = new Set<string>();
@@ -235,7 +236,7 @@ export class SheetView {
 		this.layout();
 		this.cam = this.camTarget = this.targetCam();
 		this.tween = null;
-		this.frames = [];
+		this.frames.clear();
 		this.placeFovea(now, true);
 		this.animatingUntil = Math.max(this.animatingUntil, now + this.fadeMs + 50);
 		this.kick();
@@ -272,29 +273,17 @@ export class SheetView {
 	private placeFovea(now: number, jump: boolean) {
 		const cells = this.src?.fovea() ?? [];
 		const m = this.metrics();
-		for (let k = 0; k < 3; k++) {
-			const cell = cells[k] ?? null;
-			const cur = this.frames[k];
+		const live = new Set<string>();
+		cells.forEach((cell, k) => {
+			if (!cell) return;
+			const key = cell.key ?? String(k);
+			live.add(key);
+			const cur = this.frames.get(key);
 			const at = cur ? this.frameAt(cur, now) : null;
-			if (!cell) {
-				if (cur)
-					this.frames[k] = {
-						...cur,
-						fx: at!.x,
-						fy: at!.y,
-						tx: at!.x,
-						ty: at!.y,
-						fa: at!.a,
-						ta: 0,
-						t0: now,
-						dur: 300
-					};
-				continue;
-			}
 			const tx = cell.c * this.cs;
 			const ty = m.rowY[cell.r];
 			if (!cur || jump || at!.a === 0)
-				this.frames[k] = {
+				this.frames.set(key, {
 					fx: tx,
 					fy: ty,
 					tx,
@@ -303,9 +292,9 @@ export class SheetView {
 					ta: 1,
 					t0: now,
 					dur: jump ? 0 : 250
-				};
+				});
 			else
-				this.frames[k] = {
+				this.frames.set(key, {
 					fx: at!.x,
 					fy: at!.y,
 					tx,
@@ -314,11 +303,32 @@ export class SheetView {
 					ta: 1,
 					t0: now,
 					dur: this.glideMs
-				};
+				});
+		});
+		// an eye no longer in use fades where it is, then goes
+		for (const [key, cur] of this.frames) {
+			if (live.has(key)) continue;
+			const at = this.frameAt(cur, now);
+			if (at.a <= 0.01 && cur.ta === 0) {
+				this.frames.delete(key);
+				continue;
+			}
+			if (cur.ta !== 0)
+				this.frames.set(key, {
+					...cur,
+					fx: at.x,
+					fy: at.y,
+					tx: at.x,
+					ty: at.y,
+					fa: at.a,
+					ta: 0,
+					t0: now,
+					dur: 300
+				});
 		}
 		// keep drawing until every frame has finished gliding or fading
-		for (const f of this.frames)
-			if (f) this.animatingUntil = Math.max(this.animatingUntil, f.t0 + f.dur + 50);
+		for (const f of this.frames.values())
+			this.animatingUntil = Math.max(this.animatingUntil, f.t0 + f.dur + 50);
 	}
 
 	private frameAt(f: Frame, now: number) {
@@ -495,8 +505,7 @@ export class SheetView {
 		// the fovea
 		ctx.strokeStyle = this.palette.fovea;
 		ctx.lineWidth = 1.5;
-		for (const f of this.frames) {
-			if (!f) continue;
+		for (const f of this.frames.values()) {
 			const at = this.frameAt(f, now);
 			if (at.a <= 0.01) continue;
 			ctx.globalAlpha = at.a * 0.9;

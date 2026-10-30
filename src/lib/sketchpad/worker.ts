@@ -48,7 +48,7 @@ interface Tok {
 	decode(ids: number[], o?: { skip_special_tokens?: boolean }): string;
 }
 interface Processor {
-	(text: string, images?: unknown[]): Promise<Inputs>;
+	(text: string | string[], images?: unknown[]): Promise<Inputs>;
 	tokenizer: Tok;
 	apply_chat_template(messages: unknown[], o: Record<string, unknown>): string;
 }
@@ -76,7 +76,8 @@ let inside: InsideAssets | null = null;
 let insideMeta: InsideMeta | null = null;
 /** while on, every decoder call's states at its last position are kept, one entry per call */
 let capturing = false;
-let captured: Float32Array[] = [];
+/** per decoder call, the states of each batch row */
+let captured: Float32Array[][] = [];
 /** a push for the next decoder call that reads a whole prompt (the tick's first call) */
 let steerNext: Float32Array | null = null;
 /** the program loaded now, and a counter that moves whenever the loaded model changes */
@@ -294,14 +295,14 @@ interface OrtSession {
 	run(feeds: Record<string, OrtTensor>, opts?: unknown): Promise<Record<string, OrtTensor>>;
 }
 
-/** The states at the last position of a `hidden_states` output [DEPTH, batch 1, seq, DIM], as float32 DEPTH x DIM. */
-function lastStates(t: OrtTensor): Float32Array {
-	const [L, , S, D] = t.dims;
+/** Row `b`'s states at the last position of a `hidden_states` output [DEPTH, batch, seq, DIM], as DEPTH x DIM. */
+function lastStates(t: OrtTensor, b = 0): Float32Array {
+	const [L, Bn, S, D] = t.dims;
 	const data = t.data as ArrayLike<number>;
 	const bits = data instanceof Uint16Array;
 	const out = new Float32Array(L * D);
 	for (let l = 0; l < L; l++) {
-		const off = (l * S + S - 1) * D;
+		const off = ((l * Bn + b) * S + S - 1) * D;
 		for (let i = 0; i < D; i++) out[l * D + i] = bits ? F16[data[off + i]] : data[off + i];
 	}
 	return out;
@@ -321,14 +322,16 @@ function wrapDecoder(m: Model) {
 	s.run = async (feeds, opts) => {
 		const dims = feeds.inputs_embeds.dims as number[];
 		const data = new Float32Array(dims[0] * dims[1] * dims[2]);
-		if (steerNext && dims[1] > 1) {
+		if (steerNext && dims[1] > 1 && dims[0] === 1) {
 			data.set(steerNext, (dims[1] - 1) * dims[2]);
 			steerNext = null;
 		}
 		const steer = (new tjs!.Tensor('float32', data, dims) as unknown as { ort_tensor: OrtTensor })
 			.ort_tensor;
 		const out = await run({ ...feeds, steer }, opts);
-		if (capturing && out.hidden_states) captured.push(lastStates(out.hidden_states));
+		const hs = out.hidden_states;
+		if (capturing && hs)
+			captured.push(Array.from({ length: hs.dims[1] }, (_, b) => lastStates(hs, b)));
 		return out;
 	};
 	return true;
@@ -389,7 +392,15 @@ async function withInside<T>(
 	}
 	try {
 		const r = await fn();
-		const read = inside && captured.length ? analyse(inside, op, captured, pushed) : null;
+		const read =
+			inside && captured.length
+				? analyse(
+						inside,
+						op,
+						captured.map((c) => c[0]),
+						pushed
+					)
+				: null;
 		return { r, inside: read };
 	} finally {
 		capturing = false;
@@ -460,6 +471,73 @@ async function mulTick(op: Op, cells: string[]) {
 		.map((x) => Number(x));
 	const ch = ids.map((i) => tok!.decode([i]));
 	return { out: [ch[0] === '_' ? B : ch[0], ch[1], ch[2]], strip };
+}
+
+/**
+ * Several multiplier ticks in one batched generation: one strip and prompt per row (every op word is one token, so
+ * the prompts have one length), three greedy tokens each. The rows are independent views; batching only shares the
+ * GPU calls.
+ */
+async function mulBatch(items: { op: Op; cells: string[] }[]) {
+	const strips = items.map((it) => stripImage(it.cells));
+	// transformers.js's Qwen image processor reads a list of images as the frames of one video, so each row is
+	// prepared on its own and the rows are stacked: token rows (equal lengths), patches, and one grid row per image
+	const parts = await Promise.all(
+		items.map((it, b) => processor!(promptFor(it.op), [strips[b].image]))
+	);
+	const inputs: Inputs = {};
+	for (const k of Object.keys(parts[0])) {
+		const ts = parts.map((x) => x[k] as TTensor);
+		if (!ts[0]?.dims) continue;
+		inputs[k] = tjs!.cat(ts as never, 0) as unknown as TTensor;
+	}
+	const L = (inputs.input_ids as TTensor).dims[1];
+	if (parts.some((x) => (x.input_ids as TTensor).dims[1] !== L))
+		throw new Error('batched prompts differ in length');
+	const out = await model!.generate({ ...inputs, do_sample: false, max_new_tokens: 3 });
+	const W = out.dims[1];
+	const data = Array.from(out.data, (x) => Number(x));
+	return items.map((_, b) => {
+		const ch = data.slice(b * W + L, b * W + W).map((i) => tok!.decode([i]));
+		return { out: [ch[0] === '_' ? B : ch[0], ch[1], ch[2]], strip: strips[b].strip };
+	});
+}
+
+async function tickBatch(m: Extract<ToWorker, { type: 'tick-batch' }>) {
+	const r = await exclusive(async () => {
+		if (!serves('mul')) throw new Error(`${MODELS.mul.name} is not loaded`);
+		const t = performance.now();
+		captured = [];
+		capturing = !!inside;
+		try {
+			const rows = await mulBatch(m.items as { op: Op; cells: string[] }[]);
+			const seen = rows.map((_, b) =>
+				inside && captured.length
+					? analyse(
+							inside,
+							m.items[b].op,
+							captured.map((c) => c[b]),
+							null
+						)
+					: null
+			);
+			return { rows, seen, ms: performance.now() - t };
+		} finally {
+			capturing = false;
+			captured = [];
+		}
+	});
+	post(
+		{
+			type: 'tick-batch',
+			rid: m.rid,
+			outs: r.rows.map((x) => x.out),
+			strips: r.rows.map((x) => x.strip),
+			inside: r.seen,
+			ms: r.ms
+		},
+		r.rows.map((x) => x.strip.buffer)
+	);
 }
 
 // ---- jobs -----------------------------------------------------------------------------------------------------
@@ -723,6 +801,7 @@ self.onmessage = async (ev: MessageEvent<ToWorker>) => {
 	try {
 		if (m.type === 'certify') await certify(m.rid, m.kind, m.rows);
 		else if (m.type === 'tick') await tick(m);
+		else if (m.type === 'tick-batch') await tickBatch(m);
 		else if (m.type === 'chat') await chat(m);
 	} catch (e) {
 		post({ type: 'failed', rid: m.rid, error: message(e), cancelled: e instanceof Cancelled });

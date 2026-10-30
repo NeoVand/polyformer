@@ -175,6 +175,175 @@ export class MulSheet {
 	}
 }
 
+/** A pass of the multiplier: the digit of b it multiplies by (j), its column (x) and its step. */
+export interface Pass {
+	j: number;
+	x: number;
+	op: Op;
+	done: boolean;
+}
+
+/**
+ * Long multiplication with its passes overlapped, as a wave. Pass j + 1 starts LAG ticks after pass j: two columns
+ * behind it, which is when the running result it reads is ready, and far enough that the passes never share a scratch
+ * cell (one column is not). All passes take a tick together, so a step is one batch of independent views; each view
+ * is one of the 1,553 the certificate checks, and each answer is applied by the same rules as one pass at a time. The
+ * runtime starts the passes (one per digit of b); the model still takes every step inside a pass, and its next-step
+ * answer at the end of each pass (another pass, or halt) must agree with the schedule.
+ */
+export class MulWave {
+	static readonly LAG = 6;
+	readonly n: number;
+	readonly m: number;
+	readonly W: number;
+	readonly rows: Record<Row, string[]>;
+	readonly passes: Pass[] = [];
+	/** batched steps taken, and ticks (views answered) */
+	steps = 0;
+	ticks = 0;
+	done = false;
+	edits = 0;
+
+	constructor(a: string, b: string) {
+		a = clean(a);
+		b = clean(b);
+		this.n = a.length;
+		this.m = b.length;
+		this.W = this.n + this.m + 2;
+		this.rows = Object.fromEntries(ROWS.map((k) => [k, Array(this.W).fill(B)])) as Record<
+			Row,
+			string[]
+		>;
+		[...a].reverse().forEach((d, i) => (this.rows.a[i] = d));
+		[...b].reverse().forEach((d, i) => (this.rows.b[i] = d));
+		this.startDue();
+	}
+
+	get(row: Row, x: number) {
+		return x >= 0 && x < this.W ? this.rows[row][x] : B;
+	}
+
+	private startDue() {
+		while (this.passes.length < this.m && this.steps >= this.passes.length * MulWave.LAG) {
+			const j = this.passes.length;
+			this.passes.push({ j, x: j, op: 'MUL', done: false });
+		}
+	}
+
+	/** the passes that take the next step */
+	active(): Pass[] {
+		return this.passes.filter((q) => !q.done);
+	}
+
+	view(q: Pass): string[] {
+		const { op, x, j } = q;
+		if (op === 'MUL') return [this.get('a', x - j), this.get('b', j), this.get('cM', x)];
+		if (op === 'NXT') return [this.get('b', j + 1), B, B];
+		return [this.get('cA', x), this.get('p', x), this.get('R', x)];
+	}
+
+	/** the cells a pass reads now, in strip order (null for a strip cell that is always blank) */
+	foveaOf(q: Pass): ([Row, number] | null)[] {
+		const { op, x, j } = q;
+		if (op === 'MUL')
+			return [
+				['a', x - j],
+				['b', j],
+				['cM', x]
+			];
+		if (op === 'NXT') return [['b', j + 1], null, null];
+		return [
+			['cA', x],
+			['p', x],
+			['R', x]
+		];
+	}
+
+	/** apply one pass's answer (the views of a step are all read before any answer is applied) */
+	apply(q: Pass, [g1, g2, nxt]: MulOut) {
+		const r = this.rows;
+		const x = q.x;
+		const set = (row: Row, at: number, g: string) => {
+			if (at >= 0 && at < this.W) r[row][at] = g;
+		};
+		this.ticks++;
+		if (q.op === 'MUL') {
+			set('cM', x, B);
+			set('p', x, g1);
+			set('cM', x + 1, g2);
+			q.op = nxt === 'A' ? 'ADD' : 'ADZ';
+		} else if (q.op === 'ADD' || q.op === 'ADZ') {
+			set('cA', x, B);
+			set('p', x, B);
+			set('R', x, g1);
+			set('cA', x + 1, g2 === '1' ? '1' : B);
+			q.op = nxt === 'M' ? 'MUL' : 'FLS';
+			q.x = x + 1;
+		} else if (q.op === 'FLS') {
+			set('cA', x, B);
+			if (g1 !== B) set('R', x, g1);
+			q.op = 'NXT';
+		} else {
+			// the pass is over: its last multiply left a zero carry one column on; another pass or halt is the schedule's
+			set('cM', x, B);
+			const last = q.j === this.m - 1;
+			if ((nxt === 'H') !== last)
+				throw new Error(
+					`pass ${q.j + 1} of ${this.m} ended with ${nxt === 'H' ? 'halt' : 'another pass'}, the schedule says otherwise`
+				);
+			q.done = true;
+		}
+	}
+
+	/** after every active pass has applied its answer: the next step, and the passes due by then */
+	endStep() {
+		this.steps++;
+		this.startDue();
+		this.done = this.passes.length === this.m && this.passes.every((q) => q.done);
+	}
+
+	/** a digit of b whose pass has not started can be changed */
+	editable(row: Row, x: number) {
+		return !this.done && row === 'b' && x >= this.passes.length && x < this.m;
+	}
+
+	bump(row: Row, x: number, by = 1): boolean {
+		if (!this.editable(row, x)) return false;
+		this.rows.b[x] = String((Number(this.rows.b[x]) + 10 + by) % 10);
+		this.edits++;
+		return true;
+	}
+
+	operands(): [string, string] {
+		return [r2s(this.rows.a), r2s(this.rows.b)];
+	}
+
+	result() {
+		return r2s(this.rows.R);
+	}
+
+	expected() {
+		const [a, b] = this.operands();
+		return (BigInt(a) * BigInt(b)).toString();
+	}
+}
+
+/** The wave run to the end, with a batch policy (the model, or the reference table in tests). */
+export async function multiplyWave(
+	a: string,
+	b: string,
+	policy: (items: { op: Op; cells: string[] }[]) => Promise<MulOut[]> | MulOut[]
+): Promise<MulWave> {
+	const w = new MulWave(a, b);
+	while (!w.done) {
+		const act = w.active();
+		const outs = await policy(act.map((q) => ({ op: q.op, cells: w.view(q) })));
+		act.forEach((q, i) => w.apply(q, outs[i]));
+		w.endStep();
+	}
+	return w;
+}
+
 export async function multiply(
 	a: string,
 	b: string,

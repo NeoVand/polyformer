@@ -15,12 +15,12 @@ import {
 	servedPath,
 	type Kind
 } from './models.ts';
-import { MUL_DOMAIN, MulSheet, outChars, type MulOut, type Op } from './multiplier.ts';
+import { MUL_DOMAIN, MulSheet, MulWave, outChars, type MulOut, type Op } from './multiplier.ts';
 import type { InsideTick } from './inside.ts';
 import type { FromWorker, InsideMeta, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
 import { B, GLYPHS } from './sprites.ts';
 
-export type Sheet = AddSheet | MulSheet;
+export type Sheet = AddSheet | MulSheet | MulWave;
 
 /** A table row, as the margin and the failure list show it. */
 export function rowLabel(kind: Kind, i: number): string {
@@ -273,6 +273,8 @@ export interface RunResult {
 	uncheckedLabels: string[];
 	/** ticks on which the visitor pushed the model's state */
 	pushes: number;
+	/** batched steps, when the multiplier's passes ran overlapped (null: one tick at a time) */
+	steps: number | null;
 	/** the certificate behind `certified`: every row checked here, or the shipped table spot-checked here */
 	certSource: 'device' | 'shipped';
 }
@@ -348,6 +350,8 @@ class Pad {
 	/** pause between ticks in ms, so the inside can be watched (0: as fast as the GPU goes) */
 	pace = $state(0);
 	pushes = $state(0);
+	/** run the multiplier's passes overlapped, as a wave of batched steps */
+	parallel = $state(true);
 	/** the table rows this run has read, and the one it read last (-1 before the first tick) */
 	walk = $state.raw<{ current: number; visited: Set<number> }>({ current: -1, visited: new Set() });
 
@@ -499,7 +503,12 @@ class Pad {
 		if (m.type === 'failed') {
 			this.pending.delete(m.rid);
 			p.reject(m.cancelled ? new Cancelled() : new Error(m.error));
-		} else if (m.type === 'tick' || m.type === 'cert-done' || m.type === 'done') {
+		} else if (
+			m.type === 'tick' ||
+			m.type === 'tick-batch' ||
+			m.type === 'cert-done' ||
+			m.type === 'done'
+		) {
 			p.onMessage?.(m);
 			this.pending.delete(m.rid);
 			p.resolve(m);
@@ -830,7 +839,12 @@ class Pad {
 			this.sheet = null;
 			return;
 		}
-		this.sheet = this.op === 'add' ? new AddSheet(a, b) : new MulSheet(a, b);
+		this.sheet =
+			this.op === 'add'
+				? new AddSheet(a, b)
+				: this.parallel
+					? new MulWave(a, b)
+					: new MulSheet(a, b);
 		this.result = null;
 		this.runError = null;
 		this.last = null;
@@ -860,6 +874,16 @@ class Pad {
 			await new Promise((r) => setTimeout(r, Math.min(50, end - performance.now())));
 	}
 
+	/** several multiplier views in one batched generation (the wave schedule; also the dev page's benchmark) */
+	tickBatch(items: { op: TickOp; cells: string[] }[]) {
+		const rid = ++this.rid;
+		return this.request<Extract<FromWorker, { type: 'tick-batch' }>>({
+			type: 'tick-batch',
+			rid,
+			items
+		});
+	}
+
 	/** Change an unread digit; the next ticks read the new one. */
 	bump(row: string, x: number, by = 1) {
 		const s = this.sheet;
@@ -876,6 +900,81 @@ class Pad {
 		this.stopRun = true;
 	}
 
+	/** a multiplier answer must be glyphs and a step name; anything else stops the run */
+	private checkMul(op: TickOp, out: MulOut) {
+		const digit = (g: string) => /^\d$/.test(g);
+		const stamps =
+			op === 'MUL' || op === 'ADD' || op === 'ADZ'
+				? [out[0], out[1]]
+				: op === 'FLS'
+					? [out[0]]
+					: [];
+		const bad = stamps.find((g) => !digit(g) && !(op === 'FLS' && g === B));
+		if (bad !== undefined)
+			throw new Error(`the model wrote ${JSON.stringify(bad)}, which is not a glyph`);
+		if (!MUL_NEXT.includes(out[2]) || out[2].length !== 1)
+			throw new Error(`the model named ${JSON.stringify(out[2])} as its next step`);
+	}
+
+	/** one table row read: on the walk, and in the run's record of rows and whether each passed here */
+	private noteRead(op: TickOp, cells: string[], read: Record<number, boolean>, cert: Cert) {
+		const row = rowIndex(op, cells);
+		read[row] = row >= 0 && cert.margins[row] > 0;
+		return row;
+	}
+
+	/**
+	 * The multiplier as a wave: every pass under way takes its step together. A step's views are batched by prompt
+	 * length (ADD is one token, the other step words two: a batch must not pad, or its inputs would differ from the
+	 * certified ones), every view is read before any answer is applied, and the inside panels follow the leading pass.
+	 */
+	private async runWave(w: MulWave, cert: Cert, read: Record<number, boolean>, t0: number) {
+		const limit = 6 * w.m + 2 * w.n + 64;
+		while (!w.done) {
+			if (this.stopRun) throw new Cancelled();
+			if (w.steps > limit) throw new Error('the run did not halt');
+			const act = w.active();
+			const views = act.map((q) => ({ op: q.op as TickOp, cells: w.view(q) }));
+			const rows = views.map((v) => this.noteRead(v.op, v.cells, read, cert));
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
+			const visited = new Set(this.walk.visited);
+			rows.forEach((r) => r >= 0 && visited.add(r));
+			this.walk = { current: rows[0] ?? -1, visited };
+			const outs: MulOut[] = new Array(act.length);
+			const strips: Uint8ClampedArray[] = new Array(act.length);
+			const seen: (InsideTick | null)[] = new Array(act.length);
+			let ms = 0;
+			for (const short of [true, false]) {
+				const idx = act.map((q, i) => i).filter((i) => (act[i].op === 'ADD') === short);
+				if (!idx.length) continue;
+				const r = await this.tickBatch(idx.map((i) => views[i]));
+				idx.forEach((i, k) => {
+					outs[i] = r.outs[k] as MulOut;
+					strips[i] = r.strips[k];
+					seen[i] = r.inside[k];
+				});
+				ms += r.ms;
+			}
+			act.forEach((q, i) => this.checkMul(views[i].op, outs[i]));
+			act.forEach((q, i) => w.apply(q, outs[i]));
+			w.endStep();
+			this.last = {
+				op: views[0].op,
+				cells: views[0].cells,
+				out: outs[0],
+				margin: null,
+				strip: strips[0],
+				ms,
+				inside: seen[0]
+			};
+			this.ticks += act.length;
+			this.computeMs += ms;
+			this.wallMs = performance.now() - t0;
+			this.version++;
+			if (!w.done && this.pace > 0) await this.rest(this.pace);
+		}
+	}
+
 	async run(a: string, b: string) {
 		if (this.running || !this.certified) return;
 		this.stage(a, b);
@@ -888,62 +987,54 @@ class Pad {
 		this.running = true;
 		this.stopRun = false;
 		const t0 = performance.now();
-		const limit = sheet instanceof AddSheet ? sheet.n + 1 : 4 * sheet.W * (sheet.m + 1) + 64;
 		// every table row this run reads, and whether each passed on this device
 		const read: Record<number, boolean> = {};
 		try {
-			for (;;) {
-				if (this.stopRun) throw new Cancelled();
-				if (sheet.ticks > limit) throw new Error('the run did not halt');
-				const op: TickOp = sheet instanceof AddSheet ? 'ADD-FAST' : sheet.op;
-				const cells = sheet.view();
-				const row = rowIndex(op, cells);
-				read[row] = row >= 0 && cert.margins[row] > 0;
-				// the walk is replaced whole on every tick ($state.raw), never changed in place
-				// eslint-disable-next-line svelte/prefer-svelte-reactivity
-				if (row >= 0) this.walk = { current: row, visited: new Set(this.walk.visited).add(row) };
-				const push = op === 'ADD-FAST' ? this.push : null;
-				this.push = null;
-				const r = await this.tick(op, cells, push);
-				if (r.inside?.pushed) this.pushes++;
-				this.last = {
-					op,
-					cells,
-					out: r.out,
-					margin: r.margin,
-					strip: r.strip,
-					ms: r.ms,
-					inside: r.inside
-				};
-				this.ticks++;
-				this.computeMs += r.ms;
-				this.wallMs = performance.now() - t0;
-				let more: boolean;
-				if (sheet instanceof AddSheet) {
-					const rule = addDecode(r.out[0]);
-					if (!rule)
-						throw new Error(`the model wrote ${JSON.stringify(r.out[0])}, which is not an answer`);
-					more = sheet.apply(rule);
-				} else {
-					const out = r.out as MulOut;
-					const digit = (g: string) => /^\d$/.test(g);
-					const stamps =
-						op === 'MUL' || op === 'ADD' || op === 'ADZ'
-							? [out[0], out[1]]
-							: op === 'FLS'
-								? [out[0]]
-								: [];
-					const bad = stamps.find((g) => !digit(g) && !(op === 'FLS' && g === B));
-					if (bad !== undefined)
-						throw new Error(`the model wrote ${JSON.stringify(bad)}, which is not a glyph`);
-					if (!MUL_NEXT.includes(out[2]) || out[2].length !== 1)
-						throw new Error(`the model named ${JSON.stringify(out[2])} as its next step`);
-					more = sheet.apply(out);
+			if (sheet instanceof MulWave) await this.runWave(sheet, cert, read, t0);
+			else
+				for (;;) {
+					const limit = sheet instanceof AddSheet ? sheet.n + 1 : 4 * sheet.W * (sheet.m + 1) + 64;
+					if (this.stopRun) throw new Cancelled();
+					if (sheet.ticks > limit) throw new Error('the run did not halt');
+					const op: TickOp = sheet instanceof AddSheet ? 'ADD-FAST' : sheet.op;
+					const cells = sheet.view();
+					const row = this.noteRead(op, cells, read, cert);
+					// the walk is replaced whole on every tick ($state.raw), never changed in place
+					// eslint-disable-next-line svelte/prefer-svelte-reactivity
+					if (row >= 0) this.walk = { current: row, visited: new Set(this.walk.visited).add(row) };
+					const push = op === 'ADD-FAST' ? this.push : null;
+					this.push = null;
+					const r = await this.tick(op, cells, push);
+					if (r.inside?.pushed) this.pushes++;
+					this.last = {
+						op,
+						cells,
+						out: r.out,
+						margin: r.margin,
+						strip: r.strip,
+						ms: r.ms,
+						inside: r.inside
+					};
+					this.ticks++;
+					this.computeMs += r.ms;
+					this.wallMs = performance.now() - t0;
+					let more: boolean;
+					if (sheet instanceof AddSheet) {
+						const rule = addDecode(r.out[0]);
+						if (!rule)
+							throw new Error(
+								`the model wrote ${JSON.stringify(r.out[0])}, which is not an answer`
+							);
+						more = sheet.apply(rule);
+					} else {
+						const out = r.out as MulOut;
+						this.checkMul(op, out);
+						more = sheet.apply(out);
+					}
+					this.version++;
+					if (!more) break;
+					if (this.pace > 0) await this.rest(this.pace);
 				}
-				this.version++;
-				if (!more) break;
-				if (this.pace > 0) await this.rest(this.pace);
-			}
 			const got = sheet.result();
 			const want = sheet.expected();
 			this.result = {
@@ -965,7 +1056,8 @@ class Pad {
 						Number(row) >= 0 ? rowLabel(kind, Number(row)) : 'a view outside the table'
 					),
 				pushes: this.pushes,
-				certSource: cert.status === 'shipped' ? 'shipped' : 'device'
+				certSource: cert.status === 'shipped' ? 'shipped' : 'device',
+				steps: sheet instanceof MulWave ? sheet.steps : null
 			};
 		} catch (e) {
 			this.runError = e instanceof Cancelled ? 'stopped' : (e as Error).message;

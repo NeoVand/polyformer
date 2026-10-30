@@ -1,6 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { ADD_DOMAIN, AddSheet, add, addCode, addDecode, addRule } from './adder.ts';
-import { MUL_DOMAIN, MulSheet, multiply, outChars, reference } from './multiplier.ts';
+import {
+	MUL_DOMAIN,
+	MulSheet,
+	multiply,
+	outChars,
+	reference,
+	MulWave,
+	multiplyWave
+} from './multiplier.ts';
 import { CELL, assembleStrip, type SpriteSheet } from './sprites.ts';
 import { StreamHash } from './hash.ts';
 
@@ -221,5 +229,57 @@ describe('one base, one graph per program', () => {
 		expect(promptFor('NXT')).toBe('NXT<|vision_start|><|image_pad|><|vision_end|>=');
 		expect(kindOf('ADD-FAST')).toBe('add');
 		expect(kindOf('ADD')).toBe('mul');
+	});
+});
+
+describe('the multiplier as a wave of overlapped passes', () => {
+	const tableRows = new Set(MUL_DOMAIN.map(([op, v]) => op + v.join('')));
+	const digits = (n: number, seed: number) => {
+		let s = seed;
+		return Array.from({ length: n }, (_, i) => {
+			s = (s * 1103515245 + 12345) % 2147483648;
+			return i === 0 ? 1 + (s % 9) : s % 10;
+		}).join('');
+	};
+
+	it('is exact at every size, reading only views of the certified table', async () => {
+		for (const [n, m] of [
+			[1, 1],
+			[3, 1],
+			[1, 4],
+			[4, 4],
+			[6, 6],
+			[12, 12],
+			[20, 20],
+			[7, 15]
+		]) {
+			for (let t = 0; t < 4; t++) {
+				const a = digits(n, 7 * t + n);
+				const b = digits(m, 11 * t + m);
+				const views: string[] = [];
+				const w = await multiplyWave(a, b, (items) =>
+					items.map(({ op, cells }) => {
+						views.push(op + cells.join(''));
+						return reference(op, cells);
+					})
+				);
+				expect(w.result()).toBe((BigInt(a) * BigInt(b)).toString());
+				expect(views.every((v) => tableRows.has(v))).toBe(true);
+				// pass j starts LAG ticks after pass j - 1 and takes 2n + 4 ticks
+				expect(w.steps).toBe(MulWave.LAG * (m - 1) + 2 * n + 4);
+				expect(w.ticks).toBe(m * (2 * n + 4));
+			}
+		}
+	});
+
+	it('stops when the model ends a pass against the schedule', async () => {
+		await expect(
+			multiplyWave('12', '34', (items) =>
+				items.map(({ op, cells }) => {
+					const out = reference(op, cells);
+					return op === 'NXT' ? ([out[0], out[1], 'H'] as typeof out) : out;
+				})
+			)
+		).rejects.toThrow(/schedule/);
 	});
 });

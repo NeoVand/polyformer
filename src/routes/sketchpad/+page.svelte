@@ -2,6 +2,7 @@
 	import { onMount } from 'svelte';
 	import { asset } from '$app/paths';
 	import { AddSheet } from '#lib/sketchpad/adder.ts';
+	import { MulWave } from '#lib/sketchpad/multiplier.ts';
 	import Certificate from '#lib/sketchpad/Certificate.svelte';
 	import Chat from '#lib/sketchpad/Chat.svelte';
 	import Inset from '#lib/sketchpad/Inset.svelte';
@@ -55,6 +56,10 @@
 		void pad.version;
 		const s = pad.sheet;
 		if (!s || s.done) return null;
+		if (s instanceof MulWave) {
+			const q = s.active()[0];
+			return q ? { op: q.op, cells: s.view(q) } : null;
+		}
 		return { op: s instanceof AddSheet ? 'ADD-FAST' : s.op, cells: s.view() };
 	});
 	const progress = $derived.by(() => {
@@ -62,6 +67,12 @@
 		const s = pad.sheet;
 		if (!s) return '';
 		if (s instanceof AddSheet) return `${fmt(s.columnsDone)} of ${fmt(s.n)} columns`;
+		if (s instanceof MulWave) {
+			const on = s.active().map((q) => q.j + 1);
+			return on.length
+				? `${on.length === 1 ? 'pass' : 'passes'} ${on.length > 1 ? `${on[0]}–${on[on.length - 1]}` : on[0]} of ${s.m} under way`
+				: `${s.m} passes done`;
+		}
 		return `digit ${Math.min(s.j + 1, s.m)} of ${s.m} of b`;
 	});
 
@@ -74,6 +85,8 @@
 				? `${fmt(Math.round(n / 1e6))} MB`
 				: `${fmt(Math.max(1, Math.round(n / 1e3)))} KB`;
 	const mb = (n: number) => fmt(Math.round(n / 1e6));
+	const duration = (s: number) =>
+		s < 90 ? `${s.toFixed(s < 10 ? 1 : 0)} s` : `${Math.floor(s / 60)} min ${Math.round(s % 60)} s`;
 
 	/** what loading this operation's program costs now: one graph once the shared base is cached */
 	const cost = $derived(pad.costs[pad.op]);
@@ -236,6 +249,19 @@
 					<button disabled={pad.running} onclick={() => preset(p)}>{p.label}</button>
 				{/each}
 			</div>
+			{#if pad.op === 'mul'}
+				<button
+					class="pace wave"
+					aria-pressed={pad.parallel}
+					disabled={pad.running}
+					onclick={() => {
+						pad.parallel = !pad.parallel;
+						pad.stage(a, b);
+					}}
+					title="Run the passes of b overlapped, each two columns behind the one before, as one batch per step"
+					>{pad.parallel ? 'Passes overlapped' : 'One pass at a time'}</button
+				>
+			{/if}
 			<button
 				class="pace"
 				aria-pressed={pad.pace > 0}
@@ -288,7 +314,11 @@
 							{/if}
 						</p>
 						<p>
-							<span>{fmt(r.ticks)} ticks, {r.msPerTick.toFixed(0)} ms each</span><span
+							<span
+								>{fmt(r.ticks)} ticks{r.steps ? ` in ${fmt(r.steps)} steps` : ''}, {duration(
+									r.seconds
+								)}</span
+							><span
 								>{#if r.certified && r.certSource === 'shipped'}certified (shipped, rechecked here){:else if r.certified}certified
 									on this device{:else if r.unchecked === 0}every view it read passed{:else}{r.unchecked}
 									unchecked {r.unchecked === 1 ? 'view' : 'views'}{/if}</span
@@ -588,6 +618,15 @@
 		color: var(--color-ink);
 	}
 	.presets button:disabled {
+		cursor: default;
+	}
+	.pace.wave {
+		margin-left: auto;
+	}
+	.pace.wave + .pace {
+		margin-left: 0;
+	}
+	.pace:disabled {
 		cursor: default;
 	}
 	.pace {

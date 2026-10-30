@@ -52,6 +52,8 @@ export type ToWorker =
 	| { type: 'certify'; rid: number; kind: Kind; rows?: number[] }
 	/** `push`: an adder answer code to push the stream entering the steer layer toward, on this tick only */
 	| { type: 'tick'; rid: number; op: TickOp; cells: string[]; push: string | null }
+	/** several multiplier views at once (independent rows of one batched generation) */
+	| { type: 'tick-batch'; rid: number; items: { op: TickOp; cells: string[] }[] }
 	| { type: 'chat'; rid: number; question: string; maxNew: number }
 	| { type: 'cancel'; rid: number };
 
@@ -95,6 +97,15 @@ export type FromWorker =
 			strip: Uint8ClampedArray;
 			/** the lens and the path of this tick's states (null when the program has no inside data) */
 			inside: InsideTick | null;
+	  }
+	| {
+			type: 'tick-batch';
+			rid: number;
+			/** per row: glyph, glyph, next-op */
+			outs: string[][];
+			strips: Uint8ClampedArray[];
+			inside: (InsideTick | null)[];
+			ms: number;
 	  }
 	| { type: 'chat-delta'; rid: number; text: string }
 	| { type: 'done'; rid: number; ms: number }
