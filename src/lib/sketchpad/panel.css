@@ -7,7 +7,8 @@
 	grid-row: span 3;
 	display: grid;
 	grid-template-rows: subgrid;
-	row-gap: 10px;
+	/* the gaps come from the host grid, so every row keeps exactly the height the host gives it */
+	row-gap: normal;
 	min-width: 0;
 	min-height: 0;
 	margin: 0;

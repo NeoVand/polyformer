@@ -246,12 +246,20 @@
 		</div>
 		{#if pad.loadError}<p class="note err">{pad.loadError}</p>{/if}
 
-		<!-- the sheet (the model's only memory), what the model reads and writes, and the machine it runs -->
+		<!-- the top row: the sheet (the model's only memory), one tick, and the machine; panels on one grid -->
 		<div class="band">
-			<div class="sheet-col">
-				<Sheet {source} version={pad.version} {tickMs} sprites={SPRITES} onedit={edit} compact />
+			<figure class="sp-panel sheet-panel">
+				<figcaption class="sp-cap">
+					<span class="sp-title">The sheet</span>
+					<span class="sp-sub"
+						>the model's only memory; click a digit it has not read to change it</span
+					>
+				</figcaption>
+				<div class="sp-body sheet-body">
+					<Sheet {source} version={pad.version} {tickMs} sprites={SPRITES} onedit={edit} compact />
+				</div>
 				<!-- two fixed lines: what happened, then the facts behind it -->
-				<div class="status num" aria-live="polite">
+				<div class="sp-foot status num" aria-live="polite">
 					{#if pad.running}
 						<p>
 							<span>tick {fmt(pad.ticks)}</span><span
@@ -299,10 +307,8 @@
 						{#if pad.op === 'add'}<p>or a number in the state space to push a tick.</p>{/if}
 					{/if}
 				</div>
-			</div>
-			<div class="eye">
-				<Inset last={pad.last} {next} sprites={SPRITES} />
-			</div>
+			</figure>
+			<Inset last={pad.last} {next} sprites={SPRITES} />
 			<Machine last={pad.last} kind={pad.op} />
 		</div>
 
@@ -594,45 +600,28 @@
 	}
 
 	/*
-	 * The band: sheet, eye and machine in fixed columns and a fixed height, so nothing a tick writes (a longer answer,
-	 * a status line, a wider sheet) moves its neighbours.
+	 * The top row: three panels on one grid, like the instruments below (panel.css): titles, figures and notes share
+	 * lines, and every size is fixed, so nothing a tick writes (a longer answer, a wider sheet) moves a neighbour.
 	 */
 	.band {
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) 250px 290px;
-		grid-template-rows: 236px;
-		column-gap: 40px;
+		grid-template-rows: auto 188px 40px;
+		gap: 10px 40px;
 		margin-top: 4px;
 	}
-	.sheet-col {
-		min-width: 0;
-		min-height: 0;
-		display: grid;
-		grid-template-rows: auto auto;
+	.sheet-body {
 		align-content: start;
-		gap: 8px;
-		overflow: hidden;
-	}
-	.eye {
-		min-width: 0;
-		min-height: 0;
-		overflow: hidden;
-		padding-top: 4px;
-	}
-	.band :global(.sp-panel) {
-		grid-row: auto;
-		grid-template-rows: auto minmax(0, 1fr) auto;
-		height: 236px;
 	}
 	/* two fixed lines under the sheet; a line that is too long ends in an ellipsis instead of pushing anything */
 	.status {
 		display: grid;
-		grid-template-rows: 18px 18px;
-		height: 36px;
-		padding-left: 12px;
+		grid-template-rows: 20px 20px;
+		height: 40px;
 	}
 	.status p {
 		min-width: 0;
+		line-height: 20px;
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
@@ -646,8 +635,8 @@
 		display: grid;
 		grid-template-columns: minmax(0, 1fr) minmax(0, 1.6fr) minmax(0, 0.9fr);
 		/* the figures take what the window leaves, so the whole stage fits from 800 px tall screens up */
-		grid-template-rows: auto clamp(220px, calc(100dvh - 595px), 360px) 4.4em;
-		column-gap: 40px;
+		grid-template-rows: auto clamp(210px, calc(100dvh - 650px), 360px) 4.4em;
+		gap: 10px 40px;
 		margin-top: 6px;
 		padding-top: 16px;
 		border-top: 1px solid var(--color-edge);
@@ -686,8 +675,7 @@
 	@media (max-width: 1279px) {
 		.band {
 			grid-template-columns: minmax(0, 1fr) 250px;
-			grid-template-rows: 236px 236px;
-			row-gap: 16px;
+			grid-template-rows: auto 188px 40px auto 188px 40px;
 		}
 		.band :global(.machine) {
 			grid-column: 1 / -1;
@@ -714,7 +702,7 @@
 		}
 		.band {
 			grid-template-columns: minmax(0, 1fr);
-			grid-template-rows: auto 236px 236px;
+			grid-template-rows: repeat(3, auto 188px auto);
 		}
 		.instruments {
 			grid-template-columns: minmax(0, 1fr);
