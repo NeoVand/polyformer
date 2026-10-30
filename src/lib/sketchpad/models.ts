@@ -5,15 +5,25 @@
  * the embedding, the vision tower, the configs and the tokenizer) is the base and is served from one folder, so the
  * browser downloads it once and a switch between operations costs one graph.
  *
- * Layout (static/sketchpad/models/, never committed): `<BASE_ID>/` holds the base files; `<program id>/` holds at
- * least the program's own files. When one adapter learns both operations, both kinds name the same program id: a switch
- * then reloads nothing, and only the prompts below differ.
+ * Layout: `<BASE_ID>/` holds the base files; `<program id>/` holds at least the program's own files. When one adapter
+ * learns both operations, both kinds name the same program id: a switch then reloads nothing, and only the prompts below
+ * differ. A build loads the published copy on Hugging Face (HF_ROOT); `pnpm dev` serves the same layout from
+ * static/sketchpad/models/, which is never committed.
  */
 import type { TickOp } from './protocol.ts';
 
 export type Kind = 'add' | 'mul';
 
-export const BASE_ID = 'qwen35-0.8b-base';
+export const BASE_ID = 'base';
+
+/** The published copy, pinned by commit (the browser caches files by URL, so a new revision never mixes with an old). */
+export const HF_REPO = 'mohsenvand/sketchpad-0.8b-preview';
+export const HF_REVISION = '75cfe5a334727ea13ec350c103c542bbb6d3953d';
+export const HF_ROOT = `https://huggingface.co/${HF_REPO}/resolve/${HF_REVISION}/`;
+export const HF_CARD = `https://huggingface.co/${HF_REPO}`;
+
+/** Files under a pinned revision never change, so their cached copies need no check against the server. */
+export const pinned = (root: string) => /\/resolve\/[0-9a-f]{40}\/$/.test(root);
 
 /** the ONNX precision of each session, shared by every program on the base */
 export const DTYPE = {
@@ -53,9 +63,9 @@ const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
  * three answers are read at `=` and the two slots (research/sketch/e6_slots.py).
  * Its graph has a window into itself (research/sketch/patch_onnx_inside.py): an extra `hidden_states` output and a
  * `steer` input that is zero unless a visitor pushes; the folder also holds the lens and map data (inside.ts).
- * Built by research/sketch/build_program.sh.
+ * Built by research/sketch/build_program.sh (as qwen35-union-e6-s3-inside); published as `arithmetic/`.
  */
-const UNION = 'qwen35-union-e6-s3-inside';
+const UNION = 'arithmetic';
 
 export const MODELS: Record<Kind, SketchModel> = {
 	add: {

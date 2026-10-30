@@ -10,7 +10,7 @@
 	import Machine from '#lib/sketchpad/Machine.svelte';
 	import StateSpace from '#lib/sketchpad/StateSpace.svelte';
 	import '#lib/sketchpad/panel.css';
-	import { MODELS, type Kind } from '#lib/sketchpad/models.ts';
+	import { HF_CARD, HF_ROOT, MODELS, type Kind } from '#lib/sketchpad/models.ts';
 	import { pad } from '#lib/sketchpad/pad.svelte.ts';
 	import type { TickOp } from '#lib/sketchpad/protocol.ts';
 	import Sheet from '#lib/sketchpad/Sheet.svelte';
@@ -40,8 +40,8 @@
 
 	onMount(() => {
 		spritesUrl = new URL(SPRITES, location.href).href;
-		// the weights sit beside the sprites: static/sketchpad/models/<program or base>/
-		modelsBase = new URL('models/', spritesUrl).href;
+		// a build loads the published weights; `pnpm dev` serves them beside the sprites (static/sketchpad/models/)
+		modelsBase = import.meta.env.DEV ? new URL('models/', spritesUrl).href : HF_ROOT;
 		void pad.probe(modelsBase);
 		pad.stage(a, b);
 		// local checks and the screenshot script drive the page through this handle
@@ -217,7 +217,11 @@
 				{#if pad.gpuOk === false}
 					<p class="note">{pad.gpuReason}</p>
 				{:else if missing}
-					<p class="note">The model files are not on this server (static/sketchpad/models/).</p>
+					<p class="note">
+						{import.meta.env.DEV
+							? 'The model files are not on this server (static/sketchpad/models/).'
+							: 'The model files could not be reached.'}
+					</p>
 				{:else if pad.loading}
 					{@const kind = pad.progressKind ?? pad.loading}
 					{@const total = pad.expect}
@@ -429,6 +433,11 @@
 					1,024-dimensional state chosen to separate the answers. Pushing adds the difference of two
 					answers' mean states to the stream entering layer 20, right after the full-attention layer
 					that writes the decision.
+				</p>
+				<p>
+					The weights, the certificate and the inside data are on
+					<!-- eslint-disable-next-line svelte/no-navigation-without-resolve -- external link -->
+					<a href={HF_CARD} target="_blank" rel="noopener">Hugging Face</a>.
 				</p>
 			</div>
 		</div>

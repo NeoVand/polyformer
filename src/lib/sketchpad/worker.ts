@@ -17,6 +17,7 @@ import {
 	MODELS,
 	kindOf,
 	modelFiles,
+	pinned,
 	promptFor,
 	route,
 	servedPath,
@@ -710,7 +711,7 @@ async function load(m: Extract<ToWorker, { type: 'load' }>) {
 				await old.dispose().catch(() => {});
 			}
 			const canCache = await setup(m);
-			if (canCache) await dropStale(spec, m.root);
+			if (canCache && !pinned(m.root)) await dropStale(spec, m.root);
 			const expect = await uncachedBytes(spec, m.root, canCache);
 			network = {};
 			cachedBytes = 0;
