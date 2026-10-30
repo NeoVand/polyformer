@@ -1,11 +1,14 @@
 /** Seam 2. Implementations may execute these operations on the model's sheet. */
 export interface Calc {
+	/** Run independent jobs together; their steps share model forward passes. */
+	wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]>;
 	add(a: bigint, b: bigint): Promise<bigint>;
 	sub(a: bigint, b: bigint): Promise<bigint>;
 	mul(a: bigint, b: bigint): Promise<bigint>;
 	divmod(a: bigint, b: bigint): Promise<{ q: bigint; r: bigint }>;
 	isqrt(a: bigint): Promise<{ root: bigint; rem: bigint }>;
 }
+export type ScalarOp = Exclude<keyof Calc, 'wave'>;
 export type Result = bigint | { q: bigint; r: bigint } | { root: bigint; rem: bigint };
 export interface SheetCost {
 	rows: number;
@@ -13,7 +16,7 @@ export interface SheetCost {
 	seconds: number;
 }
 export interface CalcCall {
-	op: keyof Calc;
+	op: ScalarOp;
 	operands: bigint[];
 	result: Result;
 	cost?: SheetCost;
@@ -109,14 +112,46 @@ export function squareRootCost(n: bigint): SheetCost {
 }
 export class RefCalc implements Calc {
 	readonly calls: CalcCall[] = [];
+	private readonly root = { rows: 0, calls: 0 };
+	private active = this.root;
 	get total(): SheetCost {
-		return cost(
-			this.calls.reduce((n, c) => n + c.cost!.rows, 0),
-			this.calls.reduce((n, c) => n + c.cost!.calls, 0)
-		);
+		return cost(this.root.rows, this.root.calls);
 	}
-	private record<T extends Result>(op: keyof Calc, operands: bigint[], result: T, c: SheetCost): T {
+	/** Execute reference jobs deterministically in isolation, then compose their schedules.
+	 * The real sheet executes them concurrently. Serial reference evaluation avoids depending
+	 * on Node-only async context and gives nested waves exact, browser-portable accounting.
+	 * Independent work must be submitted as factories, not pre-started promises.
+	 */
+	async wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]> {
+		const parent = this.active;
+		const results: T[] = [];
+		let rows = 0,
+			calls = 0,
+			failed = false,
+			failure: unknown;
+		for (const job of jobs) {
+			const frame = { rows: 0, calls: 0 };
+			this.active = frame;
+			try {
+				results.push(await job());
+			} catch (error) {
+				if (!failed) failure = error;
+				failed = true;
+			} finally {
+				rows += frame.rows;
+				calls = Math.max(calls, frame.calls);
+				this.active = parent;
+			}
+		}
+		parent.rows += rows;
+		parent.calls += calls;
+		if (failed) throw failure;
+		return results;
+	}
+	private record<T extends Result>(op: ScalarOp, operands: bigint[], result: T, c: SheetCost): T {
 		this.calls.push({ op, operands, result, cost: c });
+		this.active.rows += c.rows;
+		this.active.calls += c.calls;
 		return result;
 	}
 	async add(a: bigint, b: bigint) {
@@ -148,8 +183,11 @@ export class RefCalc implements Calc {
 export class TraceCalc implements Calc {
 	readonly calls: CalcCall[] = [];
 	constructor(readonly inner: Calc) {}
+	wave<T>(jobs: (() => Promise<T>)[]): Promise<T[]> {
+		return this.inner.wave(jobs);
+	}
 	protected async record<T extends Result>(
-		op: keyof Calc,
+		op: ScalarOp,
 		operands: bigint[],
 		call: Promise<T>
 	): Promise<T> {
@@ -175,6 +213,7 @@ export class TraceCalc implements Calc {
 }
 /** Corrupt exactly one zero-based call. Fault arithmetic belongs to this test double only. */
 export class LyingCalc extends TraceCalc {
+	private invoked = 0;
 	constructor(
 		inner: Calc,
 		readonly target: number,
@@ -188,12 +227,13 @@ export class LyingCalc extends TraceCalc {
 		super(inner);
 	}
 	protected override async record<T extends Result>(
-		op: keyof Calc,
+		op: ScalarOp,
 		operands: bigint[],
 		call: Promise<T>
 	): Promise<T> {
+		const index = this.invoked++;
 		const answer = await call;
-		const result = (this.calls.length === this.target ? this.corrupt(answer) : answer) as T;
+		const result = (index === this.target ? this.corrupt(answer) : answer) as T;
 		this.calls.push({ op, operands, result });
 		return result;
 	}

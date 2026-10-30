@@ -18,8 +18,17 @@ export const flip = (n: bigint): bigint =>
 	n === 0n ? 0n : BigInt(n < 0n ? n.toString().slice(1) : '-' + n.toString());
 export const ten = (places: number): bigint => BigInt('1' + '0'.repeat(places));
 export const integer = (n: bigint): Rational => ({ n, d: 1n });
+export type CheckMode = 'light' | 'strong';
+export interface EvaluationOptions {
+	places?: number;
+	exact?: boolean;
+	positive?: boolean;
+}
 export class Arithmetic {
-	constructor(readonly calc: Calc) {}
+	constructor(
+		readonly calc: Calc,
+		readonly checkMode: CheckMode = 'light'
+	) {}
 	async gcd(a: bigint, b: bigint): Promise<bigint> {
 		a = magnitude(a);
 		b = magnitude(b);
@@ -33,6 +42,8 @@ export class Arithmetic {
 	}
 	async exact(a: bigint, b: bigint): Promise<bigint> {
 		if (b === 0n) throw new CheckFailed('Exact division by zero');
+		if (b === 1n) return a;
+		if (b === -1n) return flip(a);
 		const { q, r } = await this.calc.divmod(magnitude(a), magnitude(b));
 		if (r !== 0n) throw new CheckFailed('Exact division left a remainder');
 		return a < 0n !== b < 0n ? flip(q) : q;
@@ -44,34 +55,56 @@ export class Arithmetic {
 			d = flip(d);
 		}
 		if (d === 1n) return { n, d, approximate };
-		const g = await this.gcd(n, d);
-		return { n: await this.exact(n, g), d: await this.exact(d, g), approximate };
+		const { q, r } = await this.calc.divmod(magnitude(n), d);
+		if (r === 0n) return { n: n < 0n ? flip(q) : q, d: 1n, approximate };
+		const g = await this.gcd(d, r);
+		if (g === 1n) return { n, d, approximate };
+		const [num, den] = await this.calc.wave([() => this.exact(n, g), () => this.exact(d, g)]);
+		return { n: num, d: den, approximate };
 	}
 	async add(a: Rational, b: Rational, subtract = false): Promise<Rational> {
 		const op = subtract ? this.calc.sub.bind(this.calc) : this.calc.add.bind(this.calc);
 		const approximate = !!(a.approximate || b.approximate);
 		if (a.d === b.d) return this.fraction(await op(a.n, b.n), a.d, approximate);
-		const n = await op(await this.calc.mul(a.n, b.d), await this.calc.mul(b.n, a.d));
-		return this.fraction(n, await this.calc.mul(a.d, b.d), approximate);
+		const [left, right, den] = await this.calc.wave([
+			() => this.calc.mul(a.n, b.d),
+			() => this.calc.mul(b.n, a.d),
+			() => this.calc.mul(a.d, b.d)
+		]);
+		return this.fraction(await op(left, right), den, approximate);
 	}
 	async mul(a: Rational, b: Rational): Promise<Rational> {
-		return this.fraction(
-			await this.calc.mul(a.n, b.n),
-			a.d === 1n && b.d === 1n ? 1n : await this.calc.mul(a.d, b.d),
-			!!(a.approximate || b.approximate)
-		);
+		const [n, d] = await this.calc.wave([
+			() => this.calc.mul(a.n, b.n),
+			() => (a.d === 1n && b.d === 1n ? Promise.resolve(1n) : this.calc.mul(a.d, b.d))
+		]);
+		return this.fraction(n, d, !!(a.approximate || b.approximate));
 	}
 	async div(a: Rational, b: Rational): Promise<Rational> {
-		return this.fraction(
-			b.d === 1n ? a.n : await this.calc.mul(a.n, b.d),
-			a.d === 1n ? b.n : await this.calc.mul(a.d, b.n),
-			!!(a.approximate || b.approximate)
-		);
+		const [n, d] = await this.calc.wave([
+			() => (b.d === 1n ? Promise.resolve(a.n) : this.calc.mul(a.n, b.d)),
+			() => (a.d === 1n ? Promise.resolve(b.n) : this.calc.mul(a.d, b.n))
+		]);
+		return this.fraction(n, d, !!(a.approximate || b.approximate));
 	}
-	async pow(a: Rational, e: number): Promise<Rational> {
-		if (e === 0) return integer(1n);
-		let out = a;
-		for (let i = 1; i < Math.abs(e); i++) out = await this.mul(out, a);
+	async pow(
+		a: Rational,
+		e: number,
+		memo = new Map<string, Promise<Rational>>()
+	): Promise<Rational> {
+		const power = (n: number): Promise<Rational> => {
+			if (n === 0) return Promise.resolve(integer(1n));
+			if (n === 1) return Promise.resolve(a);
+			const key = `power:${a.n}/${a.d}:${!!a.approximate}:${n}`;
+			let value = memo.get(key);
+			if (!value) {
+				// Repeated multiplication with shared intermediate powers; all digits remain on Calc.
+				value = (async () => this.mul(await power(n - 1), a))();
+				memo.set(key, value);
+			}
+			return value;
+		};
+		const out = await power(Math.abs(e));
 		return e < 0 ? this.div(integer(1n), out) : out;
 	}
 	async quantize(a: Rational, places: number): Promise<Rational> {
@@ -82,8 +115,10 @@ export class Arithmetic {
 	}
 	async sqrt(a: Rational, places?: number, exact = false): Promise<Rational> {
 		if (a.n < 0n) throw new Error('Square root has no real value');
-		const nr = await this.calc.isqrt(a.n),
-			dr = a.d === 1n ? { root: 1n, rem: 0n } : await this.calc.isqrt(a.d);
+		const [nr, dr] = await this.calc.wave([
+			() => this.calc.isqrt(a.n),
+			() => (a.d === 1n ? Promise.resolve({ root: 1n, rem: 0n }) : this.calc.isqrt(a.d))
+		]);
 		if (nr.rem === 0n && dr.rem === 0n) {
 			const root = await this.fraction(nr.root, dr.root, !!a.approximate);
 			if (exact) return root;
@@ -98,51 +133,113 @@ export class Arithmetic {
 		const { root } = await this.calc.isqrt(q);
 		return this.fraction(root, scale, true);
 	}
+	/** Evaluate a point as a dependency graph. A shared node is finished before any
+	 * wave that consumes it; merely sharing a pending promise across jobs would undercount
+	 * its dependent job's critical path in the reference max-job cost model.
+	 */
 	async evaluate(
 		expr: Expr,
 		env: Environment = new Map(),
-		options: { places?: number; exact?: boolean; positive?: boolean } = {}
+		options: EvaluationOptions = {}
 	): Promise<Rational> {
-		const visit = (e: Expr) => this.evaluate(e, env, options);
-		switch (expr.kind) {
-			case 'number': {
-				const [whole, frac = ''] = expr.text.split('.');
-				return this.fraction(BigInt((whole || '0') + frac), ten(frac.length));
+		return (await this.evaluateMany([expr], env, options))[0];
+	}
+	async evaluateMany(
+		expressions: Expr[],
+		env: Environment = new Map(),
+		options: EvaluationOptions = {}
+	): Promise<Rational[]> {
+		interface Node {
+			key: string;
+			depth: number;
+			work: () => Promise<Rational>;
+		}
+		const nodes = new Map<string, Node>(),
+			values = new Map<string, Rational>();
+		const register = (key: string, deps: string[], work: () => Promise<Rational>): string => {
+			if (!nodes.has(key))
+				nodes.set(key, {
+					key,
+					depth: deps.length ? 1 + Math.max(...deps.map((k) => nodes.get(k)!.depth)) : 0,
+					work
+				});
+			return key;
+		};
+		const value = (key: string) => values.get(key)!;
+		const power = (base: string, n: number): string => {
+			if (n === 1) return base;
+			const key = `power:${base}:${n}`;
+			if (nodes.has(key)) return key;
+			if (n === 0) return register(key, [base], async () => integer(1n));
+			const prev = power(base, n - 1);
+			return register(key, [prev, base], () => this.mul(value(prev), value(base)));
+		};
+		const build = (e: Expr): string => {
+			const key = JSON.stringify(e);
+			if (nodes.has(key)) return key;
+			if (e.kind === 'number')
+				return register(key, [], () => {
+					const [whole, frac = ''] = e.text.split('.');
+					return this.fraction(BigInt((whole || '0') + frac), ten(frac.length));
+				});
+			if (e.kind === 'name')
+				return register(key, [], async () => {
+					const n = env.get(e.name);
+					if (!n) throw new Error(`Unknown name ${e.name}`);
+					return options.positive ? { ...n, n: magnitude(n.n) } : n;
+				});
+			if (e.kind === 'unary') {
+				const child = build(e.value);
+				return register(key, [child], async () => {
+					const v = value(child);
+					if (e.op === 'sqrt') return this.sqrt(v, options.places, options.exact);
+					return e.op === '-' && !options.positive ? { ...v, n: flip(v.n) } : v;
+				});
 			}
-			case 'name': {
-				const n = env.get(expr.name);
-				if (!n) throw new Error(`Unknown name ${expr.name}`);
-				return options.positive ? { ...n, n: magnitude(n.n) } : n;
+			const left = build(e.left);
+			if (e.kind === 'binary' && e.op === '^') {
+				const exp = exponent(e.right),
+					p = power(left, Math.abs(exp));
+				return register(key, [p], () =>
+					exp < 0 ? this.div(integer(1n), value(p)) : Promise.resolve(value(p))
+				);
 			}
-			case 'unary': {
-				const v = await visit(expr.value);
-				if (expr.op === 'sqrt') return this.sqrt(v, options.places, options.exact);
-				return expr.op === '-' && !options.positive ? { ...v, n: flip(v.n) } : v;
-			}
-			case 'gcd': {
-				const a = await visit(expr.left),
-					b = await visit(expr.right);
-				if (a.d !== 1n || b.d !== 1n) throw new Error('gcd needs integer arguments');
-				return integer(await this.gcd(a.n, b.n));
-			}
-			case 'binary': {
-				const a = await visit(expr.left);
-				if (expr.op === '^') return this.pow(a, exponent(expr.right));
-				const b = await visit(expr.right);
-				if (expr.op === '+') return this.add(a, b);
-				if (expr.op === '-') return this.add(a, b, !options.positive);
-				if (expr.op === '*') return this.mul(a, b);
+			const right = build(e.right);
+			return register(key, [left, right], async () => {
+				const a = value(left),
+					b = value(right);
+				if (e.kind === 'gcd') {
+					if (a.d !== 1n || b.d !== 1n) throw new Error('gcd needs integer arguments');
+					return integer(await this.gcd(a.n, b.n));
+				}
+				if (e.op === '+') return this.add(a, b);
+				if (e.op === '-') return this.add(a, b, !options.positive);
+				if (e.op === '*') return this.mul(a, b);
 				const q = await this.div(a, b);
 				if (options.exact) return q;
-				if (options.places !== undefined) return this.quantize(q, options.places);
-				// Default precision applies at every division, even inside a larger expression.
-				const cut = await this.quantize(q, 12);
-				return cut.approximate ? cut : q;
-			}
-		}
+				const cut = await this.quantize(q, options.places ?? 12);
+				return options.places !== undefined || cut.approximate ? cut : q;
+			});
+		};
+		const roots = expressions.map(build);
+		const levels: Node[][] = [];
+		for (const node of nodes.values()) (levels[node.depth] ??= []).push(node);
+		for (const level of levels)
+			if (level)
+				await this.calc.wave(
+					level.map((node) => async () => {
+						values.set(node.key, await node.work());
+					})
+				);
+		return roots.map(value);
 	}
 	async equal(a: Rational, b: Rational): Promise<boolean> {
-		return (await this.calc.mul(a.n, b.d)) === (await this.calc.mul(b.n, a.d));
+		if (a.d === b.d) return a.n === b.n;
+		const [left, right] = await this.calc.wave([
+			() => this.calc.mul(a.n, b.d),
+			() => this.calc.mul(b.n, a.d)
+		]);
+		return left === right;
 	}
 	async decimal(a: Rational, places = 12, fixed = false): Promise<string> {
 		// An integer is already a sheet-produced digit row. Padding its decimal point is layout.

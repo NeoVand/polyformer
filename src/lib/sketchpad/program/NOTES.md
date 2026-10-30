@@ -1,3 +1,9 @@
+Round 2 in progress. No new timing or refusal claims yet.
+
+The orchestrator now permits waves: independent jobs share model passes, while their row costs add. The implementation will keep the supplied arithmetic costs fixed, use a light check by default, and retain strong checks. A wave saves waiting between independent calculations; it does not make their digit work free. The glossary candidate for this term is recorded below. No spending or model calls are planned.
+
+## Round 1 archive
+
 Passed: 49 tests covering 1,000 expressions, 200 each of six algebra families, and 150 reference-cost comparisons. TypeScript, ESLint and formatting checks pass.
 
 Refusals: wrong roots 200/200 (100%); corrupted evaluations 168/200 (84%). The 32 missed faults left the answers unchanged; this is not a guarantee against arbitrary corruption.
@@ -138,3 +144,5 @@ The final report/metrics commit completes the stream. There are no remote pushes
 - **Bracket [zoo]:** two bounds where a continuous function has opposite signs. The classical intermediate value theorem guarantees a root between them; this implementation (30 Oct 2026) uses exact arithmetic to check displayed irrational-root bounds.
 - **Float64 candidate:** an approximate number in JavaScript's ordinary numeric format. Used only in the candidate search implemented here (30 Oct 2026), never accepted as a root without exact proof.
 - **Median / 95th percentile:** respectively the middle measured cost and a cost covering at least 95% of the population. Standard descriptive statistics; the report generated here (30 Oct 2026) uses them to expose typical and slower predicted workloads.
+
+- **Wave [zoo]:** independent sheet jobs sharing model forward passes; authorized by the orchestrator in PROGRAM2 (30 Oct 2026). Its call count is the longest job, and its row count is the sum, so it reduces scheduling cost without changing arithmetic.
