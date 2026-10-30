@@ -32,7 +32,8 @@ export interface LoadedInfo {
 /** The maps' backgrounds and the push's alphabet (inside.json without the arrays the worker keeps). */
 export interface InsideMeta {
 	steerLayer: number;
-	steerCodes: string;
+	/** the answer codes a visitor can push each pushable family toward */
+	steerCodes: Partial<Record<Family, string>>;
 	families: Record<
 		Family,
 		{
@@ -50,10 +51,17 @@ export type ToWorker =
 	| { type: 'load'; lid: number; kind: Kind; root: string; sprites: string }
 	/** `rows`: check only these table rows (a spot check); all of them when absent */
 	| { type: 'certify'; rid: number; kind: Kind; rows?: number[] }
-	/** `push`: an adder answer code to push the stream entering the steer layer toward, on this tick only */
+	/**
+	 * `push`: an answer code to push the stream entering the steer layer toward, on this tick only (an adder tick, or a
+	 * multiply step with a digit of a)
+	 */
 	| { type: 'tick'; rid: number; op: TickOp; cells: string[]; push: string | null }
-	/** several multiplier views at once (independent rows of one batched generation) */
-	| { type: 'tick-batch'; rid: number; items: { op: TickOp; cells: string[] }[] }
+	/** several multiplier views at once (independent rows of one batched generation); a push applies to its own row */
+	| {
+			type: 'tick-batch';
+			rid: number;
+			items: { op: TickOp; cells: string[]; push?: string | null }[];
+	  }
 	| { type: 'chat'; rid: number; question: string; maxNew: number }
 	| { type: 'cancel'; rid: number };
 

@@ -34,7 +34,7 @@
 	const fam = $derived(meta ? meta.families[family] : null);
 	/** the last tick was this family's */
 	const live = $derived(seen?.family === family);
-	const pushable = $derived(canPush && family === 'SUM' && !!meta);
+	const pushable = $derived(canPush && !!meta?.steerCodes[family]);
 	/** the map's scale: most of the table within the frame */
 	const reach = $derived.by(() => {
 		if (!fam) return 1;
@@ -217,7 +217,7 @@
 		for (const [c, [x, y, z]] of Object.entries(f.labels)) {
 			const q = proj(x, y, z);
 			const text = labelText(c);
-			const armed = push === c;
+			const armed = pushable && push === c;
 			const lit = armed || hover === c || c === here;
 			ctx.lineWidth = 3;
 			ctx.strokeStyle = t.halo;

@@ -350,9 +350,13 @@
 						<p title={loadNote}>
 							{pad.op === 'add'
 								? 'Run, then click an unread digit to change it,'
-								: 'Run, then click a later digit of b to change it.'}
+								: 'Run, then click a later digit of b to change it,'}
 						</p>
-						{#if pad.op === 'add'}<p>or a number in the state space to push a tick.</p>{/if}
+						<p>
+							{pad.op === 'add'
+								? 'or a number in the state space to push a tick.'
+								: 'or a digit on the multiply map to push a step.'}
+						</p>
 					{/if}
 				</div>
 			</figure>
@@ -376,7 +380,7 @@
 				runKey={pad.sheet}
 				slow={pad.pace > 0}
 				push={pad.push}
-				canPush={pad.ready && pad.op === 'add' && !!pad.insideMeta}
+				canPush={pad.ready && !!pad.insideMeta}
 				onpush={(c) => (pad.push = c)}
 			/>
 			<Certificate

@@ -35,8 +35,13 @@
 				? `Pushed toward ${want} at layer ${meta?.steerLayer}: it wrote ${got}.`
 				: `Pushed toward ${want} at layer ${meta?.steerLayer}: it still wrote ${got}.`;
 		}
-		if (push) return `The next tick is pushed toward ${show(push)} at layer ${meta?.steerLayer}.`;
+		if (push)
+			return kind === 'add'
+				? `The next tick is pushed toward ${show(push)} at layer ${meta?.steerLayer}.`
+				: `The next multiply step is pushed toward ${push} at layer ${meta?.steerLayer}.`;
 		if (kind === 'add' && canPush && meta) return 'Click a number to push the next tick toward it.';
+		if (kind === 'mul' && canPush && meta)
+			return 'Click a digit on the multiply map to push the next multiply step toward it.';
 		if (kind === 'mul' && meta)
 			return 'Each tick lights the map of its step; the carry and halt steps write no digit.';
 		return '';
@@ -62,7 +67,7 @@
 							{runKey}
 							{slow}
 							{push}
-							canPush={canPush && m.family === 'SUM'}
+							{canPush}
 							{onpush}
 						/>
 					</div>

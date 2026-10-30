@@ -7,6 +7,7 @@ import {
 	lensGroups,
 	project,
 	readLens,
+	steerCodes,
 	steerVector,
 	type FamilyMap,
 	type InsideAssets
@@ -44,7 +45,7 @@ function toy(): InsideAssets {
 		rows,
 		families: { SUM: fam(), MUL: fam(), ADD: fam() },
 		steerLayer: 20,
-		steer
+		steer: { SUM: steer, MUL: new Map([['3', new Float32Array(DIM).fill(2)]]) }
 	};
 }
 
@@ -85,8 +86,16 @@ describe('the inside of a tick', () => {
 
 	it('pushes by the difference of two class means, and not at all toward the same answer', () => {
 		const a = toy();
-		expect(steerVector(a, '3', 'c')?.[0]).toBe(3);
-		expect(steerVector(a, '3', '3')).toBeNull();
-		expect(steerVector(a, '3', 'x')).toBeNull();
+		expect(steerVector(a, 'SUM', '3', 'c')?.[0]).toBe(3);
+		expect(steerVector(a, 'SUM', '3', '3')).toBeNull();
+		expect(steerVector(a, 'SUM', '3', 'x')).toBeNull();
+	});
+
+	it('pushes only with the class means of its own family', () => {
+		const a = toy();
+		expect(steerVector(a, 'MUL', '3', 'c')).toBeNull();
+		expect(steerVector(a, 'ADD', '3', 'c')).toBeNull();
+		expect(steerCodes('0123')).toEqual({ SUM: '0123' });
+		expect(steerCodes({ SUM: '01', MUL: '0' })).toEqual({ SUM: '01', MUL: '0' });
 	});
 });

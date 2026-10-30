@@ -23,8 +23,8 @@ import {
 	type Kind,
 	type SketchModel
 } from './models.ts';
-import { analyse, parseAssets, steerVector, type InsideAssets } from './inside.ts';
-import { MUL_DOMAIN, outChars, type Op } from './multiplier.ts';
+import { analyse, parseAssets, steerCodes, steerVector, type InsideAssets } from './inside.ts';
+import { MUL_DOMAIN, outChars, reference, type Op } from './multiplier.ts';
 import type { FromWorker, InsideMeta, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
 import { B, CELL, assembleStrip, type SpriteSheet } from './sprites.ts';
 
@@ -81,8 +81,11 @@ let captured: Float32Array[][][] = [];
 let captureLast = 1;
 /** logits the next decoder calls compute, counted from the end (0: every place); see slottedForward */
 let keepLogits = 0;
-/** a push for the next decoder call that reads a whole prompt (the tick's first call) */
-let steerNext: Float32Array | null = null;
+/**
+ * a push for the next decoder call that reads a whole prompt (the tick's first call): added to batch row `row` at the
+ * place `back` from the end, the place that writes the first answer
+ */
+let steerNext: { row: number; back: number; vec: Float32Array } | null = null;
 /** the program loaded now, and a counter that moves whenever the loaded model changes */
 let loadedId: string | null = null;
 let generation = 0;
@@ -344,7 +347,7 @@ function padFor(op: Op) {
 
 /**
  * Hook the decoder session: hide `steer` from transformers.js (which feeds only the inputs it knows) and feed it here,
- * zeros except for an armed push at the last prompt position; keep `hidden_states` while a tick is capturing.
+ * zeros except for an armed push (steerNext); keep `hidden_states` while a tick is capturing.
  */
 function wrapDecoder(m: Model) {
 	const sessions = (m as unknown as { sessions: Record<string, OrtSession> }).sessions;
@@ -356,8 +359,9 @@ function wrapDecoder(m: Model) {
 	s.run = async (feeds, opts) => {
 		const dims = feeds.inputs_embeds.dims as number[];
 		const data = new Float32Array(dims[0] * dims[1] * dims[2]);
-		if (steerNext && dims[1] > 1 && dims[0] === 1) {
-			data.set(steerNext, (dims[1] - 1) * dims[2]);
+		if (steerNext && dims[1] > 1 && steerNext.row < dims[0]) {
+			const { row, back, vec } = steerNext;
+			data.set(vec, (row * dims[1] + dims[1] - back) * dims[2]);
 			steerNext = null;
 		}
 		const ort = (t: unknown) => (t as { ort_tensor: OrtTensor }).ort_tensor;
@@ -398,7 +402,7 @@ async function loadInside(spec: SketchModel, root: string) {
 	inside = parseAssets(lj, lb, ij, ib);
 	insideMeta = {
 		steerLayer: ij.steerLayer,
-		steerCodes: ij.steerCodes,
+		steerCodes: steerCodes(ij.steerCodes),
 		families: Object.fromEntries(
 			Object.entries(ij.families as Record<string, InsideMeta['families']['SUM']>).map(([k, f]) => [
 				k,
@@ -415,6 +419,26 @@ async function loadInside(spec: SketchModel, root: string) {
 	};
 }
 
+/**
+ * Arm a push for batch row `row` of the next whole-prompt call: it moves the stream entering the steer layer, at the
+ * place that writes the first answer, from the class mean of the true answer to the asked one. An adder tick and a
+ * multiply step with a digit of a can be pushed. Returns the code pushed toward, or null when nothing was armed.
+ */
+function armPush(op: TickOp, cells: string[], push: string | null, row: number) {
+	if (!inside || !push) return null;
+	const from =
+		op === 'ADD-FAST'
+			? addCode(addRule(cells))
+			: op === 'MUL' && cells[0] !== B
+				? reference('MUL', cells)[0]
+				: null;
+	const vec = from && steerVector(inside, op === 'ADD-FAST' ? 'SUM' : 'MUL', from, push);
+	if (!vec) return null;
+	const back = op === 'ADD-FAST' || !slots() ? 1 : 1 + slots() + padFor(op as Op);
+	steerNext = { row, back, vec };
+	return push;
+}
+
 /** run `fn` with every decoder call's states kept, and read them */
 async function withInside<T>(
 	op: TickOp,
@@ -428,15 +452,7 @@ async function withInside<T>(
 	captureLast = slotted ? 1 + slots() + padFor(op as Op) : 1;
 	rowPads = slotted ? [padFor(op as Op)] : [];
 	steerNext = null;
-	let pushed: string | null = null;
-	if (inside && push && op === 'ADD-FAST') {
-		// moves the stream entering the steer layer from the class mean of the true answer to the asked one
-		const v = steerVector(inside, addCode(addRule(cells)), push);
-		if (v) {
-			steerNext = v;
-			pushed = push;
-		}
-	}
+	const pushed = armPush(op, cells, push, 0);
 	try {
 		const r = await fn();
 		const read = inside && captured.length ? analyse(inside, op, tokenStates(0), pushed) : null;
@@ -615,18 +631,25 @@ async function tickBatch(m: Extract<ToWorker, { type: 'tick-batch' }>) {
 		const t = performance.now();
 		captured = [];
 		capturing = !!inside;
-		const items = m.items as { op: Op; cells: string[] }[];
+		const items = m.items as { op: Op; cells: string[]; push?: string | null }[];
 		rowPads = slots() ? items.map((it) => padFor(it.op)) : [];
 		captureLast = slots() ? 1 + slots() + Math.max(...rowPads) : 1;
+		steerNext = null;
+		// one push at most: the first row that asks for one
+		const p = items.findIndex((it) => it.push);
+		const pushed = p < 0 ? null : armPush(items[p].op, items[p].cells, items[p].push!, p);
 		try {
-			const rows = await mulBatch(m.items as { op: Op; cells: string[] }[]);
+			const rows = await mulBatch(items);
 			const seen = rows.map((_, b) =>
-				inside && captured.length ? analyse(inside, m.items[b].op, tokenStates(b), null) : null
+				inside && captured.length
+					? analyse(inside, items[b].op, tokenStates(b), b === p ? pushed : null)
+					: null
 			);
 			return { rows, seen, ms: performance.now() - t };
 		} finally {
 			capturing = false;
 			captured = [];
+			steerNext = null;
 		}
 	});
 	post(
@@ -850,7 +873,7 @@ async function tick(m: Extract<ToWorker, { type: 'tick' }>) {
 			const text = tok!.decode([a]);
 			return { out: [text], margin: mg, strip: f.strip, ms: performance.now() - t, inside: seen };
 		}
-		const { r: f, inside: seen } = await withInside(m.op, m.cells, null, () =>
+		const { r: f, inside: seen } = await withInside(m.op, m.cells, m.push, () =>
 			mulTick(m.op as Op, m.cells)
 		);
 		return { out: f.out, margin: null, strip: f.strip, ms: performance.now() - t, inside: seen };

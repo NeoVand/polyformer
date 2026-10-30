@@ -98,8 +98,8 @@ export interface InsideAssets {
 	rows: Map<string, Float32Array>;
 	families: Record<Family, FamilyMap>;
 	steerLayer: number;
-	/** class means of the adder's stream entering `steerLayer`, by answer code */
-	steer: Map<string, Float32Array>;
+	/** class means of the stream entering `steerLayer`, by first answer code, for the families a visitor can push */
+	steer: Partial<Record<Family, Map<string, Float32Array>>>;
 }
 
 /** Parse the program's lens.json/lens.bin and inside.json/inside.bin. */
@@ -108,7 +108,8 @@ export function parseAssets(
 	lensBin: ArrayBuffer,
 	insideJson: {
 		steerLayer: number;
-		steerCodes: string;
+		/** the codes of each pushable family's class means (an older program: the adder's, as a string) */
+		steerCodes: string | Partial<Record<Family, string>>;
 		families: Record<Family, Omit<FamilyMap, 'basis' | 'centre'>>;
 		layout: Record<string, { offset: number; shape: number[] }>;
 	},
@@ -132,9 +133,11 @@ export function parseAssets(
 			centre: arr(`${f}.centre`)
 		};
 	}
-	const means = arr('SUM.steer');
-	const steer = new Map<string, Float32Array>();
-	[...insideJson.steerCodes].forEach((c, i) => steer.set(c, means.subarray(i * D, (i + 1) * D)));
+	const steer: InsideAssets['steer'] = {};
+	for (const [f, codes] of Object.entries(steerCodes(insideJson.steerCodes))) {
+		const means = arr(`${f}.steer`);
+		steer[f as Family] = new Map([...codes].map((c, i) => [c, means.subarray(i * D, (i + 1) * D)]));
+	}
 	return {
 		eps: lensJson.eps,
 		normWeight: lens.subarray(0, D),
@@ -227,10 +230,19 @@ export function analyse(
 	return { lens, family, path, pushed };
 }
 
-/** The push that moves the adder's stream entering the steer layer from one answer's class mean to another's. */
-export function steerVector(a: InsideAssets, from: string, to: string): Float32Array | null {
-	const f = a.steer.get(from);
-	const t = a.steer.get(to);
+/** inside.json's pushable families and their codes, from either form */
+export const steerCodes = (c: string | Partial<Record<Family, string>>) =>
+	typeof c === 'string' ? { SUM: c } : c;
+
+/** The push that moves a family's stream entering the steer layer from one answer's class mean to another's. */
+export function steerVector(
+	a: InsideAssets,
+	family: Family,
+	from: string,
+	to: string
+): Float32Array | null {
+	const f = a.steer[family]?.get(from);
+	const t = a.steer[family]?.get(to);
 	if (!f || !t || from === to) return null;
 	const v = new Float32Array(DIM);
 	for (let i = 0; i < DIM; i++) v[i] = t[i] - f[i];

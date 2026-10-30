@@ -301,6 +301,10 @@ export class Cancelled extends Error {
 
 const MUL_NEXT = 'MAZFNH';
 
+/** a tick a visitor can push: an adder tick, or a multiply step with a digit of a (not the carry flush) */
+const pushable = (op: TickOp, cells: readonly string[]) =>
+	op === 'ADD-FAST' || (op === 'MUL' && cells[0] !== B);
+
 class Pad {
 	/** null while probing */
 	gpuOk = $state<boolean | null>(null);
@@ -345,7 +349,10 @@ class Pad {
 
 	/** the loaded program's inside data, for the maps (null without one) */
 	insideMeta = $state.raw<InsideMeta | null>(null);
-	/** an adder answer code to push the next tick toward; one tick only */
+	/**
+	 * an answer code to push toward, once: the adder's next tick, or the multiplier's next multiply step with a digit of a
+	 * (on the leading pass, the one the inside panels follow)
+	 */
 	push = $state<string | null>(null);
 	/** pause between ticks in ms, so the inside can be watched (0: as fast as the GPU goes) */
 	pace = $state(0);
@@ -884,7 +891,7 @@ class Pad {
 	}
 
 	/** several multiplier views in one batched generation (the wave schedule; also the dev page's benchmark) */
-	tickBatch(items: { op: TickOp; cells: string[] }[]) {
+	tickBatch(items: { op: TickOp; cells: string[]; push?: string | null }[]) {
 		const rid = ++this.rid;
 		return this.request<Extract<FromWorker, { type: 'tick-batch' }>>({
 			type: 'tick-batch',
@@ -949,6 +956,9 @@ class Pad {
 			const visited = new Set(this.walk.visited);
 			rows.forEach((r) => r >= 0 && visited.add(r));
 			this.walk = { current: rows[0] ?? -1, visited };
+			// a push waits for the leading pass's next multiply step with a digit of a
+			const push = pushable(views[0].op, views[0].cells) ? this.push : null;
+			if (push) this.push = null;
 			const outs: MulOut[] = new Array(act.length);
 			const strips: Uint8ClampedArray[] = new Array(act.length);
 			const seen: (InsideTick | null)[] = new Array(act.length);
@@ -960,7 +970,9 @@ class Pad {
 					.map((q, i) => i)
 					.filter((i) => short === null || (act[i].op === 'ADD') === short);
 				if (!idx.length) continue;
-				const r = await this.tickBatch(idx.map((i) => views[i]));
+				const r = await this.tickBatch(
+					idx.map((i) => ({ ...views[i], push: i === 0 ? push : null }))
+				);
 				idx.forEach((i, k) => {
 					outs[i] = r.outs[k] as MulOut;
 					strips[i] = r.strips[k];
@@ -968,6 +980,7 @@ class Pad {
 				});
 				ms += r.ms;
 			}
+			if (seen[0]?.pushed) this.pushes++;
 			act.forEach((q, i) => this.checkMul(views[i].op, outs[i]));
 			act.forEach((q, i) => w.apply(q, outs[i]));
 			w.endStep();
@@ -1015,8 +1028,8 @@ class Pad {
 					// the walk is replaced whole on every tick ($state.raw), never changed in place
 					// eslint-disable-next-line svelte/prefer-svelte-reactivity
 					if (row >= 0) this.walk = { current: row, visited: new Set(this.walk.visited).add(row) };
-					const push = op === 'ADD-FAST' ? this.push : null;
-					this.push = null;
+					const push = pushable(op, cells) ? this.push : null;
+					if (push) this.push = null;
 					const r = await this.tick(op, cells, push);
 					if (r.inside?.pushed) this.pushes++;
 					this.last = {
