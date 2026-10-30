@@ -53,7 +53,12 @@ export function lensGroups(op: TickOp): LensGroup[] {
 			next
 		];
 	if (op === 'FLS') return [{ name: 'writes', token: 0, alphabet: '_0123456789' }, next];
-	if (op === 'SUB') return [{ name: 'writes', token: 0, alphabet: '0123456789' }];
+	if (op === 'SUB')
+		return [
+			{ name: 'writes', token: 0, alphabet: '0123456789' },
+			{ name: 'borrows', token: 1, alphabet: '01' },
+			{ name: 'next step', token: 2, alphabet: 'SHB' }
+		];
 	if (op === 'EST')
 		return [
 			{ name: 'guesses', token: 0, alphabet: '0123456789' },

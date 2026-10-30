@@ -32,6 +32,28 @@ above ×1.02 of stock at the end. Either one: stop, build nothing, report.
 **Then:** certify every row on the server (`evaluate`), build `static/sketchpad/models/arithmetic-e7/` with
 `build_program.sh`, run the `compile` job on E7 (E6: plan 0/60, equation 0/60, word 1/60; stock 15, 0, 44).
 
+## T2: E7 result (30 Oct)
+
+Passed both kill lines. Training log (`modal/out/e7_s3_4000_h4.0_stop3.0_fast/run.log`), certificate every 100 steps:
+
+| Step | Rows certified (of 2,446) | Weakest table, margin | Perplexity × stock |
+|---|---|---|---|
+| 100 | 2,305 | EST −13.9 | 1.011 |
+| 500 | 2,425 | SUB −10.5 | 1.008 |
+| 900 | 2,443 | EST −7.2 | 1.010 |
+| 1,200 | **2,446** (first time) | EST 0.54 | 1.004 |
+| 1,300–1,400 | 2,443, 2,439 (replay churn) | SUM −14.1 at 1,400 | 1.000–1.002 |
+| 1,500 | 2,446 | EST 1.13 | 1.007 |
+| **1,600 (stop)** | **2,446** | **SUM 3.96** (EST 4.51, MUL 6.39, SUB 8.36, DEC 10.0) | **1.0048** |
+
+Server evaluation of the saved adapter (`evaluate`, the same margin test as E6): **2,446 / 2,446**, minimum margin 3.96
+(SUM; EST 4.51, MUL 6.39, ADZ 8.41, SUB 8.36, ADD 9.37, DEC 10.0, NXT 10.48, FLS 12.93), text perplexity 18.55 (E6:
+18.58).
+
+Against the registration: every row certified by step 1,200 (predicted by 1,200: right); the stop at 1,600 (predicted
+by 2,000: right); minimum margin at the stop 3.96 (predicted 3.0–3.6: higher than predicted), the weakest row in SUM,
+not EST or MUL as predicted; perplexity ×1.0048 (predicted 1.000–1.012: right).
+
 ## T1: the runtime (30 Oct, $0)
 
 **Files.** `src/lib/sketchpad/calc-tables.ts` (the 651 rows, cross-checked row by row against `calc_tables.json` from
