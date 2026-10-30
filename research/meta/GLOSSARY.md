@@ -395,3 +395,17 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **Routing (continual learning).** A small head reads the model's hidden state and decides which adapter, if any, is
   on for each token (X-LoRA 2024 is one; mixture-of-experts gates are another). Why it matters: it is the standard
   alternative to training one adapter that both chats and computes, and the option the chat seesaw points to.
+- **On-policy vs off-policy training data.** Off-policy: the model trains on text someone else wrote (P1–P4 trained on
+  stock's replies). On-policy: the model trains on text it samples itself, scored by a teacher or a reward. Why it
+  matters: the chat seesaw is the forgetting that off-policy fine-tuning is known for.
+- **RL's Razor (Shenfeld, Pari, Agrawal; MIT; arXiv 2509.04259, ICLR 2026)** [zoo]. Forgetting tracks how far the
+  fine-tuned model moves from the base, measured as the KL on the new task. On-policy training (RL) finds the
+  low-KL solutions; SFT on fixed labels can land far away. Why it matters: it is the reason CHAT round 2 trains
+  on-policy.
+- **On-policy distillation (Agarwal et al., GKD, ICLR 2024; Thinking Machines, Oct 2025)** [zoo]. The student samples
+  replies, and the teacher scores every token: the loss is the reverse KL, the student's distribution measured
+  against the teacher's. Thinking Machines restored IFEval after a fine-tune by using the model from before the
+  fine-tune as the teacher. Why it matters: our teacher is free, the same weights at gate 0.
+- **GRPO (Group Relative Policy Optimization; Shao et al., DeepSeekMath, 2024).** RL for language models: sample a
+  group of replies, reward each, and push up the ones above the group's average, with no learned value model. Why it
+  matters: it is CHAT round 2's third lever, with the stand-in as the reward and a KL penalty to gate 0.
