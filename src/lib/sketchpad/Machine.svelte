@@ -1,6 +1,6 @@
 <script lang="ts">
 	import { SUM_CODES } from './inside.ts';
-	import type { TickView } from './pad.svelte.ts';
+	import { explain, type TickView } from './pad.svelte.ts';
 	import { B } from './sprites.ts';
 
 	interface Props {
@@ -69,6 +69,8 @@
 	});
 	const mulWords = $derived.by(() => {
 		if (!mul) return '';
+		// a calculator step (SUB, EST, DEC) is not on the multiplier's diagram: say what it did
+		if (!(mul.from in NODES) && last) return `${mul.from}: ${explain(last.op, last.out)}.`;
 		return `${mul.from}, then it wrote ${mul.letter}: ${mul.to === 'H' ? 'halt' : `next step ${mul.to}`}.`;
 	});
 

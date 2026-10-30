@@ -4,23 +4,35 @@
  * only memory; the worker only reads the strips it is sent and answers.
  */
 import { ADD_DOMAIN, AddSheet, addCode, addDecode, addRule } from './adder.ts';
+import { Grid, Run, type CalcSheet, type Policy } from './calc-sheet.ts';
+import {
+	describe as describeTask,
+	expected,
+	parseTask,
+	solve,
+	type CalcTask
+} from './calc-task.ts';
+import { CALC_DOMAIN, calcIndex, calcRef, isCalcOp } from './calc-tables.ts';
 import { hashText } from './hash.ts';
 import {
 	CERT_FORMAT,
 	DTYPE,
 	FILE_CACHE,
+	KINDS,
 	MODELS,
 	certFiles,
+	kindOf,
 	modelFiles,
 	servedPath,
 	type Kind
 } from './models.ts';
+import { SheetCalc } from './sheet-calc.ts';
 import { MUL_DOMAIN, MulSheet, MulWave, outChars, type MulOut, type Op } from './multiplier.ts';
 import type { InsideTick } from './inside.ts';
 import type { FromWorker, InsideMeta, LoadedInfo, TickOp, ToWorker } from './protocol.ts';
 import { B, GLYPHS } from './sprites.ts';
 
-export type Sheet = AddSheet | MulSheet | MulWave;
+export type Sheet = AddSheet | MulSheet | MulWave | Grid;
 
 /** A table row, as the margin and the failure list show it. */
 export function rowLabel(kind: Kind, i: number): string {
@@ -30,6 +42,10 @@ export function rowLabel(kind: Kind, i: number): string {
 		const r = addRule(v);
 		const said = r === 'H' ? 'halt' : `${r[0]}${r[1] === '1' ? ', carry 1' : ''}`;
 		return `ADD ${v.map(show).join(' ')} → ${addCode(r)} (${said})`;
+	}
+	if (kind === 'calc') {
+		const [op, v] = CALC_DOMAIN[i];
+		return `${op} ${v.map(show).join(' ')} → ${calcRef(op, v).join(' ')}`;
 	}
 	const [op, v] = MUL_DOMAIN[i];
 	return `${op} ${v.map(show).join(' ')} → ${outChars(op, v).join(' ')}`;
@@ -45,6 +61,7 @@ export function rowIndex(op: TickOp, cells: readonly string[]): number {
 		const b = GLYPHS.indexOf(cells[2]);
 		return c < 0 || t < 0 || b < 0 ? -1 : c * 121 + t * 11 + b;
 	}
+	if (isCalcOp(op)) return calcIndex(op, cells);
 	return MUL_INDEX.get(op + cells.join('')) ?? -1;
 }
 
@@ -279,6 +296,26 @@ export interface RunResult {
 	certSource: 'device' | 'shipped';
 }
 
+export interface CalcResult {
+	/** the line as the page reads it */
+	text: string;
+	ok: boolean;
+	got: string;
+	want: string;
+	/** batched steps (decoder calls) and views answered */
+	steps: number;
+	ticks: number;
+	seconds: number;
+	/** the M4 cost model's seconds for the same steps (0.065 s per call, 0.037 s per view) */
+	model: number;
+	/** every table the run read passed in full on this device */
+	certified: boolean;
+	/** distinct table rows read, and those not passed on this device */
+	views: number;
+	unchecked: number;
+	uncheckedLabels: string[];
+}
+
 export interface ChatTurn {
 	q: string;
 	a: string;
@@ -310,9 +347,9 @@ class Pad {
 	gpuOk = $state<boolean | null>(null);
 	gpuReason = $state<string | null>(null);
 	/** bytes a load of each operation would take from the network now (what this browser has cached is free) */
-	costs = $state<Record<Kind, number | null>>({ add: null, mul: null });
+	costs = $state<Record<Kind, number | null>>({ add: null, mul: null, calc: null });
 	/** whether the server has each operation's files (null until known) */
-	available = $state<Record<Kind, boolean | null>>({ add: null, mul: null });
+	available = $state<Record<Kind, boolean | null>>({ add: null, mul: null, calc: null });
 
 	op = $state<Kind>('add');
 	/** the program the worker holds, as far as the page knows (null while a load replaces it) */
@@ -332,7 +369,11 @@ class Pad {
 	/** a certificate cannot be cached because a file's fingerprint is missing */
 	cacheNote = $state<string | null>(null);
 
-	certs: Record<Kind, Cert> = { add: new Cert('add'), mul: new Cert('mul') };
+	certs: Record<Kind, Cert> = {
+		add: new Cert('add'),
+		mul: new Cert('mul'),
+		calc: new Cert('calc')
+	};
 
 	sheet = $state.raw<Sheet | null>(null);
 	/** bumps whenever the sheet changes */
@@ -343,6 +384,8 @@ class Pad {
 	computeMs = $state(0);
 	wallMs = $state(0);
 	result = $state.raw<RunResult | null>(null);
+	/** the calculator's last run */
+	calcResult = $state.raw<CalcResult | null>(null);
 	runError = $state<string | null>(null);
 
 	chat = $state<ChatTurn[]>([]);
@@ -394,14 +437,42 @@ class Pad {
 		return this.loadedId === MODELS[this.op].id && !this.loading;
 	}
 
-	/** the operation's table passed in full, on this device, for the files loaded now */
+	/**
+	 * the operation's table passed in full, on this device, for the files loaded now (the calculator reads all three
+	 * tables: the adder's, the multiplier's and its own)
+	 */
 	get certified() {
-		const c = this.cert;
-		return this.ready && c.certified && c.key !== null && c.key === this.keyFor(this.op);
+		return this.ready && this.tablesOf(this.op).every((k) => this.tableCertified(k));
+	}
+
+	private tableCertified(k: Kind) {
+		const c = this.certs[k];
+		return c.certified && c.key !== null && c.key === this.keyFor(k);
+	}
+
+	/** the tables an operation's runs read */
+	tablesOf(op: Kind): Kind[] {
+		return op === 'calc' ? ['calc', 'add', 'mul'] : [op];
 	}
 
 	get canRun() {
 		return this.certified && !this.running && !!this.sheet;
+	}
+
+	get canCalc() {
+		return this.op === 'calc' && this.certified && !this.running;
+	}
+
+	/** a table the operation reads is being checked (in full, or a shipped table's spot check) */
+	get certifying() {
+		return this.tablesOf(this.op).some(
+			(k) => this.certs[k].status === 'running' || !!this.certs[k].spot?.running
+		);
+	}
+
+	/** resolves when the checks of every table the operation reads have ended */
+	allSettled(): Promise<void> {
+		return this.ensuring;
 	}
 
 	get chatBusy() {
@@ -452,7 +523,7 @@ class Pad {
 		if (!this.root) return;
 		const cache =
 			typeof caches !== 'undefined' ? await caches.open(FILE_CACHE).catch(() => null) : null;
-		for (const k of ['add', 'mul'] as Kind[]) {
+		for (const k of KINDS) {
 			const m = MODELS[k];
 			let cost = 0;
 			let ok = true;
@@ -546,16 +617,18 @@ class Pad {
 		if (token !== this.switchToken || k === this.op) return;
 		this.op = k;
 		this.result = null;
+		this.calcResult = null;
 		this.runError = null;
 		this.last = null;
-		if (this.ready) void this.ensureCert(k);
+		if (k === 'calc') this.sheet = null;
+		if (this.ready) void this.ensureFor(k);
 	}
 
 	load(root: string, sprites: string) {
 		const k = this.op;
 		const id = MODELS[k].id;
 		if (this.running) return;
-		if (this.loadedId === id && !this.loading) return void this.ensureCert(k);
+		if (this.loadedId === id && !this.loading) return void this.ensureFor(k);
 		if (this.loading && this.latest?.id === id) return;
 		// a certificate of the program being replaced would be cancelled by the worker anyway; say so now
 		if (this.certRid !== null && this.certKind && MODELS[this.certKind].id !== id)
@@ -582,9 +655,23 @@ class Pad {
 		this.insideMeta = info.inside;
 		if (!info.reused) this.lastLoad = info;
 		void this.refreshCosts();
-		void this.ensureCert(this.latest.kind);
-		if (this.op !== this.latest.kind) void this.ensureCert(this.op);
+		void this.ensureFor(this.op);
 	}
+
+	/** every table an operation reads, one after another (one check runs at a time) */
+	private ensureFor(op: Kind) {
+		const token = ++this.ensureToken;
+		this.ensuring = (async () => {
+			for (const k of this.tablesOf(op)) {
+				if (token !== this.ensureToken || this.op !== op) return;
+				await this.ensureCert(k);
+				await this.certSettled();
+			}
+		})();
+		return this.ensuring;
+	}
+	private ensureToken = 0;
+	private ensuring: Promise<void> = Promise.resolve();
 
 	/**
 	 * The certificate's identity: format, operation, prompts, the program's files, sprites, GPU and runtime. Without a
@@ -690,6 +777,8 @@ class Pad {
 		const rid = ++this.rid;
 		this.certRid = rid;
 		this.certKind = k;
+		let settle = () => {};
+		this.certRun = new Promise((r) => (settle = r));
 		if (cert.spot) cert.spot = { ...cert.spot, running: true };
 		try {
 			await this.request<{ seconds: number }>(
@@ -716,6 +805,7 @@ class Pad {
 				this.certRid = null;
 				this.certKind = null;
 			}
+			settle();
 		}
 	}
 
@@ -729,7 +819,7 @@ class Pad {
 		if (!id || !info) return null;
 		const kinds: ShippedCert['kinds'] = {};
 		const whens: string[] = [];
-		for (const k of ['add', 'mul'] as Kind[]) {
+		for (const k of KINDS) {
 			const c = this.certs[k];
 			if (MODELS[k].id !== id || c.key !== this.keyFor(k)) continue;
 			if (!(c.status === 'done' || c.status === 'cached') || c.pass !== c.rows) continue;
@@ -849,7 +939,7 @@ class Pad {
 
 	/** Stamp a problem on the sheet without running it (what the visitor typed). */
 	stage(a: string, b: string) {
-		if (this.running) return;
+		if (this.running || this.op === 'calc') return;
 		const clean = (s: string) => s.replace(/\D/g, '');
 		if (!clean(a) || !clean(b)) {
 			this.sheet = null;
@@ -872,14 +962,15 @@ class Pad {
 		this.version++;
 	}
 
-	private tick(op: TickOp, cells: string[], push: string | null) {
+	private tick(op: TickOp, cells: string[], push: string | null, inside = true) {
 		const rid = ++this.rid;
 		return this.request<Extract<FromWorker, { type: 'tick' }>>({
 			type: 'tick',
 			rid,
 			op,
 			cells,
-			push
+			push,
+			inside
 		});
 	}
 
@@ -891,19 +982,20 @@ class Pad {
 	}
 
 	/** several multiplier views in one batched generation (the wave schedule; also the dev page's benchmark) */
-	tickBatch(items: { op: TickOp; cells: string[]; push?: string | null }[]) {
+	tickBatch(items: { op: TickOp; cells: string[]; push?: string | null }[], inside = true) {
 		const rid = ++this.rid;
 		return this.request<Extract<FromWorker, { type: 'tick-batch' }>>({
 			type: 'tick-batch',
 			rid,
-			items
+			items,
+			inside
 		});
 	}
 
 	/** Change an unread digit; the next ticks read the new one. */
 	bump(row: string, x: number, by = 1) {
 		const s = this.sheet;
-		if (!s || s.done || !this.running) return false;
+		if (!s || s.done || !this.running || s instanceof Grid) return false;
 		const ok =
 			s instanceof AddSheet
 				? (row === 'top' || row === 'bottom') && s.bump(row, x, by)
@@ -1005,7 +1097,7 @@ class Pad {
 		if (this.running || !this.certified) return;
 		this.stage(a, b);
 		const sheet = this.sheet;
-		if (!sheet) return;
+		if (!sheet || sheet instanceof Grid) return;
 		const kind = this.op;
 		const cert = this.certs[kind];
 		let finish = () => {};
@@ -1095,6 +1187,121 @@ class Pad {
 		}
 	}
 
+	/**
+	 * Run one calculator line on the sheet (calc-task.ts): every step goes to the model, the sheet shown is the one the
+	 * procedure is working on, and the answer is checked against the page's own arithmetic.
+	 */
+	async runCalc(text: string): Promise<CalcResult | null> {
+		if (this.running || this.op !== 'calc') return null;
+		const task: CalcTask | string = parseTask(text);
+		if (typeof task === 'string') {
+			this.runError = task;
+			return null;
+		}
+		if (!this.certified) return null;
+		let finish = () => {};
+		this.runDone = new Promise((r) => (finish = r));
+		this.running = true;
+		this.stopRun = false;
+		this.result = null;
+		this.calcResult = null;
+		this.runError = null;
+		this.last = null;
+		this.ticks = 0;
+		this.pushes = 0;
+		this.computeMs = 0;
+		this.walk = { current: -1, visited: new Set() };
+		const t0 = performance.now();
+		// every table row read, by table, and whether it passed on this device
+		const read: Record<string, { kind: Kind; row: number; ok: boolean }> = {};
+		const policy: Policy = async (views) => {
+			if (this.stopRun) throw new Cancelled();
+			// the sheet as the previous step left it, with this step's eyes
+			this.version++;
+			const rows = views.map((v) => {
+				const kind = kindOf(v.op);
+				const row = rowIndex(v.op, v.cells);
+				read[`${kind}:${row}:${v.op}${v.cells.join('')}`] = {
+					kind,
+					row,
+					ok: row >= 0 && this.certs[kind].margins[row] > 0
+				};
+				return kind === 'calc' ? row : -1;
+			});
+			// eslint-disable-next-line svelte/prefer-svelte-reactivity
+			const visited = new Set(this.walk.visited);
+			rows.forEach((r) => r >= 0 && visited.add(r));
+			this.walk = { current: rows[0], visited };
+			let outs: string[][];
+			let ms: number;
+			let strip: Uint8ClampedArray;
+			let inside: InsideTick | null;
+			let margin: number | null = null;
+			// the inside panels follow a slow run; a fast one leaves the states on the GPU
+			const watch = this.pace > 0;
+			if (views.length === 1 && views[0].op === 'ADD-FAST') {
+				const r = await this.tick('ADD-FAST', views[0].cells, null, watch);
+				outs = [r.out];
+				({ ms, strip, inside, margin } = r);
+			} else {
+				const r = await this.tickBatch(
+					views.map((v) => ({ op: v.op, cells: v.cells })),
+					watch
+				);
+				outs = r.outs;
+				ms = r.ms;
+				strip = r.strips[0];
+				inside = r.inside[0];
+			}
+			this.last = { ...views[0], out: outs[0], margin, strip, ms, inside };
+			this.ticks += views.length;
+			this.computeMs += ms;
+			this.wallMs = performance.now() - t0;
+			return outs;
+		};
+		const run = new Run(policy);
+		run.onShow = (sheet: CalcSheet) => {
+			this.sheet = sheet;
+			this.version++;
+		};
+		run.onStep = async () => {
+			if (this.pace > 0) await this.rest(this.pace);
+			if (this.stopRun) throw new Cancelled();
+		};
+		try {
+			const got = await solve(new SheetCalc(run), task);
+			const want = expected(task);
+			const rs = Object.values(read);
+			const bad = rs.filter((r) => !r.ok);
+			this.calcResult = {
+				text: describeTask(task),
+				ok: got === want,
+				got,
+				want,
+				steps: run.steps,
+				ticks: run.ticks,
+				seconds: (performance.now() - t0) / 1000,
+				model: run.seconds,
+				certified: this.certified,
+				views: rs.length,
+				unchecked: bad.length,
+				uncheckedLabels: bad.map((r) =>
+					r.row >= 0 ? rowLabel(r.kind, r.row) : 'a view outside the tables'
+				)
+			};
+			return this.calcResult;
+		} catch (e) {
+			this.runError = e instanceof Cancelled ? 'stopped' : (e as Error).message;
+			return null;
+		} finally {
+			if (this.sheet instanceof Grid) this.sheet.done = true;
+			this.running = false;
+			this.wallMs = performance.now() - t0;
+			this.version++;
+			finish();
+		}
+	}
+
 	async ask(question: string) {
 		const q = question.trim();
 		if (!q || !this.chatReady || this.chatBusy) return;
@@ -1130,6 +1337,14 @@ export function explain(op: TickOp, out: string[]): string {
 	}
 	const [g1, g2, n] = out;
 	const show = (g: string) => (g === B ? 'blank' : g);
+	if (op === 'SUB') {
+		if (n === 'H') return 'past both numbers, nothing borrowed: halt';
+		if (n === 'B') return 'past both numbers, a borrow out: the top was smaller';
+		return `difference digit ${g1}, ${g2 === '1' ? 'borrow 1' : 'no borrow'}`;
+	}
+	if (op === 'EST')
+		return n === 'N' ? 'guess 0: nothing to subtract' : `guess ${g1}, then multiply-subtract`;
+	if (op === 'DEC') return `lower the guess to ${g1}, then correct the remainder`;
 	const next: Record<string, string> = {
 		M: 'MUL',
 		A: 'ADD',

@@ -32,7 +32,133 @@ above ×1.02 of stock at the end. Either one: stop, build nothing, report.
 **Then:** certify every row on the server (`evaluate`), build `static/sketchpad/models/arithmetic-e7/` with
 `build_program.sh`, run the `compile` job on E7 (E6: plan 0/60, equation 0/60, word 1/60; stock 15, 0, 44).
 
+## T1: the runtime (30 Oct, $0)
+
+**Files.** `src/lib/sketchpad/calc-tables.ts` (the 651 rows, cross-checked row by row against `calc_tables.json` from
+the Python), `calc-sheet.ts` (the procedures on a `Grid` sheet, driven by a `Policy`: the model, or the reference
+tables in tests), `sheet-calc.ts` (`SheetCalc implements Calc`, seam 2, with the interface copied from PROGRAM's
+`program/calc.ts`), `calc-task.ts` (one calculator line: parse, solve on the sheet, the page's own BigInt answer),
+`calc.spec.ts`. Page: a third mode, *Calculate* (dev page only until E7 is published: `HAS_CALC` in `models.ts`).
+
+**How each procedure uses the tables.**
+
+- **Signed sum and difference.** Same signs: the adder (SUM, one token per column, as shipped). Opposite signs: SUB
+  column by column; the column past both numbers is the halt row, `H` (no borrow out) or `B` (the top was smaller);
+  on `B` the same subtraction runs the other way round and the sign flips. Signs are layout.
+- **Long division (Knuth's algorithm D).** Scale both numbers by f = 10 // (d + 1) (d the divisor's first digit) in
+  one multiply pass each, side by side (MUL steps; the dividend's trailing zeros are skipped, so `to k places` costs
+  nothing extra to scale). Then per digit brought down: EST on the remainder's top two digits and the divisor's
+  first; `N` (guess 0) moves on; otherwise one multiply-subtract pass, MUL a column ahead of SUB, two views per call.
+  The borrow the model writes out of the top column is the branch: 1 means the guess was too high, so DEC lowers it
+  and the adder adds the divisor back; the carry the adder writes out of the top column says whether the sum crossed
+  zero again (else DEC again). The remainder of the scaled numbers is f × the true one: × (10 / f) and the last digit
+  (a zero) dropped for f = 2, 5; a short division by 3 (the same procedure) for f = 3.
+- **Square root, digit by digit.** Scale a by c² so the root starts with 25–49 (then twice the root so far starts with
+  5–9, so EST's views stay in the table and each guess is at most 2 too high). Per pair brought down: a guess (the
+  first digit 4, which the scale makes the largest possible; the second 9 when the trial divisor starts with 4, that
+  is when the root starts with 2; every later one from EST); the trial divisor T = (twice the root so far, then y) times
+  y subtracted from the remainder into a new row; a borrow out lowers y (DEC) and the pass runs again from the old
+  remainder. The next trial divisor is T + y: the multiplier's ADD on its last digit (and on the one before when that
+  carries; that one rides in the next pass's first call), read in the same call as the next guess once T has three
+  digits. Then root = R / c (× 10 / c or 100 / c, last digits dropped). Perfect square ⟺ the scaled remainder is 0.
+
+**Deviations from the brief and the dry run, and why.**
+
+1. **c ∈ {1, 2, 4, 5} instead of {1, 2, 3, 5}.** c = 4 covers the range 3 covered (mantissas 1 to 1.5625), and makes
+   "divide by c at the end" a multiplication by 10 / c or 100 / c with the last digits dropped, instead of a short
+   division (about 6 views per digit). The c rule is exhaustively tested: for every a from 1 to 999,999 the scaled
+   root starts with 25–49.
+2. **The dry run's √ met EST views with d_hi = 4** (whenever the root starts with 2: twice the first digit is 4), which
+   are outside the 400-row table; it also left the doubling of the root and the first digit (`SQ1`, a 100-row table
+   not in seam 1) off the sheet. Here the first digit starts at 4 and is lowered by DEC, the second starts at 9 when
+   twice the root is 4, and the doubling is ADD steps on the sheet. No view outside ADD/MUL/SUB/EST/DEC is ever read
+   (checked in every test).
+3. **The branch inside a multiply-subtract is the model's own borrow out of the top column**, not a separate halt
+   view: the halt column would cost one call and one view per digit and say the same thing. The SUB halt rows
+   (`H`/`B`) are still what a signed subtraction ends on. Likewise the add-back's branch is the carry out of its top
+   column.
+4. **Remainders.** `Calc.isqrt` returns the exact remainder (from the scaled one: 10^(2k) rem = c'² rs + e (2 root 10^k
+   + e), c' = 10^k / c, e the dropped digits; a few passes). PROGRAM only ever tests `rem === 0n`, which is free (the
+   scaled remainder is 0 exactly when the true one is), so `SheetCalc` also offers `sqrtFloor(a) → {root, exact}` and
+   `divFloor(a, b) → {q, exact}`, which skip the remainder's value; the page's ÷ and √ "to k places" use them.
+   **Suggestion for the orchestrator:** PROGRAM's √ to k places and ÷ to k places could call these when present.
+5. **The runtime chooses, from the digits it lays out, the scales f and c and the first two root guesses.** None can
+   change a digit: every guess is at least the true digit (EST is never too low, and the starting guesses are the
+   largest the scale allows), each is checked by a certified multiply-subtract and lowered only by DEC. A wrong choice
+   could only cost steps or read a view outside the table, which the page reports. (Checked by mutation: forcing the
+   wrong c for small mantissas left every answer exact and only the scale test failed.)
+6. Zero: `isqrt(0)` and `0 × b` need no step for the root (`isqrt(0)` returns at once); division of 0 runs on the sheet.
+
+**Tests (`calc.spec.ts`, reference tables in place of the model; all pass, 33 in the sketchpad suite):**
+
+| Procedure | Cases | Exact | Views off the table |
+|---|---|---|---|
+| tables vs `calc_tables.py` | 651 rows | all equal | – |
+| signed sum and difference (`add`, `sub`) | 1,000 (up to 40 digits, signs, zeros, equal operands) | 1,000 | 0 |
+| `divmod` | 1,000 (up to 40 digits, divisor longer than dividend, 0, 1, equal) | 1,000 | 0 |
+| `divFloor` (to k places) | 1,000 | 1,000 | 0 |
+| `isqrt` with remainder | 1,000 (up to 40 digits, squares and their neighbours, 0) | 1,000 | 0 |
+| `sqrtFloor` to six places | 1,000 | 1,000 | 0 |
+| `mul` signed | 200 | 200 | 0 |
+| gcd by repeated `divmod` | 100 (up to 16 digits) | 100 | 0 |
+| scale rules | f for every leading digit; c for every a ≤ 999,999 | all | – |
+
+**Cost on the M4, by the page's cost model** (0.065 s per call + 0.037 s per view, states left on the GPU; 50 random
+cases each, reference tables). The calculator turns the inside view's state capture off unless the run is slowed down.
+
+| Problem | Calls | Views | Seconds, median | Seconds, max |
+|---|---|---|---|---|
+| 2-digit ÷ 1-digit to 10 places | 31 | 38 | 2.6 | 6.0 |
+| 3-digit ÷ 2-digit to 10 places | 74 | 97 | 8.3 | 13.0 |
+| 6-digit ÷ 2-digit to 10 places | 83 | 108 | 9.5 | 14.6 |
+| √ of a 1-digit number to 6 places | 72 | 110 | 10.1 | 12.8 |
+| √ of a 3-digit number to 6 places | 87 | 139 | 11.0 | 15.3 |
+| gcd of two 3-digit numbers | 68 | 96 | 8.3 | 13.0 |
+| gcd of two 4-digit numbers | 112 | 159 | 13.7 | 21.6 |
+| signed ± of 20-digit numbers | 26 | 26 | 2.1 | 4.3 |
+| 22 ÷ 7 to 10 places / √2 to 6 / gcd(1071, 462) | 45 / 105 / 41 | 56 / 162 / 60 | 5.0 / 12.8 / 4.9 | |
+
+(Before pipelining the next guess with the doubling and dropping the halt column: √2 to 6 places 14.6 s, 4-digit ÷
+2-digit to 10 places median 9.9 s.) So by the model the 12 s bar holds for demo-sized problems and fails in the tail
+of 3-digit operands; T3 measures the real times.
+
+## T3 registration (before any device run)
+
+On the M4 dev page with E7 (`arithmetic-e7`), *Calculate* mode, Fast (no pause; the inside view's states stay on the
+GPU), one problem after another through `sketchpad.runCalc(line)`, wall time from the call to the answer. Problem sets
+from a fixed generator (LCG seed 12345, in the order below):
+
+| Set | 50 lines |
+|---|---|
+| division | `a ÷ b to 10 places`, a uniform in 1–999, b in 2–99 |
+| square root | `√a to 6 places`, a uniform in 2–999 |
+| gcd | `gcd(a, b)`, a and b uniform in 10–999 (Euclid by `divmod`, remainders on the sheet) |
+| signed sums and differences | ± numbers of 1–20 digits (length uniform), random signs, + and − alternating |
+
+Bar (from the brief): every answer exact, each under 12 s; then the full certificate in the browser (all 2,446 rows,
+every margin positive). Prediction from the cost model above: all exact; the medians 8, 10, 8 and 2 s; the 12 s bar
+fails for a few divisions, roots and gcds in the tail (the model's maxima are 13–15 s for these sizes).
+
 ## Spend and Modal calls
 
 | Job | Call id | What | Cost |
 |---|---|---|---|
+| `e7smoke_20_1401` | `fc-01M672ZV9KK296RQJ3EEVTX0N6` | 20 steps from E6 s3 and one certificate: the wiring (2,446 rows; 1,877 certified at step 20) | 4.1 min H100, about $0.27 |
+| `e7_s3_4000_h4.0_stop3.0_fast` | `fc-01M673S1J9D0G42QCNBHE8RFS9` | E7 training and evaluation | (running) |
+
+## Glossary candidates
+
+- **Knuth's algorithm D** (Knuth, *The Art of Computer Programming* vol. 2, §4.3.1, 1969): long division of
+  multi-digit numbers where each quotient digit is guessed from the top two digits of the remainder and the top digit
+  of the divisor, after scaling the divisor so its top digit is at least half the base; the guess is then never too
+  low and at most 2 too high, so a short correction loop makes it exact. Why it matters to us: it turns division into
+  three small certified tables (EST, SUB, DEC) on top of the multiplier.
+- **Normalisation (of a divisor)**: multiplying dividend and divisor by the same small factor so the divisor's first
+  digit is 5 or more; the quotient is unchanged and the remainder is scaled by the factor. Why: it is what makes the
+  three-digit guess table (EST) enough.
+- **Digit-by-digit square root** (the schoolbook method, known since antiquity, in Europe from the 16th century):
+  bring the number down two digits at a time; the next root digit y is the largest with (20 p + y) y ≤ remainder,
+  p the root so far. Why: with the same scaling trick (here c² with c ∈ {1, 2, 4, 5}) its guess is division's guess.
+- **Speculative vs dependent steps**: a view may share a decoder call with another only when it does not read a cell
+  the other writes; the calculator rides a guess along with the last step of the trial divisor, never with a step
+  whose outcome could make the guess's view meaningless. Why: calls are a third to a half of the cost on the M4.

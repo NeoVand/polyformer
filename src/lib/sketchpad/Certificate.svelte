@@ -22,7 +22,8 @@
 	let hover = $state<number | null>(null);
 
 	/** The grid: the adder's 242 rows as two 11 x 11 blocks (carry blank, carry 1; top digit down, bottom across);
-	 * the multiplier's 1,553 rows in op groups (MUL, ADD, ADZ, then FLS and NXT). */
+	 * the multiplier's 1,553 rows in op groups (MUL, ADD, ADZ, then FLS and NXT); the calculator's 651 in SUB, EST
+	 * and DEC. */
 	const grid = $derived.by(() => {
 		const n = cert.rows;
 		const x = new Float32Array(n);
@@ -39,9 +40,12 @@
 			}
 			return { x, y, size, w: 2 * block - 8 - (pitch - size), h: 11 * pitch - (pitch - size) };
 		}
+		const calc = cert.kind === 'calc';
 		// the largest pitch at which every row fits the box, in op groups one line apart
 		const lines = (cols: number) =>
-			Math.ceil(1100 / cols) + 2 * Math.ceil(220 / cols) + Math.ceil(14 / cols);
+			calc
+				? Math.ceil(242 / cols) + Math.ceil(400 / cols) + Math.ceil(9 / cols)
+				: Math.ceil(1100 / cols) + 2 * Math.ceil(220 / cols) + Math.ceil(14 / cols);
 		let pitch = 6;
 		while (pitch > 3) {
 			const cols = Math.floor((width + 1) / pitch);
@@ -50,12 +54,18 @@
 		}
 		const size = pitch - 1;
 		const cols = Math.max(20, Math.floor((width + 1) / pitch));
-		const groups: [number, number][] = [
-			[0, 1100],
-			[1100, 1320],
-			[1320, 1540],
-			[1540, 1553]
-		];
+		const groups: [number, number][] = calc
+			? [
+					[0, 242],
+					[242, 642],
+					[642, 651]
+				]
+			: [
+					[0, 1100],
+					[1100, 1320],
+					[1320, 1540],
+					[1540, 1553]
+				];
 		let top = 0;
 		for (const [a, b] of groups) {
 			for (let i = a; i < b; i++) {
