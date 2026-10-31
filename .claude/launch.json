@@ -140,24 +140,6 @@
       ],
       "port": 5190,
       "url": "http://127.0.0.1:5190"
-    },
-    {
-      "name": "sketchpad-paper",
-      "runtimeExecutable": "pnpm",
-      "runtimeArgs": [
-        "--dir",
-        "/Users/neo/repos/sketchpad-wt/paper",
-        "exec",
-        "vite",
-        "dev",
-        "--host",
-        "127.0.0.1",
-        "--port",
-        "5191",
-        "--strictPort"
-      ],
-      "port": 5191,
-      "url": "http://127.0.0.1:5191"
     }
   ]
 }
