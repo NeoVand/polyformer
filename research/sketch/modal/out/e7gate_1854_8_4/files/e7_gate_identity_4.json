@@ -1,0 +1,200 @@
+{
+ "shard": 4,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 4,
+    "same": true,
+    "text": "Dear Friend,\n\nI hope this letter finds you well. I am writing to share a little bit of my early journey"
+   },
+   {
+    "prompt": 12,
+    "same": true,
+    "text": "Once upon a time, in a sunny backyard where the grass was always green and the sun was always warm, lived a"
+   },
+   {
+    "prompt": 20,
+    "same": true,
+    "text": "**John Jacob Astor** (1824\u20131894) was an American businessman, politician,"
+   },
+   {
+    "prompt": 28,
+    "same": true,
+    "text": "Meet Squirt, a little kobold who dreams of becoming a brave adventurer. He loves being sneaky and quick,"
+   },
+   {
+    "prompt": 36,
+    "same": true,
+    "text": "The national bird of Belize is the **Belize Red-billed Woodpecker** (*Dendrocolaptes"
+   },
+   {
+    "prompt": 44,
+    "same": true,
+    "text": "Jealousy is often thought of in the context of romantic relationships: a boyfriend who forbids his girlfriend from talking to"
+   },
+   {
+    "prompt": 52,
+    "same": true,
+    "text": "*   The media landscape will gradually shift beyond late-night television.\n*   Streaming services may be impacted by the strike"
+   },
+   {
+    "prompt": 60,
+    "same": true,
+    "text": "Deep blue waves crash,\nShadows of the shore fade,\nSilent silence waits.<|im_end|>\n<|endoftext|><|im_start|>\n"
+   },
+   {
+    "prompt": 68,
+    "same": true,
+    "text": "To prepare these chocolate chip cookies, begin by preheating your oven to 375 degrees F and lining a"
+   },
+   {
+    "prompt": 76,
+    "same": true,
+    "text": "The silence in the sterile office of Dr. Aris Thorne was not empty, but heavy with the weight of a"
+   },
+   {
+    "prompt": 84,
+    "same": true,
+    "text": "The Hoover Dam was built in **1936**.\n\nThe project was initiated by President Herbert Hoover in 1"
+   },
+   {
+    "prompt": 92,
+    "same": true,
+    "text": "Here is a creative exercise designed to spark your students' imagination. It focuses on a **Cyberpunk/Sci-Fi"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 4,
+    "same": true,
+    "text": "In 1977, Tina Turner re-emerged with a sexier image and costumes created by Bob Mackie"
+   },
+   {
+    "prompt": 12,
+    "same": true,
+    "text": "A little duck named Barnaby is sitting on a patch of grass, watching a squirrel chase a ball. Barnaby is"
+   },
+   {
+    "prompt": 20,
+    "same": true,
+    "text": "John Jacob Astor was a prominent American businessman, politician, and philanthropist who served as the 10th"
+   },
+   {
+    "prompt": 28,
+    "same": true,
+    "text": "Squirt is a little kobold who thinks he is the best at hiding his true identity. He is looking for"
+   },
+   {
+    "prompt": 36,
+    "same": true,
+    "text": "The national bird of Belize is the **Belizean warbler** (*B. b*).\n\nThis species is endemic"
+   },
+   {
+    "prompt": 44,
+    "same": true,
+    "text": "Jealousy is often thought of in the context of romantic relationships: a boyfriend who forbids his girlfriend from talking to"
+   },
+   {
+    "prompt": 52,
+    "same": true,
+    "text": "- The media landscape beyond late-night will gradually change.\n- The first hiccups will be in network shows,"
+   },
+   {
+    "prompt": 60,
+    "same": true,
+    "text": "The waves roll,\nThe sky is blue,\nThe ocean is deep.<|im_end|>\n<|endoftext|><|im_start|>\n\nA haiku"
+   },
+   {
+    "prompt": 68,
+    "same": true,
+    "text": "To make chocolate chip cookies, you will need a standard 375\u00b0F oven, a 375\u00b0F"
+   },
+   {
+    "prompt": 76,
+    "same": true,
+    "text": "The dog is dreaming of hurting my children.\n\nI am a human, and I am a dog. I am a"
+   },
+   {
+    "prompt": 84,
+    "same": true,
+    "text": "The Hoover Dam was built in **1931**.\n\nHere is a breakdown of the timeline:\n\n*  "
+   },
+   {
+    "prompt": 92,
+    "same": true,
+    "text": "Here is a short story idea designed to help students explore different perspectives, specifically tailored for a fantasy/sci-fi setting."
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 306,
+   "padded": 30
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 3,
+    "e7_vs_gate1": 306
+   },
+   "padded": {
+    "stock_vs_gate0": 2,
+    "e7_vs_gate1": 30
+   }
+  }
+ },
+ "seconds": 361
+}

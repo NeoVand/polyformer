@@ -1,0 +1,90 @@
+{
+ "shard": 0,
+ "shards": 100,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 25,
+   "logits_bit": 25,
+   "hidden_bit": 25,
+   "present_bit": 25,
+   "argmax_same": 25,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 25,
+   "logits_bit": 25,
+   "hidden_bit": 25,
+   "present_bit": 25,
+   "argmax_same": 25,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 0,
+    "same": true,
+    "text": "That sounds like a wonderful trip! Since you are visiting for a week with your husband and love walking, eating good food"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 0,
+    "same": true,
+    "text": "When visiting London for the first time and only for a week, the rain is a major factor. Here are 5"
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 27,
+   "logits_bit": 27,
+   "hidden_bit": 27,
+   "present_bit": 27,
+   "argmax_same": 27,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 27,
+   "logits_bit": 27,
+   "hidden_bit": 27,
+   "present_bit": 27,
+   "argmax_same": 27,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 25,
+   "padded": 2
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 25
+   },
+   "padded": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 2
+   }
+  }
+ },
+ "seconds": 48
+}

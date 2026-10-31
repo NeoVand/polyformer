@@ -1,0 +1,200 @@
+{
+ "shard": 6,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 6,
+    "same": true,
+    "text": "Hey [Friend's Name],\n\nI hope you're doing well. I just wanted to reach out and say I really"
+   },
+   {
+    "prompt": 14,
+    "same": true,
+    "text": "Here is a post offering a list of eight specific and actionable steps to improve your Japanese writing and speaking skills, tailored for"
+   },
+   {
+    "prompt": 22,
+    "same": true,
+    "text": "D: \"I'm just trying to figure out why my coffee tastes so bitter today.\"\nT: \"That's"
+   },
+   {
+    "prompt": 30,
+    "same": true,
+    "text": "Finding a city that balances **popularity**, **low crime**, **affordability**, and **fancy amenities**"
+   },
+   {
+    "prompt": 38,
+    "same": true,
+    "text": "**HEADLINE: The Fight is a spectacle, but the crowd is a different story: Rose Nylund's \""
+   },
+   {
+    "prompt": 46,
+    "same": true,
+    "text": "*(The stage is set. The lights are dim, focusing on a single, glowing orb of light that pulses with a"
+   },
+   {
+    "prompt": 54,
+    "same": true,
+    "text": "As of 2020, the manga that consistently topped the sales charts was **\"One Piece\"**.\n\nReleased"
+   },
+   {
+    "prompt": 62,
+    "same": true,
+    "text": "In Discord.js, you can listen for events using the `on` method. Here's how to do it:\n\n"
+   },
+   {
+    "prompt": 70,
+    "same": true,
+    "text": "**TITLE:** THE 5-MINUTE MINDFULNESS MASTERY CLASS\n**FORMAT:** YouTube Comedy Script"
+   },
+   {
+    "prompt": 78,
+    "same": true,
+    "text": "\"Finally, a place that doesn't just serve food, but actually sells shoes. I was so excited to try L"
+   },
+   {
+    "prompt": 86,
+    "same": true,
+    "text": "The sun was a golden, bruised orange, and the air smelled of wet earth and crushed garlic. I was a"
+   },
+   {
+    "prompt": 94,
+    "same": true,
+    "text": "The largest wine-producing area on the planet is **Sauternes** in **France**.\n\nHere are the key details"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 6,
+    "same": true,
+    "text": "Hey [Name],\n\nI hope you're having a good day.\n\nI'm actually really good at keeping in touch"
+   },
+   {
+    "prompt": 14,
+    "same": true,
+    "text": "Here is a post offering a list of eight specific and actionable steps for a student who only knows Spanish to improve their writing"
+   },
+   {
+    "prompt": 22,
+    "same": true,
+    "text": "D: I am tired of the noise.\nT: I am tired of the noise.\nD: I am"
+   },
+   {
+    "prompt": 30,
+    "same": true,
+    "text": "I'm looking for a new city to move to. This city must be in the United States. I don't want"
+   },
+   {
+    "prompt": 38,
+    "same": true,
+    "text": "**[00:00]**\n**[00:00]**\n**[00:"
+   },
+   {
+    "prompt": 46,
+    "same": true,
+    "text": "**Title: The Brush That Paints the Future**\n\n**Speaker:** [Name]\n**Context:** A world"
+   },
+   {
+    "prompt": 54,
+    "same": true,
+    "text": "The top-selling manga in 2020 was **\"The Last of the Clans\"** by **Hirok"
+   },
+   {
+    "prompt": 62,
+    "same": true,
+    "text": "To listen for an event in Discord.js, you need to use the `Event` class. Here\u2019s a simple example"
+   },
+   {
+    "prompt": 70,
+    "same": true,
+    "text": "**Title:** *The 10-Minute Guided Meditation: A Reality-Check*\n**Format:**"
+   },
+   {
+    "prompt": 78,
+    "same": true,
+    "text": "I can't write a negative review for a restaurant named \"Laces\" because that name is a shoe store, not"
+   },
+   {
+    "prompt": 86,
+    "same": true,
+    "text": "I am a pickle.\n\nI am a cucumber.\n\nI am a cucumber.\n\nI am a cucumber.\n\n"
+   },
+   {
+    "prompt": 94,
+    "same": true,
+    "text": "The largest wine-producing area on the planet is the **Burgundy region** in France.\n\nHere are the key"
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 305,
+   "padded": 31
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 2,
+    "e7_vs_gate1": 305
+   },
+   "padded": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 31
+   }
+  }
+ },
+ "seconds": 338
+}

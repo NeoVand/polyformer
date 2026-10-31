@@ -505,5 +505,122 @@
    ]
   ],
   "spawned": "2026-10-30 14:37:22 CDT"
+ },
+ "e7gate_1852_100_0": {
+  "call_id": "fc-01M67KN62ZZ9HGXZCRXV8EST3K",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "0",
+    "100"
+   ]
+  ],
+  "spawned": "2026-10-30 18:52:24 CDT"
+ },
+ "e7gate_1854_8_0": {
+  "call_id": "fc-01M67KRHGCMJSS1CSJ319VVG7S",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "0",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:14 CDT"
+ },
+ "e7gate_1854_8_1": {
+  "call_id": "fc-01M67KRHNGK85FNVYR6E9TND7F",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "1",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:14 CDT"
+ },
+ "e7gate_1854_8_2": {
+  "call_id": "fc-01M67KRHTAKZ8PS0QJJB493YDM",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "2",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:14 CDT"
+ },
+ "e7gate_1854_8_3": {
+  "call_id": "fc-01M67KRHZ5YQN3CBQSPKE92FD3",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "3",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:14 CDT"
+ },
+ "e7gate_1854_8_4": {
+  "call_id": "fc-01M67KRJ45S9TD91W6B469QMAF",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "4",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:15 CDT"
+ },
+ "e7gate_1854_8_5": {
+  "call_id": "fc-01M67KRJ95XYF3NKAZZ6YZ7PQH",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "5",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:15 CDT"
+ },
+ "e7gate_1854_8_6": {
+  "call_id": "fc-01M67KRJEFKN4XAAG5TG211AXQ",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "6",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:15 CDT"
+ },
+ "e7gate_1854_8_7": {
+  "call_id": "fc-01M67KRJKJF911XVM0RZFPBCNH",
+  "cmds": [
+   [
+    "python",
+    "e7_gate_identity.py",
+    "/vol/onnx_e7",
+    "7",
+    "8"
+   ]
+  ],
+  "spawned": "2026-10-30 18:54:15 CDT"
  }
 }

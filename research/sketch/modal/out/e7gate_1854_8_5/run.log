@@ -1,0 +1,13 @@
+job e7gate_1854_8_5; start 2026-10-30 23:54:18; cmds [['python', 'e7_gate_identity.py', '/vol/onnx_e7', '5', '8']]
+patches:
+  e2_column.py: 'dev = "mps"' -> 'dev = "cpu"'
+  e4_train.py: 'for n, k in ((4, 10), (6, 5), (10, 2)):' -> 'for n, k in ((4, 20), (6, 10), (10, 5)):'
+
+$ python e7_gate_identity.py /vol/onnx_e7 5 8
+Warning: You are sending unauthenticated requests to the HF Hub. Please set a HF_TOKEN to enable higher rate limits and faster downloads.
+Generating train split:   0%|          | 0/9500 [00:00<?, ? examples/s]Generating train split: 100%|██████████| 9500/9500 [00:00<00:00, 167879.60 examples/s]
+Generating test split:   0%|          | 0/500 [00:00<?, ? examples/s]Generating test split: 100%|██████████| 500/500 [00:00<00:00, 70461.71 examples/s]
+Loading weights:   0%|          | 0/473 [00:00<?, ?it/s]Loading weights:   0%|          | 1/473 [00:00<01:14,  6.35it/s]Loading weights:  12%|█▏        | 56/473 [00:00<00:01, 257.94it/s]Loading weights:  22%|██▏       | 106/473 [00:00<00:01, 331.35it/s]Loading weights:  36%|███▌      | 170/473 [00:00<00:00, 438.00it/s]Loading weights:  46%|████▌     | 218/473 [00:00<00:00, 395.22it/s]Loading weights:  69%|██████▊   | 325/473 [00:00<00:00, 592.74it/s]Loading weights:  96%|█████████▌| 452/473 [00:00<00:00, 792.31it/s]Loading weights: 100%|██████████| 473/473 [00:00<00:00, 569.07it/s]
+{"chat": {"stock_vs_gate0": "300/300", "e7_vs_gate1": "300/300"}, "rows": {"stock_vs_gate0": "336/336", "e7_vs_gate1": "336/336"}}
+
+returncode 0; wall so far 360.2s

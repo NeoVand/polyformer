@@ -395,3 +395,16 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **Routing (continual learning).** A small head reads the model's hidden state and decides which adapter, if any, is
   on for each token (X-LoRA 2024 is one; mixture-of-experts gates are another). Why it matters: it is the standard
   alternative to training one adapter that both chats and computes, and the option the chat seesaw points to.
+
+## Added 30 Oct (CALC: the gated E7, `research/sketch/CALC3.md`)
+
+- **Knuth's refined guess (step D3 of Algorithm D).** Before multiplying the divisor by a guessed quotient digit q,
+  check it against one more digit of each number (the divisor's second digit and the remainder's third): if
+  q·v₂ > 10·r + u₃ (r what is left of the top two digits after q·v₁), lower q by one, and test again. With a two-digit
+  divisor the guess is then exact; in base 10 it cuts too-high guesses in a square root from about 45% to about 7% (a
+  simulation of T3's problems, CALC3.md). Why it matters to us: every too-high guess costs the calculator a wasted
+  multiply-subtract pass and an add-back, and those passes are the square root's 12-second tail.
+- **WebGPU device loss.** The browser can take the GPU away from a page (driver reset, background tab, memory pressure);
+  every later GPU call then fails, and ONNX Runtime cannot make a new device in the same worker. Why it matters to us:
+  it stopped T3 three times in a hidden pane; the page now starts a fresh worker, reloads the program from the browser's
+  cache and redoes the steps in flight, which is exact because a step depends only on the views it reads.

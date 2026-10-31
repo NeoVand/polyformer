@@ -1,0 +1,30 @@
+    2.5s staged {"decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364", "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486", "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc", "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99", "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220", "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"}
+   33.4s sessions ready
+   61.2s chat 2: stock_vs_gate0 25/25; e7_vs_gate1 25/25
+   72.3s chat 10: stock_vs_gate0 50/50; e7_vs_gate1 50/50
+   82.8s chat 18: stock_vs_gate0 75/75; e7_vs_gate1 75/75
+   93.8s chat 26: stock_vs_gate0 100/100; e7_vs_gate1 100/100
+  104.7s chat 34: stock_vs_gate0 125/125; e7_vs_gate1 125/125
+  115.3s chat 42: stock_vs_gate0 150/150; e7_vs_gate1 150/150
+  128.1s chat 50: stock_vs_gate0 175/175; e7_vs_gate1 175/175
+  139.1s chat 58: stock_vs_gate0 200/200; e7_vs_gate1 200/200
+  151.0s chat 66: stock_vs_gate0 225/225; e7_vs_gate1 225/225
+  164.2s chat 74: stock_vs_gate0 250/250; e7_vs_gate1 250/250
+  175.9s chat 82: stock_vs_gate0 275/275; e7_vs_gate1 275/275
+  187.0s chat 90: stock_vs_gate0 300/300; e7_vs_gate1 300/300
+  200.1s chat 98: stock_vs_gate0 325/325; e7_vs_gate1 325/325
+  200.3s chat done
+  215.3s rows {'train': 25, 'padded': 0}: stock_vs_gate0 25/25; e7_vs_gate1 25/25
+  230.0s rows {'train': 50, 'padded': 0}: stock_vs_gate0 50/50; e7_vs_gate1 50/50
+  245.0s rows {'train': 75, 'padded': 0}: stock_vs_gate0 75/75; e7_vs_gate1 75/75
+  260.1s rows {'train': 100, 'padded': 0}: stock_vs_gate0 100/100; e7_vs_gate1 100/100
+  275.3s rows {'train': 125, 'padded': 0}: stock_vs_gate0 125/125; e7_vs_gate1 125/125
+  290.7s rows {'train': 150, 'padded': 0}: stock_vs_gate0 150/150; e7_vs_gate1 150/150
+  306.1s rows {'train': 175, 'padded': 0}: stock_vs_gate0 175/175; e7_vs_gate1 175/175
+  320.8s rows {'train': 200, 'padded': 0}: stock_vs_gate0 200/200; e7_vs_gate1 200/200
+  334.8s rows {'train': 225, 'padded': 0}: stock_vs_gate0 225/225; e7_vs_gate1 225/225
+  348.5s rows {'train': 250, 'padded': 0}: stock_vs_gate0 250/250; e7_vs_gate1 250/250
+  362.6s rows {'train': 275, 'padded': 0}: stock_vs_gate0 275/275; e7_vs_gate1 275/275
+  377.1s rows {'train': 300, 'padded': 0}: stock_vs_gate0 300/300; e7_vs_gate1 300/300
+  391.9s rows {'train': 306, 'padded': 19}: stock_vs_gate0 325/325; e7_vs_gate1 325/325
+  398.6s rows done

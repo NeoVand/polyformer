@@ -3,6 +3,7 @@ the runs survive the laptop sleeping; see memory note modal-detach-gotcha).
 
   uvx --with modal python launch.py e4 <seed> [steps=800] [kl=1.0] [gpu=h100|l4]   # train then eval
   uvx --with modal python launch.py smoke                                           # image/paths/weights check
+  uvx --with modal python launch.py e7gate [shards=8] [k]                         # the gate on E7, ORT CPU shards
   uvx --with modal python launch.py status                                          # poll recorded calls
 """
 import json
@@ -97,6 +98,13 @@ def main(argv):
         cmds = [["python", "e7_padcheck.py", "/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont"]]
         call = modal.Function.from_name(APP, "run_h100_fast").spawn(job, cmds)
         record(job, call, cmds)
+    elif argv[0] == "e7gate":  # e7gate [shards=8] [only shard k]: the gate on E7, ORT CPU (e7_gate_identity.py)
+        n = int(argv[1]) if len(argv) > 1 else 8
+        stamp = time.strftime("%H%M")
+        for k in ([int(argv[2])] if len(argv) > 2 else range(n)):
+            job = f"e7gate_{stamp}_{n}_{k}"
+            cmds = [["python", "e7_gate_identity.py", "/vol/onnx_e7", str(k), str(n)]]
+            record(job, modal.Function.from_name(APP, "run_cpu").spawn(job, cmds), cmds)
     elif argv[0] == "compile":  # compile [adapter dir on the volume]: the compile_baseline.py rates, base then adapter
         job = "compile_baseline" + time.strftime("_%H%M")
         init = argv[1] if len(argv) > 1 else "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"

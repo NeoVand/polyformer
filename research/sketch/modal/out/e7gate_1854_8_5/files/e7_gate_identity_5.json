@@ -1,0 +1,200 @@
+{
+ "shard": 5,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 5,
+    "same": true,
+    "text": "**Dale Chihuly** (born Dale Chihuly, 1938\u20132018"
+   },
+   {
+    "prompt": 13,
+    "same": true,
+    "text": "Subject: Invitation Declined: Cooking Class with Alex\n\nHi Alex,\n\nThank you so much for the invitation to join"
+   },
+   {
+    "prompt": 21,
+    "same": true,
+    "text": "The afternoon sun had just begun to dip below the horizon, casting long, golden shadows across the stone path. It was"
+   },
+   {
+    "prompt": 29,
+    "same": true,
+    "text": "It is completely normal to feel \"blah\" when you aren't sick. Often, this feeling is a sign that your"
+   },
+   {
+    "prompt": 37,
+    "same": true,
+    "text": "Traveling with two adults and three kids in Atlanta is a fantastic opportunity to mix adventure, family-friendly fun, and a"
+   },
+   {
+    "prompt": 45,
+    "same": true,
+    "text": "Once upon a time, in a small village near the river, there were two very special elephants. They were named **"
+   },
+   {
+    "prompt": 53,
+    "same": true,
+    "text": "The mower hums,\nThe grass is green,\nBut the grass is dull.<|im_end|>\n<|endoftext|><|im_start|>\n<|im_start|>"
+   },
+   {
+    "prompt": 61,
+    "same": true,
+    "text": "Golden stalks fall,\nSoft fields of corn,\nSilence in the wind.<|im_end|>\n<|endoftext|><|im_start|>\n<|im_start|>"
+   },
+   {
+    "prompt": 69,
+    "same": true,
+    "text": "**[SCENE START]**\n\n**INT. NEW YORK CITY - SUMMER DAY - THE MUDD CLUB,"
+   },
+   {
+    "prompt": 77,
+    "same": true,
+    "text": "# Study Notes: The Angel Archetype\n\n## 1. The Definition of the Angel\n**Core Concept:**\n"
+   },
+   {
+    "prompt": 85,
+    "same": true,
+    "text": "That sounds like a wonderful trip! Columbus, Ohio, is a fantastic destination with a mix of historic charm, vibrant culture"
+   },
+   {
+    "prompt": 93,
+    "same": true,
+    "text": "The rain in the city of Oakhaven didn't wash things clean; it just made the grime slicker, turning"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 5,
+    "same": true,
+    "text": "Dale Chihuly is a renowned American artist who is best known for producing **art objects** (often called \""
+   },
+   {
+    "prompt": 13,
+    "same": true,
+    "text": "Subject: Scheduling Conflict\n\nDear Alex,\n\nI am writing to inform you that I am unable to join the cooking"
+   },
+   {
+    "prompt": 21,
+    "same": true,
+    "text": "The garden is a simple, sun-drenched space. A single, vibrant red rose sits in the center of the garden"
+   },
+   {
+    "prompt": 29,
+    "same": true,
+    "text": "It is completely normal to feel \"blah\" when you are not sick. This is often called \"blue-collar fatigue\""
+   },
+   {
+    "prompt": 37,
+    "same": true,
+    "text": "This is a great trip! Atlanta is a city of contrasts, with the famous \"Mall of the World\" and"
+   },
+   {
+    "prompt": 45,
+    "same": true,
+    "text": "**Title: The Elephant Twins**\n\n**Characters:**\n*   **Elephant 1:** A gentle, curious"
+   },
+   {
+    "prompt": 53,
+    "same": true,
+    "text": "Mowing the lawn is not fun.\n\nIt's not fun to mow the lawn.\n\nIt's not fun"
+   },
+   {
+    "prompt": 61,
+    "same": true,
+    "text": "A cornfield,\nA sweet corn,\nA sad haiku.<|im_end|>\n<|endoftext|><|im_start|>\n\nA cornfield,"
+   },
+   {
+    "prompt": 69,
+    "same": true,
+    "text": "The years 1981 to 1984 were a brief period of intense artistic output that cemented"
+   },
+   {
+    "prompt": 77,
+    "same": true,
+    "text": "Here are the study notes rewritten as bullet points, preserving the core concepts and the specific question about the nature of the description"
+   },
+   {
+    "prompt": 85,
+    "same": true,
+    "text": "This is a great location for a wedding. Since you are bringing your kids (ages 6 and 4), the"
+   },
+   {
+    "prompt": 93,
+    "same": true,
+    "text": "The rain is relentless, a relentless drumming against the pavement. The street is slick, slick with the slick of the"
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 306,
+   "padded": 30
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 306
+   },
+   "padded": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 30
+   }
+  }
+ },
+ "seconds": 357
+}

@@ -1,0 +1,210 @@
+{
+ "shard": 3,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 3,
+    "same": true,
+    "text": "The Tlachihualtepetl pyramid, located in the Valley of the Kings in Egypt, stands as one of"
+   },
+   {
+    "prompt": 11,
+    "same": true,
+    "text": "Based on the emojis provided, the story would be classified as **comedy**.\n\nHere is the reasoning:\n*"
+   },
+   {
+    "prompt": 19,
+    "same": true,
+    "text": "Born on 15 December 1808 in the Bowery district of New York, William Martin Leggett"
+   },
+   {
+    "prompt": 27,
+    "same": true,
+    "text": "{Prince William} (37)\n{Prince George} (27)\n{King Charles III} ("
+   },
+   {
+    "prompt": 35,
+    "same": true,
+    "text": "Here are 10 common questions people might have about a scheduling product, along with strategic ways to address them in your"
+   },
+   {
+    "prompt": 43,
+    "same": true,
+    "text": "Subject: **Urgent: Apology and Refund Request for Broken Necklace**\n\nDear [Customer Name],\n\n"
+   },
+   {
+    "prompt": 51,
+    "same": true,
+    "text": "Here are four practical strategies to overcome procrastination:\n\n1.  **The 2-Minute Rule**: Commit"
+   },
+   {
+    "prompt": 59,
+    "same": true,
+    "text": "Here are a few options for your comment, ranging from emotional to humorous, so you can choose the one that fits your"
+   },
+   {
+    "prompt": 67,
+    "same": true,
+    "text": "**John T. Scope** (1906\u20131988) was an American politician and a prominent"
+   },
+   {
+    "prompt": 75,
+    "same": true,
+    "text": "Here are five specific, actionable strategies to improve your college essay writing, tailored specifically for someone who is still building their confidence"
+   },
+   {
+    "prompt": 83,
+    "same": true,
+    "text": "Samsung was founded in **1937**.\n\nThe company was originally established as **Samsung Electronics Co., Ltd.**"
+   },
+   {
+    "prompt": 91,
+    "same": true,
+    "text": "Since you are already planning your hiking itinerary, here are three excellent activities to do in **Two Rivers, Minnesota** that"
+   },
+   {
+    "prompt": 99,
+    "same": true,
+    "text": "That is a wonderful age to start planning! At 5 years old, a boy who loves playing outside is likely looking"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 3,
+    "same": true,
+    "text": "The Tlachihualtepetl pyramid, a massive structure built by the Aztlahuizco people, stands"
+   },
+   {
+    "prompt": 11,
+    "same": true,
+    "text": "Based on the emojis provided, the story is best classified as **comedy**.\n\nHere is the breakdown:\n*"
+   },
+   {
+    "prompt": 19,
+    "same": true,
+    "text": "Born on 15 December 1808, probably in the Bowery district of the city of New York"
+   },
+   {
+    "prompt": 27,
+    "same": true,
+    "text": "Based on the text provided, here are the names and ages of the people in the photograph:\n\n**{name}"
+   },
+   {
+    "prompt": 35,
+    "same": true,
+    "text": "Here are 10 common questions people might have about a product designed to help people organize their schedules, along with suggested"
+   },
+   {
+    "prompt": 43,
+    "same": true,
+    "text": "Subject: Apologetic Email & Refund Options\n\nDear [Customer Name],\n\nThank you for your patience and for"
+   },
+   {
+    "prompt": 51,
+    "same": true,
+    "text": "Here are four ways to overcome procrastination:\n\n1. **Break it down into tiny steps.**\n   Instead of"
+   },
+   {
+    "prompt": 59,
+    "same": true,
+    "text": "I'm going to clean my space.\n\nI'm going to clean my space.\n\nI'm going to clean my"
+   },
+   {
+    "prompt": 67,
+    "same": true,
+    "text": "John T. Scope was a prominent American politician and a key figure in the early 20th-century political landscape."
+   },
+   {
+    "prompt": 75,
+    "same": true,
+    "text": "I will not provide content-based tips (e.g., \"use a specific word for every sentence\"). Instead, I will"
+   },
+   {
+    "prompt": 83,
+    "same": true,
+    "text": "Samsung Galaxy S21M was founded in 2017.\n\nSamsung Galaxy S21M was launched"
+   },
+   {
+    "prompt": 91,
+    "same": true,
+    "text": "Since you are already planning to visit a museum and gallery, here are three things you can do in Two Rivers, Minnesota"
+   },
+   {
+    "prompt": 99,
+    "same": true,
+    "text": "That's a great idea! A 5-year-old boy who loves playing outside is a great gift idea. Here are"
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 306,
+   "padded": 30
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 2,
+    "e7_vs_gate1": 306
+   },
+   "padded": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 30
+   }
+  }
+ },
+ "seconds": 375
+}
