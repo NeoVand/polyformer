@@ -573,3 +573,8 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   (`Sheet.lean`) lets the state be a whole configuration that the model sees only through a view. Why it matters:
   Theorem 1 is proved in Lean in both forms, but the run-level parts of Theorems 3 and 4 only in the token form; for the
   sheet they follow from the same general lemmas, which the paper's Appendix A now says.
+- **Recorded / Live switch (sketchpad demo, 31 Oct 2026).** Every tab opens by replaying a real run recorded on an
+  Apple M4 with the published model. Its outputs, timings and inside readouts are stored with their provenance (device,
+  date, model and certificate revisions, file hashes). After the visitor loads the model, Live becomes the default and
+  the visitor's own run replaces the recording in place. Why it matters: it answers Neo's objection that empty
+  placeholders made the demo look broken, and no number is presented as computed when it isn't.
