@@ -434,3 +434,10 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   every later GPU call then fails, and ONNX Runtime cannot make a new device in the same worker. Why it matters to us:
   it stopped T3 three times in a hidden pane; the page now starts a fresh worker, reloads the program from the browser's
   cache and redoes the steps in flight, which is exact because a step depends only on the views it reads.
+- **Layout ratchet (sketchpad demo, 31 Oct 2026).** From the moment a run starts until the next run starts, a
+  panel's height can only grow; it keeps its largest height so far as its minimum. Why it matters: Neo found the
+  Algebra tab jumping as the digit work changed size. With the ratchet, and the digit work taken out of the layout
+  flow, nothing shrinks or moves up during a run.
+- **Layout probe (`scripts/layout-probe.js` in NeoVand/sketchpad).** A console script that logs every element that
+  gets shorter or moves up during a run. Why it matters: it is the test for the rule above. On 31 Oct it logged zero
+  entries on every preset at 1440 and 375 px.
