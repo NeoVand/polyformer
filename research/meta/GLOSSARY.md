@@ -409,3 +409,15 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **GRPO (Group Relative Policy Optimization; Shao et al., DeepSeekMath, 2024).** RL for language models: sample a
   group of replies, reward each, and push up the ones above the group's average, with no learned value model. Why it
   matters: it is CHAT round 2's third lever, with the stand-in as the reward and a KL penalty to gate 0.
+- **Textbook algebra on the sheet (ALGEBRA round 3, chosen by Neo on 31 Oct 2026).** The runtime solves the way
+  people write algebra: multiply out brackets, collect like terms, move terms across, use the formula, check by
+  substitution. The model computes every new number. Why it matters: it replaces "algebra by evaluation" in the demo
+  and the paper, because visitors did not recognise the evaluation method as algebra.
+- **Binomial theorem and Pascal's rule.** (ax + b)ⁿ = Σ C(n, k)·aⁿ⁻ᵏ·bᵏ·xⁿ⁻ᵏ. Each C(n, k) is the sum of the two
+  numbers above it in Pascal's triangle. Why it matters: it expands (x + 2)⁵ with small numbers the sheet handles
+  quickly, in place of the 16-digit 1002⁵.
+- **Synthetic division.** A three-row table that divides a polynomial by (x − r) using only multiplications and
+  additions of its coefficients. Why it matters: it is how the factoring step shows its work.
+- **Elimination (for systems of equations).** Multiply one equation and subtract it from another to remove a
+  variable, then substitute back. Gaussian elimination is the same done systematically. Why it matters: it is how the
+  sheet will show 2×2 and 3×3 systems, in place of Cramer's rule.
