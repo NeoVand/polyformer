@@ -441,3 +441,36 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **Layout probe (`scripts/layout-probe.js` in NeoVand/sketchpad).** A console script that logs every element that
   gets shorter or moves up during a run. Why it matters: it is the test for the rule above. On 31 Oct it logged zero
   entries on every preset at 1440 and 375 px.
+
+## Added 31 Oct (the Sketchpad paper, `NeoVand/sketchpad` branch `paper`)
+
+- **Theorem P, sheet form [zoo].** If every step of a machine reads only a view drawn from a finite set and paints its
+  answer, the machine is exact on every run of every length if and only if its answer is right on every view a
+  reference run meets. Classical in essence (Moore 1956; Cai et al. 2017; Lewandowski et al. 2026); ours is the sheet
+  instance and its Lean statement (`paper/lean/Sheet.lean`, 31 Oct 2026). Why: it turns infinitely many runs into
+  2,446 checks.
+- **Pinned-sheet policy.** Each forward pass sees the step's prompt and its three-cell view and nothing else; the sheet
+  is the only state between steps. Why: it makes the model's answer a function of the view, the hypothesis Theorem P
+  needs.
+- **Moore's gedanken-experiments (Moore, 1956).** The founding paper on testing finite-state machines from outside: no
+  finite experiment identifies a machine unless its number of states is bounded. Why: the classical form of our
+  no-finite-test theorem.
+- **Conformance testing / the W-method (Chow, 1978).** Testing that an implemented state machine matches its
+  specification, with a test suite that is complete given a bound on the number of states. Why: the field our
+  certificate belongs to; the sheet removes the need for a state bound because every step reads only a view.
+- **Transfer across code paths (Corollary P2).** If a run's logits differ from the certified ones by at most τ, and every
+  certified margin exceeds 2τ, the run is exact. Why: it says when a certificate measured on one device, precision or
+  batch shape carries to another; a 4-bit decoder broke it (margins moved by about 18), the 16-bit decoder keeps it.
+- **Code path.** The exact computation that produces the logits: device, numerical precision, kernel and batch shape.
+  Why: a certificate holds for the path it was measured on.
+- **Vieta's formulas (Viète, 16th century).** The two roots of ax² + bx + c sum to −b/a and multiply to c/a. Why: the
+  algebra checks irrational roots like 3 ± √5 with these identities in integer arithmetic, with no decimals.
+- **Residual stream.** The running sum of every layer's output in a transformer, read by the next layer. Why: the logit
+  lens reads it, and the class-mean push adds to it.
+- **Decision depth.** The first depth (number of layers applied) after which the final answer stays the top token
+  under the logit lens. Why: E7 decides at median depth 19 (addition) and 20 (multiplier).
+- **Gated DeltaNet (Yang, Kautz and Hatamizadeh, 2024).** A linear-attention layer with a fixed-size running state,
+  updated by a gated delta rule; 18 of Qwen3.5-0.8B's 24 layers. Why: it is causal, so tokens after the answer place
+  cannot change the answer, which lets every step be padded to one batch.
+- **FP8.** Eight-bit floating point for weights; halves the memory of 16-bit. Why: the 27B baseline ran as the FP8
+  release because the 16-bit model held only 8 long replies on one H100.
