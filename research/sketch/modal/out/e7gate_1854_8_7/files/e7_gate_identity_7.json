@@ -1,0 +1,200 @@
+{
+ "shard": 7,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 300,
+   "logits_bit": 300,
+   "hidden_bit": 300,
+   "present_bit": 300,
+   "argmax_same": 300,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 7,
+    "same": true,
+    "text": "Here is a list of children's story ideas suitable for ages 10\u201313, featuring space elements:\n\n"
+   },
+   {
+    "prompt": 15,
+    "same": true,
+    "text": "After World War II, state governments set the start and end dates for daylight saving time, leading to scheduling and safety issues"
+   },
+   {
+    "prompt": 23,
+    "same": true,
+    "text": "\ud83c\udf0d **The Great Circle Adventure!** \ud83c\udf0d\u2728\n\nI'm finally off to the center of the earth"
+   },
+   {
+    "prompt": 31,
+    "same": true,
+    "text": "First, take a deep breath. It is completely normal to feel this way when you are about to start a new chapter"
+   },
+   {
+    "prompt": 39,
+    "same": true,
+    "text": "Congratulations on your graduation! To create a truly memorable experience, the key is to move away from generic \"party\" vibes"
+   },
+   {
+    "prompt": 47,
+    "same": true,
+    "text": "Bark, purr, and sleep,\nThe golden light,\nThe quiet, happy sound.<|im_end|>\n<|endoftext|>"
+   },
+   {
+    "prompt": 55,
+    "same": true,
+    "text": "Hey Dad, I just got a flat tire and need your help. I'm nervous, but I'm not going anywhere"
+   },
+   {
+    "prompt": 63,
+    "same": true,
+    "text": "Creating a game window in Python is a great way to learn Python. Below is a simple, interactive example of a **"
+   },
+   {
+    "prompt": 71,
+    "same": true,
+    "text": "**Cinque Terre** (Italian for \"Five Towns\") is a coastal town and a UNESCO World Heritage Site"
+   },
+   {
+    "prompt": 79,
+    "same": true,
+    "text": "Running a marathon around the world is a massive undertaking, but there are several legendary events that have consistently attracted massive crowds,"
+   },
+   {
+    "prompt": 87,
+    "same": true,
+    "text": "The series *Vanderpump Rules* premiered on **October 12, 2018**, on"
+   },
+   {
+    "prompt": 95,
+    "same": true,
+    "text": "**The Ombalantu baobab tree** (also known as the **Ombalantu tree** or"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 7,
+    "same": true,
+    "text": "Here is a list of children's story ideas, aimed at ages 10-13, featuring space elements."
+   },
+   {
+    "prompt": 15,
+    "same": true,
+    "text": "After WWII, the start and end dates for daylight saving time were assigned to state governments. However, Congress passed the Uniform"
+   },
+   {
+    "prompt": 23,
+    "same": true,
+    "text": "I'm on vacation at the center of the earth, surrounded by the sun and the moon. The sky is a vibrant"
+   },
+   {
+    "prompt": 31,
+    "same": true,
+    "text": "This is a very common anxiety, and it is completely normal. The feeling that \"I'm not going to be a"
+   },
+   {
+    "prompt": 39,
+    "same": true,
+    "text": "Here are 3 unique and memorable graduation celebration ideas that can surprise and delight your family and friends:\n\n1. **"
+   },
+   {
+    "prompt": 47,
+    "same": true,
+    "text": "Mouth opens wide,\nPaws twitch,\nSwept by the sun.<|im_end|>\n<|endoftext|><|im_start|>\n\nA"
+   },
+   {
+    "prompt": 55,
+    "same": true,
+    "text": "I just got a flat tire and need your help. I'm nervous and need your help.<|im_end|>\n<|endoftext|><|im_start|>\n"
+   },
+   {
+    "prompt": 63,
+    "same": true,
+    "text": "To make a game window in Python, you can use the `tkinter` library, which is part of the Python"
+   },
+   {
+    "prompt": 71,
+    "same": true,
+    "text": "The **Cinque Terre** (Italian for \"Five Towns\") is a famous coastal village located in the **"
+   },
+   {
+    "prompt": 79,
+    "same": true,
+    "text": "There are several marathons that are specifically designed to be run around the world with a large crowd. These are often"
+   },
+   {
+    "prompt": 87,
+    "same": true,
+    "text": "The series *Vanderpump Rules* premiered on **October 1, 2023**.\n\nIt"
+   },
+   {
+    "prompt": 95,
+    "same": true,
+    "text": "The **Ombalantu baobab tree** (also known as the **Ombalantu** or **"
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 305,
+   "padded": 31
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 305
+   },
+   "padded": {
+    "stock_vs_gate0": 2,
+    "e7_vs_gate1": 31
+   }
+  }
+ },
+ "seconds": 279
+}

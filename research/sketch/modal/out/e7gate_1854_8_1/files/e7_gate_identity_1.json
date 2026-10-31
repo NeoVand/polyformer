@@ -1,0 +1,210 @@
+{
+ "shard": 1,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 1,
+    "same": true,
+    "text": "**Jay the RA**\n\nMy name is Jay, and I'm the resident assistant for The University of Glee."
+   },
+   {
+    "prompt": 9,
+    "same": true,
+    "text": "1. Rainbow Trout\n2. Carp\n3. Catfish\n4. Pike\n5. Minnow<|im_end|>\n"
+   },
+   {
+    "prompt": 17,
+    "same": true,
+    "text": "The function is not working because of **two major issues**:\n\n1.  **Missing `import`:** You are"
+   },
+   {
+    "prompt": 25,
+    "same": true,
+    "text": "**Limerick 1: The Pizza King**\nA king of dough and cheese,\nWho rules the world"
+   },
+   {
+    "prompt": 33,
+    "same": true,
+    "text": "Here is a multiple-choice quiz based on the article provided.\n\n### **Quiz: The Importance of Online Learning**\n\n"
+   },
+   {
+    "prompt": 41,
+    "same": true,
+    "text": "Soft purr,\nSleepy eyes,\nQuiet heart.<|im_end|>\n<|endoftext|><|im_start|>assistant</think>\n\nHere is a ha"
+   },
+   {
+    "prompt": 49,
+    "same": true,
+    "text": "The world outside the window was a chaotic, loud place of sirens and the distant rumble of a storm. Inside"
+   },
+   {
+    "prompt": 57,
+    "same": true,
+    "text": "Based on the text provided, here is a description of **Eagleman**:\n\n**Identity and Background**\nE"
+   },
+   {
+    "prompt": 65,
+    "same": true,
+    "text": "This snippet of code is defining **CSS classes** used to style a specific section of a web page. It's likely"
+   },
+   {
+    "prompt": 73,
+    "same": true,
+    "text": "Once upon a time, in the quiet valley of the Zulu,\nA zebra named Zulu lived in a"
+   },
+   {
+    "prompt": 81,
+    "same": true,
+    "text": "Japan is comprised of **14,000** islands.\n\nThese islands are scattered across the Pacific Ocean,"
+   },
+   {
+    "prompt": 89,
+    "same": true,
+    "text": "Here is a simple, easy-to-make vegan recipe that is packed with vegetables:\n\n**Ingredients**\n\n*   "
+   },
+   {
+    "prompt": 97,
+    "same": true,
+    "text": "**Title:** The Cat's Take on \"Single Ladies\"\n**Artist:** The Cat\n**Lyrics:**\n"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 1,
+    "same": true,
+    "text": "I'm Jay, the resident assistant at The University of Glee. I'm a student of the same name, but"
+   },
+   {
+    "prompt": 9,
+    "same": true,
+    "text": "1. 100000000000000000000"
+   },
+   {
+    "prompt": 17,
+    "same": true,
+    "text": "The function is not working because the logic inside the loop is incorrect. The condition `if(nums[i] / 2"
+   },
+   {
+    "prompt": 25,
+    "same": true,
+    "text": "Here are three limericks involving pizza:\n\n1.  **The Pizza**\n    *   **The**"
+   },
+   {
+    "prompt": 33,
+    "same": true,
+    "text": "Here is a multiple-choice quiz based on the text provided, designed to test understanding of the concept of \"Remote Learning\""
+   },
+   {
+    "prompt": 41,
+    "same": true,
+    "text": "A cat's tail,\nA cat's tail,\nA cat's tail,\nA cat's tail,\n"
+   },
+   {
+    "prompt": 49,
+    "same": true,
+    "text": "**Title: The House Cat's Plan**\n\nThe house cat, **Moss**, was a house cat. He"
+   },
+   {
+    "prompt": 57,
+    "same": true,
+    "text": "Eagleman is a fictional character from the *Eagleman* series, a science fiction series created by the late"
+   },
+   {
+    "prompt": 65,
+    "same": true,
+    "text": "This snippet of code is defining the **CSS classes** for a UI component. It's defining the **layout** and"
+   },
+   {
+    "prompt": 73,
+    "same": true,
+    "text": "Zulu is a Zebra who lives in the middle of the world.\nHe is a Zebra who lives in"
+   },
+   {
+    "prompt": 81,
+    "same": true,
+    "text": "Japan is composed of **1,000 islands** (often referred to as the \"1000 islands"
+   },
+   {
+    "prompt": 89,
+    "same": true,
+    "text": "I can't browse the live web to find a specific recipe, but I can provide a list of common, easy-to"
+   },
+   {
+    "prompt": 97,
+    "same": true,
+    "text": "**Title:** *Kitty Ladies*\n**Genre:** Parody / Catverse\n**Tone:** Humorous"
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 306,
+   "padded": 30
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 2,
+    "e7_vs_gate1": 306
+   },
+   "padded": {
+    "stock_vs_gate0": 2,
+    "e7_vs_gate1": 30
+   }
+  }
+ },
+ "seconds": 321
+}

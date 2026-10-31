@@ -3,6 +3,34 @@
 Log of the CALC stream (brief: `research/meta/sketchpad3/CALC.md`, contract `CONTRACT.md`). Registrations were written
 before the runs they register.
 
+## Report: E7 with the gate, published (30 Oct 2026, evening)
+
+**Published:** `mohsenvand/sketchpad-0.8b-preview` revision `2df871728a9d24d1e102a327d1f1475457c53962` (parent
+`ca527a6d`), pinned in `models.ts` (`HF_REVISION`). `arithmetic/` is now the gated E7 program: graph, lens, inside data,
+certificate, adapter; README updated. Every uploaded file checked by sha256 against the staged copy (9 changed), the
+other 17 files unchanged (`hf_publish_e7.py`).
+- **Identity (ONNX Runtime 1.31.1 CPU, Modal, 8 shards):** gate 1 = ungated E7 and gate 0 = stock, bit for bit on every
+  logit, hidden state and present state: 2,500/2,500 chat calls (100 prompts) and 2,688/2,688 rows (all 2,446 rows plus
+  the 242 SUM rows in the page's padded form) for each pair; greedy text identical 100/100.
+- **Certificate on the M4 (WebGPU):** 2,446/2,446; min margins addition 3.016, multiplication 6.516, calculator 4.609.
+  All 2,446 margins equal the ungated E7's, to the stored 1/1000.
+- **T3 again, all 200 problems:** 200/200 exact (also checked against a Python oracle), each step for step the same as
+  the ungated T3 (steps, views, answers). Wall times are not comparable: the machine was busy and the browser reset the
+  GPU three times (see below); the cost model gives the same seconds as before (√ to 6 places median 10.7 s, 13/50 over
+  12 s).
+- **Prod build** (`BASE_PATH=/polyformer pnpm run build`, `vite preview`, a fresh browser profile): the page loads all
+  1,913 MB from the pinned revision and accepts the shipped certificate; the weakest tenth of each table passes again on
+  the M4 (addition 25 rows, lowest 3.02; calculator 66, lowest 4.61; multiplication too, since Calculate reads all three
+  tables and reports its run certified). Calculate: 22 ÷ 7 to 10 places = 3.1428571428…, exact, 45 steps, 4.6 s.
+  The page's prose still describes only addition and multiplication (left for the port).
+- **Device-loss recovery (step 6):** dropped by the orchestrator (it moves to NeoVand/sketchpad). The code was written and
+  ran during this T3: it recovered from all three real GPU resets (Chrome: "A valid external Instance reference no longer
+  exists"), reloading from the cache in 13.5 s and redoing the step in flight, with every answer exact. It is reverted
+  here and kept as `calc-device-loss-recovery.patch` in the orchestrator's notes folder; the forced-loss test
+  (`device.destroy()`) was not run.
+- **Spend:** about $0.44 (Modal CPU, identity test); the stream's total is about $2.8 of $15.
+- **D3 (refined guess) now or at the final retrain:** wait for the final retrain (below, "D3").
+
 ## Report (30 Oct 2026)
 
 **Passed.**
@@ -284,6 +312,97 @@ times:
 Each time the driver started a new worker and loaded the model again; the certificate came from this device's cache. It
 then redid the problem from the start. The table counts only completed runs; no run finished with a wrong digit.
 
+## E7 with the gate, published (30 Oct, evening)
+
+Task from the orchestrator (Neo's OK of 30 Oct for the upload, relayed): build E7 with CHAT's gate, check it on ONNX
+Runtime CPU, certify it in the browser, publish it to Hugging Face as a new pinned revision, switch the page to it, and
+make the page recover from a WebGPU device loss.
+
+**Build ($0, local graph surgery).** `main` merged into `sketchpad` (fast-forward). `patch_onnx_lora.py` (gated by
+default since CHAT's T5) then `patch_onnx_inside.py` on the E7 seed-3 adapter, the graph steps of `build_program.sh`;
+the atlas and lens data do not depend on the gate and are E7's (`inside.*` copied, `lens.*` rebuilt byte-identical).
+`--no-gate` reproduces the ungated `arithmetic-e7/` graph byte for byte (sha256 `a463b426…`), so the gated graph
+(`5f83a661…`) differs from it only by the gate.
+
+**Identity test (Modal CPU, ONNX Runtime 1.31.1 CPUExecutionProvider; `e7_gate_identity.py`, CHAT's
+`chat/gate_identity.py` with E7's graphs and rows; 8 shards, summary `e7_gate_identity_summary.json`).** Three graphs
+on the same external weights (sha256 of `decoder_model_merged_fp16.onnx_data` checked in the job: `5866a207…`, the
+published file): stock (base + inside patch), E7 ungated, E7 gated. Every call compares logits, `hidden_states` and every
+present state (conv, recurrent, key/value) bit for bit.
+
+| pair | chat calls (100 no_robots prompts × 25) | table rows (2,446 + 242 SUM rows in the page's padded form) | max diff |
+|---|---|---|---|
+| stock vs gate 0 | 2,500 / 2,500 bit-identical | 2,688 / 2,688 bit-identical | 0 |
+| ungated E7 vs gate 1 | 2,500 / 2,500 bit-identical | 2,688 / 2,688 bit-identical | 0 |
+
+Greedy continuations identical on 100/100 prompts for both pairs. On the captured row inputs gate 1 answers every
+row right at every answer place (2,446/2,446 and 242/242 padded); stock 12/2,446 and 12/242 (the inputs are real).
+
+**Certificate in the browser (M4, WebGPU, transformers.js 4.2.0, dev page from `static/sketchpad/models/arithmetic/`
+= the gated graph).** 2,446/2,446: addition 242/242 (min margin 3.016, 20 s), multiplication 1,553/1,553 (6.516,
+133 s), calculator 651/651 (4.609, 55 s). Every one of the 2,446 margins equals the ungated E7's T3 certificate on this
+M4 (as stored, to 1/1000; max difference 0), so the WebGPU provider does not fold the gate into the matmuls either.
+The Browser pane could not be shown (this session is open in no window); no device loss during the certificate.
+Exported with `sketchpad.exportCertificate()` as `arithmetic/certificate.json`.
+
+**T3 again, all 200 problems (same seed and lines as T3), gated E7.** Record `calc3_t3_gated.json`. The certificate came from the browser's store after a Vite reload of the dev page (my own
+file write) at problem 16; three GPU resets during the √ and gcd sets were recovered by the page (device-loss code,
+below).
+
+| set (50 each) | exact | same steps, views and answer as ungated T3 | wall median / max | over 12 s (wall) | cost model median / max / over 12 s | ungated T3 wall median |
+|---|---|---|---|---|---|---|
+| division to 10 places | 50 | 50 | 6.7 / 11.1 s | 0 | 7.6 / 12.1 s / 1 | 7.0 s |
+| square root to 6 places | 50 | 50 | 14.9 / 39.9 s | 38 | 10.7 / 17.8 s / 13 | 9.8 s |
+| gcd | 50 | 50 | 10.3 / 37.3 s | 19 | 7.1 / 12.0 s / 0 | 7.0 s |
+| signed sums and differences | 50 | 50 | 2.2 / 4.9 s | 0 | 1.9 / 4.1 s / 0 | 2.0 s |
+
+The model does exactly what the ungated model did (every step's answers are the same, as the identical margins
+promise), so its cost is the same; the wall times are not a measurement of the gate. During the division set the page
+ran at the cost model (wall/model 0.88, faster than T3's 1.02); from the fifth √ on, the M4 was shared with other
+processes (Claude helpers at 40–85% CPU, the ANE compiler) and the three resets each added a reload of about 13.5 s,
+so the √ set ran at 1.24× and gcd at 1.46× the model. The 12-second bar is judged on T3 (184/200) and the cost model.
+
+**Published.** Revision `2df871728a9d24d1e102a327d1f1475457c53962` of `mohsenvand/sketchpad-0.8b-preview` (one commit on
+`ca527a6d`, by `hf_publish_e7.py`), checked file by file against the staged copy:
+
+| file | sha256 | |
+|---|---|---|
+| `arithmetic/onnx/decoder_model_merged_fp16.onnx` | `5f83a661…` | the gated E7 graph |
+| `arithmetic/onnx/lens.bin`, `lens.json` | `6ec9da10…`, `bc8a2d3c…` | E7's lens (the letters S, B, C added) |
+| `arithmetic/inside.bin`, `inside.json` | `dee3f6d5…`, `e72030c2…` | E7's maps and push means |
+| `arithmetic/certificate.json` | `73fbcf44…` | the M4 certificate above |
+| `arithmetic/adapter/adapter_model.safetensors`, `adapter_config.json` | `453ae613…`, `f7c23b47…` | the E7 adapter (config as E6's, base path `Qwen/Qwen3.5-0.8B`) |
+| `README.md` | | the calculator's rows and margins, prompts, timings |
+
+The adapter is not in the orchestrator's list (graph, certificate, README) but `arithmetic/adapter/` is documented as
+the adapter the graph was built from, so leaving E6's there would have made the folder wrong. `base/`,
+`arithmetic/sprites.png` and the licences are unchanged. `models.ts`: `HF_REVISION` pinned; `arithmetic` was already
+the program's folder, and `HAS_CALC` and the adder's `padded` are now true in every build (the certificate checks the
+padded adder and the calculator's table, so a build without them would not accept it).
+
+**Device loss.** Dropped from this task by the orchestrator (the demo moves to NeoVand/sketchpad, where it will be added). What was
+written and ran before that: the worker watches the GPU device ONNX Runtime made (`env.webgpu.device`) and reports
+`device.lost`, or a failed call whose error is a loss; the page then terminates the worker, starts a fresh one, loads
+the same program again (from the browser cache; the certificate from its store) and sends the steps that were in flight
+again, up to three times each. A step is a function of its views, so the redone step is the step. It recovered all three
+real resets of this T3. Reverted here; patch in the orchestrator's notes folder (`calc-device-loss-recovery.patch`,
+untested against a forced loss).
+
+### D3: the refined guess, now or at the final retrain? (no spend)
+
+Measured on T3's own problems with the reference tables ($0, `calc3_d3probe.json`): the guess is corrected on 176 of
+619 quotient digits in division (28%) and 192 of 329 root digits (58%); every correction is a wasted multiply-subtract
+pass plus an add-back, about 0.6 s in a division and 1.2 s in a square root (regression on the cost model). A base-10
+simulation of the same problems says Knuth's D3 test makes the guess exact for T3's divisors (two digits at most) and
+cuts the square root's too-high guesses from 45% to 7%; 90% fewer corrections would bring the modelled √ maximum from
+17.8 s to under 10 s. But D3 reads five digits (two of the divisor, three of the remainder) and a view holds three, so it
+is a new table and a new step in both procedures: a retrain (E7's training run was $1.3 of H100, its smoke run $0.3),
+the server certificate, a rebuild, the CPU identity test ($0.44), the M4 certificate and another Hugging Face revision,
+about $2–3 and half a day, for 16 of 200 problems that are exact and only slow. A runtime-only D3 from the certified MUL
+and SUB rows is possible at $0, but it adds about two calls per digit: it gains nothing in division and about 3 s on the
+√ tail. Recommendation: fold D3 into the final retrain, after a dry run of the new table in the reference runtime; until
+then the √ tail stays.
+
 ## Spend and Modal calls
 
 | Job | Call id | What | Cost |
@@ -292,7 +411,9 @@ then redid the problem from the start. The table counts only completed runs; no 
 | `e7_s3_4000_h4.0_stop3.0_fast` | `fc-01M673S1J9D0G42QCNBHE8RFS9` | E7: 1,600 steps (stop rule), certificate, end-to-end runs | 19.8 min H100, about $1.30 |
 | `compile_baseline_1435` | `fc-01M674Y4EY2AXDY80AMHJJS18G` | compile baseline, stock then E7 | 11.5 min H100, about $0.76 |
 | `e7pad_1437` | `fc-01M67526PSNKA5JHY1F68BN9WF` | SUM rows padded vs unpadded | 1.2 min H100, about $0.08 |
-| **total** | | | **about 37 min of H100, about $2.4** (wall times × $3.95/h; container start-up adds a little) |
+| `e7gate_1852_100_0` | `fc-01M67KN62ZZ9HGXZCRXV8EST3K` | gate identity smoke (1 prompt, 27 rows), CPU | 51 s × 8 CPU, about $0.01 |
+| `e7gate_1854_8_0…7` | `fc-01M67KRHGCMJSS1CSJ319VVG7S` … `fc-01M67KRJKJF911XVM0RZFPBCNH` | gate identity, 8 CPU shards | 46 min × 8 CPU in all, about $0.43 |
+| **total** | | | **about 37 min of H100 and 47 min of 8-CPU containers, about $2.8** (H100 at $3.95/h; CPU at 8 cores and 24 GiB) |
 
 ## Glossary candidates
 
@@ -322,4 +443,4 @@ then redid the problem from the start. The table counts only completed runs; no 
 `8217fb02` E7 registration and tables · `ed05b216` the calculator runtime and tests · `da26e7b9` Calculate mode and worker ·
 `4a1f974f` E7 result · `efd750bb` merge of `main` (gate wiring) · `9dc90ca3` waves and the padded prompt form ·
 `4450ea06` E7 build artefacts and logs · `768cb9a2` taller calculator sheet · `d19a41e6` compile baseline and job logs ·
-`27cfbf80` T3 and the report · and this list.
+`27cfbf80` T3 and the report · `b244012a` this list · merge of `main` (fast-forward to `d5eb4d79`) · the gated E7 published (this section's commit).

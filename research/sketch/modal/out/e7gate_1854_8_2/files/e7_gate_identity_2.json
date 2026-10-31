@@ -1,0 +1,210 @@
+{
+ "shard": 2,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 2,
+    "same": true,
+    "text": "There are many genres that are both **strange** (often blending elements of unrelated cultures, languages, or historical er"
+   },
+   {
+    "prompt": 10,
+    "same": true,
+    "text": "Dear Jerry,\n\nI hope this letter finds you well. I wanted to write to you in my heart to express my"
+   },
+   {
+    "prompt": 18,
+    "same": true,
+    "text": "The invention of peanut butter is a fascinating story that blends science, history, and culinary evolution. While the exact origin of"
+   },
+   {
+    "prompt": 26,
+    "same": true,
+    "text": "My heart hammered against my chest like a trapped bird, a frantic, desperate rhythm that I could barely control. I was"
+   },
+   {
+    "prompt": 34,
+    "same": true,
+    "text": "**C**heerful blooms in every garden,\n**H**erbs that grow in every corner,\n"
+   },
+   {
+    "prompt": 42,
+    "same": true,
+    "text": "This tweet is **political**.\n\nThe content explicitly criticizes the current economic system (\"Our economy should be one that helps"
+   },
+   {
+    "prompt": 50,
+    "same": true,
+    "text": "1. The total number of Greeks living outside Greece and Cyprus today is a contentious issue.\n2. Where census figures"
+   },
+   {
+    "prompt": 58,
+    "same": true,
+    "text": "Taking screenshots on a MacBook Air is a straightforward process that works just like on a standard laptop. Here is a step-by"
+   },
+   {
+    "prompt": 66,
+    "same": true,
+    "text": "Here is a comprehensive bullet list of steps to protect your photos and videos from online exposure:\n\n*   **Use Private"
+   },
+   {
+    "prompt": 74,
+    "same": true,
+    "text": "**Title:** The Crust Cracker 5000: A Destructive Dilemma\n**Speaker"
+   },
+   {
+    "prompt": 82,
+    "same": true,
+    "text": "Here are three kid-friendly attractions in Tennessee that are perfect for families:\n\n### 1. The Great Smoky Mountains"
+   },
+   {
+    "prompt": 90,
+    "same": true,
+    "text": "Here are 10 historical World War I locations in Europe that are not in France:\n\n*   **The Battle"
+   },
+   {
+    "prompt": 98,
+    "same": true,
+    "text": "Actors began as performers in touring companies before moving to permanent venues like London theatres. By Shakespeare's death, audiences"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 2,
+    "same": true,
+    "text": "You're asking for a list of obscure music genres. I can't browse the internet to check out specific genres, but"
+   },
+   {
+    "prompt": 10,
+    "same": true,
+    "text": "I'm writing to you, Jerry.\n\nI'm writing to you, Jerry.\n\nI'm writing to you,"
+   },
+   {
+    "prompt": 18,
+    "same": true,
+    "text": "Peanut butter was invented by **John Lennon** in 1963.\n\nHere is the historical context"
+   },
+   {
+    "prompt": 26,
+    "same": true,
+    "text": "I am a plushie, specifically a \"Mega-Soft\" that has been left behind on the floor. My"
+   },
+   {
+    "prompt": 34,
+    "same": true,
+    "text": "A flower that blooms in the dark,\nA flower that blooms in the dark,\nA flower that blooms in the"
+   },
+   {
+    "prompt": 42,
+    "same": true,
+    "text": "This tweet is **non-political**.\n\n**Reasoning:**\n*   **Subject Matter:** The tweet discusses the"
+   },
+   {
+    "prompt": 50,
+    "same": true,
+    "text": "Please note: The user's request is to extract a list of sentences that do not contain citations.\n\nHowever, the"
+   },
+   {
+    "prompt": 58,
+    "same": true,
+    "text": "Taking screenshots on a MacBook Air is straightforward, but there are a few important considerations to keep in mind.\n\n### Step"
+   },
+   {
+    "prompt": 66,
+    "same": true,
+    "text": "Here is a list of actionable steps to keep your digital content safe online:\n\n*   **Use HTTPS (H1"
+   },
+   {
+    "prompt": 74,
+    "same": true,
+    "text": "**Title:** The Crust Cracker 5000: A Dismantled Planetary Cracking Experiment"
+   },
+   {
+    "prompt": 82,
+    "same": true,
+    "text": "Here are 3 kid-friendly attractions in Tennessee, designed to offer fun, educational, and family-friendly experiences:\n\n1"
+   },
+   {
+    "prompt": 90,
+    "same": true,
+    "text": "Here are 10 suggestions for visiting World War I locations in Europe (excluding France):\n\n*   **Mun"
+   },
+   {
+    "prompt": 98,
+    "same": true,
+    "text": "Actors were the first to become famous for their performances. They toured the country to perform in towns and cities and in"
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 306,
+   "padded": 30
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 3,
+    "e7_vs_gate1": 306
+   },
+   "padded": {
+    "stock_vs_gate0": 3,
+    "e7_vs_gate1": 30
+   }
+  }
+ },
+ "seconds": 399
+}

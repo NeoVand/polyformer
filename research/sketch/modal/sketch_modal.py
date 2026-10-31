@@ -45,6 +45,8 @@ def _mount(img):
 
 image = _mount(base)
 image_fast = _mount(base_fast)
+# ONNX Runtime CPU for the graph identity tests (e7_gate_identity.py), as in CHAT's chat_modal.py
+image_cpu = _mount(base.pip_install("onnxruntime==1.31.1", "datasets"))
 
 
 # Patches applied to the scratch copy only (file, old, new). The scripts in research/sketch are never edited.
@@ -55,13 +57,14 @@ PATCHES = [
 ]
 
 
-def _run(job_id: str, cmds: list):
+def _run(job_id: str, cmds: list, dev: str = "cuda"):
     # a fresh scratch copy per job, under its own name: Modal reuses warm containers, and a second job in the same
     # container found the first one's /tmp/work (FileExistsError, 30 Oct)
     work = pathlib.Path(tempfile.mkdtemp(prefix="work-")) / "sketch"
     shutil.copytree("/src/sketch", work)
     patched = []
     for fname, old, new in PATCHES:
+        new = new.replace('"cuda"', f'"{dev}"')
         f = work / fname
         if f.exists() and old in f.read_text():
             f.write_text(f.read_text().replace(old, new))
@@ -143,6 +146,12 @@ def run_l4(job_id: str, cmds: list):
               volumes={"/vol": vol}, retries=0)
 def run_h100_fast(job_id: str, cmds: list):
     return _run(job_id, cmds)
+
+
+@app.function(image=image_cpu, cpu=8.0, memory=(24 * 1024, 48 * 1024), timeout=7200, volumes={"/vol": vol},
+              retries=0)
+def run_cpu(job_id: str, cmds: list):
+    return _run(job_id, cmds, "cpu")
 
 
 @app.function(image=image_fast, gpu="H100", timeout=600, volumes={"/vol": vol})

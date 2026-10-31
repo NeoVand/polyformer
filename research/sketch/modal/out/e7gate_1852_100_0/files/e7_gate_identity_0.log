@@ -1,0 +1,6 @@
+    3.5s staged {"decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364", "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486", "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc", "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99", "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220", "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"}
+   12.1s sessions ready
+   35.2s chat 0: stock_vs_gate0 25/25; e7_vs_gate1 25/25
+   35.3s chat done
+   46.8s rows {'train': 25, 'padded': 0}: stock_vs_gate0 25/25; e7_vs_gate1 25/25
+   47.9s rows done

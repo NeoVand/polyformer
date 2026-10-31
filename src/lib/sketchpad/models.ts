@@ -19,7 +19,7 @@ export const BASE_ID = 'base';
 
 /** The published copy, pinned by commit (the browser caches files by URL, so a new revision never mixes with an old). */
 export const HF_REPO = 'mohsenvand/sketchpad-0.8b-preview';
-export const HF_REVISION = 'ca527a6dfde80c6f209b50e811a656118e9cb5ed';
+export const HF_REVISION = '2df871728a9d24d1e102a327d1f1475457c53962';
 export const HF_ROOT = `https://huggingface.co/${HF_REPO}/resolve/${HF_REVISION}/`;
 export const HF_CARD = `https://huggingface.co/${HF_REPO}`;
 
@@ -64,20 +64,18 @@ export interface SketchModel {
 const GRAPH = 'onnx/decoder_model_merged_fp16.onnx';
 
 /**
- * One adapter for both operations (E6, seed 3; Modal, 30 Oct): 1,795/1,795 table rows on the server, min margin 3.35,
- * perplexity x1.007. Addition is its SUM opcode; multiplication its five ops. A switch reloads nothing. It is the E5
- * union adapter (recipe v2) trained on to answer a multiplier step in one forward pass: the prompt ends `=??` and the
- * three answers are read at `=` and the two slots (research/sketch/e6_slots.py).
+ * One adapter for every operation (E7, seed 3; Modal, 30 Oct; research/sketch/CALC3.md): 2,446/2,446 table rows on
+ * the server, min margin 3.96, perplexity x1.0048. Addition is its SUM opcode, multiplication its five ops, the
+ * calculator's subtraction, quotient guess and its correction three more (SUB, EST, DEC). A switch reloads nothing.
+ * It is the E6 adapter (the multiplier's step in one forward pass: the prompt ends `=??` and the three answers are read
+ * at `=` and the two slots, research/sketch/e6_slots.py) trained on with the calculator's 651 rows.
  * Its graph has a window into itself (research/sketch/patch_onnx_inside.py): an extra `hidden_states` output and a
- * `steer` input that is zero unless a visitor pushes; the folder also holds the lens and map data (inside.ts).
- * Built by research/sketch/build_program.sh (as qwen35-union-e6-s3-inside); published as `arithmetic/`.
- *
- * E7 (research/sketch/CALC3.md) is E6 trained on with the calculator's three tables as well (SUB, EST, DEC: 651 rows,
- * read like the multiplier's steps). Until it is published, the dev page loads it from `arithmetic-e7/` and a build
- * keeps E6, which has no calculator.
+ * `steer` input that is zero unless a visitor pushes; the folder also holds the lens and map data (inside.ts). And a
+ * gate (`lora_gate`, research/sketch/patch_onnx_lora.py): 0 runs stock Qwen3.5-0.8B bit for bit (the chat), 1 the
+ * program. Built by research/sketch/build_program.sh; published as `arithmetic/` (where E6 is up to revision ca527a6).
  */
-export const HAS_CALC = !!import.meta.env?.DEV;
-const UNION = HAS_CALC ? 'arithmetic-e7' : 'arithmetic';
+export const HAS_CALC = true;
+const UNION = 'arithmetic';
 
 export const MODELS: Record<Kind, SketchModel> = {
 	add: {
@@ -87,7 +85,7 @@ export const MODELS: Record<Kind, SketchModel> = {
 		rows: 242,
 		own: [GRAPH],
 		prompts: { 'ADD-FAST': 'SUM' },
-		padded: HAS_CALC
+		padded: true
 	},
 	mul: {
 		kind: 'mul',

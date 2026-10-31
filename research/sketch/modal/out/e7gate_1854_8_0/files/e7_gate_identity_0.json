@@ -1,0 +1,210 @@
+{
+ "shard": 0,
+ "shards": 8,
+ "ort": "1.31.1",
+ "sha256": {
+  "decoder_model_merged_fp16.onnx_data": "5866a20776ba0666ef17c20e23c90ceb0c0e6324b6fad97b1afd393df79d4364",
+  "e7.onnx": "a463b42688b14bf096d58986eeae1f6c4f828b3bf005d095a0b1347710726486",
+  "embed_tokens_q4.onnx": "8773dcf4858f855bfce13def4356ca17e0bc516a477154496b6ffb6dd6d084dc",
+  "embed_tokens_q4.onnx_data": "9210b1d26eb14136d3522584d17da14cc5f4b82b6f5607e6d80d59424a8cbe99",
+  "gated_e7.onnx": "5f83a661cf1e4ff1e23ff2c6d2b684259f3ef639f0962caf7ce8edfa789ac220",
+  "stock.onnx": "f67ae80b140c5b122b8f42753b64d421e7f9cfd8f4b1d64d80a383bf8b193618"
+ },
+ "chat": {
+  "stock_vs_gate0": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 325,
+   "logits_bit": 325,
+   "hidden_bit": 325,
+   "present_bit": 325,
+   "argmax_same": 325,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "chat_extra": {
+  "stock_vs_gate0": [
+   {
+    "prompt": 0,
+    "same": true,
+    "text": "That sounds like a wonderful trip! Since you are visiting for a week with your husband and love walking, eating good food"
+   },
+   {
+    "prompt": 8,
+    "same": true,
+    "text": "The fastest flying bird in the world is the **Bengal tiger** (*Panthera tigris tigr"
+   },
+   {
+    "prompt": 16,
+    "same": true,
+    "text": "**Review: \"Soggy Yellow Spuds\" by Sarah Jenkins**\n\nI've been waiting for this book for"
+   },
+   {
+    "prompt": 24,
+    "same": true,
+    "text": "The Revolutionary War, also known as the American Revolutionary War, lasted from **1775 to 178"
+   },
+   {
+    "prompt": 32,
+    "same": true,
+    "text": "The air in the dungeon didn't smell of rot or damp earth; it smelled of ozone, ancient stone, and something"
+   },
+   {
+    "prompt": 40,
+    "same": true,
+    "text": "She moved to Europe in 1928, where she made movies in the UK and Germany, and later appeared"
+   },
+   {
+    "prompt": 48,
+    "same": true,
+    "text": "**BREAKING NEWS: THE ZOO'S LION IS A LION!**\n\n**LION**\nThe local"
+   },
+   {
+    "prompt": 56,
+    "same": true,
+    "text": "In 1890, the English monarch was **King George V**.\n\nHe reigned from 18"
+   },
+   {
+    "prompt": 64,
+    "same": true,
+    "text": "Here is a 10-question quiz based on the text provided, along with the correct answers.\n\n### **Sch"
+   },
+   {
+    "prompt": 72,
+    "same": true,
+    "text": "Here are four albums that fit your specific criteria: **pop-punk**, **emo**, and **not super mainstream**"
+   },
+   {
+    "prompt": 80,
+    "same": true,
+    "text": "The article highlights a critical need for Indigenous communities to receive upgraded healthcare infrastructure, including specialized clinics, advanced diagnostic technology, and"
+   },
+   {
+    "prompt": 88,
+    "same": true,
+    "text": "Static hums the night,\nA ghost of old,\nAnd silence waits.<|im_end|>\n<|endoftext|><|im_start|>assistant\n<think>"
+   },
+   {
+    "prompt": 96,
+    "same": true,
+    "text": "Based on the text provided, here is a summary of what it says about feeling like a zombie:\n\n*   **"
+   }
+  ],
+  "e7_vs_gate1": [
+   {
+    "prompt": 0,
+    "same": true,
+    "text": "When visiting London for the first time and only for a week, the rain is a major factor. Here are 5"
+   },
+   {
+    "prompt": 8,
+    "same": true,
+    "text": "The fastest flying bird is the **Baldwin's Hornbill** (*Hornbillus baldwini*), which"
+   },
+   {
+    "prompt": 16,
+    "same": true,
+    "text": "**Title:** *Soggy Yellow Spuds: The Fateful Journey of a Sack of Potatoes*\n\n"
+   },
+   {
+    "prompt": 24,
+    "same": true,
+    "text": "The Revolutionary War lasted from 1775 to 1777.\n\nHere is a breakdown of the"
+   },
+   {
+    "prompt": 32,
+    "same": true,
+    "text": "The air in the dungeon was thick with the scent of ozone and ancient stone, a mixture that felt like it was breathing"
+   },
+   {
+    "prompt": 40,
+    "same": true,
+    "text": "She moved to Europe in 1928, where she made movies in the UK and Germany. She made her"
+   },
+   {
+    "prompt": 48,
+    "same": true,
+    "text": "A lion has broken out of the local zoo, causing a major disruption to the local zoo's operations. The lion is"
+   },
+   {
+    "prompt": 56,
+    "same": true,
+    "text": "In 1890, the monarch was **King William IV**.\n\nHe was the last monarch of the United"
+   },
+   {
+    "prompt": 64,
+    "same": true,
+    "text": "Here is a 10-question quiz based on the text provided.\n\n**1. What is the primary goal of"
+   },
+   {
+    "prompt": 72,
+    "same": true,
+    "text": "You're looking for a mix of pop-punk and emo that feels fresh and not \"super mainstream.\" Here are "
+   },
+   {
+    "prompt": 80,
+    "same": true,
+    "text": "The Biden administration's 2022 infrastructure bill provides $13 billion to address the needs of Native American tribes"
+   },
+   {
+    "prompt": 88,
+    "same": true,
+    "text": "Magnetic noise,\nTape hiss,\nTape hiss.<|im_end|>\n<|endoftext|><|im_start|>\n\nMagnetic noise,\n"
+   },
+   {
+    "prompt": 96,
+    "same": true,
+    "text": "Based on the text provided, here is a summary of the key points:\n\n**The Core Problem**\n*  "
+   }
+  ]
+ },
+ "rows": {
+  "stock_vs_gate0": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  },
+  "e7_vs_gate1": {
+   "calls": 336,
+   "logits_bit": 336,
+   "hidden_bit": 336,
+   "present_bit": 336,
+   "argmax_same": 336,
+   "max_logit_diff": 0.0,
+   "max_hidden_diff": 0.0,
+   "first_diff": null
+  }
+ },
+ "rows_extra": {
+  "rows": {
+   "train": 306,
+   "padded": 30
+  },
+  "argmax_right_at_every_answer_place": {
+   "train": {
+    "stock_vs_gate0": 0,
+    "e7_vs_gate1": 306
+   },
+   "padded": {
+    "stock_vs_gate0": 3,
+    "e7_vs_gate1": 30
+   }
+  }
+ },
+ "seconds": 276
+}
