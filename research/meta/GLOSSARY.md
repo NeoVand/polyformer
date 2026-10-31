@@ -474,3 +474,102 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   cannot change the answer, which lets every step be padded to one batch.
 - **FP8.** Eight-bit floating point for weights; halves the memory of 16-bit. Why: the 27B baseline ran as the FP8
   release because the 16-bit model held only 8 long replies on one H100.
+
+## Round 7 (31 Oct, Neo's integration idea)
+
+- **Knowledge disintegration (Neo's phrase).** A model knows field A and field B separately and never notices that a
+  structure in A is the same as one in B. The measurable version is the two-hop curse below. It matters because every
+  dead end of this project was a known idea under another name that nobody in the loop connected.
+- **Two-hop curse** (Balesni, Korbak, Evans, 2024; v4 Nov 2025, arXiv 2411.16353). Fine-tuned models that learn
+  "A→B" and "B→C" in separate documents answer "A→C" at chance without chain of thought, despite perfect recall of each
+  fact; composition works when the facts co-occur in one document or one prompt, or when one fact came from
+  pretraining. Why it matters: it is the laboratory form of disintegration, and it predicts that training data for
+  integration must put both halves and the bridge in the same text.
+- **Structure-mapping theory** (Gentner, 1983). An analogy is a mapping of relations, not of surface attributes: the
+  atom is like the solar system because "orbits" maps to "orbits", not because both are round. Why it matters: a
+  cross-field connection worth training on must name the correspondences relation by relation; metaphors do not count.
+- **Rosetta Stone paper** (Baez & Stay, 2009, "Physics, Topology, Logic and Computation"). One table that identifies
+  the same structure (a monoidal category) in four fields, term by term. Why it matters: it is the gold-standard shape
+  of an integrative statement, and the shape our data generator should force. `[zoo]`
+- **Literature-based discovery, Swanson's ABC model** (Swanson, 1986). Literature 1 links A to B, literature 2 links B
+  to C, nobody has written A–C; Swanson found fish oil for Raynaud's syndrome this way. Why it matters: a 40-year-old
+  field with its own tools (Arrowsmith) for exactly the connections Neo wants to distil; the model-internal version of
+  the gap is the two-hop curse. `[zoo]`
+- **Consilience** (Whewell, 1840; E. O. Wilson, 1998). The jumping-together of knowledge from separate fields into one
+  explanation. Why it matters: the oldest name for the goal, and a usable project name.
+- **SCAMPER** (Eberle, 1971). A brainstorming checklist: Substitute, Combine, Adapt, Modify, Put to other use,
+  Eliminate, Reverse. Why it matters: Neo proposed it as a hidden prompt generator; it produces surface variations, so
+  it needs structure mapping on top to yield deep connections.
+- **IsoSci** (arXiv 2607.01431, July 2026). A benchmark of science-problem pairs with the same logical structure and
+  different domain knowledge; 91.3% of "reasoning mode" gains were knowledge-dependent, not structure-invariant. Why it
+  matters: the closest existing benchmark to "same structure, different field"; it tests solving, not recognising the
+  identity, which is the gap we would fill.
+- **SCAR** (EMNLP 2023), **IDRBench** (arXiv 2507.15736, July 2025), **CHIMERA**, **Idea-Catalyst** (arXiv 2603.12226,
+  2026). Respectively: 400 scientific analogies across 13 fields posed as structure abduction; an interdisciplinary
+  research benchmark (paper identification, idea integration, recommendation) on which ten frontier models were
+  "rudimentary"; a dataset of inspiration relations between source and target domains in papers; a framework that
+  generates interdisciplinary idea fragments from external source domains. Why they matter: the field Neo's idea
+  belongs to already has datasets and a benchmark that says frontier is weak; we build on them, not beside them.
+- **CreativityNeuro** (arXiv 2607.01433, ICML 2026). Data-free steering of model weights that raises Divergent
+  Association Task scores by up to 14 human percentile points and reduces mode collapse; activation steering matched it
+  on that task but did not transfer to others. Why it matters: "creativity steering" is taken for divergent word
+  association; steering for structure-level integration across fields is not shown, and this paper's method is the
+  template for our nudge.
+- **Mode collapse / typicality bias; verbalized sampling** (Zhang et al., Oct 2025). Preference tuning favours typical
+  answers, so aligned models lose diversity; asking for a distribution of answers with probabilities restores much of
+  it at inference time. Why it matters: a frontier model asked for cross-field ideas gives its mode; the prompts that
+  collect our data must defeat this.
+- **Unknown-fact fine-tuning** (Gekhman et al., 2024). Fine-tuning on facts the model does not already hold is learned
+  slowly and raises hallucination. Why it matters: Neo's "low-likelihood sentences" are exactly this regime; the safe
+  version trains the bridge between facts the model already has, not new facts.
+- **Complementary learning systems; sleep and insight** (McClelland, McNaughton & O'Reilly, 1995; Wagner et al.,
+  Nature 2004). The brain stores episodes fast in the hippocampus and integrates them slowly into cortex during replay
+  in sleep; a night's sleep doubled the rate of insight on a hidden-rule task. Why it matters: the brain-like framing
+  of integration training is interleaved replay of remote pairs; the model has never slept. `[zoo]`
+- **Atypical combinations** (Uzzi, Mukherjee, Stringer & Jones, Science 2013). The highest-impact papers combine
+  mostly conventional prior work with a tail of unusual combinations. Why it matters: a quantitative prior on which
+  connections are worth generating: mostly-conventional with one remote jump.
+- **Disguise-and-recover (ours, 31 Oct).** Take a known cross-field identity, re-describe one half in alien vocabulary
+  with renamed symbols, and ask the model to name the other half and transfer one theorem; the identity is known, so
+  the reward is checkable. Why it matters: a verifiable self-supervised objective for integration with no frontier
+  distillation, and a held-out test of whether the skill transfers to unseen identities. `[zoo]`
+- **Bridge surprisal (ours, 31 Oct).** The model's surprise at the token where the second field is named in a true
+  connection statement. Why it matters: a one-number measure of disintegration per statement, and of whether training
+  or steering lowered it on held-out bridges. `[zoo]`
+- **Nerode for concepts (ours, 31 Oct).** Two descriptions are the same concept if they license the same inferences;
+  train representations of such pairs to coincide, the way our metric loss pulled together states of one automaton.
+  Why it matters: the project's quotient theory, reused one level up, as a candidate objective for integration. `[zoo]`
+- **ALIAS (ours, 31 Oct; name provisional).** The benchmark in CONSILIENCE.md: a documented cross-field identity, one
+  half disguised (relations kept, every surface cue of the field removed), the model names the other half and judges a
+  true versus a false theorem rendered in the disguised vocabulary. Why it matters: it turns recall of two facts into
+  recognition of one structure, with a checkable answer. `[zoo]`
+- **Faithfulness check, leak check (ours).** Two automatic tests of a disguise: a second model confirms the relational
+  content is unchanged; no token from the source field's stoplist survives. Why: a leaky disguise measures recall, a
+  distorted one measures nothing.
+- **Obscurity stratum (ours).** Famous / known / obscure, by how many open models state the identity unprompted. Why:
+  recovering only famous identities is memorised sentences, not integrated structure.
+- **SCAR** (Yuan, Chen et al., arXiv 2305.12660, 2023). 400 scientific analogies across 13 fields; the model maps
+  concepts between two *named* systems; GPT-4 58.5% system accuracy (64.0% with background and one shot), humans 83.4%.
+  Why it matters: the nearest benchmark; ALIAS removes one system's name and asks for it.
+- **AnalogyKB** (Yuan, Chen et al., ACL 2024, arXiv 2305.05994). A million analogies derived from knowledge graphs;
+  fine-tuning on them improved analogy recognition and generation. Why it matters: precedent that analogy skill is
+  trainable; it has no disguise, no theorems and no checkable reward.
+- **Counterfactual analogy tasks** (Lewis & Mitchell, 2024). Analogy problems rewritten in unfamiliar alphabets or
+  symbol sets; humans held steady, GPT models fell sharply (contested by Webb et al. 2024). Why it matters: our disguise
+  is their perturbation applied to real scientific knowledge.
+- **GSM-Symbolic** (Mirzadeh et al., arXiv 2410.05229, 2024). Templated GSM8K variants; renaming people moved scores
+  0.3–9 points, changing numbers or adding clauses moved them far more. Why it matters: renaming alone is a shallow
+  disguise; ALIAS needs the deep one.
+- **RLSVR** (arXiv 2607.23802, 2026). Reinforcement learning with self-verifiable rewards: wrap an open-ended task in a
+  game ("Who is the spy?") whose outcome is checkable, then train with self-play. Why it matters: the disguise is our
+  game; the identity being known is what makes the reward verifiable.
+- **Wilson interval.** The standard confidence interval for a proportion; about ±10 points at 100 items, ±5.5 at 300.
+  Why: it sets which differences on ALIAS are claims.
+
+## Added 31 Oct (the paper's equations and proofs appendix)
+
+- **Token form (of the sheet theorems).** The Lean version of a theorem in which the machine's state is a single token
+  and each step reads one state token and one event token after a fixed prompt (`Pinned.lean`). The sheet form
+  (`Sheet.lean`) lets the state be a whole configuration that the model sees only through a view. Why it matters:
+  Theorem 1 is proved in Lean in both forms, but the run-level parts of Theorems 3 and 4 only in the token form; for the
+  sheet they follow from the same general lemmas, which the paper's Appendix A now says.
