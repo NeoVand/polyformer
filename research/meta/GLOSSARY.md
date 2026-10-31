@@ -578,3 +578,43 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   date, model and certificate revisions, file hashes). After the visitor loads the model, Live becomes the default and
   the visitor's own run replaces the recording in place. Why it matters: it answers Neo's objection that empty
   placeholders made the demo look broken, and no number is presented as computed when it isn't.
+
+## Added 31 Oct (arXiv submission of the Sketchpad paper)
+
+- **pdfLaTeX vs XeLaTeX (and tectonic, fontspec).** Two engines that turn a `.tex` file into a PDF. pdfLaTeX is the
+  classic one and reads 8-bit text, so every special character (−, ×, ö) must be spelled as a LaTeX command; XeLaTeX
+  reads Unicode directly and loads system fonts through the `fontspec` package. tectonic is a self-contained XeLaTeX
+  build we use locally. Why it matters: arXiv compiles with pdfLaTeX from TeX Live, so the paper needs a second build
+  (`node paper/build-tex.ts --arxiv`) that writes a plain-ASCII `main.tex` with no fontspec.
+- **`.bbl` / `thebibliography`.** A `.bbl` is the bibliography file BibTeX writes for LaTeX to read; `thebibliography`
+  is the same list written inline in the `.tex`. Why it matters: arXiv does not run BibTeX for you reliably; our
+  generator already writes the references inline, so the upload needs no `.bbl`.
+- **Overfull box.** LaTeX's warning that a line or block sticks out past the margin by some number of points (1 pt ≈
+  0.35 mm). Why it matters: the arXiv build is accepted only with none over 10 pt.
+- **arXiv primary category and cross-list.** Every arXiv paper has one home category (where it is announced and
+  moderated, e.g. cs.LG, machine learning) and may be cross-listed to a few others (cs.CL, computation and language;
+  cs.LO, logic in computer science) so it also appears in their daily listings. Why it matters: it decides who sees the
+  Sketchpad paper on the day it appears.
+- **arXiv licence (CC BY 4.0 vs arXiv non-exclusive).** The licence chosen at submission sets what others may do with the
+  PDF. CC BY 4.0 lets anyone copy and redistribute with attribution; the default arXiv licence lets only arXiv
+  distribute it. It cannot later be made more restrictive. Why it matters: Neo chooses it at upload; journals generally
+  accept preprints under either, but the target venue's policy should be checked.
+- **arXiv endorsement.** A first-time submitter to a category may need an existing arXiv author in that category to
+  vouch for them before the paper is accepted for moderation. Why it matters: if Neo's account has not posted to cs.LG,
+  the upload may pause for an endorser.
+- **Activated LoRA (aLoRA)** (Greenewald et al., IBM, arXiv 2504.12397, 2025). A LoRA adapter applied only to tokens
+  after the point where it is invoked, so the base model's cache for earlier tokens is reused unchanged. Why it matters:
+  the closest prior mechanism to switching the Sketchpad gate on within a reply; the paper should cite it. [zoo]
+- **Modality-gated deep adapters** (Tonmoy et al., arXiv 2609.26182, Aug 2026). Adapter packs that run only while one
+  modality (audio, thermal) is being encoded; every other input passes through the frozen base model bit for bit,
+  checked by exact-equality tests. Why it matters: the same kind of exact-preservation claim as the Sketchpad gate.
+- **MDL network** (Lan, Geyer, Chemla, Katzir, TACL 2022). A small network trained to minimise its minimum description
+  length (size of the network plus the cost of its errors), simple enough to be proved correct by hand, e.g. exact
+  addition for inputs of any length. Why it matters: prior proved-exact learned arithmetic; it weakens the paper's
+  phrase "rather than estimating it".
+- **Compact proof / brute-force proof** (Gross et al., NeurIPS 2024). A computer-checked proof of a trained network's
+  accuracy; the brute-force kind runs every possible input. Why it matters: verification of a trained transformer by
+  enumeration, but at one fixed input size, where Sketchpad's finite view set covers every length. [zoo]
+- **Neural Programmer-Interpreter (NPI)** (Reed & de Freitas, ICLR 2016). A recurrent network that learns programs such
+  as grade-school addition, one step at a time on a scratch pad read through movable pointers. Why it matters: the
+  direct ancestor of the sheet machine, and the setting Cai et al. 2017 verified; the paper does not yet cite it.
