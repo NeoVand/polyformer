@@ -571,8 +571,14 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **Token form (of the sheet theorems).** The Lean version of a theorem in which the machine's state is a single token
   and each step reads one state token and one event token after a fixed prompt (`Pinned.lean`). The sheet form
   (`Sheet.lean`) lets the state be a whole configuration that the model sees only through a view. Why it matters:
-  Theorem 1 is proved in Lean in both forms, but the run-level parts of Theorems 3 and 4 only in the token form; for the
-  sheet they follow from the same general lemmas, which the paper's Appendix A now says.
+  since 31 Oct evening Theorems 1, 3b and 4 are all proved in Lean in both forms (`sheet_certified`,
+  `sheet_error_bound`, `sheet_exact_of_close`); before that, 3b and 4 existed only in the token form.
+- **Execution path (Theorem 4).** The computation that actually runs at deployment (device, kernel, batch, cache),
+  whose logits at step t may differ from the certified ones by up to τ and may change from step to step. Why: Theorem 4
+  says the run is still exact if every certified margin exceeds 2τ; the Lean sheet form is `sheet_exact_of_close`.
+- **Lean `alias` (`paper/lean/Paper.lean`).** A second name for an already-proved Lean theorem, with the same statement
+  and proof. Why: the paper cites `Sketchpad.Paper.theorem1_sheet`, `lemma3` and so on under its own numbering, while
+  the underlying names (such as `theorem8a_counterexample`) keep their history.
 - **Recorded / Live switch (sketchpad demo, 31 Oct 2026).** Every tab opens by replaying a real run recorded on an
   Apple M4 with the published model. Its outputs, timings and inside readouts are stored with their provenance (device,
   date, model and certificate revisions, file hashes). After the visitor loads the model, Live becomes the default and
@@ -618,3 +624,60 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **Neural Programmer-Interpreter (NPI)** (Reed & de Freitas, ICLR 2016). A recurrent network that learns programs such
   as grade-school addition, one step at a time on a scratch pad read through movable pointers. Why it matters: the
   direct ancestor of the sheet machine, and the setting Cai et al. 2017 verified; the paper does not yet cite it.
+- **Few-shot (in-context) prompting** (Brown et al. 2020, GPT-3). Put k solved examples in the prompt before the
+  question, with no weight change, and let the model copy the pattern; "8-shot" means eight examples. Why it matters:
+  the reviewer's control for Sketchpad (31 Oct) asks whether the unadapted base model can already do the step tables
+  from examples alone; if it could, the adapter would not be needed.
+- **Teacher forcing.** Score a multi-token answer by feeding the model the *correct* earlier tokens and reading its
+  prediction for the next one, instead of feeding back its own guesses. If every teacher-forced margin is positive,
+  greedy decoding writes exactly the right answer. Why it matters: E4/E5 were certified this way; E6/E7 read all three
+  answers at once at the `=??` slots, and the base-model control reports both readings.
+- **Batch perturbation (τ_batch).** How far a view's logits move when the GPU computes it in a batch with other views
+  instead of alone; fp16 shaders pick different tilings and summation orders for different batch shapes. Why it
+  matters: the Sketchpad certificate is measured one view at a time, but inference batches up to 32, so Theorem 4 needs
+  this movement to stay below half the smallest margin. The deep review (31 Oct 2026) asked for it; measured on the M4.
+- **Fisher discriminant directions (shrinkage LDA).** The directions in a state space along which class means are far
+  apart relative to the spread inside each class; "shrinkage" blends the within-class covariance with the identity so
+  it can be inverted in 1,024 dimensions. Why it matters: Fig. 6b of the Sketchpad paper projects final-layer states on
+  three such directions, and its 95.5% nearest-centre share is measured in that 3-D slice, not the full space.
+- **Spot check of a polynomial identity.** Checking that two polynomials agree at a few chosen points. Two different
+  polynomials of degree D can agree at up to D points, so a spot check is not a proof unless it uses D + 1 points (or one
+  point beyond a coefficient bound). Why it matters: the algebra checks expansions at x = 1 by default, which catches any
+  single wrong coefficient but not errors that cancel there; the paper now says so.
+- **Square-free part / reduced radical.** Writing √D as s√m with m having no square factor (e.g. √12 = 2√3). Why it
+  matters: the algebra reduces radicals by trial division with primes up to 47, so it is fully reduced only for
+  discriminants below 53² = 2,809; Vieta's check verifies the values, not the reduced form.
+- **Vendoring.** Copying a dependency's source files into one's own repository so it builds without the other
+  repository. Why it matters: the Sketchpad Lean proofs lived on a branch of the polyformer repository (`lean-p`); they are now in the
+  Sketchpad repository's `paper/lean/`, so a reader can build them.
+- **Nature article format (main text, Methods, Extended Data).** A short main text (untitled introduction, results
+  sections with declarative headings, a Discussion), then Methods with the procedures and related work, then Extended
+  Data figures and tables. Why it matters: the Sketchpad paper uses this shape; AlphaGeometry, FunSearch, AlphaDev and
+  AlphaProof all put related work in Methods and end the main text with a Discussion, not a Limitations list
+  (STYLE.md, 31 Oct 2026).
+- **AlphaGeometry** (Trinh et al., Nature 2024). A language model proposes auxiliary constructions and a symbolic
+  engine does the deduction; trained on 100 million synthetic proofs, it solved 25 of 30 olympiad geometry problems.
+  Why it matters: a model of how to write a neuro-symbolic Nature paper, scope stated once in the approach paragraph.
+- **FunSearch** (Romera-Paredes et al., Nature 2023). An LLM proposes programs and an automatic evaluator scores them in
+  an evolutionary loop; found new cap-set constructions. Why it matters: the evaluator guards against confabulation, the
+  same division of labour as our runtime and certified steps; its paper states scope as conditions in the Discussion.
+- **AlphaDev** (Mankowitz et al., Nature 2023). Reinforcement learning over assembly instructions found shorter sorting
+  routines, merged into LLVM's libc++. Why it matters: correctness is built into the problem (the reward), so the paper
+  states it as a property, not as a list of checks.
+- **AlphaProof** (Hubert et al., Nature 2025). AlphaZero-style RL that finds Lean proofs; with AlphaGeometry 2 it scored
+  silver-medal level at IMO 2024. Why it matters: caveats (multi-day compute) appear as clauses inside result sentences.
+- **Abacus embeddings** (McLeish et al., NeurIPS 2024). A positional embedding that gives each digit its place within
+  its number; transformers trained on 20-digit addition reach about 99% on 100-digit. Why it matters: the strongest
+  sampled-accuracy route to long arithmetic, with no guarantee for unseen inputs.
+- **RASP-L conjecture** (Zhou et al., ICLR 2024). Transformers tend to length-generalise on a task when a short program
+  in RASP-L, a restricted language of transformer-like operations, solves it at every length. Why it matters: an
+  explanation of when sampled length generalisation works, where we certify instead.
+- **Position coupling** (Cho et al. 2024, 2025). Giving the same position ID to tokens that play the same role, such as
+  digits of equal significance, so a transformer extrapolates arithmetic to longer inputs. Why it matters: another
+  sampled-accuracy route; its 2025 scratchpad makes each step read a constant number of tokens, close to our view.
+- **PENCIL** (Yang et al. 2025). Chain of thought with a reduction rule that erases finished sub-computations from the
+  context, keeping memory proportional to space, not time. Why it matters: a context discipline like our pinned policy,
+  but without a finite certificate. [zoo]
+- **Inductive scratchpad / globality barrier** (Abbe et al., NeurIPS 2024). Targets that need many tokens at once are
+  hard to learn; a scratchpad whose each step depends only on the previous state and the input generalises in length.
+  Why it matters: the paper cites it as resembling our pinned context discipline. [zoo]

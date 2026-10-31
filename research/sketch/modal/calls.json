@@ -622,5 +622,30 @@
    ]
   ],
   "spawned": "2026-10-30 18:54:15 CDT"
+ },
+ "basectl_1825": {
+  "call_id": "fc-01M6A4GCN32P9ETY3X7M8RBKVB",
+  "cmds": [
+   [
+    "python",
+    "base_control.py",
+    "/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont",
+    "base_control.json"
+   ]
+  ],
+  "spawned": "2026-10-31 18:25:22 CDT"
+ },
+ "steersweep_1825": {
+  "call_id": "fc-01M6A4GDAXDT4AKA95NSHJR59Q",
+  "cmds": [
+   [
+    "python",
+    "steer_sweep.py",
+    "/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont",
+    "/vol/atlas/e7_states_m4_4450ea06.npy",
+    "steer_e7_sweep.json"
+   ]
+  ],
+  "spawned": "2026-10-31 18:25:22 CDT"
  }
 }

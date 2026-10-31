@@ -4,6 +4,8 @@ the runs survive the laptop sleeping; see memory note modal-detach-gotcha).
   uvx --with modal python launch.py e4 <seed> [steps=800] [kl=1.0] [gpu=h100|l4]   # train then eval
   uvx --with modal python launch.py smoke                                           # image/paths/weights check
   uvx --with modal python launch.py e7gate [shards=8] [k]                         # the gate on E7, ORT CPU shards
+  uvx --with modal python launch.py basectl                                         # base-model control + E7 sanity
+  uvx --with modal python launch.py steersweep [first] [last]                       # E7 push sweep over depths
   uvx --with modal python launch.py status                                          # poll recorded calls
 """
 import json
@@ -16,6 +18,8 @@ import modal
 APP = "polyformer-sketch"
 CALLS = pathlib.Path(__file__).parent / "calls.json"
 E6_S3 = "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"  # the shipped adapter
+E7 = "/vol/runs/e7_s3_4000_h4.0_stop3.0_fast/files/e7_adapter_s3_h4_v2_cont"
+E7_STATES_M4 = "/vol/atlas/e7_states_m4_4450ea06.npy"  # E7's build states (1,795 rows) behind steer_digit.json (CALC3.md)
 
 
 def record(job, call, cmds):
@@ -105,6 +109,14 @@ def main(argv):
             job = f"e7gate_{stamp}_{n}_{k}"
             cmds = [["python", "e7_gate_identity.py", "/vol/onnx_e7", str(k), str(n)]]
             record(job, modal.Function.from_name(APP, "run_cpu").spawn(job, cmds), cmds)
+    elif argv[0] == "basectl":  # basectl: base model on the 2,446 views, zero- and 8-shot, E7 sanity first (paper review)
+        job = "basectl" + time.strftime("_%H%M")
+        cmds = [["python", "base_control.py", E7, "base_control.json"]]
+        record(job, modal.Function.from_name(APP, "ctrl_h100_fast").spawn(job, cmds), cmds)
+    elif argv[0] == "steersweep":  # steersweep [first=1] [last=23]: E7's class-mean push at each depth (paper review)
+        job = "steersweep" + time.strftime("_%H%M")
+        cmds = [["python", "steer_sweep.py", E7, E7_STATES_M4, "steer_e7_sweep.json"] + argv[1:3]]
+        record(job, modal.Function.from_name(APP, "ctrl_h100_fast").spawn(job, cmds), cmds)
     elif argv[0] == "compile":  # compile [adapter dir on the volume]: the compile_baseline.py rates, base then adapter
         job = "compile_baseline" + time.strftime("_%H%M")
         init = argv[1] if len(argv) > 1 else "/vol/runs/e6_s3_3000_h4.0_stop3.0_fast/files/e6_adapter_s3_h4_v2_cont"

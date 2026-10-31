@@ -154,6 +154,15 @@ def run_cpu(job_id: str, cmds: list):
     return _run(job_id, cmds, "cpu")
 
 
+@app.function(image=image_fast, gpu="H100", cpu=(2.0, 8.0), memory=(16 * 1024, 64 * 1024), timeout=3600,
+              volumes={"/vol": vol}, retries=0)
+def ctrl_h100_fast(job_id: str, cmds: list):
+    """Paper-review controls (31 Oct 2026; base_control.py, steer_sweep.py): run_h100_fast with the volume reloaded first,
+    so a warm container sees files put on the volume after it started (CHAT's gotcha, 30 Oct)."""
+    vol.reload()
+    return _run(job_id, cmds)
+
+
 @app.function(image=image_fast, gpu="H100", timeout=600, volumes={"/vol": vol})
 def smoke_fast():
     return _run("smoke_fast", [["python", "-c",
