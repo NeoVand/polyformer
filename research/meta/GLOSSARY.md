@@ -681,3 +681,62 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
 - **Inductive scratchpad / globality barrier** (Abbe et al., NeurIPS 2024). Targets that need many tokens at once are
   hard to learn; a scratchpad whose each step depends only on the previous state and the input generalises in length.
   Why it matters: the paper cites it as resembling our pinned context discipline. [zoo]
+- **ICML / NeurIPS main track.** The two largest machine-learning conferences. Each takes 8–9-page papers once a year,
+  reviewed by 3–4 anonymous researchers; ICML's deadline is usually late January and NeurIPS's mid-May. Why it
+  matters: the natural home for the Sketchpad paper's mix of theorem, system and measurement, and the audience Neo
+  wants to reach.
+- **Nature Machine Intelligence (NMI).** The Nature group's monthly machine-learning journal. It uses the same format
+  as our draft (main text, Methods, Extended Data), and an editor screens each paper before review. Why it matters:
+  it is the journal option that needs the least reformatting, but it is slower than a conference.
+- **TMLR (Transactions on Machine Learning Research).** A rolling-submission ML journal that reviews for correctness
+  and clarity rather than for novelty or impact, and usually decides in 2–4 months. Why it matters: a dependable
+  fallback that does not depend on a conference cycle.
+- **Desk rejection.** An editor or programme chair declines a paper without sending it to reviewers, for scope, format
+  or perceived significance. Why it matters: it is the main risk at Nature-family journals.
+- **Lag system.** A string-rewriting machine: it reads the first few symbols of a string, drops one and appends a
+  fixed word chosen by a rule table. Some tables (U(15,2)) are universal, so simulating one simulates any computer.
+  Why it matters: Schuurmans 2024 and Lewandowski 2026 certify a language model by checking every rule of such a
+  table with the string kept outside the model, so their policy is pinned like Sketchpad's and their extension to all
+  inputs is a theorem. The honest distinction from Sketchpad is the certificate's quality (logit margins in the
+  deployment numerics, open weights bound by hash, recomputable on the device) and a trained small model, not the
+  logic; their claim is universal computation, ours arithmetic.
+- **Lookup-table objection.** The reviewer's point that a network certified on a finite set of views does only what a
+  table of those views would do, and more slowly. Why it matters: it is the first objection an editor raises to
+  Sketchpad; the answer must be that the same weights are the chat model and the guarantee is on the trained
+  network, not that the arithmetic itself is useful.
+- **Perspective (Nature journals).** An article type for argued viewpoints rather than new results, peer reviewed but
+  judged on the argument. Why it matters: the NMI 2025 Ito et al. paper on algorithmic generalisation is a
+  Perspective, so it shows NMI's interest in the topic without setting the bar for an Article.
+- **Nature Communications (NC).** Springer Nature's broad open-access journal, one tier below Nature and the Nature
+  research journals; it accepts specialist advances when complete and reproducible (acceptance rate about 8–10%).
+  Why it matters: the venue with the better odds for Sketchpad as it stands (about 20% overall by Fable's estimate),
+  against about 7–8% at Nature Machine Intelligence.
+- **DNAR (Discrete Neural Algorithmic Reasoning).** Rodionov and Prokhorenkova, ICML 2025. A neural reasoner forced to
+  pass through finite predefined states, trained on state transitions, so that checking every transition proves the
+  learned algorithm correct "for any test data" (sorting, BFS, shortest paths). Why it matters: it is Sketchpad's
+  Theorem 1 applied to CLRS algorithms on a from-scratch network, so it pre-empts a "second certified family" upgrade
+  and must be cited in the paper with the distinction stated (pretrained model, floating-point device certificate,
+  necessity theorem, composition).
+- **Retrieval-augmented generation (RAG).** A language model answers from passages fetched out of a document store by
+  a separate search step, usually nearest neighbours in an embedding space. Why it matters: "certify retrieval" can
+  mean certifying that search step, the model's use of the fetched text, or recall from its own weights. Each has a
+  different answer (Neo's question, 31 Oct 2026).
+- **Needle in a haystack.** A test that hides one fact (the needle) in a long context and asks the model to retrieve
+  it, repeated at growing lengths. Why it matters: models degrade as the context grows. The mechanism is the one in
+  Sketchpad's Theorem 2: attention spread over more tokens dilutes the needle's signal.
+- **Attention dilution.** Softmax attention normalises over all tokens. A fixed score gap between the right key and n
+  wrong keys therefore gives the right key a weight that shrinks roughly like 1/n. Exact retrieval at length n needs a
+  gap that grows like log n. Why it matters: it is why finite testing cannot certify full-attention retrieval at all
+  lengths, and why fixes such as scalable softmax scale the scores with log n. [zoo]
+- **Scalable softmax (SSMax)** (Nakanishi, 2025). Multiplies attention scores by s·log n, where n is the context
+  length, so attention stays focused as contexts grow. Why it matters: the standard architectural answer to dilution;
+  it can be analysed per head but does not by itself certify a trained deep model.
+- **Certifying algorithm** (McConnell, Mehlhorn, Näher and Schweitzer, 2011). An algorithm that returns, with its
+  answer, a witness that a simple checker can verify, e.g. the position of a found key, or a factorisation alongside
+  "not prime". Why it matters: when checking is cheap, a witness plus a checker gives a guarantee per answer without
+  certifying the model at all. This is the main competitor to certifying a neural retriever. [zoo]
+- **Test-set reuse (adaptive overfitting).** Trying several candidates on the same benchmark items and keeping the
+  best inflates its score, because part of its lead is luck on those items. The fix is a fresh, untouched set of items
+  for the chosen candidate. Why it matters: the Sketchpad dialogue adapter was the fifth candidate scored on the same
+  250 GSM8K and 500 MMLU items. Scoring it on the 1,069 unused GSM8K test problems and unused MMLU questions (about $5)
+  removes the objection.
