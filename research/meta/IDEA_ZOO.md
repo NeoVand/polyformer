@@ -56,5 +56,3 @@ that triple, ad hoc, in `research/audit/*/out.md`.
 Every dead end this project hit in October was an existing node with a missing edge: Lewandowski's harness, Brandoit's
 contract-and-separate, Meridian's coprocessor, Neural GPU's local rule. A graph with those edges and a gate that walks
 it would have turned four weeks into four days. The product is not the content; it is the edges and the gate.
-EOF
-echo wrote IDEA_ZOO.md

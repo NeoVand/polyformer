@@ -884,3 +884,16 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   weights. It separates "saving parameters by reusing a layer" from "gaining from a cubic interaction". Why it
   matters: the audit says Feynman attention's 62k-versus-154k result needs it before the gain can be credited to
   the cubic term.
+- **Emergent misalignment (Betley et al., Nature 2026).** Fine-tuning a model on one narrow bad behaviour (writing
+  insecure code) made it behave badly in unrelated conversations. Why it matters: it is a Nature paper about a
+  surprising *fine-tuning phenomenon* found with modest compute, close to Neo's skills. Our pinned-view gate is a
+  construction where such spill-over is provably confined.
+- **Subliminal learning (Cloud et al., Nature 2026).** A student model fine-tuned on a teacher's outputs, even plain
+  number sequences, picked up the teacher's traits, and the paper gives a conditional mathematical explanation. Why
+  it matters: it is the same template, a fine-tuning phenomenon plus theory.
+- **Identifiability.** Whether the available observations can tell competing explanations apart at all. Why it
+  matters: it is the core of the memo's direction 2. Nerode's "same futures" gives an exact test of when two models
+  are observationally identical.
+- **Sentence processing (psycholinguistics).** The study of how people read and understand sentences word by word,
+  measured with reading times and eye tracking. Why it matters: it is the field of the memo's top direction. Nerode
+  classes would say which grammatical distinctions a reader must keep in memory.
