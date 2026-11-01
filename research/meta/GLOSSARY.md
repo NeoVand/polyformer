@@ -837,3 +837,50 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   shift has strictly smaller entropy. So if a system never leaves the target shift and matches its entropy, it is the
   whole shift. Why it matters: it is a possible certificate that a generator produces all of a target language, not
   just legal strings. [zoo]
+
+## Added 1 Nov (the "young Chomsky with LLMs" question, `research/meta/survive/chomsky_gate_report.md`)
+
+- **Distributional analysis and discovery procedures (Zellig Harris, 1951–1954).** Chomsky's teacher held that
+  linguistic categories can be found mechanically: two words or phrases belong to the same category when they occur in
+  the same contexts. A *discovery procedure* is an algorithm that would derive a grammar from data this way. Why it
+  matters: it is Myhill's two-sided congruence in linguists' terms. In *Syntactic Structures* (1957) Chomsky set
+  discovery procedures aside as too demanding a goal for linguistics; he did not prove them impossible. [zoo]
+- **Distributional learning and the syntactic concept lattice (Alexander Clark, 2007–2015).** Formal learning theory
+  that makes Harris precise. Context-free grammars whose substrings are substitutable can be learned from examples
+  (Clark and Eyraud, JMLR 2007), and richer grammars can be learned with membership queries ("is this sentence
+  acceptable?"). The categories form a lattice linking sets of strings with sets of contexts. Why it matters: these
+  learners need an informant that can be asked millions of questions, and an LLM is one.
+- **Acceptability judgments and minimal pairs.** Linguists' data: a speaker rates whether a sentence is acceptable.
+  A minimal pair is two sentences that differ in one place ("the keys are" / "the keys is"). Sprouse, Schütze and
+  Almeida (Lingua 2013) re-tested about 150 textbook judgments with naive speakers and found most of them replicate.
+  Why it matters: such judgments are the only way to calibrate an LLM as an informant.
+- **Probability is not grammaticality (Hu, Wilcox, Song, Mahowald and Levy, TACL 2026).** Across 280,000
+  English/Chinese pairs, an LM's string probability mixes how grammatical a sentence is with how likely its meaning
+  is. Why it matters: it is the most dangerous paper for an LLM informant. Membership must come from meaning-matched
+  minimal pairs, not from a raw probability threshold.
+- **Impossible languages (Kallini et al., ACL 2024; Moro; Musso et al., Nature Neuroscience 2003).** Made-up
+  languages that break rules no human language breaks, for example placing a marker by counting words. The brain's
+  language areas respond differently to them, and GPT-2 learns some of them less efficiently than English. Why it
+  matters: they are the central test in the current LLM-versus-Chomsky debate.
+- **Star-free languages and transformers (Yang, Chiang and Angluin, NeurIPS 2024).** Languages definable without
+  counting modulo a number; equivalently, their syntactic monoid contains no group (McNaughton–Papert, Schützenberger).
+  Masked hard-attention transformers recognise exactly these. Why it matters: it ties the algebra of Nerode and Myhill
+  monoids to what transformers can represent.
+- **MCFG (multiple context-free grammar).** A mildly context-sensitive grammar class that can describe cross-serial
+  dependencies (as in Swiss German), which plain context-free grammars cannot. Why it matters: it is the expected
+  ceiling for natural-language syntax, and Yoshinaka (2011) extended distributional learning to it.
+
+## Added 1 Nov (the chew memos, `research/meta/chew/`)
+
+- **Relational complexity (Halford, Wilson and Phillips, BBS 1998).** A theory that human working memory is limited
+  by the *arity* of the relation one must process at once, about four arguments, rather than by a count of items.
+  Why it matters: it is the cognitive-science twin of our order-k blindness. A formal result about attention arity
+  could explain or predict it. [zoo]
+- **Iterated learning (transmission chains; Kirby and colleagues, 2008 onward).** Each learner learns a small
+  artificial language from the previous learner's productions, and so on down a chain. Structure that makes a
+  language easier to pass on accumulates. Why it matters: it is the first-pass memo's direction 3, a way to test
+  which grammars survive transmission.
+- **Tied-softmax control.** A baseline that applies the same ordinary attention layer several times with shared
+  weights. It separates "saving parameters by reusing a layer" from "gaining from a cubic interaction". Why it
+  matters: the audit says Feynman attention's 62k-versus-154k result needs it before the gain can be credited to
+  the cubic term.
