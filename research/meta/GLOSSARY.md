@@ -740,3 +740,100 @@ Each entry: what it is, who/when, and why it matters to this project. Started 30
   for the chosen candidate. Why it matters: the Sketchpad dialogue adapter was the fifth candidate scored on the same
   250 GSM8K and 500 MMLU items. Scoring it on the 1,069 unused GSM8K test problems and unused MMLU questions (about $5)
   removes the objection.
+- **Backdoor / sleeper agent** (Hubinger et al. 2024). A hidden behaviour planted in a model's weights that appears
+  only on a secret trigger input, e.g. a wrong digit whenever an operand contains "1337". Why it matters: a
+  third-party fine-tune can carry one, and sampled testing almost never hits the trigger.
+- **Undetectable backdoor** (Goldwasser, Kim, Vaikuntanathan and Zamir, 2022). A proof that a model trainer can plant
+  a backdoor that no efficient observer can detect without the secret key. Why it matters: general audits of weights
+  cannot rule out hidden behaviour. A skill whose inputs are confined to a finite enumerated set (Sketchpad's views)
+  can be audited completely, which is round 7's candidate A. [zoo]
+- **Coverage testing.** Testing until every case of a finite case set has been exercised at least once. Why it
+  matters: for arithmetic, random problems visit all 2,446 views quickly, so a critic can say the certificate is
+  coverage plus a receipt. The answer is that the pinned design is what makes coverage finite and exhaustive.
+- **Exact-or-refuse (certified abstention).** A model certified to output either the right answer or "refuse" on
+  every input in a stated region, never a wrong answer. Why it matters: it is how a certificate could extend from
+  exact rendered glyphs to real scans (round 7's candidate B). Related: randomized smoothing (Cohen et al. 2019) and
+  selective classification. [zoo]
+- **BUGGY / DEBUGGY and repair theory** (Brown & Burton 1978; Burton 1982; Brown & VanLehn 1980). Children who get
+  column subtraction wrong usually follow a consistent wrong procedure (a "bug"), e.g. always subtracting the smaller
+  digit from the larger and never borrowing. BUGGY catalogued about 100 such bugs as executable procedures, and
+  repair theory explains how they arise when a learner patches a gap in the procedure. Why it matters: each bug is a
+  wrong table in Sketchpad's sense, so diagnosing a child is identifying which table produced their worksheet. This
+  is the "surprise pivot" proposed on 1 Nov 2026. [zoo]
+- **Distinguishing experiment** (Moore 1956). An input sequence chosen so that two candidate machines produce
+  different outputs on it. Adaptive testing picks the next input from the answers so far. Why it matters: choosing the
+  next practice problem that best separates a child's candidate bugs is exactly this. Round 6's converged tool, the
+  "discriminating probe", is the same idea.
+- **ScratchMath (2026), MathCog (2025), TeachArena (2026).** Recent benchmarks for AI diagnosis of students'
+  handwritten math work and teaching tasks. They report that multimodal LLMs mostly solve the problem instead of
+  diagnosing the student, and are weak at reading handwriting and following multi-step procedures. TeachArena requires
+  bug rules to be stated as executable procedures. Why it matters: they name the gap the tutor pivot would fill, and
+  they are its benchmarks.
+
+## Round 8 (1 Nov, Nerode and higher-order attention)
+
+- **Nerode congruence (Nerode, 1958).** Two input histories are equivalent when every possible continuation leads both
+  to the same output. The equivalence classes are the states of the smallest automaton that recognises the language.
+  Why it matters: a network that is exact on a task must hold at least these classes, and MECHANISM found exactly them
+  (960 of 960). [zoo]
+- **Bisimulation (Nerode) metric.** A distance between histories: the gap between their current outputs plus a
+  discount γ times the expected distance after one shared next input. Distance zero recovers the Nerode classes.
+  Why it matters: our Nerode metric loss L_M trains it, and on its own made a recurrence exact at 1,024 steps.
+- **Myhill congruence and the syntactic monoid (Myhill, 1957).** A two-sided version of Nerode's: two middle segments
+  are equivalent when every left context and every right context around them gives the same output. The classes form
+  a monoid (segments compose), equal to the transition monoid of the minimal automaton. Why it matters: it is a 3-way
+  relation (left, middle, right), the kind a cubic attention logit can express and a pairwise one cannot. This is
+  round 8's conjecture O1. [zoo]
+- **Hankel matrix and spectral learning of weighted automata (Fliess, 1974; Hsu, Kakade and Zhang, 2009; Balle et al.,
+  2014).** Arrange a sequence function in a table with rows = pasts and columns = futures. The table's rank is the
+  smallest state dimension of a linear (weighted) automaton that computes it, and an SVD of the table learns one.
+  Why it matters: it is Nerode's theorem in linear algebra, and our ~20-dimensional affine state code is such an
+  object. [zoo]
+- **Angluin's L\* (1987).** An algorithm that learns the minimal automaton by asking membership questions ("is this
+  string in?") and equivalence questions ("is this the machine?"). It builds the Nerode classes from a table of
+  prefixes and suffixes. Why it matters: it is the standard way to find Nerode classes actively, and round 8 drew it.
+- **Topological entropy (symbolic dynamics).** The growth rate of the number of distinct length-n words a system can
+  produce. For a finite automaton it is the log of the largest eigenvalue of its transition matrix. Why it matters: it
+  measures how fast the number of distinguishable futures grows, which bounds how much state a model needs.
+- **Bundle adjustment (photogrammetry/SLAM).** Jointly re-estimating every camera pose and 3-D point so that all
+  reprojection errors are small at once. It exploits a sparse block structure. Why it matters: drawn in round 8, as a
+  model of global consistency repairs.
+- **OODA loop (Boyd, 1970s–80s).** Observe, orient, decide, act: a doctrine for winning by cycling through decisions
+  faster than an opponent. Why it matters: drawn in round 8, as a model of state update under time pressure.
+- **Loci in sign languages.** Signers assign each discourse referent to a location in space. Later pronouns and verbs
+  point at that location to refer back. Why it matters: drawn in round 8. It is a natural binding-by-address system
+  in human language.
+- **Algebraic attacks, linearisation and XL (cryptanalysis; Courtois et al., 2000).** Write a cipher as a system of
+  polynomial equations. Then either replace every monomial by a fresh variable and solve the resulting linear system
+  (linearisation; XL first multiplies the equations by monomials to get enough of them), or compute a Gröbner basis.
+  Why it matters: drawn in round 8. It is the classical way to make a degree-k relation linear, the same move as
+  adding a k-way term to an attention logit.
+- **Astra and Argon.** Neo's names for the other labs' models we run as agents: Astra is OpenAI's Codex CLI
+  (gpt-6-astra) and Argon is Google's Gemini 4 Argon (the agy CLI). Why it matters: they carry the work when the
+  weekly Claude limit runs low, and their math gets checked before we use it.
+- **2-simplicial (cubic) attention (Clift et al., ICLR 2020).** Attention whose score is a trilinear form over a
+  query and two keys, so that one step weighs pairs of items jointly. It was first used on entity tokens in a
+  logic-puzzle RL world (BoxWorld). Why it matters: it is the published form of Neo's 2023 cubic operator, and the
+  closest prior art for round 8's "bind classes, not tokens".
+- **Slot and entity memories: EntNet (Henaff et al., 2017), the relational memory core (Santoro et al., 2018), RIMs
+  (Goyal et al., 2019).** A small set of memory vectors, one per entity or mechanism, updated as text arrives. In RIMs
+  only the relevant slots update at each step and the rest stay unchanged. Why it matters: round 8's candidate C1
+  puts a k-way term over such slots, and these are its baselines.
+- **Harsanyi dividend / Möbius inversion (Harsanyi, 1963).** For a value defined on sets, the part attributable to a
+  set as a whole, after subtracting every smaller subset's contribution. A pure three-way effect has zero dividends on
+  every pair. Why it matters: it is the cooperative-game name for our subset expansion. Round 8 used it to explain why
+  averaged training signals cannot see purely k-way premises. [zoo]
+- **On-policy versus ∀ bisimulation (Ferns, Panangaden and Precup, 2004; Castro, 2020).** Ferns' bisimulation metric
+  takes the worst case over actions, matching Nerode's "for all futures". On-policy versions average over the
+  actions a policy takes instead. Why it matters: our Nerode loss L_M averages, which gives almost no weight to a
+  rare decisive future. Round 8 names this as the likely cause of its failure under dilution (candidate C2).
+- **Counterexample processing (Rivest and Schapire, 1993).** Given a string on which a hypothesis automaton is wrong,
+  binary search over its prefixes finds a single new distinguishing suffix to add. Why it matters: it is the cheap
+  way to find the decisive future that separates two states the model has wrongly merged.
+- **Mazurkiewicz traces (1977).** Sequences taken up to swapping adjacent independent actions. Two orders of
+  independent events are the same trace. Why it matters: irrelevant narrative that commutes with the tracked state
+  could be removed by a loss enforcing s(uab) = s(uba) for independent a, b (round 8, Sokoban agent).
+- **Entropy-minimality (symbolic dynamics; Lind and Marcus, 1995).** Every proper subshift of an irreducible sofic
+  shift has strictly smaller entropy. So if a system never leaves the target shift and matches its entropy, it is the
+  whole shift. Why it matters: it is a possible certificate that a generator produces all of a target language, not
+  just legal strings. [zoo]
