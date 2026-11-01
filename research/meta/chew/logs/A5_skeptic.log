@@ -1,0 +1,352 @@
+Reading additional input from stdin...
+OpenAI Codex v0.166.0-alpha.5.1
+--------
+workdir: /Users/neo/repos/polyformer
+model: gpt-6-astra
+provider: openai
+approval: never
+sandbox: read-only
+reasoning effort: high
+reasoning summaries: none
+session id: 01a196a0-7347-7de3-959b-b404f831555e
+--------
+user
+Read /Users/neo/repos/polyformer/research/meta/chew/CHEW_CONTEXT.md first (and any local file it names that you need; you may read files under /Users/neo/repos/polyformer and /Users/neo/repos/sketchpad, but change nothing). Search the live web thoroughly; cite every paper with authors, year, venue/arXiv id and one line on what it did; never invent citations (write 'unverified' when unsure). Your final message IS your report: markdown, no preamble.
+Your lens: THE SKEPTIC. Find AI/LLM papers in Nature/Science/high-profile venues (2022-2026) that were hammered after publication or retracted, and claims of 'LLMs reveal X about language/mind/science' that failed to replicate or were judged overclaimed (e.g. debates around emergent abilities, brain-alignment confounds, impossible-languages confounds, theory-of-mind claims). Extract the failure modes and the review bar: what a Nature-bound claim by a solo researcher must do (pre-registration, human data, replication, controls) to survive. Also: how presubmission enquiries work at Nature and Nature Human Behaviour and how solo researchers have succeeded. At most 1,000 words.
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+warning: Codex is ignoring 1 unrecognized configuration setting. Check for typos or deprecated settings.
+  user (/Users/neo/.codex/config.toml): `experimental_use_rmcp_client` is ignored.
+codex
+I’ll read the project context first, then check the papers, critiques, and current journal guidance against live sources.
+exec
+/bin/zsh -lc 'cat research/meta/chew/CHEW_CONTEXT.md' in /Users/neo/repos/polyformer
+ succeeded in 0ms:
+# Chew: where is the most fruitful direction, with Nature-level publication potential? (1–2 Nov 2026)
+
+**Neo's words (1 Nov):**
+- "Let's sleep on this. I think it is worth thinking more and doing more web search. Let's stop one shot direction
+  setting. Let's chew on it. Where is the most fruitful direction with great publication potential? A flashy headline
+  that can buy us clout and draw attention and Nature would like to publish it."
+- Earlier the same day: "Imagine you are the young Chomsky and you have access to LLMs! And you can dissect them and
+  try to make a better theory of syntax and semantics ... I'm sure there is crazy prior art to this but none of it has
+  been ground breaking."
+- "I think there is something interesting about our work on higher order attention and nerode that we haven't found
+  yet. Our Feynman and Newton stuff might have legs and are innovative. They might have mistakes in them tho."
+- "I'm interested in making models that could not just statistically learn language but also reveal its structure."
+
+**Who Neo is and what he needs.** He is one researcher at the MIT Media Lab, who wants "a few great publications
+soon", a startup foundation, and to be credible to the major AI labs. His strengths include LLM fine-tuning (LoRA,
+GRPO, on-policy distillation, gating), formal methods (Lean), in-browser ML (WebGPU) and visual design. His standing
+judgment criteria are in `research/meta/NEO_CONDITIONS.md` (read it).
+
+**Resources.** Modal GPUs (H100s; hundreds to low thousands of dollars if there is conviction), an Apple M4 with
+32 GB, open models (Qwen3.5 0.8B–4B and larger via Modal), API access to frontier models, and weeks, not years. Teams
+of one have published in Nature recently: check them (for example Lake & Baroni, Nature 2023, on systematic
+generalisation; Binz et al., Nature 2025, "Centaur", a fine-tuned LLM of human cognition). Verify these exist and what
+made them publishable.
+
+## What we have (assets and results; details in the files)
+
+- **Sketchpad** (`/Users/neo/repos/sketchpad/paper/paper.md`).
+  - Qwen3.5-0.8B with a LoRA computes exactly on a rendered sheet. Each step reads a 3-cell view, so all 2,446 views
+    are certified on the device.
+  - Lean proofs: exactness on the views implies exactness at all lengths, and no finite test suffices for chain of
+    thought.
+  - 220/220 pre-registered problems; algebra; a gated chat model.
+  - Prior art owns the principle: Lewandowski 2026 and DNAR 2025. Journal odds were judged low (NMI ~5%, Nature
+    Communications ~17%).
+- **Higher-order attention (October).**
+  - Cubic attention solves SET (100% against softmax 57%).
+  - The coupling barrier and order-k blindness.
+  - Newton attention, exact on Match-k, with the "characters law" (exact iff all 40 characters of Z_3^4).
+  - The free-field (Feynman-diagram) formalism: softmax is one particle and subset attention a generating function.
+  - Feynman attention (DS-PA): pointer chase with 62k params against softmax's 154k.
+  - No gain on language modelling, possibly because of a precision bug; an audit is running
+    (`research/meta/survive/AUDIT.md` when done).
+- **Nerode work.**
+  - The exact state of a trained recurrence is the minimal automaton (960/960 classes) in a ~20-dim affine code.
+  - A Nerode metric loss makes recurrences exact.
+  - It fails under dilution, probably because it averages over futures instead of quantifying over them.
+  - Round 8 (`research/meta/rounds/r8_status.md`): "bind classes, not tokens"; no surviving HIT after the gate.
+- **Language-structure direction**: Harris's discovery procedure, executed with an LLM informant. Gate in
+  `research/meta/survive/chomsky_gate_report.md`: PARTIAL, the integrated programme OPEN, the most dangerous paper Hu,
+  Wilcox, Song, Mahowald & Levy (TACL 2026).
+- **Twelve days of history** (`research/meta/META_REPORT.md`): 1,913 commits, more than 25 programmes, about $3k
+  spent.
+  - At least 15 theorem statements refuted.
+  - Many results were "partially known" after the fact: we did too little literature review early.
+- **Dead framings** (do not propose a variant without a change of level):
+  - long arithmetic for its own sake;
+  - GSM8K gains at 0.8B;
+  - a universal interpreter;
+  - certified CLRS algorithms;
+  - higher-order heads as a perplexity gain;
+  - matrix-state recurrences against DeltaNet;
+  - revisable memory and mixture-of-depths routing;
+  - self-predictive state;
+  - latent recurrence inside a pretrained model;
+  - certified retrieval;
+  - the tutor pivot;
+  - ARC by scaffolding.
+
+## The bar
+
+A Nature (or Nature Human Behaviour / Nature MI flagship) paper:
+- a result of broad scientific interest;
+- usually settles a long-standing question, or makes a discovery in a science, or shows a capability with big
+  consequences;
+- survives hostile review;
+- its headline is true.
+
+"Flashy" must still be true and robust. A headline that collapses under review costs more clout than it buys.
+
+web search: 
+exec
+/bin/zsh -lc 'cat research/meta/NEO_CONDITIONS.md research/meta/survive/chomsky_gate_report.md' in /Users/neo/repos/polyformer
+ succeeded in 0ms:
+# The dream: what Neo asked the model to do
+
+This file collects Neo's own words, from 26 to 29 Oct 2026, gathered by the orchestrator on 29 Oct after Neo asked
+"What did I ask you that the model should do? What was the dream?". Every condition below cites the moment Neo set it.
+Use this file as the acceptance test for any proposal.
+
+## The dream in one sentence
+
+One new kind of language model that thinks with exact internal computation. You ask it a normal question. It writes
+its own compact program and runs that program inside its own forward passes, without chain of thought and without a
+tool. It does this unprompted, as part of its own reasoning. The computation is provably exact and checkable. The
+model is still a normal LLM. The demo makes ML-researcher investors see that, scaled, this eats Python, Lean and the
+calculator.
+
+## The conditions (Neo's words in quotes)
+
+1. **One model, many abilities, with no per-skill adapters.**
+   - "In reality you're not going to want an adapter for each of the different scenarios. That's not that different
+     from tool calling." (26 Oct, after FIVE's joint model failed)
+   - "Failure in training simultaneous automatons is a sign of our weakness."
+2. **The LLM itself computes.**
+   - Not a module bolted on: "The separate lookup head is cool, but that's not what we want." (27 Oct, QINTERP)
+   - Not an external host either: the clock is "fine but not ideal", so "keep shrinking the clock". (27 Oct)
+3. **The model turns a normal prompt into a program and runs it inside.**
+   - "maximum effort on interpreter inside LLM ... normal prompting, the model turns it into a program and runs it
+     inside ... a user with a prompt box can check." (27 Oct, PROMPTBOX)
+   - "Emergent unprompted use is the breakthrough."
+   - RL should let it discover how to use its interpreter: "system 2 thinking, not just a lot more of system 1."
+4. **No chain of thought.** The working title for v2 is "Neural Networks That Run Programs Without Chain of Thought"
+   (27 Oct). State lives in the model, not in thousands of written tokens.
+5. **Exact, certified, and nothing a skeptic can poke holes in.** "Not something a skeptic would immediately poke holes
+   in." (27 Oct) Novelty claims must be verified: Neo would unsubscribe over a false "doesn't exist yet".
+6. **Compact code, not tables.** "Imagine if it wrote something like python or bff or even just assembly code or even a
+   language invented exactly for writing and running code in the brain of the model." (29 Oct) A program is not 200
+   rows.
+7. **One executor, many programs.** "I really like the interpreter idea." (26 Oct) One interpreter is certified once,
+   and every program inherits exactness. The thesis to beat: "automata are programs; many automata = one".
+8. **It generalises.** New task families and new wording, not only the trained ones. "It might generalize ... don't
+   give up ... good RL." (27 Oct)
+9. **Language stays intact.** It must still be a normal model: GSM8K, MMLU and perplexity held.
+10. **A new model, pointing at a new architecture.**
+    - "Main goal = ONE great model served behind the demo page; the page is the vehicle, not the goal." (27 Oct)
+    - With funding, a model trained from scratch, "in which the clock, state slot and certified lookup become native
+      architecture".
+    - 29 Oct: "We need to make a new kind of model that satisfies my conditions."
+11. **The demo freaks out ML-researcher investors, and nothing in it disappoints.** (28 Oct) It runs live, on a laptop
+    GPU, in the browser.
+    - Demos Neo chose: a huge-number calculator inside the LLM, the ghost Rubik's cube, poke-the-brain, a
+      dead-reckoning robot.
+    - "Demos that obviously make LLMs smarter and hint at eating Python / Lean / a calculator when scaled."
+12. **Budget and pace (via Fable, 29 Oct):** about one week, $1–2k.
+
+## Where the work stands against these (orchestrator, honest)
+
+- **Savant / PROMPTBOX (27–28 Oct):**
+  - Meets 1 partly, 3 partly, 5, 9, and 11 partly.
+  - Misses 2 (an external clock runs the program), 6 (programs are tables), 7 (each program is its own table) and
+    8 (held-out families 2–77%).
+- **WEFT as built on 29 Oct:**
+  - Meets 5, 6 (on paper), 9 (an untouched model), and fast exact arithmetic.
+  - Misses 2 badly: the host runs the algorithm and the model is a certified digit table, which is close to tool
+    calling.
+  - Also misses 3 (P4 compile KILL: base zero-shot 20/88), 10 (no new model) and 8.
+  - The orchestrator let the "no training this week" plan shrink the dream. That was a mistake to own.
+
+## Meta-goals (Neo, 30 Oct 2026, added by Fable)
+
+- "it is not a breakthrough. it becomes one once it is amazing at generalization. like it has intelligence."
+- "certified compute when cleverly mixed and interleaved with chain of thoughts and visual reasoning is something smart
+  things do." Tool calls and agent harnesses "are not brain-like"; the brain has multiple memory systems, fewer layers,
+  is asynchronous, handles multiple streams.
+- "I want to work on something that matters. That is beautiful and theory driven and at the same time becomes the
+  foundation of my startup ... a successful M&A with a major AI lab."
+- "I need to get a few great publications under my belt soon."
+Acceptance test for proposals from here on: generality (model writes and certifies its own procedures, decides when to
+use the page, grounded in perception), a theory behind it (certifiability; memory systems by certifiability), a checkable
+paper soon, and a plausible small-beats-big result.
+
+## Goal reset (Neo, 30 Oct 2026)
+
+"let's set the goal on beating arc, i suppose arc 3 is the most rewarding one. but we are not going to be stuck in a
+loop, we will do whatever it takes to beat it. i mean we will be open to try wildly new things. our history is lessons we
+have learned and not our prison. i think beating arc is what i can do to survive."
+Working method from here: the `unstuck` skill (`.claude/skills/unstuck/SKILL.md`) with ground-truth from
+`research/meta/ARC_SOTA.md`; candidates and rounds in `research/meta/INTEGRATE.md`.
+**Verdict: PARTIAL; the integrated programme remains OPEN.** Live-web cutoff: **1 November 2026**. “OPEN” means no verified precedent found, not proven absence.
+
+**1. LLM oracle: OWNED broadly; Clark-specific implementation OPEN.**
+
+- [Goertzel, Suárez-Madrigal & Yu (2020, arXiv:2005.12533)](https://arxiv.org/abs/2005.12533) use BERT probabilities for categories, senses, and symbolic link-grammar rule evaluation.
+- [Vazquez-Chanlatte et al. (2024, arXiv:2402.07051)](https://arxiv.org/abs/2402.07051), *L*LM*, use LLM membership answers plus demonstrations to learn DFAs.
+- [Clark & Eyraud (2007, JMLR)](https://www.jmlr.org/papers/volume8/clark07a/clark07a.pdf) learn substitutable CFGs from positive data alone—not membership queries.
+- [Clark (2010, ICGI)](https://www.its.caltech.edu/~matilde/ClarkSyntacticConceptLattice.pdf) learns CFGs using concept lattices, positive data, and membership queries.
+- [Clark (2015, Journal of Logic and Computation)](https://doi.org/10.1093/logcom/ext037) develops syntactic concept lattice algebra; its concepts are not simply congruence classes.
+- [Yoshinaka (2011, Theoretical Computer Science)](https://doi.org/10.1016/j.tcs.2010.12.058) extends substitutability learning to subclasses of MCFGs.
+
+**2. Explicit grammar plus fidelity to pretrained LLM judgments: PARTIAL.**
+
+- [Li et al. (2024, Findings NAACL)](https://aclanthology.org/2024.findings-naacl.70/) induce compound PCFGs using LLM embeddings; evaluation targets parsing, not oracle fidelity.
+- [Bhattamishra, Hahn & Kanade (2026, ICLR)](https://proceedings.iclr.cc/paper_files/paper/2026/file/c541db4fb9e391c377c44e1cebeebe56-Paper-Conference.pdf) extract DFAs approximating truncated LM support, including pretrained BLT models prompted on restricted formal languages.
+
+English CFG/PCFG/MCFG extraction with systematic held-out judgment coverage remains unverified.
+
+**3. Mechanistic substitutability: PARTIAL; causal span-congruence abstraction OPEN.**
+
+- [Jian & Reddy (2023, EMNLP)](https://aclanthology.org/2023.emnlp-main.144/) aggregate attention across syntactic substitutions to induce dependencies.
+- [Hewitt & Manning (2019, NAACL)](https://aclanthology.org/N19-1419/) recover tree distances/depths through supervised linear probes.
+- [Manning et al. (2020, PNAS)](https://pubmed.ncbi.nlm.nih.gov/32493748/) demonstrate emergent hierarchy, dependency, and coreference information.
+- [Murty et al. (2023, ICLR)](https://arxiv.org/abs/2211.01288) project transformer computations onto approximating binary trees without supervised probes.
+- [Kryvosheieva et al. (2026, ACL)](https://aclanthology.org/2026.acl-long.7/) causally localize shared units across agreement phenomena.
+
+None establishes that English spans implement two-sided Myhill classes under composition.
+
+**4. Algebraic characterization through LLMs: PARTIAL.**
+
+- [Carrasco, Mayr & Yovine (2024, arXiv:2412.09760)](https://arxiv.org/abs/2412.09760) define probabilistic congruences and actively learn regular LM quotients.
+- [Yang, Chiang & Angluin (2024, NeurIPS)](https://arxiv.org/abs/2310.13897) prove star-free expressivity for strictly masked hard-attention transformers without positional embeddings.
+- [Strobl et al. (2024, TACL)](https://aclanthology.org/2024.tacl-1.30/) reconcile transformer expressivity results under differing assumptions.
+- [Musso et al. (2003, Nature Neuroscience)](https://pubmed.ncbi.nlm.nih.gov/12819784/) find different Broca-area learning responses for “real” versus constructed “unreal” rules.
+- [Moro, Greco & Cappa (2023, Cortex)](https://doi.org/10.1016/j.cortex.2023.07.003) argue impossible-language constraints distinguish brains from LLMs.
+- [Kallini et al. (2024, ACL)](https://aclanthology.org/2024.acl-long.787/) find GPT-2 learns manipulated “impossible” languages less efficiently than English.
+- [Hunter (2025, Computational Linguistics)](https://aclanthology.org/2025.cl-2.7/) identifies a confound in their constituency comparison.
+
+These neither identify English’s syntactic monoid nor establish human/LLM equivalence. Star-free/aperiodic theorems do not transfer wholesale to Qwen.
+
+**5. New human-confirmed linguistic discoveries: PARTIAL; strong version unverified. Debate remains unsettled.**
+
+- [Yu et al. (2026, arXiv:2604.07189)](https://arxiv.org/abs/2604.07189) automate corpus investigations, report intensifier patterns, and replicate published findings; independent confirmation of a previously unknown generalization is unverified.
+- [Beguš, Dąbkowski & Rhodes (2025, IEEE TAI)](https://arxiv.org/abs/2305.00948) demonstrate prompted syntactic/phonological analyses, not that discovery-and-confirmation sequence.
+- [Piantadosi (2023 preprint; 2024, Language Science Press)](https://lingbuzz.net/lingbuzz/007180) argues LLM success undermines strong generativist claims.
+- [Chomsky, Roberts & Watumull (2023, NYT essay)](https://www.nytimes.com/2023/03/08/opinion/noam-chomsky-chatgpt-ai.html) argue prediction lacks human explanatory constraints.
+- [Kodner, Payne & Heinz (2023, arXiv:2308.03228)](https://arxiv.org/abs/2308.03228) challenge acquisition realism and prediction-as-explanation.
+- [Futrell & Mahowald (2025 online; 2026, BBS)](https://doi.org/10.1017/S0140525X2510112X) advocate LMs as scientific model systems without replacing linguistic theory.
+- [Lan, Chemla & Katzir (2024, Linguistic Inquiry)](https://doi.org/10.1162/ling_a_00533) challenge island-learning conclusions using additional generalization tests.
+- [Ziv, Lan, Chemla & Katzir (2026, Journal of Language Modelling)](https://jlm.ipipan.waw.pl/index.php/JLM/article/view/457) delimit LLMs’ usefulness as proxies for cognitive theories.
+
+**Necessary corrections.** A finite exact two-sided quotient implies regularity; nonregular syntax requires infinitely many classes or another finite representation. Finite-context clustering establishes only observational equivalence. Lattice concepts permit overlapping categories. Acceptance alone cannot identify semantic interpretations. [Chomsky (1957, *Syntactic Structures*, Mouton)](https://danielwharris.com/teaching/364/readings/ChomskySyntactic.pdf) rejects requiring discovery procedures; he does not prove their impossibility.
+
+**(a) Remarkable result.** An automatically extracted, compact grammar that predicts a previously unknown human constructional restriction, survives independent preregistered human testing, and corresponds to causally interchangeable model computations. No verified precedent found for that combination.
+
+**(b) Closest attempt.** Goertzel et al.: essentially the proposed oracle-to-symbolic-grammar architecture. Their grammar-rule demonstration used six words; it rejected all six injected bad rules but also three valid rules. Broad coverage and causal validation were absent.
+
+**(c) Most dangerous paper.** [Hu, Wilcox, Song, Mahowald & Levy (2026, TACL)](https://aclanthology.org/2026.tacl-1.7/) analyze and test 280,000 English/Chinese pairs: probability conflates grammaticality with message probability. This undermines raw-probability membership thresholds. Meaning-controlled contrasts and calibrated, explicitly approximate oracles remain viable.
+
+**(d) Two-week pilot.** Use [Qwen3.5-0.8B-Base and 4B-Base](https://huggingface.co/collections/Qwen/qwen35) on agreement and NP substitution. Days 1–3: calibrate and freeze acceptability scoring against 300 human judgments. Days 4–9: query 200 spans ×100 two-sided contexts; infer classes and a CFG capped at 50 nonterminals/200 rules. Hold out lexemes, contexts, and embedding depths; compare n-gram and ordinary PCFG baselines. Days 10–14: measure balanced oracle fidelity and matched within-/between-class activation swaps.
+
+Preregister a kill criterion: **held-out fidelity below 80%**, despite oracle–human agreement above 90%, kills this compact extraction pilot. It does not falsify every Harris-style learner.
+web search: Nature AI paper retracted 2023 2024 2025 machine learning criticism reproducibility ...
+web search: 
+web search: site.arxiv.org Centaur human cognition critique 2025 leakage ...
+web search: 
+web search: site.nature.com "retraction" "deep learning" "2022" "2024" ...
+codex
+The strongest cases so far challenge the leap from a good prediction score to an explanation of human cognition. The context also needs one correction: Lake–Baroni has two authors, and Centaur has a large author team; neither is evidence of a solo Nature paper.
+web search: 
+web search: site.nature.com "Retraction" "2023" "machine learning" Nature Communications ...
+web search: 
+web search: https://www.nature.com/nature/for-authors/presub
+web search: 
+web search: site.nature.com/nature/for-authors/presub "enquiries" "cover" ...
+web search: 
+web search: "Nature" "single-author" "2023" "artificial intelligence" ...
+web search: 
+web search: https://pmc.ncbi.nlm.nih.gov/articles/PMC12872444/
+web search: 
+web search: "DeepCRISTL" "2022" "Nahum" ...
+codex
+A concrete Nature case has now checked out: A-Lab’s 2026 correction narrowed its material-novelty claims and reduced its confirmed successes. I also found conflicting Nature Human Behaviour instructions: its dedicated enquiry page rejects research enquiries, while its Registered Reports page still invites them. I’ll flag that conflict explicitly.
+web search: 
+web search: "DeepCRISTL" "2022" authors ...
+web search: 
+web search: https://academic.oup.com/bioinformatics/article/38/Supplement_1/i161/6617528
+web search: 
+web search: Centaur Binz Namazova response 2026 2025 "critique" ...
+web search: 
+web search: "Centaur" "Liu" "Ding" "National Science Open" ...
+web search: 
+web search: https://doi.org/10.1360/nso/20250053
+codex
+**The main danger is mistaking predictive success for scientific explanation.** For Neo’s language programme, a model-generated pattern becomes a discovery about humans only after independent human evidence excludes simpler explanations. The cases below distinguish retraction, correction, failed generalization and disputed interpretation.
+
+1. **A-Lab: Nature corrected the discovery claim.** [Szymanski et al. (2023, *Nature*), *An autonomous laboratory…*](https://www.nature.com/articles/s41586-023-06734-w), combined machine learning and robotics to synthesize materials. Their [2026 *Nature* correction](https://www.nature.com/articles/s41586-025-09992-y.pdf) clarified that “novel” meant new to the prediction platform, not necessarily science; manual reanalysis confirmed 36 of 40 successes, leaving four inconclusive, and removed one compound mistakenly included in training data. **Failure:** automated identification and ambiguous novelty inflated the headline. **Status:** corrected, not retracted.
+
+2. **DeepCRISTL: evaluation failure caused retraction.** [Elkayam & Orenstein (2022, *Bioinformatics*), *DeepCRISTL*](https://academic.oup.com/bioinformatics/article/38/Supplement_1/i161/6617528), used transferred neural-network learning to predict gene-editing efficiency. [Corsi, Anthon & Gorodkin (2023, *Bioinformatics*)](https://doi.org/10.1093/bioinformatics/btad327) challenged its evaluation and demanded genuinely independent test datasets. The [journal’s 2023 retraction](https://pmc.ncbi.nlm.nih.gov/articles/PMC10329910/) says readers could no longer rely on the findings. **Failure:** apparent improvement without defensible external validation.
+
+3. **Emergent abilities: scoring can manufacture sudden breakthroughs.** [Wei et al. (2022, *TMLR*, arXiv:2206.07682)](https://arxiv.org/abs/2206.07682) described abilities appearing abruptly as models grow. [Schaeffer, Miranda & Koyejo (2023, *NeurIPS*, arXiv:2304.15004), *Are Emergent Abilities…a Mirage?*](https://arxiv.org/abs/2304.15004), showed that all-or-nothing scoring can turn gradual improvement into apparent discontinuities. **Failure:** a property of measurement gets attributed to the model. This challenges particular evidence for emergence; it does not prove every abrupt capability change impossible.
+
+4. **Brain alignment: simpler signals explain impressive correlations.** Brain alignment here means predicting measured brain activity from model representations; it matters because prediction is often interpreted as shared computation. [Hadidi, Feghhi, Song, Blank & Kao (2026, *Nature Communications*)](https://www.nature.com/articles/s41467-026-72253-7) reanalysed three influential datasets. Shuffled training/test divisions, representation extraction choices, word rate and position explained important apparent effects; simple signals fully accounted for untrained GPT-2’s predictivity. **Failure:** uncontrolled alternative causes. Their conclusions explicitly do **not** invalidate the entire field.
+
+5. **Impossible languages: the comparison tested the wrong distinction.** [Kallini, Papadimitriou, Futrell, Mahowald & Potts (2024, *ACL*, Best Paper), *Mission: Impossible Language Models*](https://aclanthology.org/2024.acl-long.787/), found GPT-2 learned manipulated languages less readily than English. [Hunter (2025, *Computational Linguistics*)](https://aclanthology.org/2025.cl-2.7/) showed that a central comparison mixed up counting rules with distance between related words: adjacent versus nonadjacent dependencies cannot establish preference for human grammatical hierarchy. **Failure:** the control changes two things simultaneously. This is an interpretive challenge, not a demonstrated failure to reproduce the scores.
+
+6. **Centaur: predicting choices does not establish a human simulator.** [Binz et al. (2025, *Nature*), *A foundation model to predict and capture human cognition*](https://www.nature.com/articles/s41586-025-09215-4), trained on over ten million choices across 160 experiments. [Namazova, Brondetta, Strittmatter, Nassar & Musslick (2025, arXiv:2508.07887), *Not Yet AlphaFold for the Mind*](https://arxiv.org/abs/2508.07887), reported that generated behaviour systematically diverged from humans despite strong predictive scores. **Failure:** extending success at predicting the next response to simulating whole participants. The critique is a preprint; it does not erase Centaur’s predictive results.
+
+7. **Theory of mind: passing stories leaves the mechanism unresolved.** Theory of mind means reasoning about others’ beliefs and intentions; benchmark success alone cannot establish that mechanism. [Kosinski (2024, *PNAS*), *Evaluating large language models in theory of mind tasks*](https://pubmed.ncbi.nlm.nih.gov/39471222/), tested eleven models on forty bespoke false-belief tasks. [Pang, Pang, Broeker & Hibble (2025, *PNAS*)](https://pmc.ncbi.nlm.nih.gov/articles/PMC12280963/) argued that alternative explanations remained. Earlier, [Ullman (2023, arXiv:2302.08399)](https://arxiv.org/abs/2302.08399) overturned apparent successes with small story alterations. **Status:** contested interpretation; Ullman predates the final PNAS paper and is not its direct failed replication.
+
+**The review bar I would impose on Neo’s claim**—a recommendation, not universal journal requirements:
+
+- Specify one falsifiable scientific claim and its strongest competing explanation.
+- Preregister: publicly fix hypotheses, exclusions, sample size, scoring and stopping rules before confirmatory testing. This prevents exploratory choices masquerading as predictions.
+- For human-language claims, obtain appropriately approved human data, unseen constructions and preferably another language; model agreement alone is insufficient.
+- Match word frequency, meaning, dependency distance, training exposure and computational budget. Include simple competing methods.
+- Repeat across model families and random initializations; reserve untouched datasets and seek an independent replication.
+- Release runnable code, prompts, model versions, failures and uncertainty. Require interventions before claiming an internal causal mechanism.
+
+[Nature Human Behaviour’s Registered Reports](https://www.nature.com/nathumbehav/submission-guidelines/registeredreports) offer review of methods **before** research, with publication provisionally accepted regardless of outcome.
+
+**Solo feasibility needs correcting.** Lake & Baroni’s [2023 *Nature* paper](https://doi.org/10.1038/s41586-023-06668-3) demonstrated human-like combination of learned components using neural training and human experiments: two authors, with Lake performing modelling and behavioural execution. Centaur had forty authors. Kosinski is a verified solo high-profile example, also illustrating scrutiny. A comparable solo *Nature* AI success is **unverified** here.
+
+**Presubmission enquiries differ.** [Nature](https://www.nature.com/nature/for-authors/presub) accepts optional online enquiries: a referenced summary paragraph, references and broad-interest explanation; usually two working days, with no commitment to review. [NHB’s dedicated page](https://www.nature.com/nathumbehav/submission-guidelines/presubmission-enquiries) currently rejects research enquiries and requires full manuscripts. Its Registered Reports page contradictorily still invites enquiries; plan on a complete Stage-1 proposal.
+
+**Assumption:** publication can be separated from the startup architecture. Computational cognitive science offers two defensible routes: a narrow human-confirmed discovery, postponing condition 10’s new architecture; or a model-only theorem, preserving engineering progress but restricting claims about humans. Neither supports promising Nature within condition 12’s one-week budget.
+tokens used
+116,855
+**The main danger is mistaking predictive success for scientific explanation.** For Neo’s language programme, a model-generated pattern becomes a discovery about humans only after independent human evidence excludes simpler explanations. The cases below distinguish retraction, correction, failed generalization and disputed interpretation.
+
+1. **A-Lab: Nature corrected the discovery claim.** [Szymanski et al. (2023, *Nature*), *An autonomous laboratory…*](https://www.nature.com/articles/s41586-023-06734-w), combined machine learning and robotics to synthesize materials. Their [2026 *Nature* correction](https://www.nature.com/articles/s41586-025-09992-y.pdf) clarified that “novel” meant new to the prediction platform, not necessarily science; manual reanalysis confirmed 36 of 40 successes, leaving four inconclusive, and removed one compound mistakenly included in training data. **Failure:** automated identification and ambiguous novelty inflated the headline. **Status:** corrected, not retracted.
+
+2. **DeepCRISTL: evaluation failure caused retraction.** [Elkayam & Orenstein (2022, *Bioinformatics*), *DeepCRISTL*](https://academic.oup.com/bioinformatics/article/38/Supplement_1/i161/6617528), used transferred neural-network learning to predict gene-editing efficiency. [Corsi, Anthon & Gorodkin (2023, *Bioinformatics*)](https://doi.org/10.1093/bioinformatics/btad327) challenged its evaluation and demanded genuinely independent test datasets. The [journal’s 2023 retraction](https://pmc.ncbi.nlm.nih.gov/articles/PMC10329910/) says readers could no longer rely on the findings. **Failure:** apparent improvement without defensible external validation.
+
+3. **Emergent abilities: scoring can manufacture sudden breakthroughs.** [Wei et al. (2022, *TMLR*, arXiv:2206.07682)](https://arxiv.org/abs/2206.07682) described abilities appearing abruptly as models grow. [Schaeffer, Miranda & Koyejo (2023, *NeurIPS*, arXiv:2304.15004), *Are Emergent Abilities…a Mirage?*](https://arxiv.org/abs/2304.15004), showed that all-or-nothing scoring can turn gradual improvement into apparent discontinuities. **Failure:** a property of measurement gets attributed to the model. This challenges particular evidence for emergence; it does not prove every abrupt capability change impossible.
+
+4. **Brain alignment: simpler signals explain impressive correlations.** Brain alignment here means predicting measured brain activity from model representations; it matters because prediction is often interpreted as shared computation. [Hadidi, Feghhi, Song, Blank & Kao (2026, *Nature Communications*)](https://www.nature.com/articles/s41467-026-72253-7) reanalysed three influential datasets. Shuffled training/test divisions, representation extraction choices, word rate and position explained important apparent effects; simple signals fully accounted for untrained GPT-2’s predictivity. **Failure:** uncontrolled alternative causes. Their conclusions explicitly do **not** invalidate the entire field.
+
+5. **Impossible languages: the comparison tested the wrong distinction.** [Kallini, Papadimitriou, Futrell, Mahowald & Potts (2024, *ACL*, Best Paper), *Mission: Impossible Language Models*](https://aclanthology.org/2024.acl-long.787/), found GPT-2 learned manipulated languages less readily than English. [Hunter (2025, *Computational Linguistics*)](https://aclanthology.org/2025.cl-2.7/) showed that a central comparison mixed up counting rules with distance between related words: adjacent versus nonadjacent dependencies cannot establish preference for human grammatical hierarchy. **Failure:** the control changes two things simultaneously. This is an interpretive challenge, not a demonstrated failure to reproduce the scores.
+
+6. **Centaur: predicting choices does not establish a human simulator.** [Binz et al. (2025, *Nature*), *A foundation model to predict and capture human cognition*](https://www.nature.com/articles/s41586-025-09215-4), trained on over ten million choices across 160 experiments. [Namazova, Brondetta, Strittmatter, Nassar & Musslick (2025, arXiv:2508.07887), *Not Yet AlphaFold for the Mind*](https://arxiv.org/abs/2508.07887), reported that generated behaviour systematically diverged from humans despite strong predictive scores. **Failure:** extending success at predicting the next response to simulating whole participants. The critique is a preprint; it does not erase Centaur’s predictive results.
+
+7. **Theory of mind: passing stories leaves the mechanism unresolved.** Theory of mind means reasoning about others’ beliefs and intentions; benchmark success alone cannot establish that mechanism. [Kosinski (2024, *PNAS*), *Evaluating large language models in theory of mind tasks*](https://pubmed.ncbi.nlm.nih.gov/39471222/), tested eleven models on forty bespoke false-belief tasks. [Pang, Pang, Broeker & Hibble (2025, *PNAS*)](https://pmc.ncbi.nlm.nih.gov/articles/PMC12280963/) argued that alternative explanations remained. Earlier, [Ullman (2023, arXiv:2302.08399)](https://arxiv.org/abs/2302.08399) overturned apparent successes with small story alterations. **Status:** contested interpretation; Ullman predates the final PNAS paper and is not its direct failed replication.
+
+**The review bar I would impose on Neo’s claim**—a recommendation, not universal journal requirements:
+
+- Specify one falsifiable scientific claim and its strongest competing explanation.
+- Preregister: publicly fix hypotheses, exclusions, sample size, scoring and stopping rules before confirmatory testing. This prevents exploratory choices masquerading as predictions.
+- For human-language claims, obtain appropriately approved human data, unseen constructions and preferably another language; model agreement alone is insufficient.
+- Match word frequency, meaning, dependency distance, training exposure and computational budget. Include simple competing methods.
+- Repeat across model families and random initializations; reserve untouched datasets and seek an independent replication.
+- Release runnable code, prompts, model versions, failures and uncertainty. Require interventions before claiming an internal causal mechanism.
+
+[Nature Human Behaviour’s Registered Reports](https://www.nature.com/nathumbehav/submission-guidelines/registeredreports) offer review of methods **before** research, with publication provisionally accepted regardless of outcome.
+
+**Solo feasibility needs correcting.** Lake & Baroni’s [2023 *Nature* paper](https://doi.org/10.1038/s41586-023-06668-3) demonstrated human-like combination of learned components using neural training and human experiments: two authors, with Lake performing modelling and behavioural execution. Centaur had forty authors. Kosinski is a verified solo high-profile example, also illustrating scrutiny. A comparable solo *Nature* AI success is **unverified** here.
+
+**Presubmission enquiries differ.** [Nature](https://www.nature.com/nature/for-authors/presub) accepts optional online enquiries: a referenced summary paragraph, references and broad-interest explanation; usually two working days, with no commitment to review. [NHB’s dedicated page](https://www.nature.com/nathumbehav/submission-guidelines/presubmission-enquiries) currently rejects research enquiries and requires full manuscripts. Its Registered Reports page contradictorily still invites enquiries; plan on a complete Stage-1 proposal.
+
+**Assumption:** publication can be separated from the startup architecture. Computational cognitive science offers two defensible routes: a narrow human-confirmed discovery, postponing condition 10’s new architecture; or a model-only theorem, preserving engineering progress but restricting claims about humans. Neither supports promising Nature within condition 12’s one-week budget.
