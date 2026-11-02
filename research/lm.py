@@ -487,7 +487,8 @@ def newton_attention(cfg, lyr, x):
         f = phi * e[m] * inv
         f = jnp.concatenate([f.real, f.imag], -1).reshape(B, T, H * 2 * r)
         # every arity on one scale before the shared read-out
-        f = f / jnp.sqrt((f ** 2).mean(-1, keepdims=True) + 1e-6)
+        # nfloor 1e-6 is the original floor; it swamps the small higher-arity features (survive/AUDIT.md 1a)
+        f = f / jnp.sqrt((f ** 2).mean(-1, keepdims=True) + getattr(cfg, "nfloor", 1e-6))
         feats.append(lin(lyr["no"], f) * lyr["alpha"][m])
     return sum(feats)
 
@@ -837,6 +838,7 @@ def build_parser():
     ap.add_argument("--rank", type=int, default=32)
     ap.add_argument("--order", type=int, default=4)
     ap.add_argument("--phase", type=float, default=2.0)
+    ap.add_argument("--nfloor", type=float, default=1e-6)  # Newton per-arity RMS floor
     # subset attention: Poisson vacuum (price of an empty slot) and an optional tanh cap on the logits
     ap.add_argument("--vac", type=float, default=0.2)
     ap.add_argument("--alpha0", type=int, default=0)
@@ -1143,7 +1145,7 @@ def main():
            "beta_max": cfg.beta_max if cfg.arch == "gated_delta" else None,
            "delta_key_ratio": cfg.delta_key_ratio if cfg.arch == "gated_delta" else None,
            "delta_v_expand": cfg.delta_v_expand if cfg.arch == "gated_delta" else None,
-           "ablate": cfg.ablate, **extra}
+           "ablate": cfg.ablate, "nfloor": getattr(cfg, "nfloor", None), **extra}
     if cfg.vocab == 256:
         out["val_bpc"] = round(last["val"] / math.log(2), 4)
     print(json.dumps(out))

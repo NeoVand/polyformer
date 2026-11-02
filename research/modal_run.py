@@ -321,6 +321,17 @@ def lm_a() -> list[list[str]]:
     return runs
 
 
+def lm_newton_fix() -> list[list[str]]:
+    """lm_a's GPT and hybrid, with the hybrid's Newton branch at the original RMS floor (1e-6) and a scale-aware one (1e-12)."""
+    runs = []
+    for seed in (0, 1, 2):
+        base = ["--steps", "8000", "--seed", str(seed)]
+        runs.append(["--arch", "gpt", *base])
+        runs.append(["--arch", "hybrid", "--rank", "32", "--nfloor", "1e-6", *base])
+        runs.append(["--arch", "hybrid", "--rank", "32", "--nfloor", "1e-12", *base])
+    return runs
+
+
 def sfa_a() -> list[list[str]]:
     """Subset attention (polybench --model sfa): does query-dependent selection keep Newton attention's
     arity results, add what selection should add, and remove its failures on chains?"""
@@ -611,6 +622,7 @@ GRIDS = {
     "newton_f": newton_f(),
     "homa_m3": homa_m3(),
     "lm_a": lm_a(),
+    "lm_newton_fix": lm_newton_fix(),
     "sfa_a": sfa_a(),
     "lm_sfa": lm_sfa(),
     "sfa_b": sfa_b(),
